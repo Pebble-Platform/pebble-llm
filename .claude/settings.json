@@ -1,0 +1,93 @@
+{
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "includeCoAuthoredBy": false,
+  "enabledMcpjsonServers": ["context7", "memory", "sequential-thinking"],
+  "permissions": {
+    "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
+    "defaultMode": "bypassPermissions",
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~/*)",
+      "Bash(rm -rf .)",
+      "Bash(rm -rf /)",
+      "Bash(del /s:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git clean -f:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git stash drop:*)",
+      "Bash(git checkout -- .)",
+      "Bash(git checkout -- :*)",
+      "Bash(git restore .)",
+      "Bash(git restore --staged:*)",
+      "Edit(**/.git/**)",
+      "Edit(.git/**)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials*)",
+      "Edit(**/generated/**)",
+      "Edit(**/obj/**)",
+      "Edit(**/bin/**)",
+      "Edit(**/dist/**)",
+      "Edit(**/node_modules/**)",
+      "Read(**/.git/**)",
+      "Read(.git/**)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Write(**/.git/**)",
+      "Write(.git/**)",
+      "Write(**/secrets/**)",
+      "Write(**/credentials*)",
+      "Write(**/generated/**)",
+      "Write(**/obj/**)",
+      "Write(**/bin/**)",
+      "Write(**/dist/**)",
+      "Write(**/node_modules/**)"
+    ],
+    "allow": [
+      "mcp__codegraph__codegraph_search",
+      "mcp__codegraph__codegraph_context",
+      "mcp__codegraph__codegraph_callers",
+      "mcp__codegraph__codegraph_callees",
+      "mcp__codegraph__codegraph_impact",
+      "mcp__codegraph__codegraph_node",
+      "mcp__codegraph__codegraph_status"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/statusline.js",
+    "padding": 0
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-before-code.js\"",
+            "description": "Require a plan/spec .md exists before writing code"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-edit-biome.js\"",
+            "description": "Auto-format files with Biome after edits"
+          }
+        ]
+      }
+    ]
+  }
+}

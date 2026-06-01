@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# uv
+.uv/
+
+# Environments / secrets
+.env
+.env.local
+*.key
+*.pem
+service-account*.json
+gcp-credentials*.json
+
+# Data — never commit raw user data or labels (PII / mental-health content)
+data/raw/**
+data/interim/**
+data/processed/**
+data/external/**
+!data/**/.gitkeep
+
+# Model artifacts & checkpoints
+checkpoints/
+artifacts/
+*.pt
+*.bin
+*.onnx
+*.safetensors
+
+# Vendored NeoBERT modeling code IS committed (pinned revision — protects against
+# silent upstream changes). Only model weights are excluded (global *.safetensors rule).
+
+# Experiment tracking
+wandb/
+mlruns/
+outputs/
+logs/
+*.log
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/

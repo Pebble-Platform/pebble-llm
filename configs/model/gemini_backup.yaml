@@ -1,0 +1,12 @@
+# Gemini 2.5 Flash-Lite backup path (§4 Backup, §6.2).
+# Stood up ONLY if NeoBERT serving/quality fails the gates. Vertex AI SFT (LoRA).
+backup:
+  base_model: gemini-2.5-flash-lite
+  method: lora_sft
+  epochs: 3
+  lr_multiplier: 1.0     # → 0.5 if val diverges after epoch 2
+  thinking_budget: 0     # no CoT needed for classification
+  vertex_location: us-central1
+  # Structured-output reliability targets (§6.2 Step 4) — N/A on the NeoBERT path:
+  json_parse_rate_min: 0.99
+  zod_validation_rate_min: 0.98

@@ -1,0 +1,10 @@
+# Serving config (§6.1 Step 4). Track A (GPU FP16) is the baseline default.
+serving:
+  checkpoint_path: checkpoints/neobert-multitask/best
+  device: cuda      # set "cpu" ONLY after a successful ONNX export (Track B spike)
+  onnx: false
+  max_batch_size: 8
+
+model:
+  score_dims: [severity]   # v1: only severity is learned (see docs/decisions.md)
+  num_emotion_labels: 12

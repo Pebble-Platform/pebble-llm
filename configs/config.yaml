@@ -1,0 +1,47 @@
+# Base config. Training/serving YAMLs override sections of this.
+# Loaded via pebble_llm.config.load_config (OmegaConf + pydantic).
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  external_dir: data/external
+  max_seq_length: 256
+  context_window: 3
+  val_size: 500
+  test_size: 500
+  seed: 42
+
+model:
+  name: chandar-lab/NeoBERT
+  revision: 5424c8efeea6491b151d62dee55a752165407430   # pinned 2026-05-29 (§6.1 Step 0)
+  trust_remote_code: true
+  hidden_size: 768
+  head_hidden_dim: 256
+  dropout: 0.1
+  # v1 reuse-labels scope: only severity is learned. energy/socialIsolation/receptivity
+  # have no public labels → Decision-Engine heuristics (not the model).
+  score_dims: [severity]
+  num_emotion_labels: 12
+
+training:
+  output_dir: checkpoints/neobert-multitask
+  batch_size: 16
+  epochs: 5
+  freeze_encoder_epochs: 2
+  lr_encoder: 5.0e-6
+  lr_heads: 2.0e-5
+  weight_decay: 0.01
+  loss_weight_score: 1.0
+  loss_weight_emotion: 1.0
+  loss_weight_safety: 2.0
+  safety_pos_weight: 10.0
+  early_stopping_patience: 3
+  eval_every_steps: 100
+  seeds: [13, 42, 1337]
+  fp16: true
+
+serving:
+  checkpoint_path: checkpoints/neobert-multitask/best
+  device: cuda
+  onnx: false
+  max_batch_size: 8

@@ -1,0 +1,3 @@
+"""Pebble emotion classifier — multi-task NeoBERT fine-tuning package."""
+
+__version__ = "0.1.0"

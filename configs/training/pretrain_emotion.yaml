@@ -1,0 +1,10 @@
+# Emotion-head pre-training on GoEmotions (§6.1 Step 1).
+# Encoder frozen 2 epochs, then unfreeze 1-2 epochs at LR 1e-5.
+defaults: configs/config.yaml   # documentational; load_config reads this file directly
+
+training:
+  epochs: 4
+  freeze_encoder_epochs: 2
+  lr_encoder: 1.0e-5
+  lr_heads: 2.0e-5
+  output_dir: checkpoints/neobert-emotion-pretrain

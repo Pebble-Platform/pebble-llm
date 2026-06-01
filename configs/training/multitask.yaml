@@ -1,0 +1,13 @@
+# Multi-task fine-tune on Pebble data (§6.1 Step 2).
+# Inherits the base config defaults; overrides below as the run is tuned.
+
+model:
+  # Start the emotion head from the pretrain checkpoint:
+  # (handled in the run script — set the path here once produced)
+  revision: 5424c8efeea6491b151d62dee55a752165407430
+
+training:
+  output_dir: checkpoints/neobert-multitask
+  epochs: 5
+  freeze_encoder_epochs: 2
+  # bump dropout to 0.2 here if train/val diverge >20% after epoch 2 (§6.1)
