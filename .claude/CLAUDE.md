@@ -41,6 +41,9 @@ Format: `type(module): [NA-ticket] summary` — scope always required, ticket ID
 | `/azure-devops-cli` | Manage ADO resources via `az` CLI |
 | `/diagram` | Generate Mermaid or ASCII diagrams |
 | `/summarize-release` | Generate release summary in `docs/releases/` |
+| `/research-paper` | Find papers related to a topic, ranked by closeness to Pebble (agent: `research-paper`) |
+| `/analysis-paper` | Score a paper's % overlap with Pebble + pick the best transferable point (agent: `analysis-paper`) |
+| `/find-dataset` | Find a paper's dataset, check license/gate, download open ones to `data/external/` (agent: `find-dataset`) |
 
 ## Hooks
 
