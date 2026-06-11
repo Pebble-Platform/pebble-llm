@@ -123,3 +123,151 @@ In a Pebble paper, FAIIR can be cited to support the following specific claims:
 - **Domain-adaptive MLM as a measurable contributor.** "Domain adaptation through self-supervised learning significantly enhances tool performance, especially in supervised tasks and when addressing label biases" (Discussion §3). Cite to justify a Pebble MLM continued-pre-training step.
 
 Items that should NOT be cited from this paper (because they are not reported): calibration / ECE numbers, formal ablation isolating the priority-flag prefix, formal ablation isolating MLM contribution, per-judge agreement statistics beyond the headline 90.9%, latency or inference-cost numbers for the deployed ensemble, and any post-deployment outcome data — silent testing is the latest stage reported.
+
+## Deep research — full-PDF read (2026-06-10)
+
+> Read against the published npj Digital Medicine version (s41746-025-01647-6); the local PDF is
+> `pdfs/01-faiir.pdf` (arXiv:2405.18553). ar5iv's HTML conversion of this paper is broken
+> ("Fatal error"), so quotes below come from the npj full text. This section only adds what
+> §§1–11 above do not already cover; cross-references point back to those sections.
+
+### What the full paper adds beyond the existing analysis
+
+- **Governance route: no REB/IRB at all.** "This publication was the result of a quality
+  improvement initiative at Kids Help Phone, and as a result, no REB approval was sought or
+  obtained." §4 above says "No external IRB number is reported" — the truth is stronger: the
+  *entire* 780K-conversation youth-crisis study ran under an internal quality-improvement
+  framing plus KHP's privacy policy (consent notice, data minimization, in-infrastructure
+  controlled-access storage). That is a deliberate governance pattern, not an omission.
+- **Expert-validation sampling is half-random, half-adversarial.** The 40 conversations split
+  into 20 *randomly selected* among those with ≥4 tags (diverse, hard) and 20 *purposefully
+  curated* — <3 tags, deliberately ambiguous, or suspected mislabels — chosen so all 19 tags are
+  covered. Six assessments per conversation: 3 open (FAIIR predictions visible, rating
+  helpfulness) and 3 blind (tagging from scratch). The post-study threshold retune bought a
+  "4% increase" in precision (0.62→0.66) at a recall cost (0.82→0.76).
+- **Priority-flag provenance.** The triage algorithm is *owned by Crisis Text Line*, not KHP, and
+  fires on the user's *first message only*: "the presence of any 56 English or 73 French words in
+  an initial message from a user leads to their automatic triage to a higher priority level."
+  High risk = suicidal thoughts + plan + access to means + 0–48h timeline; medium = suicidal
+  thoughts or self-harm. Distribution: 87% medium / 13% high / ~0.0001% low.
+- **Explainability = layer-integrated gradients.** Keywords are extracted per tag via
+  layer-integrated gradients, filtered against stop-words/punctuation/special tokens and a
+  predefined common-word list ("User", "Hello"). Suicide-tag keywords: *happy, sad, mood,
+  anxiety, scared, pain, plan, home, school, friend*; *assault* indexes Abuse-Sexual while
+  *mom/dad* skew Abuse-Physical. Authors concede reliability "require[s] further rigorous
+  assessment" and report **no CR feedback** on keyword usefulness.
+- **Ensemble aggregation is unspecified.** The 3-Longformer ensemble's combination rule (vote vs.
+  probability averaging) is never stated — a real gap if Pebble wants to copy the recipe; only
+  the member-level differences are given (2 of 3 oversample rare tags; all share the same
+  15%-mask, 1-epoch MLM pass).
+- **Youth language is acknowledged but never analyzed.** The only treatment is generic noise:
+  "varying quality of conversations, including differences in language use, grammar, and the
+  presence of noise such as typos or slang." No analysis of how 10–19-year-olds actually voice
+  distress (indirectness, emoji, code-switching, message rhythm). On the *largest youth crisis
+  corpus in the literature*, that analysis simply doesn't exist yet.
+
+### Parts directly useful for Pebble
+
+1. **The two-stage validation template** (silent test → 40-conversation × 6-rater consensus with
+   open/blind split and five pre-registered consensus criteria) — the *only* published,
+   youth-crisis-specific protocol for validating a classifier against experts when ground-truth
+   labels are noisy.
+2. **The escalation-design pattern**: a cheap, auditable keyword/rule layer that *escalates* (never
+   de-escalates) + the model layer underneath + injecting the rule verdict as a text prefix
+   (`"This conversation is of <<X>> priority"`). Three independent safety layers, each simple.
+3. **The governance pattern for minors' data**: quality-improvement framing, consent notice,
+   automated scrubbing to `[scrubbed]`, controlled-access in-house storage, no open release —
+   with the known cost that over-scrubbing deletes harmless words and adds label noise.
+4. **The half-random/half-adversarial eval-set construction** (20 hard-random + 20 curated
+   ambiguous/suspected-mislabel covering every class).
+5. **The recall-first threshold policy with a published payoff curve**: per-class thresholds by
+   frequency tier (0.4/0.3/0.2), and the measured +4% precision / −6% recall consequence of
+   tightening after expert feedback.
+
+### How each part helps Pebble succeed
+
+- **Validation (1) → Pebble's eval plan.** Pebble's silver labels are exactly the "noisy
+  single-source ground truth" FAIIR faced. Copy the protocol: before any deployment claim, run a
+  ~40-item expert consensus on a half-random/half-adversarial slice of Pebble's own conversations,
+  3 blind + 3 open raters, and report model-vs-expert agreement *next to* silver-vs-expert
+  agreement. FAIIR's headline (model agreed with experts *more than the original labels did*,
+  0.64 vs 0.47 F1, p<0.001) is the exact argument Pebble will need when a reviewer says "your
+  Gemini labels are noisy": noisy labels can still train a model that out-agrees its own
+  supervision. Concretely: add an `eval/expert_consensus/` protocol doc + a 40-item annotation
+  sheet before the first deployed checkpoint.
+- **Escalation pattern (2) → Pebble's safety head is not alone.** Don't let the recall ≥ 0.95
+  floor live only in the learned head. Add a FAIIR-style first-message keyword tripwire (child
+  vocabulary, both explicit and coded terms) that can only *raise* the risk tier, and feed the
+  tier back into the encoder as a text prefix — zero architecture change, and FAIIR's Table D3
+  (flat P/R across priority strata) shows the prefix doesn't distort per-class performance. The
+  learned head then only has to beat the keyword layer, not replace it.
+- **Governance (3) → Pebble's deployment story.** Pebble cannot collect children's chat data under
+  an open-data regime. FAIIR proves the workable shape: in-infrastructure storage, scrubbing,
+  consent notice, research access on request. Adopt it early (data handling section of the paper
+  + repo policy), and budget for the scrubbing-noise cost FAIIR documents ("turkey" deletions →
+  train-time noise).
+- **Eval-set construction (4) → Pebble's test split.** Pebble's C-SSRS test set is tiny (~100
+  rows); a purely random slice will contain almost no high-severity cases. Build the held-out
+  eval the FAIIR way: half random-hard, half curated to cover every severity level and suspected
+  silver-label errors — that's what made FAIIR's 40 conversations informative enough to change
+  the production threshold policy.
+- **Threshold policy (5) → the safety/emotion head cutoffs.** Tune per-head, per-frequency-tier
+  thresholds on validation, and *publish the trade* (FAIIR: +4% P for −6% R). For Pebble the rule
+  inverts on the safety head: fix recall at 0.95 and let precision float; FAIIR's measured curve
+  is the citation that this trade is operationally acceptable in youth crisis support.
+
+### Child mental-health lens
+
+This is the one paper in the whole related-work set whose data *is* children in crisis
+(KHP serves ~10–19-year-olds; 1M+ SMS interactions, +51% during COVID). Lessons specific to
+Pebble's mission:
+
+- **Children's crisis signal is recoverable at scale.** Suicide AUROC 0.94, Self-Harm 0.97,
+  Abuse-Sexual 0.98 on real youth SMS — not social-media proxies. This is the existence proof
+  that Pebble's safety head targets are achievable on child-register text, where every other
+  paper in the set (C-SSRS, MentalBERT, WASSA) is adult Reddit/essay data.
+- **But the model never decides.** FAIIR's role boundary — post-conversation tagging support and
+  cue-surfacing, with "active rescues and mandatory reporting" always executed by a trained human
+  — is the safety architecture Pebble should copy verbatim: Pebble's heads inform a Decision
+  Engine; escalation to a human/caregiver pathway is a product invariant, not a model output.
+- **Rule layer first, model second.** For imminent-risk detection KHP does *not* trust the
+  learned model: a keyword list on the first message handles escalation, deliberately
+  over-triggering (87% of all conversations sit at medium). For minors, dumb-but-auditable
+  beats clever-but-opaque at the highest-stakes tier; Pebble's recall floor should likewise be
+  backstopped by rules a clinician can read.
+- **Single-annotator noise is the norm in child services.** Overworked CRs tag alone, unreviewed —
+  and the expert study showed those labels are *worse* than the model. Pebble's plan to use
+  multiple LLM judges + a human consensus slice is the right correction, and FAIIR is the
+  citation for why it's necessary.
+- **The open gap Pebble can own: youth-register language.** FAIIR processes youth text but never
+  characterizes it; its explainability keywords (*plan, home, school, friend* for suicide) hint
+  that children's risk markers are *contextual-relational*, not clinical vocabulary. Pebble's
+  child-register calibration slice and any analysis of indirect/coded child distress language
+  would be a genuine contribution no one — including FAIIR — has published.
+- **Ethics asymmetry to respect.** FAIIR ran no REB because it stayed an internal
+  quality-improvement tool on already-collected service data. Pebble, as a new child-facing
+  product generating synthetic crisis text (Gemini silver labels) and making live decisions,
+  cannot claim the same exemption — plan for genuine ethics review, age-appropriate consent, and
+  guardian-notification policy from the start.
+
+### Limitations & open questions for Pebble
+
+- **No calibration anywhere** (no ECE/reliability curves) — yet Pebble's Decision Engine consumes
+  probabilities, not tags. Pebble must add the calibration evaluation FAIIR skipped.
+- **No MLM or prefix ablation** — FAIIR *claims* domain-adaptive MLM "significantly enhances"
+  performance but never isolates it. Pebble's planned MLM-pass ablation on NeoBERT would be the
+  first clean measurement in this domain.
+- **Ensemble aggregation unspecified** — if Pebble copies the 3-member/2-oversampled recipe, the
+  combination rule (mean probability vs. majority vote) must be chosen and reported; FAIIR gives
+  no guidance.
+- **Conversation-level only.** FAIIR tags whole conversations post-hoc; Pebble must score
+  *turn-level, mid-conversation* — FAIIR's numbers are not directly comparable bars, only an
+  upper-bound analogue (its 2,000-token cap covering 94.4% of dialogues is, however, direct
+  evidence NeoBERT's 4K window is ample for this domain).
+- **Access is gated.** Code private (`KidsHelpPhone/AI-ML`, on request), data closed. Open
+  question worth one email: whether KHP would share the 19-tag taxonomy definitions and the
+  EN/FR escalation keyword lists — either would be directly reusable for Pebble's rule layer.
+- **Population mismatch at the margin.** KHP texters are self-selecting help-seekers, modal
+  respondent female/European-ancestry, 67.3% invisible disability among identity respondents —
+  Pebble's companion-app users (younger, not yet help-seeking) may express risk earlier and more
+  obliquely than this corpus shows.

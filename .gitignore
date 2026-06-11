@@ -58,3 +58,6 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Paper PDFs — re-downloadable from arXiv, kept local only
+docs/papers/pdfs/
