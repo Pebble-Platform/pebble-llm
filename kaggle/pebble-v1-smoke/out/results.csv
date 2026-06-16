@@ -1,0 +1,5 @@
+arm,loss,recipe,sev_pearson,sev_spearman,sev_mae,sev_qwk,emo_macroF1,emo_ece
+"static-lambda(5,1)",static,discriminative,0.2949,0.2952,0.2239,0.2535,0.1551,0.0558
+"uniform-sum(1,1)",static,discriminative,0.1916,0.1945,0.226,0.1447,0.1561,0.0601
+kendall-UW(floor),kendall,discriminative,0.1916,0.1942,0.226,0.1447,0.157,0.0584
+uniform+static-freeze,static,static_freeze,0.7061,0.6702,0.1454,0.4925,0.5093,0.295

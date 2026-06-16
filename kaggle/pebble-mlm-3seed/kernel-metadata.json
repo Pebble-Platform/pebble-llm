@@ -1,0 +1,13 @@
+{
+  "id": "fabiocarava/pebble-mlm-ablation-3seed",
+  "title": "Pebble MLM Ablation 3seed",
+  "code_file": "pebble_mlm_3seed.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}

@@ -1,0 +1,13 @@
+{
+  "id": "fabiocarava/pebble-v1-smoke",
+  "title": "Pebble v1 Smoke",
+  "code_file": "pebble_v1_smoke.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}

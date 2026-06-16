@@ -1,0 +1,4 @@
+arm,emo_macroF1,emo_ece,sev_pearson,sev_spearman,sev_mae
+MLM-off (vanilla),0.3206,0.1047,0.6075,0.5983,0.1562
+MLM-on (adapted),0.3063,0.1321,0.6069,0.6148,0.1436
+delta (on - off),-0.0143,0.0274,-0.0006,0.0165,-0.0126
