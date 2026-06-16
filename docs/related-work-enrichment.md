@@ -158,6 +158,15 @@ baselines and a key design lesson for the safety head.
 
 ## Per-paper analysis — overlap % + best point
 
+> **Update 2026-06-16 — full-PDF deep reads + synthesis.** Every paper below now has a full-PDF
+> `## Deep research — full-PDF read` section in its `docs/papers/NN-*.md` file (validated for provenance +
+> transfer to Pebble's child-facing/turn-level/silver-label regime). The cross-paper research output —
+> claim/contradiction matrices per pillar and a per-decision (D-A…D-H) recommendation table — lives in
+> [`papers/SYNTHESIS-deep-read.md`](./papers/SYNTHESIS-deep-read.md). Notable corrections surfaced by the deep
+> read: the C-SSRS "bars" (14/15/16/17) are **not** mutually comparable; WASSA@IITK's MTL loss is a **trivial
+> unweighted sum**; ULMFiT's own data shows **head-only fine-tuning is worst** on small sets; **RSD-15K remains
+> not obtainable** (repo 404, re-checked).
+
 > Produced by the `analysis-paper` agent (one per paper), 2026-06-09. Overlap = `(Σ wᵢ·scoreᵢ)/26 × 100`
 > across the 7 Pebble dimensions (D1 heterogeneous heads ×3, D2 mental-health ×2, D3 emotion-transfer ×1,
 > D4 LLM-teacher distillation ×2, D5 MTL balancing ×2, D6 safety-recall constraint ×2, D7 encoder backbone ×1).
