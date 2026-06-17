@@ -1,0 +1,99 @@
+# Bài báo 29 — openSMILE: Bộ trích xuất đặc trưng âm thanh mã nguồn mở nhanh và đa năng của Munich
+
+## 1. Thông tin thư mục
+
+**Tiêu đề:** openSMILE — The Munich Versatile and Fast Open-Source Audio Feature Extractor
+
+**Tác giả:** Florian Eyben, Martin Wöllmer, Björn Schuller (Institute for Human-Machine Communication, Technische Universität München).
+
+**Năm / hội nghị:** *MM '10: Proceedings of the 18th ACM International Conference on Multimedia*, 25–29/10/2010, Firenze, Ý, trang 1459–1462. ACM Press. DOI 10.1145/1873951.1874246.
+
+**Từ khóa (nguyên văn):** "audio feature extraction, statistical functionals, signal processing, music, speech, emotion".
+
+**Trang chủ công cụ (2010):** http://opensmile.sourceforge.net/ — nay được audEERING duy trì tại https://github.com/audeering/opensmile.
+
+## 2. Tóm tắt một đoạn
+
+openSMILE (Speech & Music Interpretation by Large-space Extraction) là một bộ công cụ C++ mã nguồn mở trích xuất các **bộ mô tả mức thấp của âm thanh (low-level descriptors — LLD)** — cao độ/F0, năng lượng/độ to (loudness), MFCC/PLP, formant, chất lượng giọng nói (jitter, shimmer, HNR), đặc trưng phổ và tonal — rồi áp dụng các **hàm thống kê (statistical functionals)** (means, moments, percentiles, regression coefficients, peaks, durations) để ánh xạ các đường viền (contour) LLD có độ dài thay đổi thành các vector đặc trưng có độ dài cố định. Đây là công cụ front-end tiêu chuẩn trên thực tế cho computational paralinguistics và affective computing: nó là bộ trích xuất đặc trưng chính thức cho INTERSPEECH 2009 Emotion Challenge và Paralinguistic Challenge 2010, và là engine đứng sau các tập đặc trưng chuẩn hóa **eGeMAPS (88 tham số)** và **ComParE (6.373 đặc trưng)** được dùng khắp tài liệu nhận diện cảm xúc qua giọng nói. Đối với Pebble, đây là cách thực dụng, sạch về giấy phép để biến **tin nhắn thoại** của trẻ thành một vector đặc trưng âm thanh độ dài cố định trước bất kỳ giai đoạn mô hình nào.
+
+## 3. Vì sao bài báo này nằm trong tập Pebble (modality tin nhắn thoại)
+
+Modality chính của Pebble là văn bản (encoder NeoBERT), nhưng luận án bao gồm một nhánh **tin nhắn thoại**: trẻ có thể gửi một đoạn âm thanh thay vì gõ chữ. Trước khi bất kỳ bộ phân loại nào có thể chấm điểm đoạn đó ở mức lượt (turn-level), dạng sóng thô phải được rút gọn thành đặc trưng. openSMILE là công cụ kinh điển cho việc rút gọn đó — nó chính là thứ tạo ra các tập đặc trưng mà mọi bài báo nhận diện cảm xúc giọng nói trong tập này đều giả định. Bài báo này là tài liệu tham chiếu về kiến trúc/kỹ thuật cho **giai đoạn tiền xử lý âm thanh** nằm ngay trước (a) một bản transcript ASR đưa vào NeoBERT, hoặc (b) một head âm thanh nhỏ nhận vector eGeMAPS/ComParE. Đây không phải bài báo mô hình hóa; nó tác động đến D-D và D-H bằng cách cung cấp nền tảng trích xuất đặc trưng cụ thể và các điểm neo (anchor) tập đặc trưng chuẩn hóa.
+
+## Deep research — đọc toàn văn PDF (2026-06-16)
+
+### Ghi chú về việc truy cập nguồn
+
+Toàn văn PDF **đã lấy được** — bản author's version của ACM được tải trực tiếp từ kho lưu trữ OPUS của Đại học Augsburg (`https://opus.bibliothek.uni-augsburg.de/opus4/files/76475/76475.pdf`, 3 trang, bản camera-ready MM'10, trang 1459–1462) và trích xuất bằng `pdftotext -layout`. Tất cả các tuyên bố về kiến trúc/đặc trưng/benchmark dưới đây được đọc từ toàn văn đó, không phải từ phần abstract.
+
+Bản thân bài báo 2010 **có trước** các tập đặc trưng chuẩn hóa mà Pebble thực sự quan tâm (eGeMAPS, ComParE 2016) — những tập đó được định nghĩa trong công trình về sau. Các con số đó được kiểm chứng qua nguồn thứ cấp:
+
+- **Xuất xứ — số đếm eGeMAPS / GeMAPS.** Truy vấn: *"GeMAPS 62 parameters eGeMAPS 88 parameters 18 LLD ComParE 2016 6373 Eyben 2016 IEEE affective computing"*. Nguồn: Eyben, Scherer, Schuller và cộng sự, "The Geneva Minimalistic Acoustic Parameter Set (GeMAPS) for Voice Research and Affective Computing," *IEEE Trans. Affective Computing* 2016 (preprint `https://sail.usc.edu/publications/files/eyben-preprinttaffc-2015.pdf`; tóm tắt `https://jmj3047.github.io/2023/04/21/eGeMAPS/`). Xác nhận: **GeMAPS = 62 tham số từ 18 LLD**; **eGeMAPS = 88 tham số** (62 + 26 mở rộng, thêm MFCC 1–4, spectral flux, formant bandwidths). ✔ đã kiểm chứng.
+- **Xuất xứ — tập ComParE 2016.** Nguồn từ tài liệu openSMILE của audEERING/DeepWiki (`https://deepwiki.com/audeering/opensmile/4.3-standard-feature-sets`) và các bài baseline challenge: **ComParE 2016 = 6.373 đặc trưng từ 65 LLD** (energy, spectral, MFCC, các LLD liên quan voicing + functionals). ✔ đã kiểm chứng (tổng "6k+ / 6.373" nhất quán giữa các nguồn; con số chính xác 65 LLD đến từ các bài baseline ComParE, ≈ đã kiểm chứng).
+- **Các con số benchmark trong bài** (real-time factors, số LLD "56", rtf 0,012 / 0,044 / 0,026) được đọc trực tiếp từ §5 của PDF và gắn thẻ bên dưới.
+
+### Bài báo thực sự làm gì
+
+**Mục tiêu (§1).** Cung cấp một bộ trích xuất đặc trưng nhanh, mã nguồn mở, đa nền tảng (Unix/Windows/Mac) hợp nhất các đặc trưng xử lý tiếng nói và Music-Information-Retrieval, hỗ trợ xử lý **gia tăng trực tuyến (on-line incremental)** *và* xử lý off-line/batch, đồng thời cho phép hệ thống trực tiếp dùng **chính xác cùng** mã đặc trưng đã tạo ra kết quả nghiên cứu đã công bố. Triển khai bằng C++ với **không phụ thuộc thư viện bên thứ ba** cho chức năng lõi; tính ổn định số học qua các phiên bản được đảm bảo bằng unit test.
+
+**Kiến trúc (§3, Hình 1).** Một **Data Memory** trung tâm liên kết ba loại thành phần:
+- **Data Sources** — ghi dữ liệu bên ngoài vào (file, sound card).
+- **Data Processors** — đọc từ data memory, biến đổi, ghi lại (windowing, FFT, Mel-filterbank, delta coefficients, functionals).
+- **Data Sinks** — ghi ra ngoài (CSV, ARFF, LibSVM, file HTK, hoặc một bộ phân loại LibSVM).
+
+Xử lý theo cơ chế **ring-buffer / gia tăng**: các mức (ví dụ `wave` → `frames` → `pitch` → `func`) mỗi mức giữ một cửa sổ trượt; `cFramer` tạo frame từ mẫu wave, `cPitch` trích cao độ, functionals được tính trên một cửa sổ các frame cao độ. Kích thước buffer được tự điều chỉnh theo block size của reader/writer. "Không đặc trưng nào phải tính hai lần" — các trung gian chia sẻ (ví dụ phổ FFT) được tái sử dụng giữa các bộ trích xuất. Mỗi thành phần có thể chạy trong **luồng (thread) riêng** để song song hóa đa nhân. Tất cả được nối qua một **file cấu hình duy nhất** — không cần biên dịch lại để định nghĩa tập đặc trưng mới.
+
+**Các LLD khả dụng (§4, Bảng 1).** Waveform/zero-crossings/extremes; signal energy; loudness (RMS & log); phổ FFT (intensity, độ to xấp xỉ); ACF & cepstrum; **phổ Mel/Bark**; **Cepstral — MFCC, PLP-CC** (tính chính xác như trong HTK [15], nên tương thích HTK); phổ semitone; **Pitch — F0 qua phương pháp ACF và SHS (sub-harmonic summation), cộng xác suất voicing**; **Voice Quality — HNR, jitter, shimmer**; **LPC — hệ số LPC, reflection coefficients, residual**; **Auditory — line spectral pairs (LSP)**; **Formants — tần số trung tâm và băng thông**; spectral (năng lượng trong N dải do người dùng định nghĩa, roll-off, centroid, entropy, flux, vị trí tương đối của max/min); **Tonal — CHROMA, CENS, đặc trưng dựa trên CHROMA**. Có thể áp dụng hệ số delta-regression và bộ làm mượt moving-average lên bất kỳ contour nào; các phép cơ bản (add, multiply, power) cho phép tạo đặc trưng tùy biến.
+
+**Functionals (§4, Bảng 2).** Áp dụng lên các contour LLD để tạo vector độ dài cố định: Extremes (giá trị/vị trí/khoảng); Means (arithmetic, quadratic, geometric); Moments (std-dev, variance, kurtosis, skewness); Percentiles & khoảng percentile; **Regression (hệ số xấp xỉ tuyến tính & bậc hai, sai số hồi quy, centroid)**; Peaks (số lượng, khoảng cách trung bình, biên độ trung bình); Segments (số lượng qua delta-thresholding, độ dài trung bình); giá trị mẫu tại các vị trí tương đối; Times/durations (up/down-level times, rise/fall times); Onsets; **hệ số DCT**; zero/mean-crossing rate. Functionals có thể **xếp chồng phân cấp** ("functionals của functionals," theo Schuller và cộng sự ICASSP 2008 [13]), và danh sách functionals dựa trên chuẩn mã hóa đặc trưng **CEICES** [2]. Vì bất kỳ processor nào cũng có thể áp lên bất kỳ chuỗi thời gian nào, "các nhà nghiên cứu [có thể] tạo ra hàng triệu đặc trưng mới mà không cần thêm một dòng C++ nào."
+
+**Khả năng tương tác (§4).** Đọc/ghi WEKA ARFF, LibSVM, CSV, file tham số HTK, raw binary (đọc được trong Matlab/Octave). **Ghi âm trực tiếp** + trích xuất gia tăng thời gian thực; **phát hiện hoạt động giọng nói (VAD) tích hợp sẵn** để phân đoạn trước luồng; **chuẩn hóa mean/variance trực tuyến** và cân bằng histogram trực tuyến; trực quan hóa trực tiếp qua gnuplot.
+
+**Hiệu năng (§5).** Đo trên một nhân AMD Phenom 64-bit ở 2,2 GHz, 4 GB RAM, đo thời gian CPU để trích đặc trưng từ 10 phút âm thanh **16 kHz PCM** đơn kênh; real-time factor (rtf) = thời-gian-CPU / thời-lượng-âm-thanh (càng thấp càng nhanh):
+- Đặc trưng frame PLP + MFCC chuẩn với log-energy và delta bậc 1/2: **rtf 0,012** (≈ nhanh hơn thời gian thực 83 lần). ✔ trong PDF §5.
+- **250 nghìn đặc trưng** = functionals phân cấp (2 mức) của **56 LLD** (pitch, MFCC, LSP, v.v.): **rtf 0,044** (≈ 23 lần thời gian thực). ✔ trong PDF §5.
+- Chỉ các LLD prosodic (đường viền cao độ + độ to): **rtf 0,026**. ✔ trong PDF §5.
+
+Kết luận: functionals rẻ; phần lớn chi phí nằm ở trích xuất LLD (FFT, lọc). Ngay cả tập brute-force 250k đặc trưng cũng chạy nhanh hơn thời gian thực ~23 lần trên một nhân đơn thời 2010.
+
+**Xuất xứ / mức độ áp dụng (§6).** openSMILE là nền tảng cho bộ công cụ nhận diện cảm xúc **openEAR** [5]; nó là **bộ trích xuất đặc trưng chính thức cho INTERSPEECH 2009 Emotion Challenge** [11] và Paralinguistic Challenge 2010. Được tài trợ bởi EU FP7 grant 211486 (SEMAINE).
+
+**Các tập chuẩn hóa Pebble sẽ thực sự dùng (sau 2010, kiểm chứng bên ngoài — xem Ghi chú nguồn):**
+
+| Tập | Năm | Đặc trưng | LLD | Nội dung (mức cao) | Trạng thái |
+|---|---|---|---|---|---|
+| GeMAPS | 2016 | **62** | 18 | F0, jitter, shimmer, loudness, HNR, formant F1–F3, alpha ratio, Hammarberg index, spectral slope + functionals tối thiểu (mean, CV) | ✔ |
+| eGeMAPS | 2016 | **88** | 25 | GeMAPS + MFCC 1–4, spectral flux, formant bandwidths 2–3 (phần mở rộng +26) | ✔ |
+| ComParE 2016 | 2016 | **6.373** | 65 | energy + spectral + MFCC + voicing LLD × ngân hàng functional lớn | ✔ (≈ với 65 LLD) |
+
+### Các phần trực tiếp hữu ích cho Pebble
+
+1. **eGeMAPS (88 tham số) làm vector đặc trưng âm thanh mặc định cho một head giọng nói.** Một vector độ dài cố định gọn nhẹ, được chuyên gia chọn lọc (F0, jitter, shimmer, HNR, loudness, formant, MFCC1–4, spectral slope) — đủ nhỏ để huấn luyện một head trên lượng dữ liệu khiêm tốn của Pebble mà không overfitting, và là chuẩn mà mọi bài báo cảm xúc giọng nói đều benchmark. **D-D** (nguồn chuyển giao hồi quy severity/energy và nền tảng đặc trưng), **D-H** (datasets/anchor đặc trưng). *Thẻ: cấu hình openSMILE `eGeMAPSv02`.*
+2. **Kiến trúc LLD → functionals làm công thức tiền xử lý theo nghĩa đen của Pebble.** Trích LLD mức frame (cửa sổ 25 ms / bước nhảy 10 ms thông thường) → functionals thống kê trên toàn utterance → một vector cho mỗi tin nhắn thoại. Đây chính là hình dạng mà giai đoạn `audio_preprocess` của Pebble nên xuất ra. **D-D**, **D-H**. *Thẻ: một wrapper `pebble/audio/features.py` quanh `opensmile-python`.*
+3. **VAD tích hợp + chuẩn hóa mean/variance trực tuyến.** openSMILE có thể phân đoạn trước một tin nhắn thoại trẻ em nhiễu (cắt im lặng/nền) và chuẩn hóa theo từng utterance trước khi tính functionals — trực tiếp liên quan đến chấm điểm mức lượt cho các đoạn ngắn, nhiễu. **D-D** (khởi tạo hồi quy ổn định), **D-G** (chính sách hiệu chỉnh/chuẩn hóa, chủ yếu v2). *Thẻ: bật VAD + MVN trực tuyến trong cấu hình trích xuất.*
+4. **ComParE 6.373 làm ablation "kitchen-sink" cận trên.** Cho một thí nghiệm một lần để xem tập nặng hơn có mua được gì so với eGeMAPS trên dữ liệu Pebble không; chính bài GeMAPS cho thấy các tập tối thiểu đạt "hiệu năng tương đương đáng kể" ở <2% kích thước ComParE — nên eGeMAPS là mặc định, ComParE chỉ là ablation. **D-D**, **D-B** (nếu head âm thanh được gập vào MTL, số chiều đặc trưng ảnh hưởng cân bằng loss). *Thẻ: một dòng ablation `compare-vs-egemaps`.*
+5. **rtf ≈ 0,012–0,044 trên một nhân CPU đơn thời 2010.** Trích xuất đặc trưng thực sự miễn phí so với suy luận mô hình, nên nhánh giọng nói thêm độ trễ không đáng kể vào chấm điểm mức lượt ngay cả trên phần cứng phổ thông. **D-D**, **D-G** (khả thi thời gian thực/mức lượt). *Thẻ: dòng ngân sách độ trễ trong tài liệu thiết kế pipeline âm thanh.*
+
+### Mỗi phần giúp Pebble thành công như thế nào
+
+- **Head âm thanh / `severity` & `energy` (D-D).** Chiều `energy` của Pebble (heuristic ở v1) và hồi quy `severity` về bản chất là các khái niệm **âm học** (arousal/cường độ). eGeMAPS cung cấp một vector đặc trưng có nguyên tắc để học hoặc neo các giá trị này: loudness, dải F0, jitter/shimmer và HNR là các tương quan trong sách giáo khoa của arousal giọng nói và đau khổ. Hành động cụ thể: khi nhánh giọng nói triển khai (v2), trích eGeMAPSv02 cho mỗi tin nhắn rồi hoặc (a) huấn luyện một MLP/ridge head nhỏ dự đoán `energy`/`severity` từ vector 88, hoặc (b) dùng các functional loudness/dải-F0 thô làm proxy `energy` heuristic *có cơ sở tốt hơn* heuristic văn bản v1. Pearson r so với bất kỳ nhãn arousal âm học nào là metric (khớp quy ước Pearson của D-D).
+- **Pipeline tiền xử lý (D-H).** Xây `pebble/audio/` thành: giải mã → resample về 16 kHz mono → openSMILE eGeMAPSv02 (LLD + functionals) → vector 88 float → cache. Đây là một wrapper mỏng quanh `opensmile-python` (gói pip của audEERING), nên không cần build C++. Cùng vector đó đưa vào hoặc một head âm thanh độc lập, hoặc nối với embedding CLS của NeoBERT cho một head đa modality late-fusion.
+- **Hai tuyến cho modality giọng nói, cả hai đều ở thượng nguồn NeoBERT.** Tuyến A (khuyến nghị v2): openSMILE eGeMAPS → head âm thanh fuse với logit văn bản NeoBERT. Tuyến B: transcript ASR → chỉ NeoBERT (bỏ thông tin âm học). openSMILE làm Tuyến A rẻ; các con số rtf của bài chứng minh giai đoạn đặc trưng sẽ không chi phối độ trễ.
+- **Chuẩn hóa để trích dẫn/so sánh.** Báo cáo các con số eGeMAPS/ComParE làm kết quả âm học của Pebble trực tiếp so sánh được với mọi baseline ComParE-challenge của INTERSPEECH — cách duy nhất để đánh giá chất lượng một head âm thanh so với lĩnh vực.
+
+### Lăng kính sức khỏe tâm thần trẻ em
+
+- **Tính hợp lệ chuyển giao — cảnh báo trung tâm.** eGeMAPS/ComParE được tinh chỉnh và kiểm chứng trên tiếng nói cảm xúc **người lớn** (corpus challenge, call-centre, cảm xúc diễn). Giọng trẻ em khác biệt về âm học theo những cách trọng yếu: **F0 cao hơn và biến thiên hơn**, đường thanh ngắn hơn (formant cao hơn), phát âm kém ổn định hơn (jitter/shimmer cao tự nhiên), và thay đổi theo phát triển theo tuổi. Ngưỡng jitter/shimmer/HNR học trên người lớn sẽ kích sai trên trẻ 7 tuổi. **Việc trích xuất đặc trưng chuyển giao được; nhưng *chuẩn (norm)* đặc trưng và bất kỳ mô hình âm học huấn luyện sẵn nào thì không.** Giảm thiểu: không bao giờ tái dùng *ngưỡng* âm học của người lớn; tái khớp hoặc tái hiệu chỉnh bất kỳ head âm học nào trên dữ liệu giọng trẻ em, và cân nhắc tuổi như một biến đồng. Tìm kiếm xác nhận công trình âm học chuyên biệt cho trẻ tồn tại (ví dụ phân loại giới/tuổi giọng trẻ em), khẳng định giọng trẻ là một regime riêng.
+- **Độ bền với âm thanh trẻ em thực tế.** Tin nhắn thoại của trẻ sẽ nhiễu (nền, khoảng cách mic, chồng tiếng, khóc, cười). VAD + MVN trực tuyến tích hợp của openSMILE giúp được, nhưng functionals tính trên một đoạn chứa phi-tiếng-nói (cửa đập, anh chị em) sẽ bị hỏng. Giảm thiểu: VAD-gate quyết liệt, loại các đoạn dưới ngưỡng số frame voiced tối thiểu, và xem đầu ra của head âm học là *tư vấn* vào Decision Engine — không bao giờ là trigger leo thang duy nhất.
+- **Không có an toàn học từ âm thanh ở v1/v2.** Nhất quán với quyết định "không có safety head học được ở v1" của Pebble: đặc trưng âm học không được âm thầm điều khiển một safety flag. Tín hiệu đau khổ giọng nói (HNR thấp, jitter cao, prosody khóc) là *gợi ý*, không *chẩn đoán*, đặc biệt với trẻ em. Chúng có thể *nâng* mức chú ý (chỉ-leo-thang, kiểu FAIIR) nhưng một tuyến lâm sàng/người giám hộ, chứ không phải head âm học, mới ra quyết định.
+- **Đạo đức / quyền riêng tư.** Giọng trẻ thô có tính định danh cao hơn nhiều so với văn bản (dấu giọng sinh trắc). Giá trị của openSMILE ở đây là cho phép Pebble rút gọn âm thanh thành một **vector đặc trưng 88 float không khả nghịch ngay trên thiết bị/lúc nạp** và loại bỏ dạng sóng — một thiết kế bảo vệ riêng tư (lưu/truyền đặc trưng, không phải âm thanh). Đây nên là chính sách tối thiểu hóa dữ liệu rõ ràng: trích → lưu vector → xóa âm thanh thô. Tính chất "không phụ thuộc bên thứ ba, chạy mọi nơi" của bài 2010 làm trích xuất trên-thiết-bị/edge khả thi.
+- **Regime nhãn silver mở rộng sang âm thanh.** Pebble không có nhãn arousal giọng trẻ do người chú thích. Bất kỳ mục tiêu `energy`/`severity` âm học nào tự nó cũng là silver (chuyển từ corpus cường độ người lớn hoặc dẫn xuất LLM/văn bản). openSMILE không sửa được vấn đề nhãn — chỉ sửa vấn đề đặc trưng. Rủi ro chuyển giao nhãn (D-D, D-C) không thay đổi.
+
+### Hạn chế & câu hỏi mở cho Pebble
+
+- **Mâu thuẫn / khoảng trống so với kế hoạch Pebble (mức lượt vs. functionals trên utterance).** Giá trị nổi bật của openSMILE — functionals — gập *toàn bộ một utterance* thành một vector tĩnh. Pebble chấm điểm **mức lượt / giữa hội thoại**. Một tin nhắn thoại là một lượt, nên điều này khớp ở mức tin nhắn; nhưng nếu Pebble muốn *động lực thời gian trong-tin-nhắn* (đau khổ tăng dần qua đoạn 30 giây), cách tóm tắt bằng functional ném đi đúng phần đó. Thiết kế của chính bài (độ dài thay đổi → tĩnh) căng thẳng với chấm điểm thời gian chi tiết. Giảm thiểu: dùng *contour* LLD (không chỉ functionals) nếu động lực trong-tin-nhắn quan trọng, hoặc cửa-sổ-hóa đoạn.
+- **Mâu thuẫn / khoảng trống so với phần còn lại của tập (lệch modality).** Mọi bài Pebble khác (01 FAIIR, 12 MentalBERT, 14–16 C-SSRS, 18–19 WASSA) đều **chỉ văn bản**. openSMILE là công cụ âm học duy nhất trong tập, và **không** nhãn nào của các bài văn bản được căn chỉnh với âm thanh. Không có corpus giọng trẻ em công khai nào có nhãn C-SSRS / GoEmotions / WASSA mà Pebble huấn luyện. Vậy head âm học không thể huấn luyện so với nhãn silver hiện có của Pebble nếu không có bước phiên âm+căn chỉnh — một khoảng trống thực sự, không chỉ là chi tiết tích hợp.
+- **eGeMAPS/ComParE không nằm trong bài này.** Bài 2010 cung cấp *engine* và từ vựng LLD/functional, nhưng các cấu hình cụ thể eGeMAPS 88 tham số và ComParE 6.373 đặc trưng đến từ công trình 2016 (kiểm chứng bên ngoài ở trên). Bất kỳ tài liệu Pebble nào trích "openSMILE eGeMAPS" phải trích **cả hai** bài công cụ 2010 *và* Eyben và cộng sự 2016 (GeMAPS) — chúng là các artifact khác nhau.
+- **Không có con số độ chính xác.** Đây là bài *công cụ*: nó báo cáo benchmark rtf, không phải độ chính xác phân loại. Nó không thể cung cấp một mốc hiệu năng cho bất kỳ head Pebble nào; nó chỉ cung cấp đặc trưng. Các mốc phải đến từ các baseline challenge cảm xúc giọng nói (ComParE/AVEC), không từ đây.
+- **Trôi phiên bản (version drift).** Công cụ SourceForge 2010 đã được thay bằng openSMILE 3.x của audEERING (GitHub) và gói `opensmile-python`. Pebble nên pin gói hiện đại và cấu hình `eGeMAPSv02`, không phải binary 2010. Câu hỏi mở: xác nhận giấy phép `opensmile-python` (nó permissive nhưng cần kiểm tra điều khoản phân phối lại) trước khi đóng gói vào sản phẩm hướng trẻ em.
+- **Câu hỏi mở — anchor hiệu chỉnh giọng trẻ em (D-D / D-H).** Corpus nào hiệu chỉnh head âm học cho trẻ em? Corpus cường độ người lớn (kiểu WASSA, nhưng đó là *văn bản*) không giúp về âm học. Đây là một ô D-H còn trống: Pebble nhiều khả năng cần một tập hiệu chỉnh giọng trẻ nhỏ (dù chỉ vài trăm đoạn có đồng thuận, gắn tuổi) trước khi head eGeMAPS có thể tin cậy — không có nó, nhánh giọng nói vẫn ở mức heuristic như `energy` v1.

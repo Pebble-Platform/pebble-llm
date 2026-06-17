@@ -47,6 +47,7 @@
     <div class="bar">
       <select id="split" title="split"></select>
       <input id="q" type="search" placeholder="Search text… (substring, case-insensitive)">
+      <select id="label" title="filter by label"></select>
       <select id="pp" title="rows per page">
         <option>25</option><option selected>50</option><option>100</option><option>500</option>
       </select>
@@ -153,8 +154,23 @@ function esc(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;","
 let filtered=rows;
 function applyFilter(){
   const q=$("#q").value.trim().toLowerCase();
-  filtered = q ? rows.filter(r=>String(r[textCol]).toLowerCase().includes(q)) : rows;
+  const lab=$("#label").value;
+  filtered = rows.filter(r=>{
+    if(q && !String(r[textCol]).toLowerCase().includes(q)) return false;
+    if(lab && labelCol>=0){ const L=r[labelCol]; const arr=Array.isArray(L)?L:[L]; if(!arr.map(String).includes(lab)) return false; }
+    return true;
+  });
   page=0; render();
+}
+function populateLabels(){
+  const sel=$("#label");
+  if(labelCol<0){ sel.style.display="none"; sel.innerHTML=""; return; }
+  sel.style.display="";
+  const cnt={};
+  rows.forEach(r=>{ const L=r[labelCol]; (Array.isArray(L)?L:[L]).forEach(x=>{ if(x!=null&&x!=="") cnt[x]=(cnt[x]||0)+1; }); });
+  const opts=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  sel.innerHTML=`<option value="">All ${esc(cols[labelCol])} (${opts.length})</option>`+
+    opts.map(([k,v])=>`<option value="${esc(k)}">${esc(k)} (${v.toLocaleString()})</option>`).join("");
 }
 function render(){
   const pp=+$("#pp").value, n=filtered.length, pages=Math.max(1,Math.ceil(n/pp));
@@ -194,7 +210,7 @@ async function open(ds, split){
     const r=await load(ds, split);
     rows=r.rows; cols=r.cols; textCol=r.textCol; labelCol=r.labelCol??-1;
     barCols=new Map((r.barCols||(r.barCol>=0?[{col:r.barCol,max:1}]:[])).map(b=>[b.col,b.max]));
-    $("#q").value=""; applyFilter(); renderStats();
+    $("#q").value=""; populateLabels(); applyFilter(); renderStats();
   }catch(e){ $("#wrap").innerHTML='<div class="center">⚠ '+esc(e.message)+'<br>Serve this folder over HTTP (see footer command).</div>'; }
 }
 
@@ -209,6 +225,7 @@ async function open(ds, split){
   });
 })();
 $("#split").onchange=e=>open(cur, e.target.value);
+$("#label").onchange=applyFilter;
 $("#pp").onchange=render;
 $("#prev").onclick=()=>{ page--; render(); };
 $("#next").onclick=()=>{ page++; render(); };
