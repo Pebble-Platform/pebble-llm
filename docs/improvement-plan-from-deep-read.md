@@ -68,6 +68,12 @@ ablation Pebble can own.
 before head fine-tuning, **with an isolation ablation** (MLM-on vs MLM-off, same seeds) — the first clean
 measurement in this domain. Match the adaptation domain to the head (emotion/distress text for `severity`).
 
+**Empirical result (2026-06-17 · 3 seeds [13/42/1337] · NeoBERT · P100) — ran the isolation ablation twice:**
+- *Run A* (corpus = 25k of the **fine-tune text itself**, 30% masking, encoder saved **fp16**): MLM-on **lost** on every metric — Δ(on−off) macroF1 −0.007, **ECE +0.081**, Pearson −0.046. A clean negative.
+- *Run B* (corpus = 80k **separate** in-domain text [GoEmotions-raw 9k + tweet_eval sentiment/offensive/hate/irony/emotion 71k, deduped vs fine-tune/eval], **15% masking**, encoder **fp32**): verdict flips to a **task-specific tradeoff** — emotion macroF1 **+0.0127 ± 0.0099** (3/3 seeds positive), but severity **Pearson −0.045 ± 0.017** (3/3 seeds negative) and **ECE +0.052** (worse, ~36% less than Run A). MLM loss 2.42→2.29.
+
+**Reading:** the original negative was partly an artifact (same-as-fine-tune corpus + fp16 confound). With a real TAPT corpus, MLM adaptation **helps the emotion (classification) head and hurts the severity (regression) head** — they share one encoder. Run B's corpus was ~71k/80k Twitter sentiment/toxicity (only 9k emotion comments survived dedup — GoEmotions-raw is one row per annotator), pushing representations toward categorical separability at the cost of intensity resolution. **Open next step:** rebalance the corpus toward intensity-graded affect (drop offensive/hate; add EmoBank / SemEval V-reg / EI-oc) and re-measure severity, or decouple the encoder per pool. Notebook: `kaggle/pebble-mlm-ablation-3seed/`.
+
 ### 1.4 Backbone choice is an experiment, not a footnote (D-A) **[v1]**
 **Current:** NeoBERT primary; ModernBERT documented as a second-line *fallback*.
 **Evidence:** Paper **22** — ModernBERT and NeoBERT share no common benchmark and **neither was evaluated on
@@ -137,7 +143,8 @@ regression). This also de-risks the §5.3 small-data overfitting concern with ev
 
 ### 3.3 The MLM isolation ablation (D-F) **[v1]**
 MLM-on vs MLM-off, 30% masking, same seeds — the clean measurement FAIIR skipped. One row in the results table;
-high citation value.
+high citation value. **Run (2026-06-17):** empirically **15% masking on a *separate* 80k corpus** beat the
+30%/same-corpus recipe, and the result is a **classification-vs-regression tradeoff**, not a uniform win — see §1.3.
 
 ### 3.4 The backbone head-to-head (D-A) **[v1]**
 NeoBERT vs ModernBERT, identical recipe, at **turn-length** inputs (where 22 admits ModernBERT loses its

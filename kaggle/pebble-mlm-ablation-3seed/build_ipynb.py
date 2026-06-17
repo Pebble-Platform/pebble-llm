@@ -29,6 +29,8 @@ cells = [
     code("s6_run_seeds.py"),
     md("## 7. Results table — mean +/- std + paired per-seed delta"),
     code("s7_results.py"),
+    md("## 8. Export a shippable model + inference demo  (train once on chosen arm, save, test)"),
+    code("s8_export_infer.py"),
 ]
 nb = {
     "cells": cells,

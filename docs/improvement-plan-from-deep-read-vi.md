@@ -73,6 +73,12 @@ lập đo nó** — một ablation Pebble có thể sở hữu.
 fine-tune head, **kèm ablation cô lập** (MLM-on vs MLM-off, cùng seed) — phép đo sạch đầu tiên trong miền này. Khớp
 miền thích nghi với head (text emotion/distress cho `severity`).
 
+**Kết quả thực nghiệm (2026-06-17 · 3 seed [13/42/1337] · NeoBERT · P100) — chạy ablation cô lập hai lần:**
+- *Run A* (corpus = 25k **chính text fine-tune**, masking 30%, lưu encoder **fp16**): MLM-on **thua** mọi metric — Δ(on−off) macroF1 −0.007, **ECE +0.081**, Pearson −0.046. Negative sạch.
+- *Run B* (corpus = 80k text trong miền **riêng biệt** [GoEmotions-raw 9k + tweet_eval sentiment/offensive/hate/irony/emotion 71k, khử trùng với fine-tune/eval], **masking 15%**, encoder **fp32**): kết luận lật thành **tradeoff theo task** — emotion macroF1 **+0.0127 ± 0.0099** (3/3 seed dương), nhưng severity **Pearson −0.045 ± 0.017** (3/3 seed âm) và **ECE +0.052** (vẫn tệ, ít hơn Run A ~36%). MLM loss 2.42→2.29.
+
+**Diễn giải:** negative ban đầu một phần là artifact (corpus trùng tập fine-tune + confound fp16). Với corpus TAPT đúng nghĩa, MLM adaptation **giúp head emotion (classification) nhưng hại head severity (regression)** — hai head dùng chung một encoder. Corpus Run B ~71k/80k là sentiment/toxicity Twitter (chỉ 9k comment emotion sống sót sau khử trùng — GoEmotions-raw mỗi annotator một dòng), đẩy representation về phía tách lớp categorical, đánh đổi độ phân giải mức độ. **Bước tiếp theo còn mở:** cân lại corpus về phía affect có mức độ (bỏ offensive/hate; thêm EmoBank / SemEval V-reg / EI-oc) rồi đo lại severity, hoặc tách encoder theo pool. Notebook: `kaggle/pebble-mlm-ablation-3seed/`.
+
 ### 1.4 Chọn backbone là một thí nghiệm, không phải ghi chú (D-A) **[v1]**
 **Hiện tại:** NeoBERT là chính; ModernBERT là *dự phòng* tuyến hai trong tài liệu.
 **Bằng chứng:** Paper **22** — ModernBERT và NeoBERT không có benchmark chung và **cả hai chưa được đánh giá trên
@@ -144,7 +150,8 @@ cũng giảm rủi ro overfitting dữ liệu nhỏ ở §5.3 bằng bằng ch�
 
 ### 3.3 Ablation cô lập MLM (D-F) **[v1]**
 MLM-on vs MLM-off, masking 30%, cùng seed — phép đo sạch mà FAIIR bỏ qua. Một dòng trong bảng kết quả; giá trị
-trích dẫn cao.
+trích dẫn cao. **Đã chạy (2026-06-17):** thực nghiệm **masking 15% trên corpus *riêng biệt* 80k** thắng công thức
+30%/cùng-corpus, và kết quả là **tradeoff classification-vs-regression**, không phải thắng đồng đều — xem §1.3.
 
 ### 3.4 Đối đầu backbone (D-A) **[v1]**
 NeoBERT vs ModernBERT, cùng công thức, ở input **độ dài turn** (nơi 22 thừa nhận ModernBERT mất lợi thế ngữ cảnh dài).
