@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pebble — dataset viewer</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --fg:#e6e9ef; --mut:#8a93a6; --acc:#5b9dff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--fg); }
+  .app { display:grid; grid-template-columns:260px 1fr; height:100vh; }
+  aside { background:var(--panel); border-right:1px solid var(--line); overflow:auto; padding:14px 0; }
+  aside h1 { font-size:13px; letter-spacing:.04em; color:var(--mut); margin:0 16px 10px; text-transform:uppercase; }
+  .grp { color:var(--mut); font-size:11px; text-transform:uppercase; letter-spacing:.05em; margin:14px 16px 4px; }
+  .item { padding:7px 16px; cursor:pointer; border-left:3px solid transparent; }
+  .item:hover { background:#1d212b; }
+  .item.on { background:#1d2530; border-left-color:var(--acc); color:#fff; }
+  .item small { display:block; color:var(--mut); font-size:11px; }
+  main { display:flex; flex-direction:column; overflow:hidden; }
+  .bar { display:flex; gap:10px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  .bar input[type=search] { flex:1; min-width:200px; background:#0c0e12; border:1px solid var(--line); color:var(--fg); padding:7px 10px; border-radius:7px; }
+  .bar select, .bar button { background:#0c0e12; border:1px solid var(--line); color:var(--fg); padding:7px 9px; border-radius:7px; cursor:pointer; }
+  .bar button:disabled { opacity:.4; cursor:default; }
+  .meta { color:var(--mut); font-size:12px; }
+  .wrap { overflow:auto; flex:1; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  thead th { position:sticky; top:0; background:#11141a; text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); color:var(--mut); font-weight:600; white-space:nowrap; }
+  td { padding:7px 10px; border-bottom:1px solid #1c2029; vertical-align:top; }
+  tr:hover td { background:#161a22; }
+  td.idx { color:var(--mut); text-align:right; font-variant-numeric:tabular-nums; }
+  td.text { max-width:680px; }
+  .tag { display:inline-block; background:#22304a; color:#bcd4ff; border-radius:5px; padding:1px 7px; margin:1px 3px 1px 0; font-size:12px; }
+  .neu { background:#2a2f3a; color:#aab2c2; }
+  .barcell { min-width:170px; }
+  .ibar { height:9px; border-radius:5px; background:#22262f; overflow:hidden; }
+  .ifill { height:100%; }
+  .num { font-variant-numeric:tabular-nums; color:#cfd6e4; }
+  .stats { color:var(--mut); font-size:12px; padding:8px 16px; border-bottom:1px solid var(--line); display:flex; gap:14px; flex-wrap:wrap; }
+  .stats b { color:var(--fg); font-weight:600; }
+  .center { display:flex; align-items:center; justify-content:center; height:100%; color:var(--mut); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="side"><h1>Pebble datasets</h1></aside>
+  <main>
+    <div class="bar">
+      <select id="split" title="split"></select>
+      <input id="q" type="search" placeholder="Search text… (substring, case-insensitive)">
+      <select id="pp" title="rows per page">
+        <option>25</option><option selected>50</option><option>100</option><option>500</option>
+      </select>
+      <button id="prev">‹ Prev</button>
+      <span class="meta" id="pageinfo">—</span>
+      <button id="next">Next ›</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="wrap" id="wrap"><div class="center">Select a dataset on the left.</div></div>
+  </main>
+</div>
+<script>
+const EMO28 = ["admiration","amusement","anger","annoyance","approval","caring","confusion","curiosity","desire","disappointment","disapproval","disgust","embarrassment","excitement","fear","gratitude","grief","joy","love","nervousness","optimism","pride","realization","relief","remorse","sadness","surprise","neutral"];
+
+// ---- dataset registry ----
+const DATASETS = [
+  { id:"go-simpl", group:"Task data", name:"GoEmotions — emotion task", sub:"emotion classification (28 cls)",
+    type:"go_simpl", splits:{ train:"goemotions/simplified/train.tsv", dev:"goemotions/simplified/dev.tsv", test:"goemotions/simplified/test.tsv" } },
+  { id:"eireg", group:"Task data", name:"EI-reg — severity task", sub:"affect intensity [0–1]",
+    type:"eireg", splits:{
+      train:["anger","fear","joy","sadness"].map(e=>`semeval2018-eireg/EI-reg-En-${e}-train.txt`),
+      dev:["anger","fear","joy","sadness"].map(e=>`semeval2018-eireg/EI-reg-En-${e}-dev.txt`) } },
+  { id:"go-raw", group:"MLM corpus", name:"GoEmotions raw", sub:"full annotation (1 row / annotator)",
+    type:"go_raw", splits:{ "part 1":"goemotions/raw/goemotions_1.csv", "part 2":"goemotions/raw/goemotions_2.csv", "part 3":"goemotions/raw/goemotions_3.csv" } },
+  ...["emotion","sentiment","offensive","hate","irony"].map(s=>(
+    { id:"te-"+s, group:"MLM corpus", name:"tweet_eval / "+s, sub:(s==="offensive"||s==="hate"?"toxicity (suspect)":"affect / social"),
+      type:"tweeteval", base:"tweeteval/"+s, splits:{ train:"train", val:"val", test:"test" } })),
+  { id:"esconv", group:"Conversations (research arm)", name:"ESConv — support dialogs", sub:"emotion + intensity (init→final) + strategy",
+    type:"esconv", splits:{ train:"esconv/train.txt", valid:"esconv/valid.txt", test:"esconv/test.txt", all:"esconv/ESConv.json" } }
+];
+
+const $ = s => document.querySelector(s);
+let cur = null, curSplit = null, rows = [], cols = [], textCol = 0, barCols = new Map(), labelCol = -1, page = 0;
+
+// ---- parsers ----
+function parseTSV(t){ return t.replace(/\r/g,"").split("\n").filter(l=>l.length).map(l=>l.split("\t")); }
+function parseCSV(t){
+  const out=[]; let row=[], f="", q=false; t=t.replace(/\r/g,"");
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else { if(c==='"') q=true; else if(c===","){ row.push(f); f=""; } else if(c==="\n"){ row.push(f); out.push(row); row=[]; f=""; } else f+=c; }
+  }
+  if(f.length||row.length){ row.push(f); out.push(row); }
+  return out;
+}
+
+// ---- loaders: return {cols, rows, textCol, barCol, labelCol} ----
+async function fetchText(p){ const r=await fetch(p); if(!r.ok) throw new Error(p+" → "+r.status); return r.text(); }
+
+async function load(ds, split){
+  if(ds.type==="go_simpl"){
+    const raw=parseTSV(await fetchText(ds.splits[split]));
+    const rows=raw.map(r=>{ const names=(r[1]||"").split(",").filter(x=>x!=="").map(i=>EMO28[+i]); return [r[0], names, r[2]]; });
+    return { cols:["#","text","emotions","comment_id"], rows, textCol:0, labelCol:1 };
+  }
+  if(ds.type==="eireg"){
+    let rows=[];
+    for(const f of ds.splits[split]){ const lines=parseTSV(await fetchText(f)); lines.shift(); // header
+      for(const c of lines){ if(c.length<4) continue; rows.push([c[1], c[2], parseFloat(c[3])]); } }
+    return { cols:["#","tweet","affect","intensity"], rows, textCol:0, barCol:2, labelCol:1 };
+  }
+  if(ds.type==="go_raw"){
+    const t=parseCSV(await fetchText(ds.splits[split])); const head=t.shift();
+    const e0=head.indexOf("admiration");
+    const enames=head.slice(e0);
+    const si=head.indexOf("subreddit"), ri=head.indexOf("rater_id"), ui=head.indexOf("example_very_unclear");
+    const rows=t.filter(r=>r.length>=head.length).map(r=>{
+      const labs=enames.map((n,j)=>r[e0+j]==="1"?n:null).filter(Boolean);
+      return [r[0], r[ui]==="True"?["unclear"]:labs, r[si], r[ri]]; });
+    return { cols:["#","text","labels","subreddit","rater"], rows, textCol:0, labelCol:1 };
+  }
+  if(ds.type==="tweeteval"){
+    const pre=ds.splits[split];
+    const [txt,lab,map]=await Promise.all([ fetchText(`${ds.base}/${pre}_text.txt`), fetchText(`${ds.base}/${pre}_labels.txt`), fetchText(`${ds.base}/mapping.txt`) ]);
+    const names={}; parseTSV(map).forEach(m=>names[m[0]]=m[1]);
+    const T=txt.replace(/\r/g,"").split("\n"), L=lab.replace(/\r/g,"").split("\n");
+    const rows=[]; for(let i=0;i<T.length;i++){ if(T[i]==="" && i>=T.length-1) continue; rows.push([T[i], [names[(L[i]||"").trim()]||L[i]]]); }
+    return { cols:["#","text","label"], rows, textCol:0, labelCol:1 };
+  }
+  if(ds.type==="esconv"){
+    const path=ds.splits[split], raw=await fetchText(path);
+    const arr = path.endsWith(".json") ? JSON.parse(raw)
+              : raw.replace(/\r/g,"").split("\n").filter(l=>l.trim()).map(l=>JSON.parse(l));
+    const num=x=>{ const n=parseFloat(x); return isNaN(n)?0:n; };
+    const rows=arr.map(d=>{ const ss=(d.survey_score&&d.survey_score.seeker)||{};
+      return [ d.situation||"", [d.emotion_type].filter(Boolean), d.problem_type||"",
+               num(ss.initial_emotion_intensity), num(ss.final_emotion_intensity), (d.dialog||[]).length ]; });
+    return { cols:["#","situation","emotion","problem","init","final","turns"], rows, textCol:0, labelCol:1, barCols:[{col:3,max:5},{col:4,max:5}] };
+  }
+}
+
+// ---- rendering ----
+function tagCell(arr){
+  if(!arr || !arr.length) return '<td><span class="tag neu">∅</span></td>';
+  return '<td>'+arr.map(x=>`<span class="tag${x==="neutral"||x==="unclear"?" neu":""}">${esc(x)}</span>`).join("")+'</td>';
+}
+function barCellHTML(v,max){
+  max=max||1; const p=Math.max(0,Math.min(1,(v||0)/max)), hue=Math.round(120-120*p); // green→red
+  const lab = max===1 ? (v||0).toFixed(3) : `${v}/${max}`;
+  return `<td class="barcell"><div class="ibar"><div class="ifill" style="width:${(p*100).toFixed(0)}%;background:hsl(${hue} 80% 55%)"></div></div><span class="num">${lab}</span></td>`;
+}
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+let filtered=rows;
+function applyFilter(){
+  const q=$("#q").value.trim().toLowerCase();
+  filtered = q ? rows.filter(r=>String(r[textCol]).toLowerCase().includes(q)) : rows;
+  page=0; render();
+}
+function render(){
+  const pp=+$("#pp").value, n=filtered.length, pages=Math.max(1,Math.ceil(n/pp));
+  if(page>=pages) page=pages-1;
+  const start=page*pp, slice=filtered.slice(start, start+pp);
+  let h='<table><thead><tr>'+cols.map(c=>`<th>${c}</th>`).join("")+'</tr></thead><tbody>';
+  slice.forEach((r,i)=>{
+    h+='<tr><td class="idx">'+(start+i+1)+'</td>';
+    for(let c=0;c<r.length;c++){
+      if(barCols.has(c)) h+=barCellHTML(r[c], barCols.get(c));
+      else if(Array.isArray(r[c])) h+=tagCell(r[c]);
+      else h+=`<td class="${c===textCol?'text':''}">${esc(r[c])}</td>`;
+    }
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  $("#wrap").innerHTML = n? h : '<div class="center">No rows match.</div>';
+  $("#pageinfo").textContent = `${n? start+1:0}–${Math.min(start+pp,n)} of ${n.toLocaleString()}`;
+  $("#prev").disabled = page<=0; $("#next").disabled = page>=pages-1;
+}
+function renderStats(){
+  const s=$("#stats"); const bits=[`<b>${rows.length.toLocaleString()}</b> rows`];
+  if(barCols.size){ const bc=[...barCols.keys()][0]; const v=rows.map(r=>r[bc]).filter(x=>!isNaN(x)); const avg=v.reduce((a,b)=>a+b,0)/v.length;
+    bits.push(`${cols[bc]} avg <b>${avg.toFixed(2)}</b>`, `min <b>${Math.min(...v).toFixed(2)}</b>`, `max <b>${Math.max(...v).toFixed(2)}</b>`); }
+  if(labelCol>=0){ const cnt={}; rows.forEach(r=>{ const L=r[labelCol]; (Array.isArray(L)?L:[L]).forEach(x=>{ if(x!=null&&x!=="") cnt[x]=(cnt[x]||0)+1; }); });
+    const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`${k}:${v}`).join("  ");
+    bits.push(`top labels → <b>${esc(top)}</b>`); }
+  s.innerHTML = bits.join('<span style="opacity:.4">|</span>');
+}
+
+async function open(ds, split){
+  cur=ds; curSplit=split;
+  document.querySelectorAll(".item").forEach(e=>e.classList.toggle("on", e.dataset.id===ds.id));
+  const sp=$("#split"); sp.innerHTML=Object.keys(ds.splits).map(k=>`<option ${k===split?"selected":""}>${k}</option>`).join("");
+  $("#wrap").innerHTML='<div class="center">Loading '+ds.name+' / '+split+' …</div>';
+  try{
+    const r=await load(ds, split);
+    rows=r.rows; cols=r.cols; textCol=r.textCol; labelCol=r.labelCol??-1;
+    barCols=new Map((r.barCols||(r.barCol>=0?[{col:r.barCol,max:1}]:[])).map(b=>[b.col,b.max]));
+    $("#q").value=""; applyFilter(); renderStats();
+  }catch(e){ $("#wrap").innerHTML='<div class="center">⚠ '+esc(e.message)+'<br>Serve this folder over HTTP (see footer command).</div>'; }
+}
+
+// ---- build sidebar ----
+(function(){
+  const side=$("#side"); let g=null;
+  DATASETS.forEach(ds=>{
+    if(ds.group!==g){ g=ds.group; const h=document.createElement("div"); h.className="grp"; h.textContent=g; side.appendChild(h); }
+    const el=document.createElement("div"); el.className="item"; el.dataset.id=ds.id;
+    el.innerHTML=`${ds.name}<small>${ds.sub}</small>`;
+    el.onclick=()=>open(ds, Object.keys(ds.splits)[0]); side.appendChild(el);
+  });
+})();
+$("#split").onchange=e=>open(cur, e.target.value);
+$("#pp").onchange=render;
+$("#prev").onclick=()=>{ page--; render(); };
+$("#next").onclick=()=>{ page++; render(); };
+let dt; $("#q").oninput=()=>{ clearTimeout(dt); dt=setTimeout(applyFilter,180); };
+</script>
+</body>
+</html>

@@ -25,6 +25,10 @@ data/interim/**
 data/processed/**
 data/external/**
 !data/**/.gitkeep
+# tooling only (NOT data): the dataset viewer + its docs/fetch script
+!data/external/index.html
+!data/external/README.md
+!data/external/download.sh
 
 # Model artifacts & checkpoints
 checkpoints/
