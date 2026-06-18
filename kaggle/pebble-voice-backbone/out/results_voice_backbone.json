@@ -1,0 +1,88 @@
+{
+  "agg": {
+    "emotion2vec": {
+      "emo_macroF1": [
+        0.5372752983940702,
+        0.006988623931917984
+      ],
+      "distress_recall@0.5": [
+        1.0,
+        0.0
+      ],
+      "precision@floor": [
+        0.597274553013274,
+        0.012315583923684007
+      ],
+      "thr@floor": [
+        0.7200000000000001,
+        1.1102230246251565e-16
+      ]
+    },
+    "wavlm-large": {
+      "emo_macroF1": [
+        0.6086214571354355,
+        0.01913491164586502
+      ],
+      "distress_recall@0.5": [
+        1.0,
+        0.0
+      ],
+      "precision@floor": [
+        0.6172928388306685,
+        0.0027038274776186103
+      ],
+      "thr@floor": [
+        0.6900000000000001,
+        0.0
+      ]
+    }
+  },
+  "per_seed": {
+    "emotion2vec": [
+      {
+        "emo_macroF1": 0.5410071485403187,
+        "distress_recall@0.5": 1.0,
+        "thr@floor": 0.72,
+        "precision@floor": 0.5939086294416244
+      },
+      {
+        "emo_macroF1": 0.5433350447472116,
+        "distress_recall@0.5": 1.0,
+        "thr@floor": 0.72,
+        "precision@floor": 0.6137566137566137
+      },
+      {
+        "emo_macroF1": 0.5274837018946803,
+        "distress_recall@0.5": 1.0,
+        "thr@floor": 0.72,
+        "precision@floor": 0.5841584158415841
+      }
+    ],
+    "wavlm-large": [
+      {
+        "emo_macroF1": 0.5918283753843179,
+        "distress_recall@0.5": 1.0,
+        "thr@floor": 0.6900000000000001,
+        "precision@floor": 0.6203208556149733
+      },
+      {
+        "emo_macroF1": 0.6353949283726679,
+        "distress_recall@0.5": 1.0,
+        "thr@floor": 0.6900000000000001,
+        "precision@floor": 0.6137566137566137
+      },
+      {
+        "emo_macroF1": 0.5986410676493206,
+        "distress_recall@0.5": 1.0,
+        "thr@floor": 0.6900000000000001,
+        "precision@floor": 0.6178010471204188
+      }
+    ]
+  },
+  "winner": "wavlm-large",
+  "seeds": [
+    13,
+    42,
+    1337
+  ]
+}
