@@ -1,0 +1,9 @@
+backbone,metric,mean,std
+emotion2vec,emo_macroF1,0.5373,0.007
+emotion2vec,distress_recall@0.5,1.0,0.0
+emotion2vec,precision@floor,0.5973,0.0123
+emotion2vec,thr@floor,0.72,0.0
+wavlm-large,emo_macroF1,0.6086,0.0191
+wavlm-large,distress_recall@0.5,1.0,0.0
+wavlm-large,precision@floor,0.6173,0.0027
+wavlm-large,thr@floor,0.69,0.0

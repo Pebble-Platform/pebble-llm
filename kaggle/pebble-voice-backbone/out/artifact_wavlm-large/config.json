@@ -1,0 +1,29 @@
+{
+  "backbone_hf_id": "microsoft/wavlm-large",
+  "backbone": "wavlm-large",
+  "embed_dim": 1024,
+  "emotions": [
+    "neutral",
+    "calm",
+    "happy",
+    "sad",
+    "angry",
+    "fearful",
+    "disgust",
+    "surprised"
+  ],
+  "distress_emotions": [
+    "angry",
+    "disgust",
+    "fearful",
+    "sad"
+  ],
+  "safety_threshold": 0.6900000000000001,
+  "recall_floor": 0.9,
+  "sample_rate": 16000,
+  "max_samples": 64000,
+  "pooling": "mean",
+  "head_dim": 256,
+  "safety_head_dim": 64,
+  "is_winner": true
+}
