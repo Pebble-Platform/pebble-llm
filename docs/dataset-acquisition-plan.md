@@ -29,12 +29,12 @@ This splits the sources into two arms:
 
 ## 1. CSSRS-Reddit (Gaur et al., WWW 2019) — ✅ ACQUIRED
 
-- **Status:** **Downloaded** to `data/external/cssrs/` (gitignored). No agreement required.
+- **Status:** **Downloaded** to `data/finetuning-message/external/cssrs/` (gitignored). No agreement required.
 - **License:** **CC-BY-4.0** — open; commercial use, ML training, and **serving permitted** with
   attribution. This is the **deployment-compatible** crisis source.
 - **What it is:** 500 Reddit users, gold-labelled by 4 practicing psychiatrists on the Columbia
   Suicide-Severity Rating Scale. Pairwise annotator agreement 0.79, group-wise 0.73.
-- **Files** (`data/external/cssrs/`):
+- **Files** (`data/finetuning-message/external/cssrs/`):
   - `500_Reddit_users_posts_labels.csv` — 500 users, columns `User, Post, Label`; 5-label C-SSRS
     scheme: **Supportive / Indicator / Ideation / Behavior / Attempt**.
   - `suicidal_{ideation,behavior,attempt,indicator}.csv` — severity lexicon files.
@@ -45,7 +45,7 @@ This splits the sources into two arms:
   > Early Intervention.* The World Wide Web Conference (WWW '19).
 - **Next step (code):** add a `load_cssrs_severity()` loader to
   [`src/pebble_llm/data/external.py`](../src/pebble_llm/data/external.py) following the existing
-  `load_semeval_intensity` pattern (lazy-download from Zenodo + cache under `data/external/`).
+  `load_semeval_intensity` pattern (lazy-download from Zenodo + cache under `data/finetuning-message/external/`).
   Decide the C-SSRS→`severity` / safety-head mapping (5 ordinal levels → binary crisis flag and/or
   [0,1] severity).
 
@@ -137,8 +137,8 @@ Thank you,
 
 | Dataset | Status | Location | License → deploy? | Arm |
 |---------|--------|----------|-------------------|-----|
-| **WASSA empathy/distress** (Buechel 2018) | ✅ acquired | `data/external/wassa_empathy/messages.csv` | CC-BY-4.0 → **YES** | deployed + research |
-| **ESConv** (Liu 2021) | ✅ acquired | `data/external/esconv/` | CC-BY-NC-4.0 → **NO** | research only |
+| **WASSA empathy/distress** (Buechel 2018) | ✅ acquired | `data/finetuning-message/external/wassa_empathy/messages.csv` | CC-BY-4.0 → **YES** | deployed + research |
+| **ESConv** (Liu 2021) | ✅ acquired | `data/finetuning-message/external/esconv/` | CC-BY-NC-4.0 → **NO** | research only |
 | **RSD-15K** (2025) | ❌ not obtainable | promised repo unpublished (404) | unknown | — |
 | **MentalBERT/RoBERTa weights** | available, not downloaded | HF soft-gate | CC-BY-NC-4.0 → **NO** | research only |
 
@@ -148,9 +148,9 @@ Thank you,
 
 ## Status checklist
 
-- [x] CSSRS-Reddit downloaded (CC-BY, deployment-OK) → `data/external/cssrs/`
-- [x] WASSA empathy downloaded (CC-BY, deployment-OK) → `data/external/wassa_empathy/`
-- [x] ESConv downloaded (CC-BY-NC, research-only) → `data/external/esconv/`
+- [x] CSSRS-Reddit downloaded (CC-BY, deployment-OK) → `data/finetuning-message/external/cssrs/`
+- [x] WASSA empathy downloaded (CC-BY, deployment-OK) → `data/finetuning-message/external/wassa_empathy/`
+- [x] ESConv downloaded (CC-BY-NC, research-only) → `data/finetuning-message/external/esconv/`
 - [ ] Add `load_cssrs_severity()` loader + **ordinal** C-SSRS→severity/safety mapping (ordinal-loss lesson confirmed)
 - [ ] Fill `load_wassa_empathy()` stub + add `load_esconv()` in `external.py`
 - [ ] Sign + submit DAIC-WOZ EULA (academic email) — research arm

@@ -69,7 +69,7 @@ methods + a ready-made library to run the static-vs-principled comparison.
 
 ## Pillar 4 — Suicide-risk severity on the *exact* dataset you just downloaded
 
-These benchmark on the **Reddit C-SSRS 500-user dataset now in `data/external/cssrs/`** — direct
+These benchmark on the **Reddit C-SSRS 500-user dataset now in `data/finetuning-message/external/cssrs/`** — direct
 baselines and a key design lesson for the safety head.
 
 - **🔧 (2024) — *Enhancing Suicide Risk Detection through Semi-Supervised Deep Label Smoothing.***
@@ -205,8 +205,8 @@ baselines and a key design lesson for the safety head.
 
 | Dataset | Status | Location / gate | License → deploy? |
 |---------|--------|-----------------|-------------------|
-| **WASSA empathy/distress** (Buechel et al. 2018) | ✅ **acquired** | `data/external/wassa_empathy/messages.csv` (1,860 essays) | **CC-BY-4.0 → YES (deployable)** |
-| **ESConv** (Liu et al. 2021) | ✅ **acquired** | `data/external/esconv/` (1,300 convs, 38K turns) | **CC-BY-NC-4.0 → research-only, NO deploy** |
+| **WASSA empathy/distress** (Buechel et al. 2018) | ✅ **acquired** | `data/finetuning-message/external/wassa_empathy/messages.csv` (1,860 essays) | **CC-BY-4.0 → YES (deployable)** |
+| **ESConv** (Liu et al. 2021) | ✅ **acquired** | `data/finetuning-message/external/esconv/` (1,300 convs, 38K turns) | **CC-BY-NC-4.0 → research-only, NO deploy** |
 | **RSD-15K** (2025) | ❌ not obtainable | Promised GitHub repo unpublished (404); no DUA/contact | unknown |
 | **MentalBERT/RoBERTa** | weights available (not downloaded) | HF soft-gate; pretraining corpus private | CC-BY-NC-4.0 → research-only |
 

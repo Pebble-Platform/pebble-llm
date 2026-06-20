@@ -40,7 +40,7 @@
 | Metric | accuracy, macro-recall | **weighted-F1** | acc, **QWK, MAE** | acc, macro-F1 |
 | Headline | 43%→**52%** acc, 47.8% macro-recall | **0.7512** wF1 (RoBERTa-only 0.7499) | Claude F1 0.7505 / QWK 0.876; Gemini weakest | DeBERTa **76%/77%**; RoBERTa 71%/65% |
 | Annotation | — | Fleiss κ 0.564 | human κ 0.82 | Fleiss κ **0.7206** |
-| Obtainable | ✅ in `data/external/cssrs/` | dataset = different corpus | code public | ❌ **404, not obtainable** |
+| Obtainable | ✅ in `data/finetuning-message/external/cssrs/` | dataset = different corpus | code public | ❌ **404, not obtainable** |
 
 - **Hard contradiction (numbers don't compose):** "IN" = *Ideation* in 17 but *Indicator* in 15 — **opposite ends
   of the scale**. Attempt scores **F1 0.65 (15)** vs **recall ≈0 (14)** — a pure post-vs-user **granularity

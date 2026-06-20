@@ -5,7 +5,7 @@
 ## Bibliographic info
 - **Authors / Year / Venue:** 2024.
 - **Link:** [arXiv:2405.05795](https://arxiv.org/abs/2405.05795) · open
-- **Pebble pillar:** suicide-risk severity — benchmarks the **exact Reddit C-SSRS 500-user dataset Pebble already downloaded** (`data/external/cssrs/`).
+- **Pebble pillar:** suicide-risk severity — benchmarks the **exact Reddit C-SSRS 500-user dataset Pebble already downloaded** (`data/finetuning-message/external/cssrs/`).
 
 ## Summary
 A CNN over learnable embeddings does single-task 5-class C-SSRS suicide-risk classification, with soft-label smoothing via MC-Dropout uncertainty. Improves the C-SSRS benchmark from 43.12% → 52.33% accuracy.
@@ -67,7 +67,7 @@ Headline 43.12% → 52.33% (= **+9.21 pts** accuracy). The bigger story is in th
 
 ### Parts directly useful for Pebble (specific)
 
-1. **The exact published bar on Pebble's own dataset.** Pebble holds the identical 500-user C-SSRS split (`data/external/cssrs/`). Targets to beat: **accuracy 0.5233, weighted-balanced accuracy 0.4923, macro recall 0.4777, macro precision 0.4721**, vs a Gaur baseline of 0.4312 / 0.2567 / 0.2734. Because the test set is ~100 examples (80/20, no CV), Pebble should report **k-fold or repeated splits with confidence intervals** — beating 52.33% on a single 100-row hold-out is within noise.
+1. **The exact published bar on Pebble's own dataset.** Pebble holds the identical 500-user C-SSRS split (`data/finetuning-message/external/cssrs/`). Targets to beat: **accuracy 0.5233, weighted-balanced accuracy 0.4923, macro recall 0.4777, macro precision 0.4721**, vs a Gaur baseline of 0.4312 / 0.2567 / 0.2734. Because the test set is ~100 examples (80/20, no CV), Pebble should report **k-fold or repeated splits with confidence intervals** — beating 52.33% on a single 100-row hold-out is within noise.
 
 2. **Per-example, uncertainty-driven soft labels (the actual transferable method).** The MC-Dropout-averaged target (Eq. 9, T=100) is a concrete recipe for turning noisy labels into per-example soft targets that concentrate mass where the model is genuinely unsure. Directly reusable for Pebble's **Gemini silver labels**, which share the pathology (a single noisy teacher, no inter-rater signal).
 

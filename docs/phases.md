@@ -156,7 +156,7 @@ fallback bar. *(§5.1, §5.5, §6.1 Step 1)*
 **Tasks**
 - Filter/merge silver + Protocol A + safety layers + transfer examples. **User-level
   split** (deterministic userId hash), **then** stratify by severity quartile within
-  split-assigned users (never the reverse — leakage). Export to `data/processed/`. *(§5.5)*
+  split-assigned users (never the reverse — leakage). Export to `data/finetuning-message/processed/`. *(§5.5)*
 - **GoEmotions emotion-head pre-training:** map 27→taxonomy; freeze encoder 2 epochs,
   unfreeze 1–2 at LR 1e-5. *(§6.1 Step 1)*
 - **Run a quick Gemini-Lite SFT baseline** to set the bar the NeoBERT run must beat. *(§10 W7)*

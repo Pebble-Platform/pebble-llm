@@ -109,7 +109,7 @@ post-vs-user artifact). The one durable lesson is the **ordinal** error structur
 but it is **target-dependent** (generic Twitter-sentiment init *hurt* one track). Paper **18** confirms single-linear
 MSE + Pearson as the standard design.
 **Change:** add an **affect-matched-init ablation arm** (warm-start the encoder from an emotion/distress-adapted
-checkpoint vs vanilla) and keep it as an arm, not a default. Use **WASSA-empathy** (`data/external/wassa_empathy/`,
+checkpoint vs vanilla) and keep it as an arm, not a default. Use **WASSA-empathy** (`data/finetuning-message/external/wassa_empathy/`,
 CC-BY → deployable) as the external severity baseline (empathy r≈0.558 / distress r≈0.507 from 18).
 
 ### 2.3 ESConv as a research-arm calibration slice; drop RSD-15K (D-H) **[v1]**

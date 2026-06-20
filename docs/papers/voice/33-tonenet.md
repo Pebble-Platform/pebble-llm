@@ -43,7 +43,7 @@ The claimed gap: every prior method either depends on explicit, noise-fragile pi
 
 **Labels:** the four canonical tones (T1–T4). This is a balanced, clean 4-class problem — a single speaker register (young adult male), studio-clean monosyllables, gold phonetic labels. (Contrast with Pebble's noisy silver-label, child-register, in-the-wild regime — see §Child lens.)
 
-**Access:** SCSC is an institutional corpus (Chinese Academy of Social Sciences); it is **not** one of the openly downloadable tone corpora in Pebble's `data/external/` (those are AISHELL-1, THCHS-30, VIVOS). Treat SCSC as not directly obtainable; the *method* transfers, the *data* does not.
+**Access:** SCSC is an institutional corpus (Chinese Academy of Social Sciences); it is **not** one of the openly downloadable tone corpora in Pebble's `data/voice/external/` (those are AISHELL-1, THCHS-30, VIVOS). Treat SCSC as not directly obtainable; the *method* transfers, the *data* does not.
 
 ## 5. Method
 
@@ -190,7 +190,7 @@ The paper is short and bullish; it does not enumerate limitations, but the read 
    **(D-A, D-G)** — a cheap, publishable sanity check Pebble can reuse to show a voice head attends
    to prosody rather than speaker identity/channel.
 6. **Dataset substitution note** — SCSC is institutional/closed; the *open* tone corpora Pebble
-   already tracks (AISHELL-1, THCHS-30 under `data/external/`, and **VIVOS** for Vietnamese) are the
+   already tracks (AISHELL-1, THCHS-30 under `data/voice/external/`, and **VIVOS** for Vietnamese) are the
    reproducible substitutes. **(D-H)** — if Pebble builds a tone/prosody probe, train on the open
    corpora, cite ToneNet for the method, not for the data.
 

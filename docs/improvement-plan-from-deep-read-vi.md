@@ -114,7 +114,7 @@ khác mức độ chi tiết; "IN" nghĩa là *Ideation* ở paper này nhưng *
 nhưng **phụ thuộc target** (init Twitter-sentiment chung *làm hại* một track). Paper **18** xác nhận single-linear
 MSE + Pearson là thiết kế chuẩn.
 **Thay đổi:** thêm **arm ablation affect-matched-init** (warm-start encoder từ checkpoint thích nghi emotion/distress
-vs vanilla) và giữ nó là một arm, không phải mặc định. Dùng **WASSA-empathy** (`data/external/wassa_empathy/`,
+vs vanilla) và giữ nó là một arm, không phải mặc định. Dùng **WASSA-empathy** (`data/finetuning-message/external/wassa_empathy/`,
 CC-BY → triển khai được) làm baseline severity ngoài (empathy r≈0.558 / distress r≈0.507 từ 18).
 
 ### 2.3 ESConv làm lát cắt calibration cho nhánh nghiên cứu; bỏ RSD-15K (D-H) **[v1]**

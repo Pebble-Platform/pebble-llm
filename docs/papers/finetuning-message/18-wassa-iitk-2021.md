@@ -16,10 +16,10 @@ An ELECTRA encoder trained multi-task: a categorical emotion-classification head
 
 ## Best point — Baseline to beat
 Concrete ranked shared-task numbers: empathy/distress **Pearson r ≈ 0.533** (3rd), emotion **macro-F1 ≈ 0.5528** (1st), on Pebble's planned WASSA transfer source.
-- **How to apply to Pebble:** When warm-starting/evaluating Pebble's continuous-score + emotion heads on WASSA empathy/distress (now downloaded — see paper 23 / `data/external/wassa_empathy/`), report against r≈0.53 and macro-F1≈0.55 to show what teacher-LLM distillation + principled balancing add over naive MTL.
+- **How to apply to Pebble:** When warm-starting/evaluating Pebble's continuous-score + emotion heads on WASSA empathy/distress (now downloaded — see paper 23 / `data/finetuning-message/external/wassa_empathy/`), report against r≈0.53 and macro-F1≈0.55 to show what teacher-LLM distillation + principled balancing add over naive MTL.
 
 ## Dataset
-WASSA 2021 empathy/distress essays — the Buechel et al. 2018 base is acquired (CC-BY, deployable) at `data/external/wassa_empathy/`.
+WASSA 2021 empathy/distress essays — the Buechel et al. 2018 base is acquired (CC-BY, deployable) at `data/finetuning-message/external/wassa_empathy/`.
 
 ## Caveats
 Abstract + fetch only; exact ELECTRA variant (base vs large), param count, and loss-balancing scheme unread → D5/D7 lower confidence. D5=0 (no principled balancing mentioned); if the full paper documents a non-trivial weighting scheme, D5→1 (→50%).
@@ -140,7 +140,7 @@ ensembling, all models taken off-the-shelf from HuggingFace.
 - **D-D (severity/energy regression).** Adopt the metric and head shape directly: **Pearson r**
   as the severity-head eval metric, **single linear regression layer** on the pooled encoder
   output, **MSE** loss. Use empathy r≈0.558 / distress r≈0.507 as the *external* baseline when
-  reporting Pebble's WASSA-transfer numbers (data already at `data/external/wassa_empathy/`).
+  reporting Pebble's WASSA-transfer numbers (data already at `data/finetuning-message/external/wassa_empathy/`).
   Pebble's edge to demonstrate over this paper: teacher-LLM silver labels at scale + a domain-
   adapted encoder, vs. this paper's tiny 1,860-example finetune.
 - **D-H / D-D (augmentation transfer).** GoEmotions→Ekman-7 augmentation is a *validated* recipe

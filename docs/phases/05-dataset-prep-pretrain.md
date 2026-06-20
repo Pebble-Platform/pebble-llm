@@ -19,7 +19,7 @@ Assemble the final splits, warm-start the emotion head, and set the fallback bar
     message level then dedup by user — that reintroduces leakage.
   - Target composition: Train 4,000–5,500 · Val 500 (250 human + 250 silver) ·
     **Test 500 = 100% Protocol B (unanchored)** — non-negotiable.
-  - Export to `data/processed/`.
+  - Export to `data/finetuning-message/processed/`.
 - **GoEmotions emotion-head pre-training** (§6.1 Step 1): map 27 labels → taxonomy
   (team-reviewed); freeze encoder 2 epochs so the head converges, then unfreeze 1–2
   epochs at LR 1e-5. Only the emotion head is active.

@@ -19,7 +19,7 @@ Human **emotion category + 1–5 intensity** + feedback scores in exactly Pebble
 - **How to apply to Pebble:** Map intensity → `severity`/`energy` and emotion → the softmax head; use as a small in-domain **human-labeled calibration slice** to check Gemini silver scores against real human intensity (a calibration anchor for the distillation angle).
 
 ## Dataset status — ✅ ACQUIRED
-`data/external/esconv/` (ESConv.json + train/valid/test = 910/195/195 convs). **License CC-BY-NC-4.0 → research-only, NOT deployable.** Source: [HF thu-coai/esconv](https://huggingface.co/datasets/thu-coai/esconv) / [GitHub thu-coai](https://github.com/thu-coai/Emotional-Support-Conversation).
+`data/finetuning-message/external/esconv/` (ESConv.json + train/valid/test = 910/195/195 convs). **License CC-BY-NC-4.0 → research-only, NOT deployable.** Source: [HF thu-coai/esconv](https://huggingface.co/datasets/thu-coai/esconv) / [GitHub thu-coai](https://github.com/thu-coai/Emotional-Support-Conversation).
 - `emotion_type` (anxiety/depression/sadness/anger/fear/shame/disgust/nervousness/…) maps to the emotion head; `strategy` (8 classes) is a candidate new head.
 - **Next step:** add `load_esconv()` to `external.py` (mirror `load_semeval_intensity`); document the NC license in the docstring (research arm only).
 
@@ -31,7 +31,7 @@ Architecture details from abstract + secondary summaries. A dialog-*generation* 
 > Read end-to-end from the local PDF `pdfs/23-esconv.pdf` (arXiv:2106.01144v1, "Towards
 > Emotional Support Dialog Systems", Liu et al., ACL-IJCNLP 2021, anthology 2021.acl-long.269)
 > via `pdftotext` — main text, all tables (1–7), all appendices (A–E), and the worked annotation
-> example (Fig. 6). Also inspected the **acquired** dataset directly at `data/external/esconv/`
+> example (Fig. 6). Also inspected the **acquired** dataset directly at `data/finetuning-message/external/esconv/`
 > (`ESConv.json`, 1,300 conversations) to confirm the exact on-disk schema, label vocabularies, and
 > the 1–5 intensity field — because the released HF/GitHub corpus is **larger** than the paper's
 > reported 1,053, and Pebble loads the on-disk version, not the paper's. This section only adds what
@@ -112,7 +112,7 @@ Table 4); in human eval the **Joint** model beats no-finetune / Vanilla / Random
 (e.g. 73:20 win:lose overall vs no-finetune, Table 5). Backbones: BlenderBot-small-90M, DialoGPT-small,
 lr 5e-5, 5 epochs, dialog cut to 5-utterance windows, 6:2:2 split (App. C). ✔
 
-**Acquired release vs paper (load-bearing for D-H):** `data/external/esconv/ESConv.json` is the
+**Acquired release vs paper (load-bearing for D-H):** `data/finetuning-message/external/esconv/ESConv.json` is the
 *expanded* release — **1,300 conversations** (910/195/195), and its label vocabularies are *wider*
 than the paper's:
 - **emotion_type (11 distinct on disk):** anxiety 354, depression 334, sadness 308, anger 111,

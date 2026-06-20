@@ -75,7 +75,7 @@ Legend: ⬜ Not started · 🟡 Partial/In progress · ✅ Done · ⛔ Blocked
   the per-emotion gold TSVs. Tested (`tests/test_external.py`).
 - [x] **Emotion loader** (`data/external.py::load_goemotions_for_emotion_head`): parametrized by split.
 - [x] **Masked-multitask assembler** (`data/build_dataset.py`): disjoint GoEmotions (emotion) +
-  EI-reg (severity) pools → per-example masked records → `data/processed/*.jsonl`. Each row
+  EI-reg (severity) pools → per-example masked records → `data/finetuning-message/processed/*.jsonl`. Each row
   activates only its labeled head; safety head never trained in v1. Tested (`tests/test_build_dataset.py`).
 - [ ] WASSA intensity augmentation (`load_wassa_intensity`) — stub, deferred (source unverified).
 - [ ] Run the live `write_processed()` build (exercises real downloads — untested I/O).

@@ -2,7 +2,7 @@
 
 > Discovered 2026-06-17. Scope (per thesis): Speech Emotion Recognition + Paralinguistics/prosody +
 > tonal-language tone + paralinguistic mental-health markers. Language focus: English speech.
-> PDFs live in `pdfs/NN-*.pdf` (i.e. `docs/papers/voice/pdfs/`). Datasets (gitignored) under `data/external/`.
+> PDFs live in `pdfs/NN-*.pdf` (i.e. `docs/papers/voice/pdfs/`). Datasets (gitignored) under `data/voice/external/`.
 > 18 papers (#24–#41). 17 PDFs downloaded; #29 openSMILE = manual download (host unreachable from CI).
 >
 > **Deep reads:** every paper has a full-PDF deep-read in two languages — EN at `NN-name.md`
@@ -48,7 +48,7 @@
 
 ---
 
-## Datasets — local status (`data/external/`)
+## Datasets — local status (`data/voice/external/`)
 
 **Downloaded (open):**
 

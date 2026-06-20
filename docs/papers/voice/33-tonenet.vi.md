@@ -45,7 +45,7 @@ Khoảng trống được tuyên bố: mọi phương pháp trước hoặc ph�
 
 **Nhãn:** bốn thanh điệu kinh điển (T1–T4). Đây là bài toán 4 lớp cân bằng, sạch — một register người nói duy nhất (nam trưởng thành trẻ), các âm tiết đơn thu trong phòng thu sạch, nhãn ngữ âm chuẩn vàng. (Tương phản với chế độ nhãn-bạc nhiễu, register trẻ em, ngoài-thực-địa của Pebble — xem §Lăng kính trẻ em.)
 
-**Truy cập:** SCSC là một kho ngữ liệu thuộc thể chế (Chinese Academy of Social Sciences); nó **không** nằm trong các kho thanh điệu tải mở trong `data/external/` của Pebble (các kho đó là AISHELL-1, THCHS-30, VIVOS). Coi SCSC như không trực tiếp lấy được; *phương pháp* chuyển giao được, *dữ liệu* thì không.
+**Truy cập:** SCSC là một kho ngữ liệu thuộc thể chế (Chinese Academy of Social Sciences); nó **không** nằm trong các kho thanh điệu tải mở trong `data/voice/external/` của Pebble (các kho đó là AISHELL-1, THCHS-30, VIVOS). Coi SCSC như không trực tiếp lấy được; *phương pháp* chuyển giao được, *dữ liệu* thì không.
 
 ## 5. Phương pháp
 
@@ -192,7 +192,7 @@ Bài báo ngắn và lạc quan; nó không liệt kê hạn chế, nhưng việ
    tượng** — **(D-A, D-G)** — một kiểm tra tỉnh táo rẻ, công bố được mà Pebble có thể tái dùng để cho
    thấy một head thoại chú ý tới ngữ điệu chứ không phải danh tính người nói/kênh truyền.
 6. **Ghi chú thay thế tập dữ liệu** — SCSC thuộc thể chế/đóng; các kho thanh điệu *mở* mà Pebble đã
-   theo dõi (AISHELL-1, THCHS-30 trong `data/external/`, và **VIVOS** cho tiếng Việt) là các phương án
+   theo dõi (AISHELL-1, THCHS-30 trong `data/voice/external/`, và **VIVOS** cho tiếng Việt) là các phương án
    tái lập được. **(D-H)** — nếu Pebble xây một probe thanh điệu/ngữ điệu, huấn luyện trên các kho mở,
    trích dẫn ToneNet cho phương pháp, không phải cho dữ liệu.
 
