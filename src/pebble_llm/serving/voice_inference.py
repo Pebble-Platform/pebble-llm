@@ -5,7 +5,7 @@ safety_head.pt) and a frozen speech encoder, then classifies a raw waveform.
 Reuses the multi-task head architectures from models.heads so the serving
 heads are bit-for-bit the ones trained in the notebook.
 
-Artifact bundle layout (produced by kaggle/pebble-voice-backbone, cell 5):
+Artifact bundle layout (produced by kaggle/voice/pebble-voice-backbone, cell 5):
     artifact_<backbone>/
       config.json        backbone id, embed_dim, emotions, distress, threshold, ...
       emotion_head.pt     EmotionHead state_dict

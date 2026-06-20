@@ -99,7 +99,7 @@ def _ensure_eireg_file(emotion: str, file_split: str, dest_dir: Path) -> Path:
 
 
 def load_semeval_intensity(
-    split: str = "train", external_dir: Path | str = "data/external"
+    split: str = "train", external_dir: Path | str = "data/finetuning-message/external"
 ) -> Dataset:
     """Load SemEval-2018 EI-reg as a `severity` transfer set (strategy §5.1).
 

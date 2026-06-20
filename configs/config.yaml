@@ -2,9 +2,9 @@
 # Loaded via pebble_llm.config.load_config (OmegaConf + pydantic).
 
 data:
-  raw_dir: data/raw
-  processed_dir: data/processed
-  external_dir: data/external
+  raw_dir: data/finetuning-message/raw
+  processed_dir: data/finetuning-message/processed
+  external_dir: data/finetuning-message/external
   max_seq_length: 256
   context_window: 3
   val_size: 500

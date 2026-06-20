@@ -7,7 +7,7 @@ on RAVDESS, 3 seeds, paired delta. Rationale: [`docs/voice-method-selection.md`]
 ## Build the notebook
 
 ```bash
-python kaggle/pebble-voice-backbone/build_ipynb.py   # -> pebble_voice_backbone.ipynb
+python kaggle/voice/pebble-voice-backbone/build_ipynb.py   # -> pebble_voice_backbone.ipynb
 ```
 
 ## Push + run on Kaggle
@@ -24,9 +24,9 @@ printf '{"username":"fabiocarava","key":"%s"}' "$KEY" > ~/.kaggle/kaggle.json &&
 Run:
 
 ```bash
-.venv-voice/bin/kaggle kernels push   -p kaggle/pebble-voice-backbone
+.venv-voice/bin/kaggle kernels push   -p kaggle/voice/pebble-voice-backbone
 .venv-voice/bin/kaggle kernels status fabiocarava/pebble-voice-backbone        # poll until not RUNNING
-.venv-voice/bin/kaggle kernels output fabiocarava/pebble-voice-backbone -p kaggle/pebble-voice-backbone/out
+.venv-voice/bin/kaggle kernels output fabiocarava/pebble-voice-backbone -p kaggle/voice/pebble-voice-backbone/out
 ```
 
 `out/` will contain: `results_voice_backbone.{csv,json}`, `sample_val.wav`, and
@@ -35,11 +35,11 @@ Run:
 ## Verify a downloaded artifact (FastAPI)
 
 ```bash
-VOICE_ARTIFACT=kaggle/pebble-voice-backbone/out/artifact_wavlm-large \
+VOICE_ARTIFACT=kaggle/voice/pebble-voice-backbone/out/artifact_wavlm-large \
   PYTHONPATH=src .venv-voice/bin/uvicorn pebble_llm.serving.voice_app:app --port 8081
 # then:
 PYTHONPATH=src .venv-voice/bin/python scripts/voice_verify_client.py \
-  kaggle/pebble-voice-backbone/out/sample_val.wav
+  kaggle/voice/pebble-voice-backbone/out/sample_val.wav
 ```
 
 ## Local CPU stand-in (no Kaggle)

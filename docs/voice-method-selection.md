@@ -4,7 +4,7 @@
 > (the voice survey, backbone table, and the "two backbones" decision) and to the text-only system in
 > [`report-slides.md`](./report-slides.md). This document fixes the **first** voice-modality experiment,
 > justifies it against the survey, names what it rejects, and describes the actual Kaggle notebook that
-> runs it (`kaggle/pebble-voice-backbone/`).
+> runs it (`kaggle/voice/pebble-voice-backbone/`).
 >
 > **Compiled:** 2026-06-17 · pilot decision + implementation plan (no results yet — Kaggle run pending).
 
@@ -79,7 +79,7 @@ foundation for the later voice-led fusion.
 
 ## Implementation plan — the notebook pipeline
 
-The experiment is the Kaggle notebook in `kaggle/pebble-voice-backbone/`, assembled cell-by-cell by
+The experiment is the Kaggle notebook in `kaggle/voice/pebble-voice-backbone/`, assembled cell-by-cell by
 `build_ipynb.py` (markdown header + one code cell per stage). Cells 0–5:
 
 | Cell | Stage | What it does |
@@ -142,11 +142,11 @@ carries the MIT license + the proven dimensional-regression recipe the survey fl
 
 1. **Build the notebook:**
    ```bash
-   python kaggle/pebble-voice-backbone/build_ipynb.py
+   python kaggle/voice/pebble-voice-backbone/build_ipynb.py
    ```
 2. **Push to Kaggle** (GPU + internet kernel):
    ```bash
-   kaggle kernels push -p kaggle/pebble-voice-backbone
+   kaggle kernels push -p kaggle/voice/pebble-voice-backbone
    ```
    Then download the outputs (`results_voice_backbone.{csv,json}`, `artifact_*/`, `sample_val.wav`).
 3. **Local CPU smoke** for a real artifact without Kaggle: `scripts/voice_local_smoke.py` runs a

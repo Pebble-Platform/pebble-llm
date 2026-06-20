@@ -5,7 +5,7 @@ Pipeline:
   2. Filter fallbacks; run the energy/severity independence check (§5.2).
   3. Merge human-corrected (Protocol A) + safety-augmented positives (§5.4).
   4. User-level split (data/splits.py), then stratify by severity quartile.
-  5. Export processed splits to data/processed/.
+  5. Export processed splits to data/finetuning-message/processed/.
 
 This is the entry point — fill the TODOs as the data sources come online.
 """

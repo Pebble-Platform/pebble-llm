@@ -1,5 +1,18 @@
 # Papers — per-paper files
 
+Two research streams, one folder each:
+
+- **[`finetuning-message/`](finetuning-message/)** — text / NeoBERT multi-task emotion classification (papers **01–23**).
+- **[`voice/`](voice/)** — speech / paralinguistics for the voice-message modality (papers **24–41**, index in
+  [`voice/voice-speech-papers.md`](voice/voice-speech-papers.md)).
+
+Cross-cutting synthesis docs stay at this top level: [`SYNTHESIS-deep-read.md`](SYNTHESIS-deep-read.md),
+[`PLAN-deep-read.md`](PLAN-deep-read.md), [`related-work-vi.md`](related-work-vi.md).
+
+---
+
+## Stream 1 — Finetuning message (text)
+
 One markdown file per paper. **01–05** are the *closest systems* (deep 11-section dossiers; see also
 [`../related-work-survey.md`](../related-work-survey.md) and [`../related-work-methods.md`](../related-work-methods.md)).
 **06–23** are the *enrichment set* (method / baseline / dataset contributors; abstract-level analysis with
@@ -7,36 +20,36 @@ overlap % + one best point each; synthesis in [`../related-work-enrichment.md`](
 
 Overlap % = `(Σ wᵢ·scoreᵢ)/26 × 100` over Pebble's 7 dimensions (see any 06–23 file or the enrichment doc).
 
-## Closest systems
+### Closest systems
 | # | Paper | Theme |
 |---|-------|-------|
-| [01](01-faiir.md) | FAIIR (npj Digital Medicine 2025) | crisis-line multi-label classification |
-| [02](02-ghosh-vad-multitask.md) | Ghosh et al. VAD multitask (IPM 2022) | emotion + intensity on suicide notes |
-| [03](03-pathak-cfn-motivate.md) | Pathak et al. CFN (ACM THC 2025) | tri-task mental-health/emotion/sentiment |
-| [04](04-emo-pillars.md) | Emo Pillars (ACL Findings 2025) | LLM-teacher distillation, GoEmotions |
-| [05](05-sharma-empathy.md) | Sharma et al. (EMNLP 2020) | empathy in mental-health support |
+| [01](finetuning-message/01-faiir.md) | FAIIR (npj Digital Medicine 2025) | crisis-line multi-label classification |
+| [02](finetuning-message/02-ghosh-vad-multitask.md) | Ghosh et al. VAD multitask (IPM 2022) | emotion + intensity on suicide notes |
+| [03](finetuning-message/03-pathak-cfn-motivate.md) | Pathak et al. CFN (ACM THC 2025) | tri-task mental-health/emotion/sentiment |
+| [04](finetuning-message/04-emo-pillars.md) | Emo Pillars (ACL Findings 2025) | LLM-teacher distillation, GoEmotions |
+| [05](finetuning-message/05-sharma-empathy.md) | Sharma et al. (EMNLP 2020) | empathy in mental-health support |
 
-## Enrichment set
+### Enrichment set
 | # | Paper | Pillar | Overlap | Best-point type |
 |---|-------|--------|:------:|-----------------|
-| [06](06-kendall-uncertainty-mtl.md) | Kendall uncertainty MTL (CVPR 2018) | 1 MTL balancing | 38% | Method to adopt |
-| [07](07-gradnorm.md) | GradNorm (ICML 2018) | 1 MTL balancing | 38% | Method to adopt |
-| [08](08-pcgrad.md) | PCGrad (NeurIPS 2020) | 1 MTL balancing | 27% | Method to adopt |
-| [09](09-nash-mtl.md) | Nash-MTL (ICML 2022) | 1 MTL balancing | 27% | Method to adopt |
-| [10](10-libmtl.md) | LibMTL (JMLR 2023) | 1 MTL tooling | 31% | Method (tool) |
-| [11](11-mtl-imbalance-revisit.md) | MTL imbalance revisit (2025) | 1 MTL balancing | 27% | Design lesson |
-| [12](12-mentalbert.md) | MentalBERT (LREC 2022) | 2 MH encoders | 27% | Method to adopt |
-| [13](13-pgkd-llm-distillation.md) | PGKD (EMNLP 2024) | 3 LLM distillation | 19% | Method to adopt |
-| [14](14-cssrs-label-smoothing.md) | C-SSRS label smoothing (2024) | 4 C-SSRS | 23% | Baseline to beat |
-| [15](15-cssrs-hybrid.md) | C-SSRS hybrid (2025) | 4 C-SSRS | 31% | Baseline to beat |
-| [16](16-llm-cssrs-screening.md) | LLM C-SSRS screening (2025) | 4 C-SSRS | 31% | Design lesson |
-| [17](17-rsd-15k.md) | RSD-15K (2025) | 4 C-SSRS | 31% | Dataset (not obtainable) |
-| [18](18-wassa-iitk-2021.md) | WASSA@IITK 2021 | 5 intensity/empathy | **42%** | Baseline to beat |
-| [19](19-ncuee-wassa-2023.md) | NCUEE-NLP WASSA 2023 | 5 intensity/empathy | 31% | Method to adopt |
-| [20](20-ulmfit.md) | ULMFiT (ACL 2018) | 6 staged fine-tuning | 4% | Method (citation) |
-| [21](21-recadam.md) | RecAdam (EMNLP 2020) | 6 staged fine-tuning | 15% | Method to adopt |
-| [22](22-modernbert.md) | ModernBERT (2024) | 7 encoder backbone | 8% | Baseline to beat |
-| [23](23-esconv.md) | ESConv (ACL 2021) | 7 support domain | 31% | Dataset (acquired) |
+| [06](finetuning-message/06-kendall-uncertainty-mtl.md) | Kendall uncertainty MTL (CVPR 2018) | 1 MTL balancing | 38% | Method to adopt |
+| [07](finetuning-message/07-gradnorm.md) | GradNorm (ICML 2018) | 1 MTL balancing | 38% | Method to adopt |
+| [08](finetuning-message/08-pcgrad.md) | PCGrad (NeurIPS 2020) | 1 MTL balancing | 27% | Method to adopt |
+| [09](finetuning-message/09-nash-mtl.md) | Nash-MTL (ICML 2022) | 1 MTL balancing | 27% | Method to adopt |
+| [10](finetuning-message/10-libmtl.md) | LibMTL (JMLR 2023) | 1 MTL tooling | 31% | Method (tool) |
+| [11](finetuning-message/11-mtl-imbalance-revisit.md) | MTL imbalance revisit (2025) | 1 MTL balancing | 27% | Design lesson |
+| [12](finetuning-message/12-mentalbert.md) | MentalBERT (LREC 2022) | 2 MH encoders | 27% | Method to adopt |
+| [13](finetuning-message/13-pgkd-llm-distillation.md) | PGKD (EMNLP 2024) | 3 LLM distillation | 19% | Method to adopt |
+| [14](finetuning-message/14-cssrs-label-smoothing.md) | C-SSRS label smoothing (2024) | 4 C-SSRS | 23% | Baseline to beat |
+| [15](finetuning-message/15-cssrs-hybrid.md) | C-SSRS hybrid (2025) | 4 C-SSRS | 31% | Baseline to beat |
+| [16](finetuning-message/16-llm-cssrs-screening.md) | LLM C-SSRS screening (2025) | 4 C-SSRS | 31% | Design lesson |
+| [17](finetuning-message/17-rsd-15k.md) | RSD-15K (2025) | 4 C-SSRS | 31% | Dataset (not obtainable) |
+| [18](finetuning-message/18-wassa-iitk-2021.md) | WASSA@IITK 2021 | 5 intensity/empathy | **42%** | Baseline to beat |
+| [19](finetuning-message/19-ncuee-wassa-2023.md) | NCUEE-NLP WASSA 2023 | 5 intensity/empathy | 31% | Method to adopt |
+| [20](finetuning-message/20-ulmfit.md) | ULMFiT (ACL 2018) | 6 staged fine-tuning | 4% | Method (citation) |
+| [21](finetuning-message/21-recadam.md) | RecAdam (EMNLP 2020) | 6 staged fine-tuning | 15% | Method to adopt |
+| [22](finetuning-message/22-modernbert.md) | ModernBERT (2024) | 7 encoder backbone | 8% | Baseline to beat |
+| [23](finetuning-message/23-esconv.md) | ESConv (ACL 2021) | 7 support domain | 31% | Dataset (acquired) |
 
 > Generated by the `analysis-paper` / `find-dataset` agents, 2026-06-09. Enrichment papers scored at
 > abstract/HTML level — see each file's Caveats. Datasets acquired: CSSRS-Reddit, WASSA-empathy (deployable),
@@ -46,3 +59,45 @@ Overlap % = `(Σ wᵢ·scoreᵢ)/26 × 100` over Pebble's 7 dimensions (see any 
 > section (06–14 prior run; **15–23 this run**), read from the local PDFs and web-validated for provenance +
 > transfer. Cross-paper synthesis (claim/contradiction matrices + a per-decision recommendation table) is in
 > [`SYNTHESIS-deep-read.md`](SYNTHESIS-deep-read.md); the run plan is [`PLAN-deep-read.md`](PLAN-deep-read.md).
+
+---
+
+## Stream 2 — Voice / Speech
+
+Tone, timbre & paralinguistics for the voice-message modality. Full index (datasets, license/gate status,
+headline numbers) in [`voice/voice-speech-papers.md`](voice/voice-speech-papers.md). Each paper has a
+full-PDF deep read in EN (`voice/NN-name.md`) and VI (`voice/NN-name.vi.md`).
+
+### A. Speech Emotion Recognition (SER)
+| # | Paper | Venue / Year |
+|---|-------|--------------|
+| [24](voice/24-mmer-multimodal-mtl-ser.md) | MMER: Multimodal Multi-task Learning for SER | Interspeech 2023 |
+| [25](voice/25-emotion2vec.md) | emotion2vec: SSL Pre-Training for Speech Emotion | ACL Findings 2024 |
+| [26](voice/26-wavlm.md) | WavLM: Large-Scale SSL for Full-Stack Speech | IEEE JSTSP 2022 |
+| [27](voice/27-morais-ssl-ser.md) | SER using Self-Supervised Features (Morais et al.) | ICASSP 2022 |
+| [28](voice/28-latif-ser-survey.md) | Survey of Deep Representation Learning for SER | IEEE T-AFFC 2023 |
+
+### B. Paralinguistics & prosody
+| # | Paper | Venue / Year |
+|---|-------|--------------|
+| [29](voice/29-opensmile.md) | openSMILE audio feature extractor | ACM MM 2010 |
+| [30](voice/30-egemaps.md) | GeMAPS/eGeMAPS for voice research | IEEE T-AFFC 2016 |
+| [31](voice/31-compare-csl2019.md) | First ComParE Challenge | Computer Speech & Language 2019 |
+| [32](voice/32-interspeech2009-emotion-challenge.md) | The INTERSPEECH 2009 Emotion Challenge | Interspeech 2009 |
+
+### C. Lexical tone in tonal languages
+| # | Paper | Venue / Year |
+|---|-------|--------------|
+| [33](voice/33-tonenet.md) | ToneNet: CNN tone classification (Mandarin) | Interspeech 2019 |
+| [34](voice/34-lugosch-tone-ctc.md) | Tone Recognition Using Lifters and CTC | Interspeech 2018 |
+| [35](voice/35-shen-lexical-tone-ssl.md) | Encoding of Lexical Tone in SSL Models (incl. VIVOS vi) | NAACL 2024 |
+| [36](voice/36-j-tonenet.md) | J-ToneNet: Transformer tone via F0 | Interspeech 2023 |
+
+### D. Paralinguistic mental-health markers in voice
+| # | Paper | Venue / Year |
+|---|-------|--------------|
+| [37](voice/37-avec2016.md) | AVEC 2016 — Depression, Mood & Emotion Challenge | AVEC@ACM-MM 2016 |
+| [38](voice/38-avec2019.md) | AVEC 2019 — Detecting Depression with AI | AVEC@ACM-MM 2019 |
+| [39](voice/39-wu-ssl-depression.md) | SSL Representations in Speech-Based Depression Detection | ICASSP 2023 |
+| [40](voice/40-zhang-wav2vec2-depression.md) | Speech Depression Detection w/ wav2vec 2.0 | Scientific Reports 2024 |
+| [41](voice/41-jordan-ser-mentalhealth-review.md) | SER in Mental Health: Systematic Review | JMIR Mental Health 2025 |

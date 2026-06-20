@@ -1,4 +1,4 @@
-"""Assemble the v1 transfer-learning splits → data/processed/ (Phase 5 Task 1; §5.5).
+"""Assemble the v1 transfer-learning splits → data/finetuning-message/processed/ (Phase 5 Task 1; §5.5).
 
 Two DISJOINT public pools feed two heads:
   - GoEmotions     → emotion head  (detectedEmotion)
@@ -54,7 +54,7 @@ def severity_record(text: str, severity: float) -> dict[str, object]:
     }
 
 
-def build_split(split: str, external_dir: Path | str = "data/external") -> list[dict[str, object]]:
+def build_split(split: str, external_dir: Path | str = "data/finetuning-message/external") -> list[dict[str, object]]:
     """Combine the GoEmotions + EI-reg partitions for one split into masked records."""
     if split not in _GOEMOTIONS_SPLITS:
         raise ValueError(f"split must be one of {sorted(_GOEMOTIONS_SPLITS)}, got {split!r}")
@@ -65,8 +65,8 @@ def build_split(split: str, external_dir: Path | str = "data/external") -> list[
     return records
 
 
-def write_processed(processed_dir: Path | str = "data/processed") -> dict[str, int]:
-    """Build all three splits and write ``data/processed/<split>.jsonl``. Returns row counts."""
+def write_processed(processed_dir: Path | str = "data/finetuning-message/processed") -> dict[str, int]:
+    """Build all three splits and write ``data/finetuning-message/processed/<split>.jsonl``. Returns row counts."""
     out_dir = Path(processed_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     counts: dict[str, int] = {}

@@ -14,9 +14,9 @@ from pydantic import BaseModel, Field
 
 
 class DataConfig(BaseModel):
-    raw_dir: Path = Path("data/raw")
-    processed_dir: Path = Path("data/processed")
-    external_dir: Path = Path("data/external")
+    raw_dir: Path = Path("data/finetuning-message/raw")
+    processed_dir: Path = Path("data/finetuning-message/processed")
+    external_dir: Path = Path("data/finetuning-message/external")
     max_seq_length: int = 256  # current msg + last 3 messages; NeoBERT supports 4096
     context_window: int = 3  # number of prior messages to interleave
     val_size: int = 500

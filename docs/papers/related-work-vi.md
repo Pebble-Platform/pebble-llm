@@ -1,6 +1,6 @@
 # Tổng hợp 5 bài báo liên quan nhất — Pebble Emotion Classifier (Phiên bản Tiếng Việt)
 
-> Phiên bản đầy đủ tiếng Anh: xem các file `01-faiir.md` → `05-sharma-empathy.md` trong cùng thư mục `docs/papers/`. File này là bản tổng hợp tiếng Việt, mỗi bài ~600–900 chữ, đủ để viết phần Related Work cho một bài báo NLP về Pebble.
+> Phiên bản đầy đủ tiếng Anh: xem các file `01-faiir.md` → `05-sharma-empathy.md` trong thư mục `docs/papers/finetuning-message/`. File này là bản tổng hợp tiếng Việt, mỗi bài ~600–900 chữ, đủ để viết phần Related Work cho một bài báo NLP về Pebble.
 >
 > **Ngày biên soạn:** 2026-06-08
 

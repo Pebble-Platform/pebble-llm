@@ -77,7 +77,7 @@ miền thích nghi với head (text emotion/distress cho `severity`).
 - *Run A* (corpus = 25k **chính text fine-tune**, masking 30%, lưu encoder **fp16**): MLM-on **thua** mọi metric — Δ(on−off) macroF1 −0.007, **ECE +0.081**, Pearson −0.046. Negative sạch.
 - *Run B* (corpus = 80k text trong miền **riêng biệt** [GoEmotions-raw 9k + tweet_eval sentiment/offensive/hate/irony/emotion 71k, khử trùng với fine-tune/eval], **masking 15%**, encoder **fp32**): kết luận lật thành **tradeoff theo task** — emotion macroF1 **+0.0127 ± 0.0099** (3/3 seed dương), nhưng severity **Pearson −0.045 ± 0.017** (3/3 seed âm) và **ECE +0.052** (vẫn tệ, ít hơn Run A ~36%). MLM loss 2.42→2.29.
 
-**Diễn giải:** negative ban đầu một phần là artifact (corpus trùng tập fine-tune + confound fp16). Với corpus TAPT đúng nghĩa, MLM adaptation **giúp head emotion (classification) nhưng hại head severity (regression)** — hai head dùng chung một encoder. Corpus Run B ~71k/80k là sentiment/toxicity Twitter (chỉ 9k comment emotion sống sót sau khử trùng — GoEmotions-raw mỗi annotator một dòng), đẩy representation về phía tách lớp categorical, đánh đổi độ phân giải mức độ. **Bước tiếp theo còn mở:** cân lại corpus về phía affect có mức độ (bỏ offensive/hate; thêm EmoBank / SemEval V-reg / EI-oc) rồi đo lại severity, hoặc tách encoder theo pool. Notebook: `kaggle/pebble-mlm-ablation-3seed/`.
+**Diễn giải:** negative ban đầu một phần là artifact (corpus trùng tập fine-tune + confound fp16). Với corpus TAPT đúng nghĩa, MLM adaptation **giúp head emotion (classification) nhưng hại head severity (regression)** — hai head dùng chung một encoder. Corpus Run B ~71k/80k là sentiment/toxicity Twitter (chỉ 9k comment emotion sống sót sau khử trùng — GoEmotions-raw mỗi annotator một dòng), đẩy representation về phía tách lớp categorical, đánh đổi độ phân giải mức độ. **Bước tiếp theo còn mở:** cân lại corpus về phía affect có mức độ (bỏ offensive/hate; thêm EmoBank / SemEval V-reg / EI-oc) rồi đo lại severity, hoặc tách encoder theo pool. Notebook: `kaggle/finetuning-message/pebble-mlm-ablation-3seed/`.
 
 ### 1.4 Chọn backbone là một thí nghiệm, không phải ghi chú (D-A) **[v1]**
 **Hiện tại:** NeoBERT là chính; ModernBERT là *dự phòng* tuyến hai trong tài liệu.
@@ -229,6 +229,6 @@ v1 chưa có safety head học được (`decisions.md`). Khi nó quay lại:
 - **ESConv không thể train model triển khai** (CC-BY-NC) — chỉ nhánh nghiên cứu / calibration.
 - **RecAdam và gradual-unfreeze không chồng nhau** — chúng là arm cạnh tranh (D-E).
 
-> Chỉ mục bằng chứng: các bản deep-read từng paper trong [`papers/15-cssrs-hybrid.md`](./papers/15-cssrs-hybrid.md)–[`papers/23-esconv.md`](./papers/23-esconv.md)
-> và [`papers/01-faiir.md`](./papers/01-faiir.md)/[`papers/06`](./papers/06-kendall-uncertainty-mtl.md)–`14`; lập luận chéo paper
+> Chỉ mục bằng chứng: các bản deep-read từng paper trong [`papers/15-cssrs-hybrid.md`](./papers/finetuning-message/15-cssrs-hybrid.md)–[`papers/23-esconv.md`](./papers/finetuning-message/23-esconv.md)
+> và [`papers/01-faiir.md`](./papers/finetuning-message/01-faiir.md)/[`papers/06`](./papers/finetuning-message/06-kendall-uncertainty-mtl.md)–`14`; lập luận chéo paper
 > + bảng theo từng quyết định trong [`papers/SYNTHESIS-deep-read.md`](./papers/SYNTHESIS-deep-read.md).

@@ -4,12 +4,20 @@
 > This data contains real mental-health / crisis content and PII. Handle per the
 > annotator-wellbeing and privacy constraints in the strategy doc.
 
-| Dir | Contents |
-|---|---|
-| `raw/` | Untouched source dumps: Firestore silver-label exports, downloaded external datasets. |
-| `interim/` | Partially processed (assembled inputs, mapped labels) — reproducible from `raw/`. |
-| `processed/` | Final train/val/test splits ready for training. User-level split, then severity-quartile stratified (§5.5). |
-| `external/` | Public transfer datasets: GoEmotions, EmpatheticDialogues, DailyDialog, SemEval, WASSA. |
+Organized by research stream — `finetuning-message/` (text/NeoBERT) and `voice/` (speech):
+
+```
+data/
+  finetuning-message/   # text pipeline (the local code pipeline lives here)
+    raw/        Untouched source dumps: Firestore silver-label exports, downloaded external datasets.
+    interim/    Partially processed (assembled inputs, mapped labels) — reproducible from raw/.
+    processed/  Final train/val/test splits ready for training. User-level split, then severity-quartile stratified (§5.5).
+    external/   Public transfer datasets: GoEmotions, SemEval, tweeteval, WASSA, ESConv, CSSRS.
+  voice/                # speech datasets (experiments run on Kaggle, no local pipeline)
+    external/   RAVDESS, TESS, EmoDB, VIVOS, IEMOCAP, … (see docs/papers/voice/voice-speech-papers.md)
+```
+
+Code/config (`configs/config.yaml`, `pebble_llm.config.DataConfig`) point at `data/finetuning-message/{raw,interim,processed,external}`.
 
 ## Splits (strategy §5.5)
 

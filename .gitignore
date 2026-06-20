@@ -20,15 +20,16 @@ service-account*.json
 gcp-credentials*.json
 
 # Data — never commit raw user data or labels (PII / mental-health content)
-data/raw/**
-data/interim/**
-data/processed/**
-data/external/**
+data/finetuning-message/raw/**
+data/finetuning-message/interim/**
+data/finetuning-message/processed/**
+data/finetuning-message/external/**
+data/voice/external/**
 !data/**/.gitkeep
 # tooling only (NOT data): the dataset viewer + its docs/fetch script
-!data/external/index.html
-!data/external/README.md
-!data/external/download.sh
+!data/finetuning-message/external/index.html
+!data/finetuning-message/external/README.md
+!data/finetuning-message/external/download.sh
 
 # Model artifacts & checkpoints
 checkpoints/
@@ -66,4 +67,5 @@ htmlcov/
 .vscode/
 
 # Paper PDFs — re-downloadable from arXiv, kept local only
-docs/papers/pdfs/
+docs/papers/finetuning-message/pdfs/
+docs/papers/voice/pdfs/

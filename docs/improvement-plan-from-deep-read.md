@@ -72,7 +72,7 @@ measurement in this domain. Match the adaptation domain to the head (emotion/dis
 - *Run A* (corpus = 25k of the **fine-tune text itself**, 30% masking, encoder saved **fp16**): MLM-on **lost** on every metric — Δ(on−off) macroF1 −0.007, **ECE +0.081**, Pearson −0.046. A clean negative.
 - *Run B* (corpus = 80k **separate** in-domain text [GoEmotions-raw 9k + tweet_eval sentiment/offensive/hate/irony/emotion 71k, deduped vs fine-tune/eval], **15% masking**, encoder **fp32**): verdict flips to a **task-specific tradeoff** — emotion macroF1 **+0.0127 ± 0.0099** (3/3 seeds positive), but severity **Pearson −0.045 ± 0.017** (3/3 seeds negative) and **ECE +0.052** (worse, ~36% less than Run A). MLM loss 2.42→2.29.
 
-**Reading:** the original negative was partly an artifact (same-as-fine-tune corpus + fp16 confound). With a real TAPT corpus, MLM adaptation **helps the emotion (classification) head and hurts the severity (regression) head** — they share one encoder. Run B's corpus was ~71k/80k Twitter sentiment/toxicity (only 9k emotion comments survived dedup — GoEmotions-raw is one row per annotator), pushing representations toward categorical separability at the cost of intensity resolution. **Open next step:** rebalance the corpus toward intensity-graded affect (drop offensive/hate; add EmoBank / SemEval V-reg / EI-oc) and re-measure severity, or decouple the encoder per pool. Notebook: `kaggle/pebble-mlm-ablation-3seed/`.
+**Reading:** the original negative was partly an artifact (same-as-fine-tune corpus + fp16 confound). With a real TAPT corpus, MLM adaptation **helps the emotion (classification) head and hurts the severity (regression) head** — they share one encoder. Run B's corpus was ~71k/80k Twitter sentiment/toxicity (only 9k emotion comments survived dedup — GoEmotions-raw is one row per annotator), pushing representations toward categorical separability at the cost of intensity resolution. **Open next step:** rebalance the corpus toward intensity-graded affect (drop offensive/hate; add EmoBank / SemEval V-reg / EI-oc) and re-measure severity, or decouple the encoder per pool. Notebook: `kaggle/finetuning-message/pebble-mlm-ablation-3seed/`.
 
 ### 1.4 Backbone choice is an experiment, not a footnote (D-A) **[v1]**
 **Current:** NeoBERT primary; ModernBERT documented as a second-line *fallback*.
@@ -224,6 +224,6 @@ v1 has no learned safety head (`decisions.md`). When it returns:
 - **ESConv cannot train the deployed model** (CC-BY-NC) — research arm / calibration only.
 - **RecAdam and gradual-unfreezing don't stack** — they're competing arms (D-E).
 
-> Evidence index: per-paper deep reads in [`papers/15-cssrs-hybrid.md`](./papers/15-cssrs-hybrid.md)–[`papers/23-esconv.md`](./papers/23-esconv.md)
-> and [`papers/01-faiir.md`](./papers/01-faiir.md)/[`papers/06`](./papers/06-kendall-uncertainty-mtl.md)–`14`; cross-paper
+> Evidence index: per-paper deep reads in [`papers/15-cssrs-hybrid.md`](./papers/finetuning-message/15-cssrs-hybrid.md)–[`papers/23-esconv.md`](./papers/finetuning-message/23-esconv.md)
+> and [`papers/01-faiir.md`](./papers/finetuning-message/01-faiir.md)/[`papers/06`](./papers/finetuning-message/06-kendall-uncertainty-mtl.md)–`14`; cross-paper
 > reasoning + per-decision table in [`papers/SYNTHESIS-deep-read.md`](./papers/SYNTHESIS-deep-read.md).

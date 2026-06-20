@@ -158,6 +158,6 @@
 5. **D-H / data:** add `load_esconv()` (UTF-8, NC-licensed → research arm only); mark RSD-15K closed; keep the
    teacher-audit (D-G) on the roadmap before any silver-label trust claim.
 
-> Cross-references: per-paper evidence in [`15`](./15-cssrs-hybrid.md)–[`23`](./23-esconv.md); closest-system
-> context in [`01-faiir.md`](./01-faiir.md) and the MTL set [`06`](./06-kendall-uncertainty-mtl.md)–[`11`](./11-mtl-imbalance-revisit.md);
+> Cross-references: per-paper evidence in [`15`](finetuning-message/15-cssrs-hybrid.md)–[`23`](finetuning-message/23-esconv.md); closest-system
+> context in [`01-faiir.md`](finetuning-message/01-faiir.md) and the MTL set [`06`](finetuning-message/06-kendall-uncertainty-mtl.md)–[`11`](finetuning-message/11-mtl-imbalance-revisit.md);
 > decision status in [`../decisions.md`](../decisions.md).

@@ -49,10 +49,10 @@ chmod 600 ~/.kaggle/kaggle.json
 **Run:**
 
 ```bash
-python kaggle/pebble-voice-backbone/build_ipynb.py                       # (re)assemble the .ipynb from cells
-.venv-voice/bin/kaggle kernels push   -p kaggle/pebble-voice-backbone
+python kaggle/voice/pebble-voice-backbone/build_ipynb.py                       # (re)assemble the .ipynb from cells
+.venv-voice/bin/kaggle kernels push   -p kaggle/voice/pebble-voice-backbone
 .venv-voice/bin/kaggle kernels status fabiocarava/pebble-voice-backbone  # poll until not RUNNING
-.venv-voice/bin/kaggle kernels output fabiocarava/pebble-voice-backbone -p kaggle/pebble-voice-backbone/out
+.venv-voice/bin/kaggle kernels output fabiocarava/pebble-voice-backbone -p kaggle/voice/pebble-voice-backbone/out
 ```
 
 > Poll loop (status is external — nothing notifies you):
@@ -63,7 +63,7 @@ python kaggle/pebble-voice-backbone/build_ipynb.py                       # (re)a
 `out/` then holds `results_voice_backbone.{csv,json}`, `sample_val.wav`, and
 `artifact_emotion2vec/` + `artifact_wavlm-large/`.
 
-> **Editing the experiment:** change the `.py` cells in `kaggle/pebble-voice-backbone/`
+> **Editing the experiment:** change the `.py` cells in `kaggle/voice/pebble-voice-backbone/`
 > (`c1_imports.py` … `c5_results.py`), then re-run `build_ipynb.py` before pushing. Never edit the
 > `.ipynb` by hand — it's generated.
 
@@ -82,13 +82,13 @@ servable artifact and exercise the whole serving path.
   soundfile scikit-learn scipy pandas python-multipart
 
 # 2. get RAVDESS (HF download is flaky on slow links; pull the Zenodo zip directly)
-mkdir -p data/external/ravdess && cd data/external/ravdess
+mkdir -p data/voice/external/ravdess && cd data/voice/external/ravdess
 curl -L -C - --retry 8 --retry-all-errors -o Audio_Speech_Actors_01-24.zip \
   "https://zenodo.org/records/1188976/files/Audio_Speech_Actors_01-24.zip?download=1"
 unzip -q -o Audio_Speech_Actors_01-24.zip && cd -
 
 # 3. train a real artifact (~5 min CPU)
-PYTHONPATH=src .venv-voice/bin/python scripts/voice_local_smoke.py --ravdess-dir data/external/ravdess
+PYTHONPATH=src .venv-voice/bin/python scripts/voice_local_smoke.py --ravdess-dir data/voice/external/ravdess
 ```
 
 → writes `artifacts/voice/artifact_wavlm-base/`.
@@ -119,7 +119,7 @@ You can post **any** wav (any sample rate) — the app resamples to 16 kHz and p
 
 To serve the Kaggle WavLM-Large bundle instead:
 ```bash
-VOICE_ARTIFACT=kaggle/pebble-voice-backbone/out/artifact_wavlm-large ...uvicorn...
+VOICE_ARTIFACT=kaggle/voice/pebble-voice-backbone/out/artifact_wavlm-large ...uvicorn...
 ```
 (For an `emotion2vec` bundle the app needs `pip install funasr modelscope` in the venv.)
 
@@ -167,7 +167,7 @@ PYTHONPATH=src .venv-voice/bin/python -m pytest tests/test_voice_serving.py -q -
 | Path | Role |
 |---|---|
 | `docs/voice-method-selection.md` | the decision + justification + plan |
-| `kaggle/pebble-voice-backbone/` | the GPU notebook (cells + `build_ipynb.py` + `README.md`) |
+| `kaggle/voice/pebble-voice-backbone/` | the GPU notebook (cells + `build_ipynb.py` + `README.md`) |
 | `scripts/voice_local_smoke.py` | local CPU stand-in that produces a real artifact |
 | `scripts/voice_verify_client.py` | posts a wav to the running app |
 | `src/pebble_llm/serving/voice_app.py` | FastAPI app (`/health`, `/classify-voice`) |

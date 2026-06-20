@@ -1,14 +1,14 @@
 # External datasets — `pebble-mlm-ablation-3seed`
 
 Downloaded from **original sources** (not the HF mirror) for manual review.
-The **data files are gitignored** (`data/external/**` — PII / mental-health content);
+The **data files are gitignored** (`data/finetuning-message/external/**` — PII / mental-health content);
 only the viewer tooling (`index.html`, `README.md`, `download.sh`) is committed.
-Maps 1:1 to the Kaggle notebook `kaggle/pebble-mlm-ablation-3seed/`.
+Maps 1:1 to the Kaggle notebook `kaggle/finetuning-message/pebble-mlm-ablation-3seed/`.
 
 ## Quick start (for a fresh clone)
 
 ```bash
-cd data/external
+cd data/finetuning-message/external
 bash download.sh                 # fetch the public datasets (goemotions/eireg/tweeteval)
 py -m http.server 8765           # serve (the viewer uses fetch → needs HTTP, not file://)
 # open http://127.0.0.1:8765/index.html

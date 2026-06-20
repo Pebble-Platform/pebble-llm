@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Repopulate the PUBLIC datasets the pebble-mlm-ablation-3seed notebook uses, from
-# their original sources, into this folder. Run from data/external/:  bash download.sh
+# their original sources, into this folder. Run from data/finetuning-message/external/:  bash download.sh
 # NOTE: esconv/ and cssrs/ are NOT fetched here — they are obtained separately
 # (mental-health content with access terms; ask the team for the provisioning steps).
 set -e
