@@ -1,0 +1,18 @@
+{
+  "id": "fabiocarava/r2-suicide-risk-dual-head-mentalroberta",
+  "title": "R2 Suicide Risk Dual Head MentalRoBERTa",
+  "code_file": "r2-suicide-risk-dualhead.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}
