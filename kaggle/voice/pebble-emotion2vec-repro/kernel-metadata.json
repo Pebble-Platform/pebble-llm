@@ -1,0 +1,13 @@
+{
+  "id": "fabiocarava/pebble-emotion2vec-reproduction",
+  "title": "Pebble emotion2vec Reproduction",
+  "code_file": "pebble_emotion2vec_repro.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}

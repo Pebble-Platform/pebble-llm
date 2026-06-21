@@ -122,161 +122,203 @@ UMAP of first-linear-layer features: WavLM and data2vec show heavy overlap betwe
 
 (1) emotion2vec gives a universal representation but **still needs a separately-trained downstream model per task** — it is a feature extractor, not an end-to-end multi-task system. (2) **Whether speaker information is removed is unexplored** — important for emotional-TTS use of the representation (i.e., the embedding may still carry speaker identity).
 
+
 ## Deep research — full-PDF read (2026-06-16)
 
-> Frame: Pebble's thesis includes a planned **voice-message modality** — a child sends an audio
-> clip, Pebble must score affect from speech (not only text). emotion2vec is the strongest candidate
-> for a **drop-in, frozen, emotion-specialist SSL backbone for English speech** that feeds Pebble's
-> emotion/severity heads on the audio side, exactly mirroring how NeoBERT serves the text side.
-> This section reads against the **published ACL Findings 2024 camera-ready** (aclanthology.org/2024.findings-acl.931,
-> pp. 15747–15760). The local PDF `pdfs/25-emotion2vec.pdf` carries the ACL 2024 page footer and
-> page numbers, i.e. it *is* the camera-ready, so it is authoritative; the GitHub README is used as a
-> second source for model size / language scope.
+> **Frame for the voice thesis.** emotion2vec is the thesis's chosen **PRIMARY speech backbone**
+> (WavLM-Large/MIT is the fallback). The thesis = "voice-first stress and crisis detection for
+> emotional-support chat: a speech-encoder affect model with uncertainty-weighted heterogeneous heads
+> (emotion softmax + continuous regression + high-recall safety/crisis BCE) under a HARD crisis-recall
+> floor, LLM silver-label distillation, NeoBERT text fused in as support." This section reads the
+> camera-ready end-to-end and pulls **exact, per-decision numbers** to settle the five open backbone
+> decisions — it is not a summary. Every number carries a Table/§/line ref and a validation status.
 
 ### Source-access note
 
-- **Read:** full PDF extracted with `pdftotext "pdfs/25-emotion2vec.pdf" -` (1207 lines, ~52 KB);
-  every table (2–11), the methods/equations, and Appendices A–D read end-to-end.
-- **Web-validated:**
-  - Venue, page range, abstract, "10 languages" claim — `aclanthology.org/2024.findings-acl.931/`
-    (query: *"emotion2vec Self-Supervised Pre-Training for Speech Emotion Representation ACL Findings
-    2024 IEMOCAP WA 262 hours"*). **✔ corroborated** (venue = Findings of ACL 2024, pp. 15747–15760;
-    abstract confirms "10 different languages").
-  - Model size (~90M base / ~300M large) + multilingual scope — `github.com/ddlBoJack/emotion2vec/blob/main/README.md`.
-    **✔ corroborated** (base ~90M matches the paper's 93.79M; README also documents later
-    emotion2vec+ seed/base/large variants fine-tuned on 201/4788/42526 h — *not in the paper*).
-- **Conflict rule:** no preprint disagreement found; the local PDF = camera-ready, numbers used as-is.
-- All numbers below carry their Table/Eq./§ ref and a status tag (✔ corroborated against venue
-  metadata where the venue exposes it; ≈ in-PDF-only camera-ready number, internally consistent,
-  not independently re-derivable from a second public source).
+- **PDF read:** the project-local `docs/papers/voice/pdfs/25-emotion2vec.pdf` was **not present** at
+  read time (`pdfs/` empty; `find … -iname "*emotion2vec*.pdf"` returned nothing). The deep read was
+  therefore done against the **authoritative venue camera-ready**, fetched and converted locally:
+  `aclanthology.org/2024.findings-acl.931.pdf` → `pdftotext` → 1,907 lines, all of Tables 2–11,
+  every equation, and the Limitation section read end-to-end. This is the published ACL Findings 2024
+  version (pp. 15747–15760), i.e. **the most authoritative source** — there is no preprint-vs-venue
+  conflict to resolve because the read *is* the venue text.
+- **Web-validated (queries + resolved URLs):**
+  - Venue / page range / "10 languages" / abstract — query *"emotion2vec Self-Supervised Pre-Training
+    Speech Emotion Representation ACL Findings 2024 IEMOCAP WA 71.79 linear probe"* →
+    `https://aclanthology.org/2024.findings-acl.931/` and `https://dblp.org/rec/conf/acl/MaZYLGZ024.html`.
+    **✔ corroborated** (Findings of ACL 2024, pp. 15747–15760; "10 different languages").
+  - Table 8 init ablation (cold-start 61.34 → data2vec 70.2 → data2vec 2.0 71.79) — query
+    *"emotion2vec Table 8 initialization cold start data2vec warm start IEMOCAP WA ablation"* → second
+    public source confirms the exact triple. **✔ corroborated**.
+  - Table 2/3/4 numbers, SUPERB head text, α ablation, Fig-3 arousal text, Limitation — read **directly
+    off the venue PDF text** (`/tmp/e2v.txt` lines cited inline below). **✔ corroborated** (venue).
+  - Weight **license** + emotion2vec+ variants — `github.com/ddlBoJack/emotion2vec/blob/main/README.md`:
+    repo shows an **MIT badge but no explicit license on the checkpoints**; emotion2vec+ seed/base/large
+    fine-tuned on **201 / 4,788 / 42,526 h** (base ~90M, large ~300M), **not in the paper**. License for
+    deployment is therefore **⚠ ambiguous**, not corroborated-permissive.
+- **Status tags:** ✔ corroborated against the venue text/metadata · ≈ venue-internal number (single
+  source, internally consistent) · ✖ uncorroborated (none used).
 
 ### What the paper actually does (validated numbers)
 
-- **Pre-training data: 262 hours** of unlabeled English emotion audio (IEMOCAP 7.0 + MELD 12.2 +
-  CMU-MOSEI 91.9 + MEAD 37.3 + MSP-Podcast 113.5 = 169,053 utts) — Table 1 / Appendix B.1. **≈** (in-PDF; abstract says only "open-source unlabeled emotion data").
-- **Objective: online self-distillation, `L = L_Frm + α·L_Utt`** (Eq. 10), teacher = **EMA of student**,
-  τ linearly **0.999→0.99999** (Eq. 11); teacher target = mean of top **k=8** Transformer blocks; mask
-  l=5 frames, p=0.5; **α=1** best (Table 11). **≈** (in-PDF, ablation-supported).
-- **Model size: 93.79M** upstream params (base, 12-layer Transformer, 768-dim), downstream head
-  **0.20M** (two linear + ReLU) — Table 2. Base ~90M **✔** corroborated by GitHub README.
-- **# benchmarks: 18 emotional datasets, 10 languages** (9 English + Mandarin/Bangla/French/German/
-  Greek/Italian/Persian/Russian/Urdu); "13 datasets" used in the multilingual SER sweep — Table 1, §1.
-  "10 languages" **✔** corroborated (abstract).
-- **IEMOCAP linear-probe WA: 71.79%** (leave-one-session-out 5-fold) / **74.48%** (emotion2vec\*,
-  leave-one-speaker-out, same-fold val/test) — Table 2. vs HuBERT-base **64.92**, WavLM-base **65.94**,
-  WavLM-base+ **67.98**, data2vec-2.0-base **68.58**, WavLM-**large** **70.03**, Vesper-12 (WavLM-large
-  distilled, 164.29M) **70.70**. **≈** (in-PDF; representative SSL deltas are large and consistent
-  across Tables 2–4).
-- **Beats SER specialists with 2×/135×/114× smaller downstream nets** (TIM-Net 68.29 / MSTR 70.03 /
-  DST 71.80 vs emotion2vec 71.79 with a 0.20M head) — Table 2. **≈**.
-- **Warm-start matters: +10.45 WA** (cold-start 61.34 → data2vec-2.0 init 71.79) — Table 8. **≈**.
-- **Both losses needed:** utt-only collapses (WA 28.96); frame-only 70.85; frame+utt 71.79 — Table 9. **≈**.
+- **Method = online SELF-distillation (EMA teacher), NOT LLM distillation.** Teacher T and student S
+  share architecture and are **both warm-started from the same pre-trained checkpoint** (data2vec /
+  data2vec 2.0, LS-960); student sees masked input (mask l=5, p=0.5) + a learnable utterance embedding;
+  teacher target = mean of the **top k=8** Transformer blocks; the **teacher is an EMA copy of the
+  student**, τ linearly **0.999 → 0.99999** (Eq. 11; venue lines 215, 349–351, 422). Loss
+  `L = L_Frm + α·L_Utt`, **α=1 best** (Table 11). This is **data2vec/BYOL-style bootstrap**, no external
+  teacher, no pseudo-labels. **✔ corroborated** (venue §3.4, lines 103–125, 349–351).
+- **Pre-training data: 262 h** unlabeled adult English emotion audio (IEMOCAP 7.0 + MELD 12.2 +
+  CMU-MOSEI 91.9 + MEAD 37.3 + MSP-Podcast 113.5 = 169,053 utts) — Table 1. **≈** (venue-internal;
+  abstract only says "open-source unlabeled emotion data").
+- **Backbone size: 93.79M** upstream (12-layer Transformer, 768-dim); downstream head **0.20M** — Table 2.
+  Base ~90M **✔** corroborated (README).
+- **IEMOCAP linear-probe WA (Table 2, venue lines 815–859):** emotion2vec **71.79** (leave-one-session-out
+  5-fold) vs data2vec 2.0 base **68.58**, WavLM-base+ **67.98**, **WavLM-large 70.03**, HuBERT-large
+  **67.62**, wav2vec2-large **65.64**, Vesper-12 (WavLM-large-distilled, 164.29M) **70.70**. Speaker-fold
+  variants: emotion2vec\* **74.48** (leave-one-speaker-out, same-fold val/test) and a further **72.94 /
+  77.64** pair. Beats SER specialists TIM-Net **68.29** / MSTR **70.03** / DST **71.80** whose heads are
+  0.40M / 27.0M / 22.78M (2×–135× larger) with a **0.20M** head. **✔ corroborated** (venue).
+- **Honest spontaneous-speech number (Table 3, venue lines 870–910):** **MELD WA 51.88** (WF1 48.70) —
+  far below the **acted** RAVDESS **82.43** / SAVEE **84.38**. MELD is the realistic in-the-wild proxy.
+  **✔ corroborated** (venue).
+- **Cross-lingual (Table 4, venue lines 936–1000):** frozen English-pretrained emotion2vec leads all SSL
+  baselines on the **9 non-English** sets — AESDD-Gr **72.33**, EmoDB-De **84.34**, SUBESCO-Bn **90.91**,
+  CaFE-Fr **74.52**. **✔ corroborated** (venue). ("13 datasets … 10 languages", venue line 68.)
+- **Warm-start delta (Table 8): +10.45 WA** (cold-start **61.34** → data2vec 2.0 init **71.79**).
+  **✔ corroborated** (venue + 2nd source).
+- **Both losses needed (Table 9):** utterance-loss-only **collapses to 28.96**; frame-loss-only already
+  **70.85**; frame+utt **71.79**. **✔ corroborated** (venue lines 1776–1791).
+- **α ablation (Table 11):** 0→**70.85**, 0.1→**71.06**, 1→**72.14**, 10→**70.58** — static 1:1 wins.
+  **✔ corroborated** (venue lines 1790–1793).
+- **The decisive gap: zero continuous regression.** Every benchmark in the paper is **categorical SER**
+  (4–8 classes) or **binary** sentiment (CMU-MOSI/MOSEI). The word "arousal" appears **only** in the
+  Fig. 3 UMAP caption ("arousal refers to emotional intensity … emotion2vec exhibits a trend
+  transitioning from high arousal to low arousal", venue lines 1251, 1348–1354) — a **qualitative
+  cluster picture, not a regression result**. No valence/arousal/dominance CCC, Pearson, or MSE anywhere.
+  **✔ corroborated** (exhaustive grep of venue: no "regress"/"CCC"/"valence" as a target).
 
-### Parts directly useful for Pebble (each tagged with Decision IDs)
+### The five open backbone decisions — exact numbers + recommendation
 
-1. **Frozen-encoder + linear-probe = the cheapest competitive SER recipe** — emotion2vec frozen +
-   a **0.20M** linear head beats fully-fine-tuned/large SSL backbones (Table 2). **[D-A, D-E]** This is
-   the audio-side mirror of Pebble's text plan: a frozen specialist backbone with light task heads,
-   no expensive full fine-tune.
-2. **emotion2vec is a drop-in audio backbone for the voice-message modality** — pre-trained,
-   checkpoint public, English-strong, frozen-feature interface (768-dim). **[D-A, D-H]** It is the
-   speech analogue of choosing NeoBERT over fine-tuning a generic encoder: pick the *emotion-specialist*
-   SSL model, not a generic ASR SSL model (HuBERT/WavLM), for affect.
-3. **Severity ≈ arousal, and emotion2vec separates arousal cleanly** (Fig. 3 UMAP; high/low-arousal
-   clusters, smooth transition) — directly relevant to Pebble's **severity regression head**.
-   **[D-D]** The continuous arousal manifold is a transfer source for a speech-side intensity signal,
-   the audio counterpart of the WASSA/SemEval intensity transfer used on text.
-4. **Online self-distillation with a frame-MLM + utterance loss, warm-started from a pre-trained
-   checkpoint** (Eq. 10–11; Table 8 +10 WA from warm start). **[D-E, D-F]** Independent evidence that
-   (a) warm-starting an SSL objective from an existing checkpoint beats cold start by a large margin,
-   and (b) a masked/MLM-style pretext is the load-bearing loss (frame-only already at 70.85; utt-only
-   collapses) — both reinforce Pebble's domain-adaptive-MLM (D-F) and staged warm-start (D-E) plans on
-   the text side.
-5. **Loss-balancing ablation = static 1:1 wins** (α: 0→70.85, 0.1→71.06, 1→72.14, 10→70.58; Table 11).
-   **[D-B]** A clean, in-domain data point that a simple static loss weight (here 1:1) can beat both
-   under- and over-weighting — relevant ammunition for Pebble's "start with static λ before reaching
-   for Kendall/GradNorm" position on MTL balancing.
-6. **Multilingual generalization from English-centric pre-training** — frozen English-trained
-   emotion2vec leads all SSL baselines on 9 non-English SER sets (Table 4). **[D-H]** Evidence that an
-   emotion SSL backbone transfers across language with only a re-trained linear head — useful if Pebble
-   ever extends the voice modality beyond English.
+**Decision 1 — Backbone choice: emotion2vec as PRIMARY over WavLM-Large? → YES, but as a tunable
+hypothesis, not a settled fact. [D-A, D-H]**
+- Evidence FOR: under one common protocol (Table 2 SUPERB linear probe), emotion2vec **71.79** beats
+  **WavLM-large 70.03** while being **~3.4× smaller** (93.79M vs 316.62M) and pretrained on **~360× less
+  audio** (262 h emotion vs 94k h general). It also beats the WavLM-large-distilled specialist Vesper-12
+  (70.70, 164.29M). Cross-lingual transfer holds on 9 languages (EmoDB-De 84.34, SUBESCO-Bn 90.91).
+  Warm-start lift is large (+10.45 WA, Table 8).
+- Evidence for a **realistic bar**: the acted ceilings (RAVDESS 82.43 / SAVEE 84.38) are **not** the
+  number to promise; the spontaneous-speech number **MELD ~52 WA** is. Pebble's child-distress audio is
+  spontaneous, so anchor expectations to ~50s, not ~80s.
+- **Recommendation:** lead with emotion2vec as PRIMARY (best emotion features per parameter, smallest
+  model, public checkpoint). **But the 71.79 vs 70.03 gap is +1.76 WA on adult acted/podcast data** —
+  small enough that on child spontaneous speech it could vanish or reverse. Keep WavLM-Large (MIT, proven
+  dimensional-regression recipe) as a **funded fallback arm**, and make "did the emotion specialist
+  actually beat the strong generalist on child voice?" an explicit thesis experiment. Decision direction:
+  **emotion2vec primary, WavLM-Large mandatory comparator** — do not retire the fallback.
 
-### How each part helps Pebble succeed (concrete actions)
+**Decision 2 — Frozen vs fine-tune: FROZEN + small head is the validated, competitive recipe. [D-A, D-E]**
+- Exact head (venue lines 427, 684, 1197): non-sequential tasks use the **SUPERB recipe = two linear
+  layers with a ReLU sandwiched between them, hidden dim 256**, total **0.20M params**, on **frozen**
+  768-dim emotion2vec features. Sequential/conversational tasks use **2-layer GRU**. Sentiment uses the
+  **mean of the last four layers** of the frozen encoder as input (venue line 1302).
+- Is frozen competitive? **Yes, decisively here:** the frozen 0.20M-head probe (71.79) **beats every
+  fully-fine-tuned/larger general SSL backbone** in Table 2 and matches/beats specialists with 100×+
+  larger heads. The paper never fine-tunes the backbone for its main results.
+- **Recommendation:** for Pebble's audio v1, **freeze emotion2vec and train only the heads** (mirror the
+  SUPERB shape: 768→256→head, ReLU). Use **mean-of-last-4-layers** as the default feature (paper's choice
+  for the most "semantic" tasks) and ablate vs last-layer. Frozen is cheaper, lower-variance, and a
+  stronger baseline — only escalate to PEFT/partial-FT if a held-out child-voice head underperforms.
 
-- **Voice-message head wiring [D-A/D-E].** Add an `audio/` path: `emotion2vec (frozen) → mean/last-4-layer
-  768-dim features → {emotion 12-label head, severity regression head}`, exactly the SUPERB recipe
-  (two linear + ReLU, hidden 256). Do **not** fine-tune the backbone in v1 — Table 2 shows the frozen
-  probe already beats fine-tuned baselines, so this is both cheaper and a stronger baseline. Mirror the
-  NeoBERT head shapes so the Decision Engine sees the same output contract from text and audio.
-- **Severity from arousal [D-D].** Train the audio severity head as a regression onto an arousal/intensity
-  target; emotion2vec's clean arousal manifold (Fig. 3) is the reason a *linear* severity probe is
-  plausible. Report Pearson (Pebble's chosen severity metric) on a held-out child-voice slice, the audio
-  analogue of the text WASSA-intensity transfer.
-- **Warm-start + MLM evidence [D-E/D-F].** Cite Table 8 (+10 WA cold→warm) and Table 9 (frame-MLM is the
-  load-bearing loss) as cross-modal corroboration for Pebble's text-side domain-adaptive MLM pass and
-  gradual-unfreeze/warm-start staging — "an SSL warm start + MLM pretext is worth ~10 points" is a
-  transferable prior even though the modality differs.
-- **MTL λ default [D-B].** Use Table 11 as a reason to *start* Pebble's emotion+severity MTL with a
-  static 1:1 (or single tuned λ) and only escalate to LibMTL methods if a held-out head regresses —
-  emotion2vec found static 1:1 optimal among {0, 0.1, 1, 10}.
-- **Backbone-selection argument [D-A].** When justifying NeoBERT-over-generic on text, cite emotion2vec
-  as the parallel audio result: an *emotion-specialist* SSL backbone beats general SSL (HuBERT/WavLM)
-  and even larger models on affect, with a tiny head. The "specialist beats generalist at small head
-  budget" thesis is symmetric across modalities.
+**Decision 3 — Continuous regression head: NOT validated; this is the load-bearing GAP. [D-D]**
+- emotion2vec is validated **only on categorical/binary** emotion. The **single** piece of
+  arousal/continuous evidence is the **Fig. 3 UMAP** — qualitatively, emotion2vec separates high vs low
+  arousal cleanly with a smooth high→low transition where WavLM/data2vec overlap (venue lines 1348–1354).
+  There is **no Pearson/CCC/MSE arousal or severity number anywhere** in the paper.
+- **Implication for Pebble's severity/arousal regression head:** the clean arousal manifold makes a
+  **linear severity probe plausible**, but it is a hypothesis, not a measured result. The proven
+  continuous-regression recipes in the corpus come from **WavLM/wav2vec2-robust** (Wagner TPAMI valence
+  CCC 0.638; Odyssey-2024 dimensional baseline), **not** emotion2vec.
+- **Recommendation:** **flag this gap explicitly in the thesis.** For the continuous severity/arousal
+  head, (a) prototype a linear regression probe on frozen emotion2vec features and report **Pearson** on
+  a held-out slice, but (b) **run WavLM-Large as the regression comparator from day one** since its
+  dimensional CCC recipe is published. Do **not** assume emotion2vec's categorical SOTA transfers to
+  regression — the only basis is one UMAP picture.
 
-### Child mental-health lens (transfer validity, risks, mitigations, ethics)
+**Decision 4 — Distillation mechanism: SELF-distillation, must NOT be conflated with Pebble's Gemini
+pipeline. [D-B, D-E/D-F clarification]**
+- The "distillation" in emotion2vec is **online self-distillation**: an **EMA teacher** that is a
+  slow-moving copy of the student (τ 0.999→0.99999, Eq. 11), data2vec/BYOL-style, **no external teacher,
+  no labels** (venue §3.4). This is **orthogonal** to Pebble's **LLM silver-label distillation** (Gemini
+  generates labels that supervise the heads). They live at different stages: emotion2vec's self-distill
+  is **unsupervised representation pre-training**; Pebble's LLM distill is **supervised head training**.
+- **Recommendation:** in related-work, file emotion2vec under "self-supervised backbone pre-training",
+  and keep the Gemini→NeoBERT/audio pipeline as a **separate** "LLM-supervised head distillation" line
+  (Dutta & Ganapathy is the correct analogue for *that*). Transferable prior from this paper for Pebble's
+  **own** SSL choices: warm-starting an SSL objective beats cold start by **+10.45 WA** (Table 8) and a
+  **masked/MLM pretext is the load-bearing loss** (frame-only 70.85 vs utt-only collapse 28.96, Table 9)
+  — cross-modal support for Pebble's text-side domain-adaptive-MLM (D-F) and warm-start (D-E). Bonus
+  MTL data point: static **1:1** loss weight beats up/down-weighting (Table 11) → start MTL with static λ
+  before LibMTL (D-B).
 
-- **Adult/acted-speech provenance — transfer risk is HIGH.** The 262 h pre-training mix is adult speech:
-  IEMOCAP/MEAD/SAVEE/RAVDESS are **acted** emotion by adult actors; MSP-Podcast/CMU-MOSEI are adult
-  podcast/YouTube; MELD is adult TV (*Friends*). **No child speech anywhere.** Children's voices differ
-  in pitch (much higher f0), formant structure, prosody, and emotional expression. A frozen
-  English-adult-acted-emotion backbone may mis-represent child affect. **Mitigation:** treat emotion2vec
-  as a *feature extractor only* and validate the *probe* on a held-out child-voice slice before any
-  deployment claim; budget for a small child-voice calibration set; consider light domain-adaptive
-  continued distillation on child audio if a calibration gap appears (the warm-start result, Table 8,
-  says this is high-leverage).
-- **Acted vs spontaneous distress.** The strongest numbers (RAVDESS/SAVEE WA 82–84) are on *acted*
-  prototypical emotion; real child distress is spontaneous, indirect, often low-arousal/withdrawn. The
-  MELD result (noisy, spontaneous TV) is much lower (WA 51.88) — a more honest proxy for in-the-wild
-  difficulty. Pebble should anchor expectations to the MELD-style number, not the acted-dataset ceiling.
-- **Arousal ≠ severity for children.** emotion2vec separates *arousal*; but a quiet, flat, withdrawn
-  child can be high-severity at low arousal. The severity head must not equate "high arousal" with "high
-  risk" — the audio severity signal is a *contributor*, not a decision, feeding the same human-escalation
-  invariant Pebble already enforces on text.
-- **Speaker-identity leakage (authors' own limitation).** The paper says it never checked whether speaker
-  info is removed from the representation. For a **child-facing** product this is a privacy red flag:
-  emotion2vec features may carry voiceprint/identity. **Mitigation:** never persist raw audio or raw
-  embeddings tied to a child; score on-device/ephemerally where possible; document this in the data-handling
-  section.
-- **No safety/clinical claim.** emotion2vec is SER/sentiment, not risk detection. It can inform Pebble's
-  *emotion* and *severity* heads but supplies **no learned safety signal** — consistent with Pebble v1's
-  no-learned-safety-head decision; the audio side likewise routes through heuristics + the Decision Engine,
-  not a learned safety classifier.
+**Decision 5 — Risks for a child-facing product: four hard blockers, all must be logged. [D-A, D-G, D-H]**
+- **(a) Adult/acted pretraining, no child speech.** The full 262 h is adult: IEMOCAP/MEAD/SAVEE/RAVDESS
+  acted, MSP-Podcast/CMU-MOSEI podcast/YouTube, MELD = *Friends* TV. **Zero child voice.** Child f0,
+  formants, and prosody differ sharply; the frozen probe may mis-map child affect. **Mitigation:**
+  validate the *probe* on a held-out child-voice slice before any claim; budget a child calibration set;
+  consider light continued self-distillation on child audio (Table 8 says warm-start adaptation is
+  high-leverage).
+- **(b) Ambiguous weight license.** Repo MIT badge but **no explicit checkpoint license**, and pretraining
+  corpora carry research-only terms → **deployment licensing unresolved**. WavLM-Large is cleanly **MIT**.
+  **Mitigation:** for any shipped product, either obtain explicit license clarity or **default to the
+  WavLM-Large/MIT fallback** — this is a real reason the fallback is non-optional.
+- **(c) No speaker-leakage audit.** Authors' own Limitation (venue lines 1381–1384): "whether speaker
+  information is removed [is] not explored." For a **child-facing** product, embeddings may carry a
+  voiceprint. **Mitigation:** never persist raw audio or raw child embeddings; score ephemerally/on-device;
+  run a speaker-ID probe on the features as a **pre-ship gate**.
+- **(d) No calibration / no probability outputs.** Paper reports WA/UA/WF1 only — no ECE/reliability, no
+  arousal threshold. Pebble's **hard crisis-recall floor** needs calibrated probabilities and a tuned
+  threshold the backbone does not supply. **Mitigation:** add a calibration + recall-floor threshold step
+  on top of the audio probes (D-G); the safety/crisis decision stays a separate high-recall BCE head with
+  its own threshold, never a raw argmax of emotion2vec emotions.
+
+### Child mental-health lens (transfer validity, risks, ethics)
+
+- **Transfer risk is HIGH and asymmetric across the heads.** The categorical-emotion result transfers
+  *best* (still adult→child domain gap); the **severity/arousal regression** transfers *worst* (no
+  regression validation at all — Decision 3). The **safety/crisis** head gets **no** support from this
+  paper (it is SER, not risk detection) — consistent with routing crisis through a dedicated high-recall
+  head + the Decision Engine, not the emotion softmax.
+- **Arousal ≠ severity for children.** A withdrawn, flat, low-arousal child can be high-severity. Because
+  emotion2vec's only continuous signal is an **arousal** manifold, a naïve "high arousal = high risk" map
+  would **miss quiet distress** — the most dangerous failure mode under a recall floor. The severity head
+  must be trained against a severity target, not arousal proxied as severity.
+- **Honest ceiling.** Promise on **MELD-style spontaneous numbers (~52 WA)**, not acted RAVDESS/SAVEE
+  (~83). Set thesis expectations and the recall-floor feasibility analysis against the spontaneous figure.
+- **Ethics.** Speaker-leakage (b/c above) + child data = treat features as PII; ephemeral scoring; explicit
+  consent/data-handling section; the audio signal informs, never autonomously decides, escalation.
 
 ### Limitations & open questions for Pebble
 
-- **Contradiction-or-gap vs Pebble's text-first, turn-level plan.** emotion2vec operates on whole
-  *utterances* (utterance-level loss is half the objective) and is benchmarked utterance/clip-level; Pebble
-  scores **turn-level, mid-conversation**. A voice message is naturally one utterance, so utterance-level
-  is fine for the audio modality — *but* the text side and audio side then operate at different granularities
-  (text = turn within a streaming conversation; audio = whole clip). Pebble must define how an
-  utterance-level audio score fuses with turn-level text scores in the Decision Engine; emotion2vec gives
-  no guidance on cross-modal temporal alignment. **Gap.**
-- **Gap vs the rest of the corpus: this is the only speech paper.** Every other Pebble reference paper
-  (FAIIR, C-SSRS, MentalBERT, WASSA, GoEmotions) is **text**. emotion2vec cannot be compared on the same
-  bars (52% acc / 0.75 wF1 / 47.8% macro-recall for C-SSRS are text-severity bars; emotion2vec's IEMOCAP
-  WA 71.79 is 4-class acted SER). The two modalities share *no* common benchmark — Pebble must build its
-  own joint child-voice+text eval, or keep the modalities' metrics strictly separate.
-- **Pre-training overlaps downstream.** Four of the five pre-training sets (IEMOCAP, MELD, CMU-MOSEI,
-  MEAD) are also evaluated downstream; the cleanest out-of-domain evidence is RAVDESS/SAVEE and the 9
-  languages. Pebble should weight the OOD numbers (and especially noisy-spontaneous MELD) when estimating
-  real-world child-voice performance, not the in-domain headline.
-- **emotion2vec+ exists but is undocumented in the paper.** The GitHub README adds emotion2vec+
-  seed/base/large fine-tuned on 201/4788/42526 h — potentially stronger backbones, but with no peer-reviewed
-  numbers. Open question: which checkpoint Pebble should adopt for the voice modality (paper-grade base vs
-  the larger emotion2vec+ released later); needs an empirical bake-off on Pebble's own child-voice slice.
-- **No calibration / no probability outputs.** Like FAIIR on text, emotion2vec reports WA/UA/WF1 with no
-  calibration (ECE/reliability). Pebble's Decision Engine consumes scores, so the audio severity/emotion
-  probes will need their own calibration step (D-G), which emotion2vec does not provide.
-- **Speaker-info ablation never run** — the authors flag it; for a child product this is the first thing
-  Pebble must measure before shipping audio.
+- **Contradiction vs Pebble's "emotion2vec validates continuous regression" hope (the thesis's own
+  backbone table caveat).** The related-work table already hedges "mostly categorical; less proven on
+  regression" — this deep read **hardens that into a fact**: there is **literally no continuous-regression
+  number** in the paper, only a UMAP. Any thesis sentence implying emotion2vec is validated for
+  dimensional severity is unsupported; the regression evidence belongs to **WavLM/Wagner**, the fallback.
+  This is the central contradiction to resolve before committing the severity head to emotion2vec.
+- **Contradiction vs EmoBox crowning WavLM-Large.** The same authors' EmoBox 32-dataset benchmark ranks
+  **WavLM-Large** as the best *general* backbone, using emotion2vec as the evaluation oracle rather than
+  the across-the-board winner. So "emotion2vec is best" is **protocol-dependent** (IEMOCAP linear probe
+  yes; broad EmoBox sweep no) — another reason the WavLM comparator is mandatory.
+- **Granularity gap vs Pebble's turn-level text.** Half the objective is **utterance-level**; benchmarks
+  are clip/utterance-level. A voice message is one utterance (fine), but the **text side is turn-level,
+  mid-conversation** — the Decision Engine must define how an utterance-level audio score fuses with
+  turn-level text scores; emotion2vec gives no cross-modal temporal-alignment guidance.
+- **Pre-train/eval overlap.** 4 of 5 pre-training sets (IEMOCAP, MELD, CMU-MOSEI, MEAD) are also evaluated
+  → weight the **OOD** evidence (RAVDESS/SAVEE + 9 languages, and especially noisy **MELD**) when
+  estimating child-voice performance, not the in-domain 71.79 headline.
+- **Which checkpoint?** Paper-grade **base (93.79M)** vs the later **emotion2vec+ seed/base/large**
+  (201/4788/42526 h, no peer-reviewed numbers) — open question; needs a bake-off on Pebble's child-voice
+  slice. Larger pretraining may help spontaneous speech (the weak MELD axis) but is undocumented.
+- **No recall floor / no calibration** — the single biggest mismatch with Pebble's hard-recall thesis;
+  must be supplied entirely by Pebble's own threshold + calibration layer (D-G).

@@ -1,0 +1,11 @@
+# torch/torchaudio are installed from the CPU wheel index in the Dockerfile.
+numpy<2
+transformers==4.48.2
+huggingface_hub
+soundfile
+librosa
+funasr
+modelscope
+fastapi
+uvicorn[standard]
+python-multipart
