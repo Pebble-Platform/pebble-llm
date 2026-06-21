@@ -1,0 +1,22 @@
+{
+  "backbone_hf_id": "microsoft/wavlm-large",
+  "backbone": "wavlm-large",
+  "embed_dim": 1024,
+  "emotions": [
+    "neutral",
+    "calm",
+    "happy",
+    "sad",
+    "angry",
+    "fearful",
+    "disgust",
+    "surprised"
+  ],
+  "sample_rate": 16000,
+  "max_samples": 80000,
+  "frame_hop": 320,
+  "t_max": 250,
+  "pooling": "masked-mean",
+  "head": "superb-frame",
+  "head_dim": 256
+}

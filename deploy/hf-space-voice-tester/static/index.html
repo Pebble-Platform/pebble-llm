@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pebble Voice Model Tester</title>
+<style>
+  :root { --bg:#0f1419; --card:#1a2029; --line:#2a3340; --fg:#e6edf3; --muted:#8b98a5; --accent:#4493f8; --good:#3fb950; --warn:#d29922; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--fg); }
+  header { padding:18px 24px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:18px; } header p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+  main { display:grid; grid-template-columns:380px 1fr; gap:20px; padding:20px 24px; align-items:start; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  label { display:block; font-size:12px; color:var(--muted); margin:12px 0 4px; text-transform:uppercase; letter-spacing:.04em; }
+  select, button, input[type=file] { width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line); background:#0d1117; color:var(--fg); font-size:14px; }
+  button.run { margin-top:16px; background:var(--accent); border:none; color:#fff; font-weight:600; cursor:pointer; padding:11px; }
+  button.run:disabled { opacity:.5; cursor:not-allowed; }
+  audio { width:100%; margin-top:12px; }
+  .or { text-align:center; color:var(--muted); font-size:12px; margin:10px 0 2px; }
+  .pred { font-size:30px; font-weight:700; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .chip { display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; border:1px solid var(--line); color:var(--muted); }
+  .chip.truth { border-color:var(--good); color:var(--good); }
+  .chip.miss { border-color:var(--warn); color:var(--warn); }
+  .chip.safety { border-color:#f85149; color:#f85149; }
+  .bar { display:grid; grid-template-columns:90px 1fr 48px; align-items:center; gap:8px; margin:5px 0; }
+  .bar .name { color:var(--muted); font-size:12px; text-align:right; }
+  .track { height:14px; background:#0d1117; border-radius:6px; overflow:hidden; }
+  .fill { height:100%; background:var(--accent); }
+  .fill.top { background:var(--good); }
+  .val { font-variant-numeric:tabular-nums; font-size:12px; color:var(--muted); }
+  .meta { color:var(--muted); font-size:12px; margin-top:14px; border-top:1px solid var(--line); padding-top:10px; }
+  .muted { color:var(--muted); }
+  .err { color:#f85149; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pebble Voice Model Tester</h1>
+  <p>Pick a model and a sample, run it, see the predicted emotion. Models are discovered from artifact bundles — drop a new <code>artifact_*/</code> folder in and it appears here.</p>
+</header>
+<main>
+  <section class="card">
+    <label for="model">Model</label>
+    <select id="model"></select>
+    <div id="model-note" class="muted" style="font-size:12px;margin-top:6px"></div>
+
+    <label for="sample">Sample</label>
+    <select id="sample"></select>
+    <audio id="player" controls preload="none"></audio>
+
+    <div class="or">— or upload a .wav —</div>
+    <input type="file" id="upload" accept="audio/wav,audio/*" />
+
+    <button class="run" id="run">Run model</button>
+  </section>
+
+  <section class="card" id="results">
+    <div class="muted">Run a model to see results.</div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let MODELS = [], SAMPLES = [];
+
+async function init() {
+  MODELS = await (await fetch('/api/models')).json();
+  SAMPLES = await (await fetch('/api/samples')).json();
+  const m = $('model');
+  m.innerHTML = MODELS.map(x =>
+    `<option value="${x.id}" ${x.available ? '' : 'disabled'}>${x.label}${x.available ? '' : '  (needs ' + x.needs + ')'}</option>`).join('');
+  const s = $('sample');
+  s.innerHTML = SAMPLES.map(x => `<option value="${x.id}">${x.label}${x.truth ? '  ['+x.truth+']' : ''}</option>`).join('');
+  m.onchange = onModel; s.onchange = onSample;
+  $('upload').onchange = () => { if ($('upload').files.length) $('sample').value=''; };
+  $('run').onclick = run;
+  onModel(); onSample();
+}
+
+function onModel() {
+  const x = MODELS.find(z => z.id === $('model').value);
+  $('model-note').textContent = x ? `${x.backbone} · ${x.head} · ${x.emotions.length} classes` : '';
+}
+function onSample() {
+  const id = $('sample').value;
+  $('player').src = id ? `/api/sample-audio/${id}` : '';
+}
+
+async function run() {
+  $('run').disabled = true;
+  $('results').innerHTML = '<div class="muted">running…</div>';
+  const fd = new FormData();
+  fd.append('model_id', $('model').value);
+  if ($('upload').files.length) fd.append('file', $('upload').files[0]);
+  else fd.append('sample_id', $('sample').value);
+  try {
+    const res = await fetch('/api/infer', { method:'POST', body: fd });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.statusText); }
+    render(await res.json());
+  } catch (e) {
+    $('results').innerHTML = `<div class="err">Error: ${e.message}</div>`;
+  } finally { $('run').disabled = false; }
+}
+
+function render(r) {
+  const entries = Object.entries(r.probs).sort((a,b) => b[1]-a[1]);
+  const top = entries[0][0];
+  const truthChip = r.truth
+    ? `<span class="chip ${r.truth===r.emotion?'truth':'miss'}">truth: ${r.truth} ${r.truth===r.emotion?'✓':'✗'}</span>`
+    : '';
+  const safety = ('distress' in r)
+    ? `<span class="chip ${r.safety_flag?'safety':''}">distress ${r.distress}${r.safety_flag?' ⚠':''}</span>` : '';
+  const bars = entries.map(([name,p]) => `
+    <div class="bar">
+      <span class="name">${name}</span>
+      <span class="track"><span class="fill ${name===top?'top':''}" style="width:${(p*100).toFixed(1)}%"></span></span>
+      <span class="val">${(p*100).toFixed(1)}%</span>
+    </div>`).join('');
+  $('results').innerHTML = `
+    <div class="row"><span class="pred">${r.emotion}</span>${truthChip}${safety}</div>
+    <div style="margin-top:14px">${bars}</div>
+    <div class="meta">${r.model} · backbone <b>${r.backbone}</b> · head <b>${r.head}</b> · ${r.latency_ms} ms</div>`;
+}
+
+init();
+</script>
+</body>
+</html>
