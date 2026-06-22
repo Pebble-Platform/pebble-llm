@@ -25,6 +25,7 @@ data/finetuning-message/interim/**
 data/finetuning-message/processed/**
 data/finetuning-message/external/**
 data/voice/external/**
+data/external/**
 !data/**/.gitkeep
 # tooling only (NOT data): the dataset viewer + its docs/fetch script
 !data/finetuning-message/external/index.html
@@ -76,3 +77,4 @@ htmlcov/
 # Paper PDFs — re-downloadable from arXiv, kept local only
 docs/papers/finetuning-message/pdfs/
 docs/papers/voice/pdfs/
+docs/papers/pdfs/
