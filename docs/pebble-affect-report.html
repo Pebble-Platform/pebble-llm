@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pebble Affect Models — Progress Report</title>
+<style>
+  :root {
+    --ink:#1a2230; --muted:#5b6676; --line:#e2e7ee; --bg:#f6f8fb; --card:#fff;
+    --brand:#2c5fe0; --good:#0f9d6b; --bad:#d64545; --warn:#c47d12;
+    --good-bg:#e7f6ef; --bad-bg:#fbeaea; --warn-bg:#fbf2e0; --brand-bg:#eaf0fe;
+  }
+  * { box-sizing:border-box; }
+  html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .page { max-width:920px; margin:0 auto; padding:40px 32px 64px; }
+  header.rep {
+    border-bottom:3px solid var(--brand); padding-bottom:20px; margin-bottom:8px;
+  }
+  .eyebrow { color:var(--brand); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:12px; }
+  h1 { font-size:28px; margin:6px 0 4px; letter-spacing:-.01em; }
+  .sub { color:var(--muted); font-size:15px; }
+  .metabar { display:flex; flex-wrap:wrap; gap:18px; margin-top:14px; font-size:13px; color:var(--muted); }
+  .metabar b { color:var(--ink); font-weight:600; }
+  h2 { font-size:20px; margin:38px 0 4px; padding-top:10px; }
+  h2 .num { color:var(--brand); font-weight:800; margin-right:8px; }
+  h3 { font-size:15px; margin:22px 0 6px; color:var(--ink); }
+  p { margin:8px 0; }
+  .lead { color:var(--muted); margin-top:2px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin:16px 0;
+          box-shadow:0 1px 2px rgba(20,30,50,.04); }
+  .tldr { background:var(--brand-bg); border:1px solid #cfdcfb; border-radius:12px; padding:18px 22px; margin:22px 0; }
+  .tldr h2 { margin:0 0 8px; font-size:16px; padding:0; }
+  .tldr ul { margin:6px 0 0; padding-left:18px; }
+  .tldr li { margin:5px 0; }
+  .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:14px 0; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; text-align:center; }
+  .kpi .v { font-size:24px; font-weight:800; letter-spacing:-.02em; }
+  .kpi .l { font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.3; }
+  .kpi.good .v { color:var(--good); } .kpi.brand .v { color:var(--brand); }
+  table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px; }
+  th,td { text-align:left; padding:9px 11px; border-bottom:1px solid var(--line); }
+  th { background:#f0f3f8; font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  tr.win td { background:var(--good-bg); }
+  .tag { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11.5px; font-weight:700; }
+  .tag.win { background:var(--good-bg); color:var(--good); }
+  .tag.base { background:#eef1f6; color:var(--muted); }
+  .pill { display:inline-block; padding:1px 8px; border-radius:6px; font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .up { background:var(--good-bg); color:var(--good); } .down { background:var(--bad-bg); color:var(--bad); }
+  .flat { background:#eef1f6; color:var(--muted); }
+  .callout { border-left:4px solid var(--brand); background:#fff; padding:12px 16px; margin:14px 0; border-radius:0 8px 8px 0; border-top:1px solid var(--line); border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .callout.decision { border-left-color:var(--good); }
+  .callout b { color:var(--ink); }
+  ul.clean { margin:8px 0; padding-left:20px; } ul.clean li { margin:5px 0; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  code { background:#eef1f6; padding:1px 6px; border-radius:5px; font-size:12.5px; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; }
+  footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:12.5px; }
+  .small { font-size:12px; color:var(--muted); }
+  @media (max-width:760px){ .kpis{grid-template-columns:repeat(2,1fr);} .grid2{grid-template-columns:1fr;} }
+  @media print { body{background:#fff;} .page{max-width:none;padding:0 8mm;} .card,.kpi{box-shadow:none;} h2{page-break-after:avoid;} table,.card,.callout{page-break-inside:avoid;} }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="rep">
+    <div class="eyebrow">Pebble · Affect Classification</div>
+    <h1>Speech &amp; Text Affect Models — Progress Report</h1>
+    <div class="sub">Backbone selection for the voice modality, and an MLM-adaptation ablation for the text modality — both decided on evidence from rigorous 3-seed evaluations.</div>
+    <div class="metabar">
+      <span><b>Date:</b> 18 June 2026</span>
+      <span><b>Scope:</b> Decision Engine — pre-generation affect scoring</span>
+      <span><b>Compute:</b> Kaggle P100 GPU (headless)</span>
+      <span><b>Status:</b> <span style="color:var(--good);font-weight:700">Both experiments complete</span></span>
+    </div>
+  </header>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="tldr">
+    <h2>Executive summary</h2>
+    <ul>
+      <li><b>Mission.</b> Read a user's emotional state <i>before</i> responding, so someone venting in distress is met with support — not a blanket safety refusal triggered by their words.</li>
+      <li><b>Voice backbone selected: WavLM-Large.</b> It beat the emotion-specialised encoder (emotion2vec) on every seed — emotion macro-F1 <b>0.609 vs 0.537</b> (+13%) and higher distress precision. A live demo website is up.</li>
+      <li><b>Text MLM adaptation: not worth shipping.</b> Adapting the encoder on in-domain text gave a tiny emotion gain (+0.013 F1) but <b>measurably hurt severity (−0.045) and calibration</b>. We ship the simpler vanilla model (<code>MLM-off</code>).</li>
+      <li><b>Common theme:</b> in both modalities the stronger/simpler general model won. We avoided a more expensive path that the data did not justify.</li>
+      <li><b>Delivered:</b> a runnable voice demo site, a one-command Kaggle job runner, reproducible sample tooling, and full documentation.</li>
+    </ul>
+  </div>
+
+  <!-- SECTION 1: BACKGROUND -->
+  <h2><span class="num">1</span>Background — why this project exists</h2>
+  <p class="lead">Pebble is built for people reaching out while under stress. The founding observation was a failure mode of general-purpose assistants.</p>
+  <div class="callout">
+    A user in distress was <b>refused by a general AI assistant because their message contained profanity</b> — language that was a <i>symptom of how upset they were</i>, not abuse. A safety filter that reacts to surface words can shut out exactly the person who most needs help.
+  </div>
+  <p>Pebble's answer is to <b>understand affect before it responds</b>. A lightweight classifier scores <b>emotion</b> and <b>distress / severity</b> ahead of generation, so the Decision Engine can tell <i>"someone hurting, venting in strong words"</i> apart from a genuine policy violation — and route the first to <b>care</b> instead of a refusal. Getting that distinction right is the core reason these models exist.</p>
+
+  <!-- SECTION 2: APPROACH -->
+  <h2><span class="num">2</span>Approach &amp; why these models</h2>
+  <p class="lead">We score affect with small, <b>self-hosted</b> models that run <b>before</b> generation and emit structured numbers — not a second generative LLM.</p>
+  <ul class="clean">
+    <li><b>Self-hosted, not an external API.</b> Sensitive mental-health text stays in-house; cost is predictable, latency is low, and there's no hard dependency on a third party (a hosted model is only the backup path).</li>
+    <li><b>A classifier, not a generator.</b> We need fast, typed scores (emotion, severity, safety) — an encoder plus small heads delivers that cheaply, where a generative model would be slower and costlier.</li>
+  </ul>
+  <div class="grid2">
+    <div class="card">
+      <h3>Text → NeoBERT</h3>
+      <p class="small" style="margin:0">A modern, compact BERT-style encoder. Strong language representations at a fraction of an LLM's size, easy to self-host and fine-tune into typed heads (emotion + severity). Chosen over a generative LLM for speed, cost, and privacy.</p>
+    </div>
+    <div class="card">
+      <h3>Voice → frozen encoder + light heads</h3>
+      <p class="small" style="margin:0">We freeze a pretrained speech model and train only small heads (a "linear probe"), which makes <b>backbone selection cheap and fast</b>. Candidates: <b>WavLM-Large</b> (a strong general self-supervised speech model) vs <b>emotion2vec</b> (specialised for emotion) — picked on evidence (§4) before any expensive full fine-tune.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: DATASETS -->
+  <h2><span class="num">3</span>Datasets</h2>
+  <p class="lead">All datasets are public, established benchmarks. Counts below are the exact splits used.</p>
+  <table>
+    <thead><tr>
+      <th>Dataset</th><th>Modality</th><th>Used for</th><th class="num">Records</th><th>Labels</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><b>GoEmotions</b> (simplified)</td><td>Text</td><td>Emotion head — train &amp; eval</td>
+        <td class="num">43,410 train · 5,426 dev · 5,427 test</td>
+        <td>28 classes (27 emotions + <code>neutral</code>)</td>
+      </tr>
+      <tr>
+        <td><b>GoEmotions</b> (raw)</td><td>Text</td><td>In-domain MLM corpus (unlabelled use)</td>
+        <td class="num">≈ 211,225 comments</td>
+        <td>— (text only)</td>
+      </tr>
+      <tr>
+        <td><b>SemEval-2018 EI-reg</b> (English)</td><td>Text</td><td>Severity head — regression</td>
+        <td class="num">≈ 7,102 train · 1,464 dev</td>
+        <td>4 emotions, intensity 0–1</td>
+      </tr>
+      <tr>
+        <td><b>RAVDESS</b> (speech)</td><td>Audio</td><td>Emotion + distress heads</td>
+        <td class="num">1,440 clips · 24 actors</td>
+        <td>8 emotions (balanced)</td>
+      </tr>
+    </tbody>
+  </table>
+  <ul class="clean small">
+    <li><b>GoEmotions 28 labels:</b> admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, neutral.</li>
+    <li><b>EI-reg severity:</b> 4 emotions (anger, fear, joy, sadness) with a 0–1 intensity score. The negative emotions carry the score as "severity"; joy maps to 0 — i.e. severity is a distress signal.</li>
+    <li><b>RAVDESS 8 emotions:</b> neutral, calm, happy, sad, angry, fearful, disgust, surprised. Distress-positive = angry / disgust / fearful / sad.</li>
+    <li class="small">Note: the repository also stages further affect/speech corpora (IEMOCAP, CREMA-D, CSSRS, DAIC-WOZ, ESConv, etc.) for future work; the two experiments in this report use only the four datasets above.</li>
+  </ul>
+
+  <!-- SECTION 4: VOICE -->
+  <h2><span class="num">4</span>Voice modality — speech-encoder backbone selection</h2>
+  <p class="lead">Which frozen speech encoder should power voice affect scoring? We compared two candidates with Pebble's own heads (8-way emotion + a distress/safety head) on the RAVDESS emotional-speech dataset, across 3 seeds for a paired comparison.</p>
+
+  <div class="kpis">
+    <div class="kpi brand"><div class="v">2</div><div class="l">encoders compared<br>(WavLM-L vs emotion2vec)</div></div>
+    <div class="kpi"><div class="v">3</div><div class="l">seeds<br>(13 / 42 / 1337)</div></div>
+    <div class="kpi good"><div class="v">+13%</div><div class="l">emotion macro-F1<br>winner vs runner-up</div></div>
+    <div class="kpi good"><div class="v">WavLM-L</div><div class="l">backbone selected</div></div>
+  </div>
+
+  <h3>Results (mean ± std over 3 seeds)</h3>
+  <table>
+    <thead><tr>
+      <th>Encoder</th>
+      <th class="num">Emotion macro-F1 ↑</th>
+      <th class="num">Distress recall @0.5 ↑</th>
+      <th class="num">Precision @recall-floor ↑</th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+      <tr class="win">
+        <td><b>WavLM-Large</b></td>
+        <td class="num">0.609 ± 0.019</td>
+        <td class="num">1.00</td>
+        <td class="num">0.617 ± 0.003</td>
+        <td><span class="tag win">SELECTED</span></td>
+      </tr>
+      <tr>
+        <td>emotion2vec</td>
+        <td class="num">0.537 ± 0.007</td>
+        <td class="num">1.00</td>
+        <td class="num">0.597 ± 0.012</td>
+        <td><span class="tag base">baseline</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="small">Emotion macro-F1: 8-way classification, chance ≈ 0.125. Distress head: threshold chosen as the highest value keeping validation recall ≥ 0.90 (a recall-floor for safety); precision is reported at that point.</p>
+
+  <div class="callout decision">
+    <b>Decision &amp; rationale.</b> Select <b>WavLM-Large</b>. Notably, this <i>overturned</i> our initial hypothesis that the emotion-specialised encoder would win — the stronger general-purpose encoder was better on both emotion and distress, on every seed. Choosing it now avoids building the heavier emotion2vec dependency (FunASR/ModelScope) for no benefit.
+  </div>
+
+  <!-- SECTION 2: TEXT -->
+  <h2><span class="num">5</span>Text modality — does in-domain MLM adaptation help?</h2>
+  <p class="lead">The text model fine-tunes NeoBERT into two heads: emotion (28 classes) and severity (0–1 regression). The question: if we first adapt the encoder on a large, separate in-domain corpus via masked-language modelling (the standard TAPT/DAPT technique), do downstream results improve? We ran both arms — adapted (<code>MLM-on</code>) vs vanilla (<code>MLM-off</code>) — across 3 seeds for a paired delta.</p>
+
+  <div class="kpis">
+    <div class="kpi"><div class="v">80k</div><div class="l">in-domain sentences<br>for MLM adaptation</div></div>
+    <div class="kpi"><div class="v">2×3</div><div class="l">arms × seeds<br>(paired comparison)</div></div>
+    <div class="kpi"><div class="v">+0.013</div><div class="l">emotion F1 gain<br>(small)</div></div>
+    <div class="kpi"><div class="v" style="color:var(--bad)">−0.045</div><div class="l">severity correlation<br>(regression)</div></div>
+  </div>
+
+  <h3>Results (mean ± std over 3 seeds)</h3>
+  <table>
+    <thead><tr>
+      <th>Arm</th>
+      <th class="num">Emotion F1 ↑</th>
+      <th class="num">Calib. ECE ↓</th>
+      <th class="num">Severity r ↑</th>
+      <th class="num">Severity ρ ↑</th>
+      <th class="num">Severity MAE ↓</th>
+    </tr></thead>
+    <tbody>
+      <tr class="win">
+        <td><b>MLM-off</b> <span class="tag win">SHIPPED</span></td>
+        <td class="num">0.313 ± 0.011</td>
+        <td class="num">0.108 ± 0.035</td>
+        <td class="num">0.617 ± 0.017</td>
+        <td class="num">0.613 ± 0.024</td>
+        <td class="num">0.126 ± 0.004</td>
+      </tr>
+      <tr>
+        <td>MLM-on</td>
+        <td class="num">0.326 ± 0.010</td>
+        <td class="num">0.159 ± 0.010</td>
+        <td class="num">0.572 ± 0.006</td>
+        <td class="num">0.571 ± 0.008</td>
+        <td class="num">0.132 ± 0.002</td>
+      </tr>
+      <tr>
+        <td class="small">Δ (on − off)</td>
+        <td class="num"><span class="pill up">+0.013</span></td>
+        <td class="num"><span class="pill down">+0.052</span></td>
+        <td class="num"><span class="pill down">−0.045</span></td>
+        <td class="num"><span class="pill down">−0.042</span></td>
+        <td class="num"><span class="pill down">+0.007</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="small">Green = better, red = worse for the adapted arm. Arrows show the good direction (↑ higher / ↓ lower is better). ECE = Expected Calibration Error (how honest the model's confidence is); r/ρ = Pearson/Spearman correlation.</p>
+
+  <div class="callout decision">
+    <b>Decision &amp; rationale.</b> Ship the <b>vanilla <code>MLM-off</code></b> model. MLM adaptation buys a small, consistent emotion gain but at a real cost to <b>severity accuracy</b> and <b>calibration</b> — and for Pebble, severity and trustworthy confidence matter more than a few F1 points (they sit behind safety gates). The extra MLM pre-training stage is therefore not justified for this multi-task setup.
+  </div>
+
+  <div class="callout">
+    <b>Reading the absolute numbers.</b> Emotion F1 ≈ 0.31 looks modest, but this was a deliberately <i>cheap ablation</i> (2,500 examples/task, 3 epochs) built to <i>compare the two arms</i>, not to maximise quality. For context: random guessing on 28 classes ≈ 0.036, and a fully-trained BERT baseline in the literature ≈ 0.46. Severity correlation ≈ 0.61 and MAE ≈ 0.13 are already in a healthy range. Production quality comes from scaling data + epochs, which is a separate step.
+  </div>
+
+  <!-- SECTION 3: DELIVERABLES -->
+  <h2><span class="num">6</span>What was delivered</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>🎙️ Voice demo website</h3>
+      <ul class="clean">
+        <li>Pick a labelled voice clip (or upload a <code>.wav</code>), run the model, see emotion probabilities + distress/safety flag.</li>
+        <li>Serves the selected WavLM-Large model end-to-end (FastAPI + a single-page UI).</li>
+        <li>Verified live locally with held-out RAVDESS samples.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>⚙️ Reproducible tooling</h3>
+      <ul class="clean">
+        <li><b>One-command job runner</b> drives both GPU experiments on Kaggle (build → run → fetch results).</li>
+        <li>Sample-preparation script for the demo data.</li>
+        <li>Full run guide + a detailed methodology write-up of the fine-tuning pipeline.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION 4: NEXT STEPS -->
+  <h2><span class="num">7</span>Recommended next steps</h2>
+  <ul class="clean">
+    <li><b>Voice:</b> proceed with WavLM-Large; scale the training data beyond RAVDESS and tune the distress threshold on Pebble's own audio before any deployment.</li>
+    <li><b>Text:</b> drop the MLM-adaptation stage; invest the budget in scaling labelled data + epochs to lift emotion F1 toward the ~0.46 reference, while protecting severity/calibration.</li>
+    <li><b>Both:</b> run the formal pre-deployment evaluation against the safety gates (distress recall, severity-band MAE) before shipping to the Decision Engine.</li>
+  </ul>
+
+  <!-- SECTION 8: PRIOR WORK -->
+  <h2><span class="num">8</span>Notable prior work reviewed</h2>
+  <p class="lead">Both experiments are grounded in a <b>41-paper deep-read research library</b> (text + speech). The most influential, grouped by theme:</p>
+
+  <div class="card">
+    <h3>Encoders &amp; backbones we build on</h3>
+    <ul class="clean">
+      <li><b>WavLM: Large-Scale Self-Supervised Learning for Full-Stack Speech Processing</b> — Chen et al., <i>IEEE JSTSP 2022</i>. <span class="small">→ the voice backbone we selected.</span></li>
+      <li><b>emotion2vec: Self-Supervised Pre-Training for Speech Emotion Representation</b> — Ma et al., <i>ACL Findings 2024</i>. <span class="small">→ the emotion-specialised candidate we benchmarked against.</span></li>
+      <li><b>ModernBERT: A Modern Bidirectional Encoder</b> — Warner et al., <i>2024</i>. <span class="small">→ the modern-encoder lineage behind our NeoBERT text backbone.</span></li>
+    </ul>
+
+    <h3>Multi-task learning (our two-head emotion + severity design)</h3>
+    <ul class="clean">
+      <li><b>Multi-Task Learning Using Uncertainty to Weigh Losses</b> — Kendall, Gal &amp; Cipolla, <i>CVPR 2018</i>. <span class="small">→ principled way to balance the emotion and severity losses.</span></li>
+      <li><b>GradNorm: Gradient Normalization for Adaptive Loss Balancing</b> — Chen et al., <i>ICML 2018</i>.</li>
+      <li><b>Gradient Surgery for Multi-Task Learning (PCGrad)</b> — Yu et al., <i>NeurIPS 2020</i>. <span class="small">→ resolves conflicting gradients between tasks.</span></li>
+    </ul>
+
+    <h3>Mental-health &amp; crisis-aware NLP (the mission)</h3>
+    <ul class="clean">
+      <li><b>FAIIR — crisis-line multi-label classification</b>, <i>npj Digital Medicine 2025</i>. <span class="small">→ closest deployed system to Pebble's intent.</span></li>
+      <li><b>MentalBERT: Pretrained Language Models for Mental Healthcare</b> — Ji et al., <i>LREC 2022</i>. <span class="small">→ domain-pretrained encoder for mental-health text.</span></li>
+      <li><b>Emo Pillars — LLM-teacher distillation on GoEmotions</b>, <i>ACL Findings 2025</i>. <span class="small">→ our emotion dataset + a distillation recipe.</span></li>
+      <li><b>A Computational Approach to Understanding Empathy in Text-Based Mental Health Support</b> — Sharma et al., <i>EMNLP 2020</i>.</li>
+    </ul>
+
+    <h3>Speech emotion &amp; voice mental-health markers</h3>
+    <ul class="clean">
+      <li><b>Survey of Deep Representation Learning for Speech Emotion Recognition</b> — Latif et al., <i>IEEE T-AFFC 2023</i>.</li>
+      <li><b>MMER: Multimodal Multi-task Learning for Speech Emotion Recognition</b> — Ghosh et al., <i>Interspeech 2023</i>.</li>
+      <li><b>Speech Emotion Recognition using Self-Supervised Features</b> — Morais et al., <i>ICASSP 2022</i>. <span class="small">→ the frozen-SSL-probe approach our voice pilot uses.</span></li>
+      <li><b>SER in Mental Health: A Systematic Review of Voice-Based Applications</b> — Jordan et al., <i>JMIR Mental Health 2025</i>.</li>
+    </ul>
+    <p class="small" style="margin-bottom:0">Selection of 14 from 41; the full annotated library (overlap scores, datasets, transfer notes) lives in the project's <code>docs/papers/</code>.</p>
+  </div>
+
+  <footer>
+    Prepared for internal review · Pebble affect-classification track · 18 June 2026.<br>
+    Figures are exact values from the committed 3-seed result files
+    (<code>results_voice_backbone.json</code>, <code>results_summary.csv</code>). Literature reference points are
+    indicative (measured on full test sets) and not a 1-to-1 comparison with our validation subsets.
+  </footer>
+
+</div>
+</body>
+</html>
