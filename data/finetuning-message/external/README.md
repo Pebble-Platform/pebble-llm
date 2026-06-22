@@ -5,6 +5,22 @@ The **data files are gitignored** (`data/finetuning-message/external/**` — PII
 only the viewer tooling (`index.html`, `README.md`, `download.sh`) is committed.
 Maps 1:1 to the Kaggle notebook `kaggle/finetuning-message/pebble-mlm-ablation-3seed/`.
 
+## R2 suicide-risk enrichment (C-SSRS 4-level) — added 2026-06-21
+
+For the R2 dual-head reproduction (`notebooks/r2-suicide-risk-dualhead.py`). All gitignored.
+Built by `scripts/r2_scrape_suicidewatch.py` → `scripts/r2_llm_label.py` → `scripts/r2_build_dataset.py`.
+
+| Folder | Source | Labels | Count |
+|---|---|---|---|
+| `cssrs/` | Gaur et al., Zenodo 2667859 (CC-BY-4.0) | C-SSRS 4-level (user-seqs) | 392 usable |
+| `cssrs-llm-av9ash/` | Patil et al. arXiv:2505.13480, HF `av9ash/CSSR-S_…` (CC-BY-4.0) | C-SSRS 0-6 → mapped to 4-level | 1,170 posts |
+| `scraped-suicidewatch/` | r/SuicideWatch via pullpush.io (no creds); LLM-labeled (Azure gpt-5.4-mini) | 4-level + `-1` off-topic + confidence | 11,108 seqs (8,511 on-topic conf≥0.6) |
+| `r2-combined/sequences.csv` | merge of the above (`User,Post,Label,Source`) | C-SSRS 4-level | **10,073** |
+
+Train on the enriched set: `R2_DATA=data/finetuning-message/external/r2-combined/sequences.csv` (env override
+read by the loader). Rebuild: `.venv-voice/bin/python scripts/r2_build_dataset.py --min-confidence 0.6`.
+LLM labeling needs an Azure/OpenAI/Anthropic/Gemini key in `.env` (see `.env.example`).
+
 ## Quick start (for a fresh clone)
 
 ```bash

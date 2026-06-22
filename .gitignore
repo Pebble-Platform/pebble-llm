@@ -30,6 +30,13 @@ data/voice/external/**
 !data/finetuning-message/external/index.html
 !data/finetuning-message/external/README.md
 !data/finetuning-message/external/download.sh
+# R2 dataset viewer (tooling, no PII) — its data (sequences.json/.csv) stays ignored
+!data/finetuning-message/external/r2-combined/
+!data/finetuning-message/external/r2-combined/viewer.html
+
+# Kaggle downloaded outputs (models, data, logs) — code only is committed
+kaggle/**/out/
+kaggle/**/out2/
 
 # Model artifacts & checkpoints
 checkpoints/
