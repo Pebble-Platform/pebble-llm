@@ -44,6 +44,7 @@ Format: `type(module): [NA-ticket] summary` — scope always required, ticket ID
 | `/research-paper` | Find papers related to a topic, ranked by closeness to Pebble (agent: `research-paper`) |
 | `/analysis-paper` | Score a paper's % overlap with Pebble + pick the best transferable point (agent: `analysis-paper`) |
 | `/find-dataset` | Find a paper's dataset, check license/gate, download open ones to `data/<stream>/external/` (agent: `find-dataset`) |
+| `/long-task` | Run a long/multi-session task against a living doc at `docs/tasks/<slug>.md`; auto-spawns research on blocking uncertainties (agent: `task-researcher`) |
 
 ## Hooks
 
