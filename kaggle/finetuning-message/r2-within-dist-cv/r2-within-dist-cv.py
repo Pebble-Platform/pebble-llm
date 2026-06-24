@@ -19,6 +19,15 @@ from pathlib import Path
 
 IS_KAGGLE = Path("/kaggle").exists()
 
+# Run A — within-distribution 5-fold CV on the full 10k + Behavior rebalance (comparable to the paper's
+# 0.5098). Gold-holdout OFF → default CV (train+test on the same 10k distribution). Set before Config.
+if IS_KAGGLE:
+    os.environ.setdefault("R2_GOLD_HOLDOUT", "0")
+    os.environ.setdefault("R2_BALANCE", "1")
+    os.environ.setdefault("R2_EPOCHS", "10")
+    # default-CV path uses load_cssrs → point it at the uploaded 10k (not Zenodo's 392)
+    os.environ.setdefault("R2_DATA", "/kaggle/input/r2-cssrs-combined-10k/sequences.csv")
+
 # ── 0. Pinned GPU stack (Kaggle only; local uses .venv-voice) ───────────────────
 if IS_KAGGLE:
     import subprocess

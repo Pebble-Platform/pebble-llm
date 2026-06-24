@@ -19,10 +19,10 @@ from pathlib import Path
 
 IS_KAGGLE = Path("/kaggle").exists()
 
-# Kaggle run: gold-holdout eval on the enriched 10k by default (set before Config reads the env).
-# Cap epochs at 10 (early stopping usually triggers earlier; keeps the 5-fold run under Kaggle's 12h GPU cap).
+# Run B — gold-holdout + Behavior rebalance (eval on held-out clinical CSSRS-500). Set before Config.
 if IS_KAGGLE:
     os.environ.setdefault("R2_GOLD_HOLDOUT", "1")
+    os.environ.setdefault("R2_BALANCE", "1")
     os.environ.setdefault("R2_EPOCHS", "10")
 
 # ── 0. Pinned GPU stack (Kaggle only; local uses .venv-voice) ───────────────────
@@ -48,7 +48,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import cohen_kappa_score, f1_score
 from sklearn.model_selection import StratifiedKFold
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from transformers import AutoConfig, AutoModel, AutoTokenizer
 
 csv.field_size_limit(10**7)
@@ -65,6 +65,8 @@ class Config:
     smoke: bool = bool(int(os.environ.get("R2_SMOKE", "0")))
     # gold-holdout: train on LLM-labeled pool (av9ash+scraped), eval folds on clinical CSSRS-500 test
     gold_holdout: bool = bool(int(os.environ.get("R2_GOLD_HOLDOUT", "0")))
+    # class-balanced sampling (WeightedRandomSampler) to fight the Behavior-class imbalance
+    balance: bool = bool(int(os.environ.get("R2_BALANCE", "0")))
     # data
     seq_len: int = 5                 # posts per user-sequence (paper: 5)
     max_length: int = 256            # tokens/post (paper: 512; reduced for speed)
@@ -402,18 +404,25 @@ def evaluate(model, loader, cfg):
         preds.extend(p_final.argmax(-1).cpu().tolist())
         gts.extend(b["label"].tolist())
     f1 = f1_score(gts, preds, average="macro", zero_division=0)
+    per = f1_score(gts, preds, average=None, labels=[0, 1, 2, 3], zero_division=0)
     mae = float(np.mean(np.abs(np.array(preds) - np.array(gts))))
     qwk = cohen_kappa_score(gts, preds, weights="quadratic", labels=[0, 1, 2, 3])
-    return {"macro_f1": f1, "mae": mae, "qwk": float(qwk if qwk == qwk else 0.0)}
+    return {"macro_f1": f1, "mae": mae, "qwk": float(qwk if qwk == qwk else 0.0),
+            "per_class_f1": [round(float(x), 4) for x in per]}
 
 
 def train_fold(cfg, tr_seq, tr_lab, va_seq, va_lab, tok, fold):
     model = HierarchicalDualHead(cfg, pretrained=True).to(DEVICE)
-    tr = DataLoader(CSSRSDataset(tr_seq, tr_lab, tok, cfg, train=True),
-                    batch_size=cfg.batch_size, shuffle=True)
+    counts = np.bincount(tr_lab, minlength=cfg.n_classes).astype(np.float32)
+    ds_tr = CSSRSDataset(tr_seq, tr_lab, tok, cfg, train=True)
+    if cfg.balance:                         # class-balanced minibatches (inverse-freq sampling)
+        w = (counts.sum() / np.maximum(counts, 1))[np.asarray(tr_lab)]
+        sampler = WeightedRandomSampler(torch.as_tensor(w, dtype=torch.double), len(tr_lab), replacement=True)
+        tr = DataLoader(ds_tr, batch_size=cfg.batch_size, sampler=sampler)
+    else:
+        tr = DataLoader(ds_tr, batch_size=cfg.batch_size, shuffle=True)
     va = DataLoader(CSSRSDataset(va_seq, va_lab, tok, cfg, train=False),
                     batch_size=cfg.batch_size)
-    counts = np.bincount(tr_lab, minlength=cfg.n_classes).astype(np.float32)
     alpha = torch.tensor(counts.sum() / (cfg.n_classes * np.maximum(counts, 1)),
                          dtype=torch.float32, device=DEVICE)
     total_steps = math.ceil(len(tr) / cfg.grad_accum) * cfg.epochs
@@ -440,7 +449,7 @@ def train_fold(cfg, tr_seq, tr_lab, va_seq, va_lab, tok, fold):
                 scaler.step(opt); scaler.update(); sched.step(); opt.zero_grad()
         m = evaluate(model, va, cfg)
         print(f"  [fold {fold}] epoch {epoch}: macroF1={m['macro_f1']:.4f} "
-              f"MAE={m['mae']:.4f} QWK={m['qwk']:.4f}", flush=True)
+              f"MAE={m['mae']:.4f} QWK={m['qwk']:.4f} per-class={m['per_class_f1']}", flush=True)
         if m["macro_f1"] > best:
             best, best_state, bad = m["macro_f1"], {k: v.cpu() for k, v in model.state_dict().items()}, 0
         else:
@@ -477,7 +486,7 @@ def run_gold_holdout(cfg: Config, tok, out: Path):
         gm = evaluate(model, gold_loader, cfg)
         val_f1.append(f1v); gold_f1.append(gm["macro_f1"])
         print(f">>> [fold {fold}] val-macroF1(LLM)={f1v:.4f} | GOLD macroF1={gm['macro_f1']:.4f} "
-              f"MAE={gm['mae']:.4f} QWK={gm['qwk']:.4f}", flush=True)
+              f"MAE={gm['mae']:.4f} QWK={gm['qwk']:.4f} per-class-F1={gm['per_class_f1']}", flush=True)
         if gm["macro_f1"] > best_g:
             best_g, best_state = gm["macro_f1"], state
         if cfg.smoke:
