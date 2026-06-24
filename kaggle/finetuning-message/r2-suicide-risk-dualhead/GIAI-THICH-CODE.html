@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giải thích r2-suicide-risk-dualhead.py</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2029; --ink: #e6edf3; --muted: #9aa7b4;
+    --accent: #58a6ff; --accent2: #7ee787; --border: #2d3742;
+    --code-bg: #11161d; --warn: #ffa657;
+    --kw: #ff7b72; --str: #a5d6ff; --com: #8b949e; --fn: #d2a8ff; --num: #79c0ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7; font-size: 16px;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 120px; }
+  h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 8px; }
+  h2 {
+    font-size: 1.4rem; margin: 52px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); color: var(--accent);
+  }
+  h3 { font-size: 1.12rem; margin: 30px 0 10px; color: var(--accent2); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  blockquote {
+    margin: 16px 0; padding: 12px 18px; background: var(--panel);
+    border-left: 4px solid var(--accent); border-radius: 6px; color: var(--muted);
+  }
+  blockquote strong { color: var(--ink); }
+  code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em; color: var(--accent2);
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0; padding: 16px 18px; overflow-x: auto; line-height: 1.55;
+    margin: 18px 0 0; font-size: 0.84rem; position: relative;
+  }
+  pre + .note { margin-top: 0; border-radius: 0 0 8px 8px; }
+  pre code {
+    background: none; padding: 0; color: var(--ink);
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  }
+  pre .tag {
+    position: absolute; top: 0; right: 0; font-size: 0.68rem; color: var(--muted);
+    background: #20272f; padding: 3px 10px; border-radius: 0 8px 0 8px;
+    border-left: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .kw { color: var(--kw); } .str { color: var(--str); } .com { color: var(--com); font-style: italic; }
+  .fn { color: var(--fn); } .num { color: var(--num); } .self { color: var(--warn); }
+  .note {
+    background: var(--panel); border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 8px 8px; padding: 14px 18px; margin: 0 0 22px;
+  }
+  .note p:first-child { margin-top: 0; } .note p:last-child { margin-bottom: 0; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 16px 0;
+    background: var(--panel); border-radius: 8px; overflow: hidden; font-size: 0.92rem;
+  }
+  th, td { padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #232c38; color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  ul, ol { padding-left: 24px; } li { margin: 6px 0; }
+  .lead {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 22px; margin: 20px 0; color: var(--muted);
+  }
+  .lead strong { color: var(--ink); }
+  .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 22px; margin: 24px 0; }
+  .toc h3 { margin-top: 0; color: var(--ink); } .toc ol { margin: 0; }
+  .badge {
+    display: inline-block; font-size: 0.72rem; padding: 2px 8px; border-radius: 999px;
+    background: #233; color: var(--accent2); border: 1px solid var(--border); margin-left: 8px; vertical-align: middle;
+  }
+  .summary { background: linear-gradient(135deg, #1a2535, #1a2029); border: 1px solid var(--accent); border-radius: 10px; padding: 6px 22px; margin: 24px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .muted { color: var(--muted); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Giải thích chi tiết <code>r2-suicide-risk-dualhead.py</code></h1>
+<p class="muted">
+  Tái hiện mô hình <strong>Hierarchical Dual-Head cho đánh giá nguy cơ tự tử</strong>
+  (Yang et al., IEEE BigData 2025; arXiv:2510.20085).<br>
+  Mỗi mục: <strong>code thật</strong> ở trên, <strong>giải thích</strong> ngay dưới — đọc liền mạch.
+</p>
+
+<div class="toc">
+  <h3>Mục lục</h3>
+  <ol>
+    <li><a href="#overview">Tổng quan</a></li>
+    <li><a href="#env">Khởi tạo môi trường</a></li>
+    <li><a href="#config">Config</a></li>
+    <li><a href="#data">Data</a></li>
+    <li><a href="#model">Model — HierarchicalDualHead</a></li>
+    <li><a href="#loss">Losses</a></li>
+    <li><a href="#train">Train / Eval</a></li>
+    <li><a href="#main">Main / Gold-holdout</a></li>
+    <li><a href="#summary">Tóm tắt &amp; cách chạy</a></li>
+  </ol>
+</div>
+
+<h2 id="overview">1. Tổng quan</h2>
+<div class="lead">
+  File Python tự chứa train một mô hình phân loại <strong>nguy cơ tự tử</strong> từ
+  <strong>chuỗi bài post Reddit của một người dùng</strong> thành <strong>4 mức ordinal (có thứ tự)</strong>.
+  Chạy được cả trên Kaggle GPU lẫn local CPU. Kiến trúc cốt lõi: <strong>dual-head</strong> — một đầu
+  <strong>CORAL</strong> (ordinal) + một đầu <strong>classification</strong> — gộp lại khi dự đoán.
+</div>
+<pre><span class="tag">luồng dữ liệu</span><code>Indicator (0) → Ideation (1) → Behavior (2) → Attempt (3)
+
+5 posts của 1 user
+   │
+   ▼
+[RoBERTa encoder]  ──► 5 CLS vectors (B, S, h)
+   + temporal embedding (Δt)
+   ▼
+[3-layer Transformer over sequence]
+   ▼
+[attention pooling, learnable query] ──► 1 vector u (B, h)
+   + [stat-feature MLP fusion]
+   ▼
+   ├─► CORAL head  (ordinal)
+   └─► CLS head    (classification)
+        ▼
+   p_final = 0.5·CORAL + 0.5·CLS  ──► argmax ──► nhãn 0-3</code></pre>
+<div class="note"><p>Hai nhánh đỏ là <strong>dual-head</strong>; phần "5 posts → 1 vector user" là tính <strong>hierarchical</strong> (post-level rồi user-level).</p></div>
+
+<h2 id="env">2. Khởi tạo môi trường <span class="badge">dòng 14–54</span></h2>
+<pre><span class="tag">dòng 20–36</span><code>IS_KAGGLE = Path(<span class="str">"/kaggle"</span>).exists()
+
+<span class="com"># Run B — gold-holdout + Behavior rebalance. Set before Config.</span>
+<span class="kw">if</span> IS_KAGGLE:
+    os.environ.setdefault(<span class="str">"R2_GOLD_HOLDOUT"</span>, <span class="str">"1"</span>)
+    os.environ.setdefault(<span class="str">"R2_BALANCE"</span>, <span class="str">"1"</span>)
+    os.environ.setdefault(<span class="str">"R2_EPOCHS"</span>, <span class="str">"10"</span>)
+
+<span class="com"># ── 0. Pinned GPU stack (Kaggle only) ──</span>
+<span class="kw">if</span> IS_KAGGLE:
+    subprocess.run([sys.executable, <span class="str">"-m"</span>, <span class="str">"pip"</span>, <span class="str">"install"</span>, <span class="str">"-q"</span>,
+                    <span class="str">"torch==2.5.1"</span>, ... , <span class="str">"--index-url"</span>, <span class="str">".../cu121"</span>], check=<span class="num">True</span>)
+    subprocess.run([..., <span class="str">"transformers==4.48.2"</span>, <span class="str">"scikit-learn>=1.3"</span>, <span class="str">"nltk>=3.8"</span>], check=<span class="num">True</span>)</code></pre>
+<div class="note">
+  <p><strong>Phát hiện Kaggle</strong> qua thư mục <code>/kaggle</code>. Nếu đúng Kaggle thì tự bật <strong>Run B preset</strong> (gold-holdout + cân bằng class + 10 epoch).</p>
+  <p><code>setdefault</code> = <strong>chỉ set nếu chưa có</strong> → vẫn override được từ ngoài. Sau đó <strong>cài cứng</strong> <code>torch 2.5.1 + cu121</code> vì torch mặc định của Kaggle hay hỏng.</p>
+</div>
+
+<h2 id="config">3. Config <span class="badge">dòng 58–112</span></h2>
+<pre><span class="tag">dòng 64–103 (rút gọn)</span><code><span class="kw">class</span> <span class="fn">Config</span>:
+    model_name: str = os.environ.get(<span class="str">"R2_MODEL"</span>, <span class="str">"welsachy/mental-roberta-base-finetuned-depression"</span>)
+    smoke: bool        = bool(int(os.environ.get(<span class="str">"R2_SMOKE"</span>, <span class="str">"0"</span>)))
+    gold_holdout: bool = bool(int(os.environ.get(<span class="str">"R2_GOLD_HOLDOUT"</span>, <span class="str">"0"</span>)))
+    balance: bool      = bool(int(os.environ.get(<span class="str">"R2_BALANCE"</span>, <span class="str">"0"</span>)))
+    seq_len: int    = <span class="num">5</span>          <span class="com"># posts mỗi user (paper: 5)</span>
+    max_length: int = <span class="num">256</span>        <span class="com"># tokens/post (paper 512, giảm cho nhanh)</span>
+    n_classes: int  = <span class="num">4</span>
+    freeze_layers: int = <span class="num">6</span>       <span class="com"># đóng băng embeddings + 6 layer đầu (~50%)</span>
+    n_transformer_layers: int = <span class="num">3</span>
+    w_coral: float = <span class="num">0.5</span>; w_ce: float = <span class="num">0.3</span>; w_focal: float = <span class="num">0.2</span>   <span class="com"># loss eq.4</span>
+    lr_encoder: float = <span class="num">2e-5</span>; lr_new: float = <span class="num">1e-4</span>      <span class="com"># 2 learning rate</span>
+    batch_size: int = <span class="num">8</span>; grad_accum: int = <span class="num">2</span>          <span class="com"># effective batch 16</span>
+    epochs: int = int(os.environ.get(<span class="str">"R2_EPOCHS"</span>, <span class="str">"15"</span>))
+    patience: int = <span class="num">5</span>; n_folds: int = <span class="num">5</span></code></pre>
+<pre><span class="tag">dòng 105–112</span><code>    <span class="kw">def</span> <span class="fn">__post_init__</span>(<span class="self">self</span>):
+        <span class="kw">if</span> <span class="self">self</span>.smoke:        <span class="com"># tiny end-to-end wiring check on CPU</span>
+            <span class="self">self</span>.max_length = <span class="num">32</span>; <span class="self">self</span>.seq_len = <span class="num">3</span>; <span class="self">self</span>.epochs = <span class="num">1</span>
+            <span class="self">self</span>.n_folds = <span class="num">2</span>; <span class="self">self</span>.batch_size = <span class="num">2</span>; <span class="self">self</span>.freeze_layers = <span class="num">1</span></code></pre>
+<div class="note">
+  <p>Tất cả hyperparameter gom vào 1 dataclass, đa số đọc từ <strong>env var</strong> nên đổi hành vi không cần sửa code.</p>
+  <p><strong>Backbone:</strong> <code>mental/mental-roberta-base</code> gốc đã bị <strong>gated</strong> (401 nếu không token) → dùng mirror công khai có base = MentalRoBERTa; <code>AutoModel</code> chỉ lấy <code>roberta.*</code>, bỏ classifier của mirror.</p>
+  <p><code>__post_init__</code>: khi <code>smoke=True</code> thu nhỏ mọi thứ để chạy thử thông đường ống trên CPU trong vài giây.</p>
+</div>
+<table>
+  <tr><th>Env var</th><th>Tác dụng</th></tr>
+  <tr><td><code>R2_SMOKE=1</code></td><td>Smoke test (CPU, siêu nhỏ)</td></tr>
+  <tr><td><code>R2_MODEL=...</code></td><td>Đổi backbone</td></tr>
+  <tr><td><code>R2_GOLD_HOLDOUT=1</code></td><td>Train trên nhãn-LLM, eval trên gold lâm sàng</td></tr>
+  <tr><td><code>R2_BALANCE=1</code></td><td>Cân bằng class bằng WeightedRandomSampler</td></tr>
+  <tr><td><code>R2_EPOCHS=N</code> / <code>R2_DATA=path</code></td><td>Số epoch / trỏ CSV khác</td></tr>
+</table>
+
+<h2 id="data">4. Data <span class="badge">dòng 125–271</span></h2>
+<pre><span class="tag">dòng 125–134</span><code><span class="kw">def</span> <span class="fn">_parse_posts</span>(cell: str) -> list[str]:
+    <span class="com">"""Cột 'Post' là python-list-as-string. 28/500 fail literal_eval (escapes)
+    → fallback dùng raw cell làm 1 post."""</span>
+    <span class="kw">try</span>:
+        v = ast.literal_eval(cell)
+        <span class="kw">if</span> isinstance(v, list) <span class="kw">and</span> v:
+            <span class="kw">return</span> [str(x) <span class="kw">for</span> x <span class="kw">in</span> v <span class="kw">if</span> str(x).strip()]
+    <span class="kw">except</span> Exception:
+        <span class="kw">pass</span>
+    <span class="kw">return</span> [cell.strip(<span class="str">"[]"</span>)]</code></pre>
+<div class="note"><p>Cột <code>Post</code> trong CSV là list Python lưu dạng chuỗi → parse bằng <code>ast.literal_eval</code>; 28/500 dòng lỗi escape thì coi cả ô là 1 post.</p></div>
+
+<pre><span class="tag">dòng 238–271 (rút gọn)</span><code><span class="kw">def</span> <span class="fn">stat_features</span>(posts, seq_len) -> np.ndarray:
+    wc = [len(p.split()) <span class="kw">for</span> p <span class="kw">in</span> posts] <span class="kw">or</span> [<span class="num">0</span>]
+    pad = [<span class="num">0.0</span>, <span class="num">0.0</span>, <span class="num">0.0</span>, <span class="num">0.0</span>]          <span class="com"># khoảng thời gian: không có timestamp → 0</span>
+    <span class="kw">return</span> np.array([np.mean(wc), np.std(wc), np.min(wc), np.max(wc), *pad], ...)
+
+<span class="kw">class</span> <span class="fn">CSSRSDataset</span>(Dataset):
+    <span class="kw">def</span> <span class="fn">__getitem__</span>(<span class="self">self</span>, i):
+        posts = list(<span class="self">self</span>.seqs[i])
+        <span class="kw">if</span> <span class="self">self</span>.train <span class="kw">and</span> random.random() &lt; <span class="self">self</span>.cfg.aug_prob:
+            posts = [augment(p) <span class="kw">for</span> p <span class="kw">in</span> posts]      <span class="com"># augment chỉ khi train</span>
+        n = len(posts)
+        posts = posts + [<span class="str">""</span>] * (<span class="self">self</span>.cfg.seq_len - n)   <span class="com"># pad tới seq_len</span>
+        enc = <span class="self">self</span>.tok(posts, truncation=<span class="num">True</span>, max_length=..., padding=<span class="str">"max_length"</span>, ...)
+        mask_valid = torch.zeros(<span class="self">self</span>.cfg.seq_len, dtype=torch.bool)
+        mask_valid[:n] = <span class="num">True</span>                       <span class="com"># True = post thật</span>
+        <span class="kw">return</span> {<span class="str">"input_ids"</span>: enc[<span class="str">"input_ids"</span>], <span class="str">"valid"</span>: mask_valid,
+                <span class="str">"dt"</span>: torch.zeros(...), <span class="str">"feats"</span>: ..., <span class="str">"label"</span>: ...}</code></pre>
+<div class="note">
+  <p><strong>Loader:</strong> <code>load_cssrs</code> lấy tập gốc (local → cache → tải Zenodo), <code>load_combined</code> lấy tập kết hợp <em>có cột Source</em> (<code>cssrs500</code>/<code>av9ash</code>/<code>scraped</code>) cho gold-holdout. Cả hai bỏ "Supportive", lấy <strong>5 post gần nhất</strong>.</p>
+  <p><strong>8 stat-feature</strong> = 4 độ dài post + 4 khoảng thời gian (luôn 0 vì không có timestamp). <strong>Augment</strong> (delete/swap/synonym, paper §III) chỉ áp dụng khi train. <code>valid</code> mask để model bỏ qua post pad.</p>
+</div>
+
+<h2 id="model">5. Model — <code>HierarchicalDualHead</code> <span class="badge">dòng 275–343</span></h2>
+<pre><span class="tag">dòng 287–311 (khởi tạo)</span><code><span class="com"># temporal embedding: ReLU(LayerNorm(W·Δt + b))</span>
+<span class="self">self</span>.time_fc = nn.Linear(<span class="num">1</span>, h); <span class="self">self</span>.time_ln = nn.LayerNorm(h)
+
+<span class="com"># 3-layer sequence transformer</span>
+layer = nn.TransformerEncoderLayer(d_model=h, nhead=cfg.n_heads, dim_feedforward=cfg.ffn_dim, ...)
+<span class="self">self</span>.seq_encoder = nn.TransformerEncoder(layer, num_layers=cfg.n_transformer_layers)
+
+<span class="com"># attention pooling với learnable query</span>
+<span class="self">self</span>.query = nn.Parameter(torch.randn(<span class="num">1</span>, <span class="num">1</span>, h) * <span class="num">0.02</span>)
+<span class="self">self</span>.pool = nn.MultiheadAttention(h, cfg.pool_heads, ...)
+
+<span class="com"># dual heads</span>
+<span class="self">self</span>.coral_fc   = nn.Linear(h, <span class="num">1</span>, bias=<span class="num">False</span>)              <span class="com"># 1 weight chung w_c</span>
+<span class="self">self</span>.coral_bias = nn.Parameter(torch.zeros(cfg.n_classes - <span class="num">1</span>))  <span class="com"># 3 ngưỡng có thứ tự</span>
+<span class="self">self</span>.cls_head   = nn.Linear(h, cfg.n_classes)             <span class="com"># classification 4 lớp</span></code></pre>
+<pre><span class="tag">dòng 313–327 (freeze + encode)</span><code><span class="kw">def</span> <span class="fn">_freeze</span>(<span class="self">self</span>, k):
+    <span class="kw">for</span> name, p <span class="kw">in</span> <span class="self">self</span>.encoder.named_parameters():
+        <span class="kw">if</span> name.startswith(<span class="str">"embeddings"</span>): p.requires_grad = <span class="num">False</span>
+        <span class="kw">elif</span> <span class="str">".layer."</span> <span class="kw">in</span> name:
+            li = int(name.split(<span class="str">".layer."</span>)[<span class="num">1</span>].split(<span class="str">"."</span>)[<span class="num">0</span>])
+            <span class="kw">if</span> li &lt; k: p.requires_grad = <span class="num">False</span>     <span class="com"># khóa k layer đầu</span>
+
+<span class="kw">def</span> <span class="fn">encode_posts</span>(<span class="self">self</span>, input_ids, attention_mask):
+    B, S, L = input_ids.shape
+    out = <span class="self">self</span>.encoder(input_ids=input_ids.view(B*S, L), ...)   <span class="com"># 1 lần cho cả 5 post</span>
+    <span class="kw">return</span> out.last_hidden_state[:, <span class="num">0</span>].view(B, S, <span class="self">self</span>.h)    <span class="com"># lấy CLS</span></code></pre>
+<pre><span class="tag">dòng 329–343 (forward)</span><code><span class="kw">def</span> <span class="fn">forward</span>(<span class="self">self</span>, input_ids, attention_mask, valid, dt, feats):
+    e = <span class="self">self</span>.encode_posts(input_ids, attention_mask)        <span class="com"># (B,S,h)</span>
+    e = e + <span class="self">self</span>.time_drop(F.relu(<span class="self">self</span>.time_ln(<span class="self">self</span>.time_fc(dt.unsqueeze(-<span class="num">1</span>)))))
+    pad_mask = ~valid                                       <span class="com"># True = pad (bỏ qua)</span>
+    s = <span class="self">self</span>.seq_encoder(e, src_key_padding_mask=pad_mask)   <span class="com"># transformer chuỗi</span>
+    q = <span class="self">self</span>.query.expand(e.size(<span class="num">0</span>), -<span class="num">1</span>, -<span class="num">1</span>)
+    u, _ = <span class="self">self</span>.pool(q, s, s, key_padding_mask=pad_mask)      <span class="com"># gom → 1 vector user</span>
+    u = <span class="self">self</span>.pool_drop(u.squeeze(<span class="num">1</span>))
+    <span class="kw">if</span> <span class="self">self</span>.cfg.use_features:
+        u = <span class="self">self</span>.fuse(torch.cat([u, <span class="self">self</span>.feat_mlp(feats)], dim=-<span class="num">1</span>))  <span class="com"># fuse stat-feature</span>
+    coral_logits = <span class="self">self</span>.coral_fc(u) + <span class="self">self</span>.coral_bias       <span class="com"># (B, 3)</span>
+    cls_logits   = <span class="self">self</span>.cls_head(u)                       <span class="com"># (B, 4)</span>
+    <span class="kw">return</span> coral_logits, cls_logits</code></pre>
+<div class="note">
+  <p><strong>Hierarchical:</strong> <code>encode_posts</code> reshape <code>(B,S,L)→(B·S,L)</code> để chạy encoder <em>một lần</em> cho cả 5 post (hiệu quả), lấy CLS. Sau đó sequence transformer + <strong>attention pooling</strong> (1 learnable query) gom 5 vector thành 1 vector đại diện user.</p>
+  <p><strong>Dual-head:</strong> <code>coral_fc</code> dùng <em>1 weight chung</em> + <code>coral_bias</code> 3 ngưỡng <em>có thứ tự</em> → đây là điểm mấu chốt CORAL, đảm bảo dự đoán đơn điệu. <code>cls_head</code> là classification thường.</p>
+  <p><code>_freeze(6)</code> khóa embeddings + 6 layer đầu của RoBERTa (~50% như paper) để fine-tune nhẹ.</p>
+</div>
+
+<h2 id="loss">6. Losses <span class="badge">dòng 347–372</span></h2>
+<pre><span class="tag">dòng 347–360</span><code><span class="kw">def</span> <span class="fn">coral_loss</span>(coral_logits, y, n_classes):
+    levels = torch.arange(n_classes - <span class="num">1</span>, ...).unsqueeze(<span class="num">0</span>)
+    t = (y.unsqueeze(<span class="num">1</span>) &gt; levels).float()        <span class="com"># mục tiêu nhị phân t_k = 1[y &gt; k]</span>
+    <span class="kw">return</span> F.binary_cross_entropy_with_logits(coral_logits, t)
+
+<span class="kw">def</span> <span class="fn">focal_loss</span>(cls_logits, y, alpha, gamma):
+    logp = F.log_softmax(cls_logits, dim=-<span class="num">1</span>); p = logp.exp()
+    p_y = p.gather(<span class="num">1</span>, y.unsqueeze(<span class="num">1</span>)).squeeze(<span class="num">1</span>)
+    <span class="kw">return</span> (-alpha[y] * (<span class="num">1</span> - p_y) ** gamma * logp_y).mean()  <span class="com"># tập trung sample khó</span></code></pre>
+<pre><span class="tag">dòng 363–372</span><code><span class="kw">def</span> <span class="fn">coral_to_probs</span>(coral_logits, n_classes):
+    <span class="com">"""cumulative P(y&gt;k) → xác suất từng lớp."""</span>
+    pgt = torch.sigmoid(coral_logits)               <span class="com"># P(y&gt;k)</span>
+    probs[:, <span class="num">0</span>]  = <span class="num">1</span> - pgt[:, <span class="num">0</span>]                     <span class="com"># P(y=0)</span>
+    probs[:, k]  = pgt[:, k-<span class="num">1</span>] - pgt[:, k]            <span class="com"># P(y=k)</span>
+    probs[:, -<span class="num">1</span>] = pgt[:, -<span class="num">1</span>]                        <span class="com"># P(y=last)</span>
+    <span class="kw">return</span> probs.clamp_min(<span class="num">1e-6</span>)</code></pre>
+<pre><span class="tag">dòng 441–443 (tổng loss, paper eq.4)</span><code>loss = (cfg.w_coral * coral_loss(coral, y, n_classes)        <span class="com"># 0.5</span>
+        + cfg.w_ce   * F.cross_entropy(cls, y, label_smoothing=...)  <span class="com"># 0.3</span>
+        + cfg.w_focal * focal_loss(cls, y, alpha, gamma))    <span class="com"># 0.2</span></code></pre>
+<div class="note">
+  <p><strong>CORAL:</strong> biến nhãn thành 3 bài toán nhị phân <code>y&gt;0?, y&gt;1?, y&gt;2?</code> (vd <code>y=2 → [1,1,0]</code>). Vì chung 1 weight + bias có thứ tự → dự đoán không bao giờ mâu thuẫn. <code>coral_to_probs</code> chuyển P tích lũy thành P từng lớp bằng hiệu các tầng.</p>
+  <p><strong>Focal</strong> (alpha theo tần số + gamma=2) chống mất cân bằng. Tổng loss = <strong>0.5·CORAL + 0.3·CE + 0.2·Focal</strong>.</p>
+</div>
+
+<h2 id="train">7. Train / Eval <span class="badge">dòng 376–460</span></h2>
+<pre><span class="tag">dòng 382–393 (optimizer)</span><code>opt = torch.optim.AdamW(
+    [{<span class="str">"params"</span>: enc, <span class="str">"lr"</span>: cfg.lr_encoder},   <span class="com"># encoder: lr thấp (2e-5)</span>
+     {<span class="str">"params"</span>: new, <span class="str">"lr"</span>: cfg.lr_new}],     <span class="com"># phần mới: lr cao (1e-4)</span>
+    weight_decay=cfg.weight_decay)
+<span class="com"># scheduler: warmup tuyến tính rồi cosine decay</span></code></pre>
+<pre><span class="tag">dòng 401–411 (evaluate — gộp 2 head)</span><code>coral, cls = model(...)
+p_final = <span class="num">0.5</span> * coral_to_probs(coral, cfg.n_classes) + <span class="num">0.5</span> * F.softmax(cls, dim=-<span class="num">1</span>)
+preds.extend(p_final.argmax(-<span class="num">1</span>).cpu().tolist())
+<span class="com"># metric: macro-F1, MAE, QWK (quadratic weighted kappa), per-class F1</span></code></pre>
+<pre><span class="tag">dòng 418–423, 446–457 (vòng train)</span><code><span class="kw">if</span> cfg.balance:                          <span class="com"># cân bằng class: sampling nghịch tần số</span>
+    w = (counts.sum() / np.maximum(counts, <span class="num">1</span>))[tr_lab]
+    sampler = WeightedRandomSampler(w, len(tr_lab), replacement=<span class="num">True</span>)
+...
+<span class="kw">if</span> (step + <span class="num">1</span>) % cfg.grad_accum == <span class="num">0</span>:   <span class="com"># gradient accumulation (effective batch 16)</span>
+    scaler.unscale_(opt); nn.utils.clip_grad_norm_(...)   <span class="com"># clip gradient</span>
+    scaler.step(opt); scaler.update(); sched.step()
+...
+<span class="kw">if</span> m[<span class="str">"macro_f1"</span>] &gt; best: best, best_state, bad = ..., <span class="num">0</span>   <span class="com"># lưu best</span>
+<span class="kw">else</span>:
+    bad += <span class="num">1</span>
+    <span class="kw">if</span> bad &gt;= cfg.patience: <span class="kw">break</span>          <span class="com"># early stop (patience=5)</span></code></pre>
+<div class="note">
+  <p><strong>2 learning rate:</strong> encoder pretrained học chậm, phần mới học nhanh. <strong>Đánh giá</strong> gộp dual-head bằng trung bình xác suất <code>0.5·CORAL + 0.5·CLS</code> rồi argmax.</p>
+  <p><strong>4 metric:</strong> macro-F1, MAE (hợp ordinal), QWK (phạt nặng sai lệch xa), per-class F1. Có AMP (mixed precision), gradient accumulation, grad clipping, <strong>early stopping</strong> theo macro-F1.</p>
+</div>
+
+<h2 id="main">8. Main / Gold-holdout <span class="badge">dòng 464–543</span></h2>
+<pre><span class="tag">dòng 467–493 (gold-holdout — phần cốt lõi)</span><code>seqs, labels, sources = load_combined(cfg)
+gold = sources == <span class="str">"cssrs500"</span>                       <span class="com"># tách gold lâm sàng khỏi pool</span>
+g_seq, g_lab = ...[gold]      <span class="com"># TEST = gold (giữ riêng)</span>
+p_seq, p_lab = ...[~gold]     <span class="com"># TRAIN POOL = nhãn-LLM (av9ash + scraped)</span>
+
+skf = StratifiedKFold(n_splits=cfg.n_folds, ...)
+<span class="kw">for</span> fold, (tr_idx, va_idx) <span class="kw">in</span> enumerate(skf.split(p_seq, p_lab)):
+    f1v, state = train_fold(cfg, tr_seq, tr_lab, va_seq, va_lab, ...)  <span class="com"># train trên pool</span>
+    model.load_state_dict(state)
+    gm = evaluate(model, gold_loader, cfg)         <span class="com"># ĐÁNH GIÁ TRÊN GOLD</span>
+    <span class="kw">print</span>(<span class="str">f"val-macroF1(LLM)={f1v} | GOLD macroF1={gm['macro_f1']}"</span>)  <span class="com"># số honest = GOLD</span></code></pre>
+<pre><span class="tag">dòng 505–530 (main — chế độ thường)</span><code><span class="kw">def</span> <span class="fn">main</span>():
+    cfg = Config(); set_seed(cfg.seed)
+    <span class="kw">if</span> cfg.gold_holdout:
+        run_gold_holdout(cfg, ...); <span class="kw">return</span>            <span class="com"># nhánh Run B</span>
+    <span class="com"># ngược lại: 5-fold CV chuẩn trên CSSRS-500</span>
+    seqs, labels = load_cssrs(cfg)
+    <span class="kw">for</span> fold, (tr_idx, va_idx) <span class="kw">in</span> enumerate(skf.split(seqs, labels)):
+        f1, state = train_fold(...); fold_metrics.append(f1)</code></pre>
+<blockquote>
+  <strong>Tại sao gold-holdout?</strong> Pool mở rộng được gán nhãn bởi <strong>LLM</strong>. Nếu đánh giá trên chính nhãn LLM thì <strong>circular</strong> (ảo tưởng cao). Giải pháp: train trên pool nhãn-LLM (5-fold CV), nhưng <strong>luôn đo trên tập gold lâm sàng giữ riêng</strong>. Chỉ số GOLD mới là con số trung thực để báo cáo thesis.
+</blockquote>
+
+<h2 id="summary">9. Tóm tắt &amp; cách chạy</h2>
+<div class="summary">
+  <h3>3 điểm thiết kế quan trọng nhất</h3>
+  <ol>
+    <li><strong>Dual-head CORAL + CLS:</strong> ordinal regression (giữ thứ tự nguy cơ) + classification thường, average xác suất lúc predict.</li>
+    <li><strong>Hierarchical:</strong> post-level encoder (RoBERTa) → user-level sequence transformer + attention pooling.</li>
+    <li><strong>Gold-holdout:</strong> train trên nhãn-LLM nhưng đo trên nhãn lâm sàng giữ riêng → tránh đánh giá circular.</li>
+  </ol>
+</div>
+<pre><span class="tag">cách chạy</span><code><span class="com"># Local smoke test (CPU, vài giây)</span>
+R2_SMOKE=1 R2_MODEL=prajjwal1/bert-tiny .venv-voice/bin/python \
+    notebooks/r2-suicide-risk-dualhead.py
+
+<span class="com"># Kaggle: upload làm script kernel, bật GPU + Internet ON, run.</span>
+<span class="com"># Run B preset (gold-holdout + balance + 10 epochs) tự bật.</span></code></pre>
+
+<hr>
+<p class="muted">Sinh tự động từ phân tích mã nguồn — Pebble-LLM · finetuning-message · R2</p>
+
+</div>
+</body>
+</html>
