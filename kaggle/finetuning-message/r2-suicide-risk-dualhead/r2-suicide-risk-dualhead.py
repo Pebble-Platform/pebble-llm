@@ -19,6 +19,12 @@ from pathlib import Path
 
 IS_KAGGLE = Path("/kaggle").exists()
 
+# Kaggle run: gold-holdout eval on the enriched 10k by default (set before Config reads the env).
+# Cap epochs at 10 (early stopping usually triggers earlier; keeps the 5-fold run under Kaggle's 12h GPU cap).
+if IS_KAGGLE:
+    os.environ.setdefault("R2_GOLD_HOLDOUT", "1")
+    os.environ.setdefault("R2_EPOCHS", "10")
+
 # ── 0. Pinned GPU stack (Kaggle only; local uses .venv-voice) ───────────────────
 if IS_KAGGLE:
     import subprocess
@@ -57,6 +63,8 @@ class Config:
     # backbone. Override with R2_MODEL. See R2-DEEP-method-and-repro-vi.md §6.
     model_name: str = os.environ.get("R2_MODEL", "welsachy/mental-roberta-base-finetuned-depression")
     smoke: bool = bool(int(os.environ.get("R2_SMOKE", "0")))
+    # gold-holdout: train on LLM-labeled pool (av9ash+scraped), eval folds on clinical CSSRS-500 test
+    gold_holdout: bool = bool(int(os.environ.get("R2_GOLD_HOLDOUT", "0")))
     # data
     seq_len: int = 5                 # posts per user-sequence (paper: 5)
     max_length: int = 256            # tokens/post (paper: 512; reduced for speed)
@@ -83,7 +91,7 @@ class Config:
     weight_decay: float = 0.01
     batch_size: int = 8
     grad_accum: int = 2              # effective batch 16
-    epochs: int = 15
+    epochs: int = int(os.environ.get("R2_EPOCHS", "15"))
     warmup_ratio: float = 0.1
     patience: int = 5
     n_folds: int = 5
@@ -125,7 +133,8 @@ def _parse_posts(cell: str) -> list[str]:
 
 
 def load_cssrs(cfg: Config) -> tuple[list[list[str]], list[int]]:
-    local = Path("data/finetuning-message/external/cssrs/500_Reddit_users_posts_labels.csv")
+    # R2_DATA lets us point the loader at the enriched combined set (same User,Post,Label schema)
+    local = Path(os.environ.get("R2_DATA", "data/finetuning-message/external/cssrs/500_Reddit_users_posts_labels.csv"))
     cache = Path(cfg.output_dir) / "cssrs500.csv"
     if local.exists():
         path = local
@@ -151,6 +160,33 @@ def load_cssrs(cfg: Config) -> tuple[list[list[str]], list[int]]:
     if cfg.smoke:
         seqs, labels = seqs[:12], labels[:12]
     return seqs, labels
+
+
+def _combined_path(cfg: Config) -> Path:
+    """Resolve the enriched combined CSV: R2_DATA env → Kaggle input dir → local r2-combined."""
+    if os.environ.get("R2_DATA"):
+        return Path(os.environ["R2_DATA"])
+    for p in Path("/kaggle/input").glob("*/sequences.csv") if Path("/kaggle/input").exists() else []:
+        return p
+    return Path("data/finetuning-message/external/r2-combined/sequences.csv")
+
+
+def load_combined(cfg: Config) -> tuple[list[list[str]], list[int], list[str]]:
+    """Load the combined set WITH source tags (User,Post,Label,Source). Source ∈ {cssrs500, av9ash, scraped}."""
+    path = _combined_path(cfg)
+    seqs, labels, sources = [], [], []
+    with open(path, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            lab = row["Label"].strip()
+            if lab not in LABEL_MAP:
+                continue
+            posts = _parse_posts(row["Post"])[-cfg.seq_len:]
+            if not posts:
+                continue
+            seqs.append(posts)
+            labels.append(LABEL_MAP[lab])
+            sources.append(row.get("Source", "unknown"))
+    return seqs, labels, sources
 
 
 # --- text augmentation (train only); paper §III: deletion / swap / synonym -------
@@ -416,11 +452,55 @@ def train_fold(cfg, tr_seq, tr_lab, va_seq, va_lab, tok, fold):
 
 
 # ── 6. Main ──────────────────────────────────────────────────────────────────────
+def run_gold_holdout(cfg: Config, tok, out: Path):
+    """Train on the LLM-labeled pool (av9ash+scraped) with 5-fold CV; evaluate every fold's best model on the
+    held-out clinical gold set (CSSRS-500). The gold metrics are the honest, non-circular numbers."""
+    seqs, labels, sources = load_combined(cfg)
+    labels = np.array(labels); sources = np.array(sources)
+    gold = sources == "cssrs500"
+    g_seq = [s for s, k in zip(seqs, gold) if k]; g_lab = labels[gold]
+    p_seq = [s for s, k in zip(seqs, gold) if not k]; p_lab = labels[~gold]
+    if cfg.smoke:
+        g_seq, g_lab = g_seq[:8], g_lab[:8]; p_seq, p_lab = p_seq[:16], p_lab[:16]
+    print(f">>> GOLD-HOLDOUT | test(gold)={len(g_seq)} {np.bincount(g_lab, minlength=4).tolist()} | "
+          f"train-pool={len(p_seq)} {np.bincount(p_lab, minlength=4).tolist()} ({LABEL_NAMES})", flush=True)
+
+    gold_loader = DataLoader(CSSRSDataset(g_seq, list(g_lab), tok, cfg, train=False), batch_size=cfg.batch_size)
+    skf = StratifiedKFold(n_splits=cfg.n_folds, shuffle=True, random_state=cfg.seed)
+    gold_f1, val_f1, best_g, best_state = [], [], -1.0, None
+    for fold, (tr_idx, va_idx) in enumerate(skf.split(p_seq, p_lab)):
+        tr_seq = [p_seq[i] for i in tr_idx]; tr_lab = p_lab[tr_idx].tolist()
+        va_seq = [p_seq[i] for i in va_idx]; va_lab = p_lab[va_idx].tolist()
+        f1v, state = train_fold(cfg, tr_seq, tr_lab, va_seq, va_lab, tok, fold)
+        model = HierarchicalDualHead(cfg, pretrained=False).to(DEVICE)
+        model.load_state_dict(state)
+        gm = evaluate(model, gold_loader, cfg)
+        val_f1.append(f1v); gold_f1.append(gm["macro_f1"])
+        print(f">>> [fold {fold}] val-macroF1(LLM)={f1v:.4f} | GOLD macroF1={gm['macro_f1']:.4f} "
+              f"MAE={gm['mae']:.4f} QWK={gm['qwk']:.4f}", flush=True)
+        if gm["macro_f1"] > best_g:
+            best_g, best_state = gm["macro_f1"], state
+        if cfg.smoke:
+            break
+
+    print(f">>> GOLD test macro-F1: mean={np.mean(gold_f1):.4f} std={np.std(gold_f1):.4f} "
+          f"folds={[round(x,4) for x in gold_f1]}", flush=True)
+    print(f">>> (val-on-LLM macro-F1: mean={np.mean(val_f1):.4f} folds={[round(x,4) for x in val_f1]})", flush=True)
+    ckpt = {"state_dict": best_state, "model_name": cfg.model_name, "n_classes": cfg.n_classes,
+            "use_features": cfg.use_features, "label_names": LABEL_NAMES,
+            "gold_macro_f1": float(np.mean(gold_f1))}
+    torch.save(ckpt, out / "best_model.pt")
+    print(f">>> saved {out/'best_model.pt'}  (best GOLD macro-F1={best_g:.4f})", flush=True)
+
+
 def main():
     cfg = Config()
     set_seed(cfg.seed)
     out = Path(cfg.output_dir); out.mkdir(parents=True, exist_ok=True)
-    print(f">>> device={DEVICE} model={cfg.model_name} smoke={cfg.smoke}", flush=True)
+    print(f">>> device={DEVICE} model={cfg.model_name} smoke={cfg.smoke} gold_holdout={cfg.gold_holdout}", flush=True)
+    if cfg.gold_holdout:
+        run_gold_holdout(cfg, AutoTokenizer.from_pretrained(cfg.model_name), out)
+        return
 
     seqs, labels = load_cssrs(cfg)
     labels = np.array(labels)

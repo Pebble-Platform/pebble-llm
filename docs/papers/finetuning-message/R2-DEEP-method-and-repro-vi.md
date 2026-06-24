@@ -92,6 +92,14 @@ Macro-F1 (chính), MAE, QWK.
 - **Phân bố**: Indicator 4,091 · Ideation 3,784 · Behavior 711 · Attempt 1,487.
 - **Dùng**: `R2_DATA=data/finetuning-message/external/r2-combined/sequences.csv` (loader đọc qua env).
 
+### Kết quả CV trên 10k + gold-holdout (Kaggle GPU, 2026-06-24)
+Chi tiết: [`docs/tasks/r2-kaggle-cv-gold-holdout.md`](../../tasks/r2-kaggle-cv-gold-holdout.md). Train 9,680 mẫu nhãn-LLM (av9ash+scraped), **eval trên gold lâm sàng held-out (CSSRS-500, 392)** — con số trung thực, không circular.
+| Run | Train | Eval | Macro-F1 | QWK |
+|---|---|---|---|---|
+| Baseline (392) | CSSRS-500 | 5-fold CV trên chính nó | 0.2374 | 0.241 |
+| **10k enriched** | pool nhãn-LLM | **gold held-out** | **0.3569** ±0.012 | **0.378** |
+- Macro-F1 **+0.12 (~+50% rel)**, QWK **0.241→0.378**. val-on-LLM 0.638 vs gold 0.357 → khoảng cách ~0.28 = chênh lệch nhãn-LLM ↔ lâm sàng. Dưới paper (0.5098) như kỳ vọng (data thay thế, nhãn LLM, lớp Behavior chỉ 6.5%).
+
 ## 7. Map sang Pebble
 - **CORAL ordinal head** = ứng viên trực tiếp cho head `severity` của Pebble (thay vì CE phẳng) — giải đúng "lỗi adjacent" mà các bài C-SSRS (14–17) chỉ ra.
 - **Tri-objective CORAL+CE+Focal** = cách trộn ordinal + categorical + chống imbalance; so được với hướng MTL-balancing của Pebble.

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R2 Suicide-Risk — Báo cáo thực nghiệm (gold-holdout)</title>
+<style>
+  :root{--ink:#1a1d24;--mut:#6b7280;--line:#e5e7eb;--bg:#f7f8fa;--card:#fff;
+        --acc:#2563eb;--good:#16a34a;--warn:#d97706;
+        --l0:#3b82f6;--l1:#f59e0b;--l2:#ef6c3b;--l3:#e11d48}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .page{max-width:920px;margin:0 auto;padding:32px 24px 64px}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:17px;margin:34px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  .sub{color:var(--mut);font-size:13.5px}
+  .cards{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0}
+  .card{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);
+        border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .card .k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .card .n{font-size:28px;font-weight:800;margin-top:2px}
+  .card .d{font-size:12.5px;color:var(--good);font-weight:600;margin-top:2px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+        border-radius:12px;overflow:hidden;font-size:14px}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:#f1f3f7;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:#46505f}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .hl{background:#eef4ff}
+  .best{color:var(--good);font-weight:700}
+  .bar{height:16px;border-radius:4px;display:inline-block;vertical-align:middle}
+  .barwrap{display:flex;align-items:center;gap:8px}
+  .barwrap .lab{width:84px;font-size:13px}
+  .barwrap .v{color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:8px 0}
+  ul{margin:8px 0;padding-left:20px}
+  li{margin:5px 0}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff}
+  .tag{font-size:12px;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:1px 9px}
+  .note{color:var(--mut);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  .warnbox{border-left:4px solid var(--warn);background:#fffaf0}
+  code{background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>R2 — Hierarchical Dual-Head Suicide-Risk Model</h1>
+  <div class="sub">Báo cáo thực nghiệm · 5-fold CV trên dataset 10k · <b>eval trên gold lâm sàng held-out</b>
+    · MentalRoBERTa · Kaggle GPU, 2026-06-24 (~9.1h)</div>
+
+  <h2>1. Kết quả chính</h2>
+  <div class="cards">
+    <div class="card"><div class="k">Gold macro-F1</div><div class="n">0.357</div>
+      <div class="d">▲ +0.12 vs baseline (~+50%)</div></div>
+    <div class="card"><div class="k">Gold QWK</div><div class="n">0.378</div>
+      <div class="d">▲ +0.137 vs baseline</div></div>
+    <div class="card"><div class="k">Gold MAE</div><div class="n">0.840</div>
+      <div class="d" style="color:var(--mut)">eval trên tập khó hơn</div></div>
+    <div class="card"><div class="k">Độ ổn định</div><div class="n">±0.012</div>
+      <div class="d" style="color:var(--mut)">std 5 folds</div></div>
+  </div>
+  <div class="panel"><b>Tóm tắt:</b> Làm giàu dữ liệu 392 → 10k nâng macro-F1 trên <b>tập gold lâm sàng giữ riêng</b>
+    (CSSRS-500, 392 mẫu, không circular) từ <b>0.2374 → 0.3569</b>, QWK <b>0.241 → 0.378</b>. Đây là con số
+    trung thực (held-out), trong khi baseline chỉ là CV trên chính tập nhỏ.</div>
+
+  <h2>2. So sánh</h2>
+  <table>
+    <thead><tr><th>Run</th><th>Train data</th><th>Eval</th>
+      <th class="num">Macro-F1</th><th class="num">MAE</th><th class="num">QWK</th></tr></thead>
+    <tbody>
+      <tr><td>Baseline</td><td>392 (CSSRS-500)</td><td>5-fold CV trên chính nó</td>
+        <td class="num">0.2374</td><td class="num">0.724</td><td class="num">0.241</td></tr>
+      <tr class="hl"><td><b>10k enriched</b></td><td>9,680 (nhãn LLM)</td><td><b>gold lâm sàng held-out</b></td>
+        <td class="num best">0.3569</td><td class="num">0.840</td><td class="num best">0.378</td></tr>
+      <tr><td>Paper (Yang et al.)</td><td>~11k (HKIE + LLM)</td><td>5-fold CV</td>
+        <td class="num">0.5098</td><td class="num">0.647</td><td class="num">0.469</td></tr>
+    </tbody>
+  </table>
+  <div class="barwrap" style="margin-top:12px"><span class="lab">Baseline</span>
+    <span class="bar" style="width:47%;background:var(--mut)"></span><span class="v">0.2374</span></div>
+  <div class="barwrap"><span class="lab">10k (gold)</span>
+    <span class="bar" style="width:70%;background:var(--good)"></span><span class="v">0.3569</span></div>
+  <div class="barwrap"><span class="lab">Paper</span>
+    <span class="bar" style="width:100%;background:var(--acc)"></span><span class="v">0.5098</span></div>
+
+  <h2>3. Chi tiết theo fold (eval trên gold)</h2>
+  <table>
+    <thead><tr><th>Fold</th><th class="num">val-F1 (nhãn LLM)</th>
+      <th class="num">GOLD macro-F1</th><th class="num">GOLD MAE</th><th class="num">GOLD QWK</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td class="num">0.6485</td><td class="num">0.3598</td><td class="num">0.829</td><td class="num">0.384</td></tr>
+      <tr><td>1</td><td class="num">0.6371</td><td class="num best">0.3778</td><td class="num">0.824</td><td class="num">0.395</td></tr>
+      <tr><td>2</td><td class="num">0.6131</td><td class="num">0.3409</td><td class="num">0.852</td><td class="num">0.354</td></tr>
+      <tr><td>3</td><td class="num">0.6640</td><td class="num">0.3533</td><td class="num">0.839</td><td class="num">0.392</td></tr>
+      <tr><td>4</td><td class="num">0.6278</td><td class="num">0.3529</td><td class="num">0.857</td><td class="num">0.364</td></tr>
+      <tr class="hl"><td><b>Mean</b></td><td class="num"><b>0.6381</b></td><td class="num"><b>0.3569</b></td>
+        <td class="num"><b>0.840</b></td><td class="num"><b>0.378</b></td></tr>
+    </tbody>
+  </table>
+  <div class="panel warnbox" style="margin-top:12px"><b>Khoảng cách nhãn LLM ↔ lâm sàng:</b>
+    val-on-LLM <b>0.638</b> vs gold <b>0.357</b> → chênh ~<b>0.28</b>. Model học nhãn LLM rất tốt nhưng nhãn
+    lâm sàng khó hơn. Đo trên av9ash: 1 LLM ~<b>82%</b> đúng / ~<b>99%</b> sai-lệch-≤1-mức so với gold.</div>
+
+  <h2>4. Dataset (10,072 mẫu)</h2>
+  <table>
+    <thead><tr><th>Nguồn</th><th>Nhãn</th><th class="num">Số mẫu</th><th>Vai trò</th></tr></thead>
+    <tbody>
+      <tr><td>CSSRS-500 (Gaur, Zenodo)</td><td>Lâm sàng (4 mức)</td><td class="num">392</td><td><b>GOLD test (held-out)</b></td></tr>
+      <tr><td>av9ash CSSR-S</td><td>0-6 → 4 mức</td><td class="num">1,170</td><td>Train pool</td></tr>
+      <tr><td>Scrape r/SuicideWatch + LLM-label</td><td>LLM (4 mức)</td><td class="num">8,510</td><td>Train pool</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:14px"><b>Phân bố lớp (toàn bộ)</b> — mất cân bằng, Behavior hiếm:</div>
+  <div class="barwrap" style="margin-top:8px"><span class="lab"><span class="pill" style="background:var(--l0)">Indicator</span></span>
+    <span class="bar" style="width:100%;background:var(--l0)"></span><span class="v">4,091</span></div>
+  <div class="barwrap"><span class="lab"><span class="pill" style="background:var(--l1)">Ideation</span></span>
+    <span class="bar" style="width:92%;background:var(--l1)"></span><span class="v">3,784</span></div>
+  <div class="barwrap"><span class="lab"><span class="pill" style="background:var(--l2)">Behavior</span></span>
+    <span class="bar" style="width:17%;background:var(--l2)"></span><span class="v">711 ⚠</span></div>
+  <div class="barwrap"><span class="lab"><span class="pill" style="background:var(--l3)">Attempt</span></span>
+    <span class="bar" style="width:36%;background:var(--l3)"></span><span class="v">1,487</span></div>
+
+  <h2>5. Nhận định &amp; hạn chế</h2>
+  <ul>
+    <li><b>Làm giàu data có tác dụng rõ:</b> +50% macro-F1 tương đối và QWK gần +0.14 trên eval trung thực.</li>
+    <li><b>Dưới paper (0.5098):</b> đúng kỳ vọng — data thay thế (không có HKIE gốc), nhãn LLM ~82% chính xác,
+      và <b>lớp Behavior chỉ 6.5% train-pool</b> → model yếu ở Behavior.</li>
+    <li><b>~84% nhãn là LLM đơn-model</b> (chỉ 392 lâm sàng) → eval phải để gold riêng (đã làm).</li>
+    <li><b>Đa số sequence 1-post</b> (comment) → phần temporal/Δt của kiến trúc chưa được khai thác (Δt=0).</li>
+  </ul>
+
+  <h2>6. Hướng cải thiện (theo tác động)</h2>
+  <ul>
+    <li><b>1. Rebalance lớp Behavior</b> (6.5% → label thêm có chủ đích) — điểm yếu rõ nhất.</li>
+    <li><b>2. Bật Δt thật</b> (scraped data có timestamp) — khai thác temporal head.</li>
+    <li><b>3. Ensemble nhiều LLM</b> re-label — giảm khoảng cách 0.28 nhãn-LLM ↔ lâm sàng.</li>
+  </ul>
+
+  <h2>7. Cấu hình run</h2>
+  <div class="panel">
+    <span class="tag">model: welsachy/mental-roberta-base-finetuned-depression</span>
+    <span class="tag">5-fold stratified CV</span>
+    <span class="tag">epochs ≤10 (early-stop patience 5)</span>
+    <span class="tag">batch 8 × grad-accum 2</span>
+    <span class="tag">lr 2e-5 / 1e-4</span>
+    <span class="tag">loss 0.5·CORAL + 0.3·CE + 0.2·Focal</span>
+    <span class="tag">freeze 6 layers</span>
+    <span class="tag">Kaggle GPU · 548 min</span>
+    <span class="tag">kernel v6</span>
+  </div>
+
+  <div class="note">
+    Nguồn: <code>kaggle/finetuning-message/r2-suicide-risk-dualhead/out/</code> ·
+    Tracking: <code>docs/tasks/r2-kaggle-cv-gold-holdout.md</code> ·
+    Method: <code>docs/papers/finetuning-message/R2-DEEP-method-and-repro-vi.md</code>.
+    Dữ liệu mental-health (gitignored). Đây là <b>method reproduction</b> + weak-supervision, không phải
+    clinical-grade — cần human oversight.
+  </div>
+
+</div>
+</body>
+</html>

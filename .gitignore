@@ -38,6 +38,8 @@ data/external/**
 # Kaggle downloaded outputs (models, data, logs) — code only is committed
 kaggle/**/out/
 kaggle/**/out2/
+# Kaggle dataset-upload dirs: the csv is a copy of gitignored data — keep only dataset-metadata.json
+kaggle/**/sequences.csv
 
 # Model artifacts & checkpoints
 checkpoints/
