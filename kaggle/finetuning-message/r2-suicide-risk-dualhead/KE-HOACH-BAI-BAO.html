@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kế hoạch bài báo — R2 Reproduction + Augmentation</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2029; --ink: #e6edf3; --muted: #9aa7b4;
+    --accent: #58a6ff; --accent2: #7ee787; --border: #2d3742;
+    --code-bg: #11161d; --warn: #ffa657; --bad: #ff7b72; --good: #7ee787;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7; font-size: 16px; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 24px 120px; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 8px; }
+  h2 { font-size: 1.35rem; margin: 50px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 1.08rem; margin: 26px 0 10px; color: var(--accent2); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  blockquote { margin: 16px 0; padding: 12px 18px; background: var(--panel);
+    border-left: 4px solid var(--accent); border-radius: 6px; color: var(--muted); }
+  blockquote strong { color: var(--ink); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em; color: var(--accent2); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; line-height: 1.55; margin: 16px 0; font-size: 0.86rem; }
+  pre code { background: none; padding: 0; color: var(--ink); }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: var(--panel);
+    border-radius: 8px; overflow: hidden; font-size: 0.92rem; }
+  th, td { padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #232c38; color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.c, th.c { text-align: center; color: var(--muted); }
+  .bad { color: var(--bad); font-weight: 600; }
+  .good { color: var(--good); font-weight: 600; }
+  .warnum { color: var(--warn); font-weight: 600; }
+  ul, ol { padding-left: 24px; } li { margin: 7px 0; }
+  .lead { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; margin: 20px 0; color: var(--muted); }
+  .lead strong { color: var(--ink); }
+  .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 22px; margin: 24px 0; }
+  .toc h3 { margin-top: 0; color: var(--ink); } .toc ol { margin: 0; }
+  .gap-box { background: linear-gradient(135deg, #2a1717, #1a2029); border: 1px solid var(--bad);
+    border-radius: 10px; padding: 4px 22px; margin: 24px 0; }
+  .gap-box h2 { color: var(--bad); border: none; }
+  .must { display:inline-block; font-size:0.7rem; padding:2px 8px; border-radius:999px;
+    background:#3a2117; color:var(--warn); border:1px solid var(--warn); margin-left:8px; vertical-align:middle; }
+  .claim { display:grid; grid-template-columns: 56px 1fr; gap:12px; margin:12px 0;
+    background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .claim .id { font-size:1.4rem; font-weight:700; color:var(--accent2); }
+  .steps { counter-reset: step; list-style: none; padding-left: 0; }
+  .steps li { counter-increment: step; position: relative; padding-left: 44px; margin: 12px 0; }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: 0;
+    width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #0b0f14;
+    font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .muted { color: var(--muted); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Kế hoạch nghiên cứu — Bài báo R2</h1>
+<p class="muted"><strong>Hướng:</strong> Reproduction + Augmentation study.</p>
+<div class="lead">
+  Tái hiện mô hình <strong>Hierarchical Dual-Head</strong> (Yang et al., IEEE BigData 2025)
+  trên benchmark công khai <strong>CSSRS-500</strong>, nghiên cứu <strong>LLM-augmentation</strong>
+  cho low-resource, và dùng <strong>gold-holdout</strong> để bóc tách khoảng cách nhãn-LLM ↔ lâm sàng.
+  <br><span class="muted">Nền: KET-QUA-PHAN-TICH.md · GIAI-THICH-CODE.md</span>
+</div>
+
+<div class="toc">
+  <h3>Mục lục</h3>
+  <ol>
+    <li><a href="#why">Vì sao hiện tại chưa đủ</a></li>
+    <li><a href="#claims">Ba claim &amp; bằng chứng</a></li>
+    <li><a href="#t0">Tầng 0 — Sửa phép so sánh (Table 1)</a></li>
+    <li><a href="#t1">Tầng 1 — Ablation</a></li>
+    <li><a href="#t2">Tầng 2 — Độ chặt thống kê</a></li>
+    <li><a href="#t3">Tầng 3 — Nhãn LLM &amp; định vị</a></li>
+    <li><a href="#budget">Ngân sách GPU</a></li>
+    <li><a href="#code">Thay đổi code cần thiết</a></li>
+    <li><a href="#road">Lộ trình thực thi</a></li>
+  </ol>
+</div>
+
+<div class="gap-box">
+<h2 id="why">0. Vì sao số liệu hiện tại CHƯA đủ thành bài báo</h2>
+<ol>
+  <li><strong>Không có baseline &amp; ablation.</strong> Báo cáo 0.385 nhưng không trả lời được <em>"so với cái gì?"</em>. Chưa chứng minh kiến trúc phức tạp hơn một <code>TF-IDF + SVM</code>, chưa tách đóng góp từng thành phần.</li>
+  <li><strong>So sánh A↔B sai phương pháp luận.</strong> B test trên <strong>toàn bộ 392 gold</strong>, A làm CV trong 392 (test ~78/fold) → <strong>hai tập test khác nhau</strong>. Kết luận "data là nút thắt" chưa đứng vững — 0.19 của A có thể chỉ là <em>overfit model nặng trên data ít</em>.</li>
+  <li><strong>Nhãn LLM không ghi nhận &amp; chưa đo chất lượng.</strong> Pool 9 680 gán nhãn bằng LLM nào, prompt gì, agreement với gold ra sao? Khoảng cách 0.67→0.385 chính là triệu chứng nhiễu nhãn LLM nhưng chưa định lượng.</li>
+</ol>
+<p class="muted">Cộng thêm: 1 seed duy nhất, không CI, không kiểm định, không confusion matrix, số tuyệt đối thấp.</p>
+</div>
+
+<h2 id="claims">1. Ba claim của bài &amp; bằng chứng</h2>
+<div class="claim"><div class="id">C1</div><div><strong>Tái hiện được dual-head trên benchmark công khai (CSSRS-500).</strong><br><span class="muted">Bằng chứng: Table 1 hàng dual-head + đường học hội tụ.</span></div></div>
+<div class="claim"><div class="id">C2</div><div><strong>LLM-augmentation giúp low-resource.</strong><br><span class="muted">Bằng chứng: Table 1 — 3 chế độ train, cùng 1 gold-test cố định.</span></div></div>
+<div class="claim"><div class="id">C3</div><div><strong>Gold-holdout lộ khoảng cách LLM↔lâm sàng (~0.28)</strong> → cảnh báo chỉ đo in-distribution là ảo.<br><span class="muted">Bằng chứng: cột LLM-only vs val-on-LLM + kiểm định.</span></div></div>
+
+<h2 id="t0">2. Tầng 0 — Sửa phép so sánh <span class="must">BẮT BUỘC</span></h2>
+<p>Lỗi gốc: B test trên <strong>toàn bộ 392</strong>, A CV trong 392 → không so được. Sửa bằng <strong>một gold-test đóng băng</strong>, dùng chung mọi thí nghiệm:</p>
+<pre><code>392 gold → [ gold-train 274 | gold-test 118 ]   (stratified, FROZEN)
+pool LLM 9 680 = P</code></pre>
+<h3>Table 1 — xương sống (đo trên gold-test 118 cố định, 3 seed)</h3>
+<table>
+  <tr><th>Model \ Chế độ train</th><th class="c">gold-train (274)</th><th class="c">LLM-only (P)</th><th class="c">LLM + gold-train</th></tr>
+  <tr><td>TF-IDF + SVM</td><td class="c">·</td><td class="c">·</td><td class="c">·</td></tr>
+  <tr><td>flat MentalRoBERTa (mean-pool, 1 head)</td><td class="c">·</td><td class="c">·</td><td class="c">·</td></tr>
+  <tr><td><strong>dual-head hierarchical</strong></td><td class="c">·</td><td class="c">·</td><td class="c">·</td></tr>
+</table>
+<blockquote>Một bảng này gánh cả <strong>C1 + C2 + C3</strong>. Cột giữa (LLM-only) so với <code>val-on-LLM</code> cho ra con số khoảng cách của C3.</blockquote>
+
+<h2 id="t1">3. Tầng 1 — Ablation <span class="muted" style="font-size:0.7em">(nhẹ, 1 seed, chế độ LLM+gold)</span></h2>
+<p>Bỏ từng thành phần để chứng minh nó đáng có:</p>
+<ul>
+  <li>dual-head → <strong>chỉ-CE</strong> / <strong>chỉ-CORAL</strong></li>
+  <li>± sequence transformer</li>
+  <li>± attention pooling (so với mean-pool)</li>
+  <li>± augmentation &nbsp;·&nbsp; ± balance &nbsp;·&nbsp; ± feature-fusion</li>
+</ul>
+<blockquote><strong>Nêu thẳng:</strong> temporal embedding gần như chết vì Δt=0 (không có timestamp) — biến nhược điểm thành sự trung thực thay vì giả vờ là đóng góp.</blockquote>
+
+<h2 id="t2">4. Tầng 2 — Độ chặt thống kê</h2>
+<ul>
+  <li><strong>3–5 seed</strong> cho hàng dual-head; báo cáo mean ± khoảng tin cậy.</li>
+  <li>Kiểm định ghép cặp <strong>McNemar / bootstrap</strong> trên gold-test.</li>
+  <li><strong>Confusion matrix</strong> + per-class F1.</li>
+  <li><strong>Error analysis</strong> Behavior↔Attempt (hay nhầm + Behavior hiếm 6.5%).</li>
+</ul>
+
+<h2 id="t3">5. Tầng 3 — Nhãn LLM &amp; định vị <span class="muted" style="font-size:0.7em">(reviewer sẽ đâm)</span></h2>
+<ul>
+  <li>Ghi rõ <strong>pipeline gán nhãn LLM</strong>: model nào, prompt, hậu xử lý.</li>
+  <li><strong>Đo agreement nhãn-LLM vs gold</strong> trên phần user giao nhau; hoặc gán lại mẫu pool bằng LLM thứ 2 để ước lượng nhiễu.</li>
+  <li><strong>Bảng literature CSSRS-500</strong> để định vị con số.</li>
+</ul>
+
+<h2 id="budget">6. Ngân sách GPU — ràng buộc thật</h2>
+<p>Heavy cell (dual-head trên P = 9 680) ≈ <strong>9 giờ/seed</strong>. Chạy thô: 3 seed × 2 chế độ ≈ <span class="bad">54 GPU-giờ</span> chỉ riêng dual-head → vượt quota Kaggle (~30 giờ/tuần). Cách cắt:</p>
+<table>
+  <tr><th>Biện pháp</th><th>Tiết kiệm</th></tr>
+  <tr><td><code>R2_EPOCHS=6</code> (log bão hòa epoch 5–6)</td><td>~40% thời gian</td></tr>
+  <tr><td>Baseline (SVM, flat) rất rẻ → 3 seed thoải mái; chỉ dual-head mới đắt</td><td>—</td></tr>
+  <tr><td>Ablation prune bằng <code>val-on-LLM</code> (rẻ), chỉ config cuối eval gold</td><td>nhiều</td></tr>
+  <tr><td>3 seed <strong>chỉ</strong> cho hàng headline; ablation 1 seed</td><td>~½</td></tr>
+</table>
+<p>→ Gói lại còn <span class="good">~25–30 GPU-giờ</span>, vừa 1 tuần quota.</p>
+
+<h2 id="code">7. Thay đổi CODE cần thiết</h2>
+<p>Refactor <code>r2-suicide-risk-dualhead.py</code>:</p>
+<ul>
+  <li><strong>(a)</strong> gold-test <strong>đóng băng</strong> (tách 118 stratified, không bao giờ train trên nó)</li>
+  <li><strong>(b)</strong> công tắc <strong>3 chế độ train</strong>: <code>gold-only</code> / <code>LLM-only</code> / <code>LLM+gold</code></li>
+  <li><strong>(c)</strong> thêm <strong>flat MentalRoBERTa</strong> + <strong>TF-IDF+SVM</strong> baseline</li>
+  <li><strong>(d)</strong> vòng <strong>multi-seed</strong></li>
+  <li><strong>(e)</strong> lưu <strong>confusion-matrix + per-class JSON</strong></li>
+</ul>
+
+<h2 id="road">8. Lộ trình thực thi</h2>
+<ol class="steps">
+  <li><strong>Chốt thiết kế</strong> (doc này) → tránh chạy lại GPU sai như luồng A.</li>
+  <li><strong>Refactor kernel</strong> cho Table 1 (mục 7).</li>
+  <li><strong>Chạy Table 1</strong> (baseline trước — rẻ, smoke pipeline; rồi dual-head).</li>
+  <li><strong>Ablation</strong> (Tầng 1) prune bằng val-on-LLM.</li>
+  <li><strong>Thống kê + error analysis</strong> (Tầng 2).</li>
+  <li><strong>Nhãn LLM + literature</strong> (Tầng 3).</li>
+  <li><strong>Viết bản thảo</strong> — số chính: gold macro-F1; bảng 3 mức minh hoạ giá trị augment + tính trung thực gold-holdout.</li>
+</ol>
+
+<hr>
+<h3>Phụ lục — số liệu hiện có</h3>
+<ul class="muted">
+  <li><strong>B (gold-holdout):</strong> GOLD macro-F1 = <span class="good">0.3849 ± 0.0071</span>; val-on-LLM = 0.6661 → <strong>gap ≈ 0.28</strong>.</li>
+  <li><strong>A (CV trên 392 gold):</strong> macro-F1 = <span class="bad">0.1888 ± 0.0335</span> (cần baseline đơn giản để xác nhận diễn giải).</li>
+  <li><strong>Phân bố pool:</strong> <code>[3992, 3612, 634, 1442]</code> → <span class="bad">Behavior chỉ 6.5%</span> = nút thắt per-class.</li>
+  <li><strong>Số chính dự kiến:</strong> gold macro-F1 ≈ 0.385, kèm bảng 3 mức (0.19 / 0.67 / 0.385).</li>
+</ul>
+<p class="muted">Pebble-LLM · finetuning-message · R2</p>
+
+</div>
+</body>
+</html>

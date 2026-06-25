@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pebble-LLM — Project Work Report</title>
+<style>
+  :root{
+    --ink:#1a2433; --muted:#5b6675; --line:#e2e7ee; --bg:#f6f8fb;
+    --accent:#2563eb; --accent-soft:#eef3ff;
+    --done:#0f9d58; --done-bg:#e6f4ea; --prog:#d98a00; --prog-bg:#fff4e0;
+    --red:#d93025; --red-bg:#fce8e6; --yellow:#b06b00; --yellow-bg:#fff8e6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 28px 80px;}
+  header{border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:8px;}
+  h1{font-size:28px;margin:0 0 6px;letter-spacing:-.3px;}
+  .sub{color:var(--muted);font-size:14px;}
+  .meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:13px;color:var(--muted);}
+  .meta b{color:var(--ink);font-weight:600;}
+  h2{font-size:19px;margin:38px 0 12px;padding-left:11px;border-left:4px solid var(--accent);}
+  h3{font-size:15px;margin:22px 0 8px;color:var(--ink);}
+  p{margin:10px 0;}
+  ul{margin:10px 0;padding-left:22px;} li{margin:4px 0;}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px;
+    background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  thead th{background:var(--accent-soft);color:var(--ink);text-align:left;
+    font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);}
+  td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#fafbfd;}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  code{background:#eef1f5;padding:1px 6px;border-radius:5px;font-size:12.5px;
+    font-family:"SF Mono",Consolas,Menlo,monospace;}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .done{background:var(--done-bg);color:var(--done);}
+  .prog{background:var(--prog-bg);color:var(--prog);}
+  .p-red{color:var(--red);font-weight:700;}
+  .p-yellow{color:var(--yellow);font-weight:700;}
+  .cards{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0;}
+  .card{flex:1 1 220px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .card .lab{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  .card .val{font-size:24px;font-weight:700;margin-top:4px;}
+  .card .note{font-size:12px;color:var(--muted);margin-top:2px;}
+  .callout{background:var(--accent-soft);border:1px solid #d4e0ff;border-radius:10px;
+    padding:12px 16px;margin:16px 0;font-size:14px;}
+  .callout.warn{background:var(--yellow-bg);border-color:#f0e0b0;}
+  footer{margin-top:46px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--muted);}
+  /* paper-style (booktabs) result tables */
+  .ptable-wrap{margin:24px 0;}
+  .ptable-cap{text-align:center;font-size:12.5px;margin-bottom:7px;color:var(--ink);}
+  .ptable-cap .lbl{text-transform:uppercase;letter-spacing:.9px;font-weight:700;}
+  .ptable-cap .ttl{font-style:italic;color:var(--muted);}
+  table.ptable{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border:none;border-radius:0;}
+  table.ptable thead th{background:none;border:none;border-top:2px solid var(--ink);
+    border-bottom:1px solid var(--ink);text-align:center;padding:7px 10px;font-weight:600;}
+  table.ptable thead th:first-child{text-align:left;}
+  table.ptable td{border:none;text-align:center;padding:6px 10px;font-variant-numeric:tabular-nums;}
+  table.ptable td:first-child{text-align:left;font-variant-numeric:normal;}
+  table.ptable tbody tr:last-child td{border-bottom:2px solid var(--ink);}
+  table.ptable tbody tr:hover{background:none;}
+  table.ptable tr.ours td{background:#f1f6ff;font-weight:700;}
+  table.ptable tr.rule-top td{border-top:1px solid var(--line);}
+  .ptable-note{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;}
+  @media print{body{background:#fff;}.wrap{padding:0;}table,.card,.callout,.ptable-wrap{break-inside:avoid;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Pebble-LLM — Project Work Report</h1>
+  <div class="sub">Crisis-sensitive affect modeling for text and voice</div>
+  <div class="meta">
+    <span><b>Report date:</b> 2026-06-25</span>
+    <span><b>Branch:</b> main</span>
+    <span><b>Workstreams:</b> Text / Message · Voice</span>
+    <span><b>Target:</b> 2 × IEEE submissions</span>
+  </div>
+</header>
+
+<h2>1. Executive Summary</h2>
+<p>The project runs <b>two parallel research workstreams</b>, each targeting an IEEE submission:</p>
+<ul>
+  <li><b>Text / Message</b> — Analyze a user's messages for <b>emotional tone (positive vs. negative)</b>, implemented as an ordinal suicide-risk classifier (R2 hierarchical dual-head).</li>
+  <li><b>Voice</b> — <b>Recall-floored heterogeneous heads</b> for crisis-sensitive speech affect.</li>
+</ul>
+<p>Core experiments for both streams have produced <b>real, honest numbers</b>. The remaining critical-path items are
+<b>data acquisition / label-quality measurement</b>, not model code — they carry external latency and should be started first.</p>
+
+<div class="cards">
+  <div class="card"><div class="lab">Text gold-holdout</div><div class="val">0.19 → 0.385</div><div class="note">honest macro-F1 gain (+~50% rel)</div></div>
+  <div class="card"><div class="lab">Voice backbone Δ</div><div class="val">−0.071</div><div class="note">WavLM &gt; emotion2vec, 3/3 seeds</div></div>
+  <div class="card"><div class="lab">Crisis head precision</div><div class="val">0.617</div><div class="note">@ recall ≥ 0.90</div></div>
+  <div class="card"><div class="lab">Dataset size</div><div class="val">10,073</div><div class="note">suicide-risk samples</div></div>
+</div>
+
+<table>
+  <thead><tr><th>Workstream</th><th>Core experiments</th><th>Paper plan</th><th>Critical-path blocker</th></tr></thead>
+  <tbody>
+    <tr><td>Text / Message</td><td><span class="pill done">Done</span></td><td><span class="pill done">Drafted</span></td><td>LLM-vs-gold κ overlap set</td></tr>
+    <tr><td>Voice</td><td><span class="pill done">Backbone done</span> <span class="pill prog">MTL pending</span></td><td><span class="pill done">Drafted</span></td><td>MSP-Podcast access</td></tr>
+  </tbody>
+</table>
+
+<h2>2. Task Status Table</h2>
+<table>
+  <thead><tr><th class="num">#</th><th>Task</th><th>Stream</th><th>Status</th><th>Key result / output</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td>emotion2vec reproduction (RAVDESS linear-probe)</td><td>Voice</td><td><span class="pill done">Done</span></td><td>v1+v2 evaluated; HF Space deployed</td></tr>
+    <tr><td class="num">2</td><td>Enrich suicide-risk dataset → 10k</td><td>Text</td><td><span class="pill done">Done</span></td><td>10,073 samples; static viewer</td></tr>
+    <tr><td class="num">3</td><td>R2 5-fold CV on Kaggle GPU (gold-holdout eval)</td><td>Text</td><td><span class="pill done">Done</span></td><td>gold macro-F1 <b>0.357</b> vs 0.237 baseline</td></tr>
+    <tr><td class="num">4</td><td>R2 beat-the-paper: dual report + Behavior rebalance</td><td>Text</td><td><span class="pill prog">In progress</span></td><td>rebalanced gold macro-F1 <b>0.385</b></td></tr>
+    <tr><td class="num">5</td><td>Voice backbone selection (emotion2vec vs WavLM)</td><td>Voice</td><td><span class="pill done">Done</span></td><td>WavLM wins, Δ −0.071 (3/3 seeds)</td></tr>
+    <tr><td class="num">6</td><td>Voice MTL heads (emotion + affect CCC + crisis)</td><td>Voice</td><td><span class="pill prog">In progress</span></td><td>kernel built; Kaggle run pending (M3–M5)</td></tr>
+    <tr><td class="num">7</td><td>Paper 1 plan (Text, IEEE)</td><td>Text</td><td><span class="pill done">Drafted</span></td><td><code>PAPER-PLAN-text-ordinal-suicide.md</code></td></tr>
+    <tr><td class="num">8</td><td>Paper 2 plan (Voice, IEEE)</td><td>Voice</td><td><span class="pill done">Drafted</span></td><td><code>PAPER-PLAN-voice-crisis-affect.md</code></td></tr>
+  </tbody>
+</table>
+
+<h2>3. Experimental Results</h2>
+
+<h3>3.1 Text — R2 Hierarchical Dual-Head</h3>
+
+<div class="ptable-wrap">
+  <div class="ptable-cap"><span class="lbl">Table I</span><br><span class="ttl">Suicide-risk classification under three evaluation protocols. Macro-F1 / QWK on the 4-level C-SSRS scale. "Cross-to-gold" is the honest, non-circular protocol (train on LLM labels, evaluate on held-out clinical gold).</span></div>
+  <table class="ptable">
+    <thead><tr><th>Protocol</th><th>Train labels</th><th>Eval labels</th><th>Macro-F1</th><th>QWK</th></tr></thead>
+    <tbody>
+      <tr><td>Gold-CV</td><td>gold</td><td>gold</td><td>0.190</td><td>0.241</td></tr>
+      <tr><td>Within-LLM <span style="color:var(--muted)">(circular)</span></td><td>LLM</td><td>LLM</td><td>0.670</td><td>—</td></tr>
+      <tr class="ours"><td>Cross-to-gold (ours)</td><td>LLM</td><td>gold</td><td>0.385</td><td>0.378</td></tr>
+    </tbody>
+  </table>
+  <div class="ptable-note">5-fold std = 0.007. Within-LLM is reported only to expose circularity; it is not a valid accuracy claim.</div>
+</div>
+
+<div class="ptable-wrap">
+  <div class="ptable-cap"><span class="lbl">Table II</span><br><span class="ttl">Per-class macro-F1 under the gold-holdout (cross-to-gold) protocol.</span></div>
+  <table class="ptable">
+    <thead><tr><th>Class</th><th>Indicator</th><th>Ideation</th><th>Behavior</th><th>Attempt</th></tr></thead>
+    <tbody>
+      <tr><td>Macro-F1</td><td>0.50</td><td>0.48</td><td>0.18</td><td>0.37</td></tr>
+    </tbody>
+  </table>
+  <div class="ptable-note">Behavior collapses to 0.18 (rare class, 6.5% of pool) — flagged as a clinical limitation.</div>
+</div>
+
+<h3>3.2 Voice — Backbone &amp; Crisis Head</h3>
+
+<div class="ptable-wrap">
+  <div class="ptable-cap"><span class="lbl">Table III</span><br><span class="ttl">Speech-affect backbone selection on RAVDESS (frozen probe, 8-class emotion, mean ± std over 3 seeds). Paired delta is computed per seed.</span></div>
+  <table class="ptable">
+    <thead><tr><th>Backbone</th><th>Params</th><th>Macro-F1</th></tr></thead>
+    <tbody>
+      <tr><td>emotion2vec</td><td>~94 M</td><td>0.537 ± 0.007</td></tr>
+      <tr class="ours"><td>WavLM-Large (ours)</td><td>~316 M</td><td>0.609 ± 0.019</td></tr>
+      <tr class="rule-top"><td>Paired Δ (WavLM − emotion2vec)</td><td>—</td><td>−0.071 ± 0.017</td></tr>
+    </tbody>
+  </table>
+  <div class="ptable-note">WavLM wins on 3/3 seeds (all paired deltas &lt; 0).</div>
+</div>
+
+<div class="ptable-wrap">
+  <div class="ptable-cap"><span class="lbl">Table IV</span><br><span class="ttl">Recall-floored distress (crisis) head — operating point under a hard recall constraint.</span></div>
+  <table class="ptable">
+    <thead><tr><th>Constraint</th><th>Threshold</th><th>Precision</th></tr></thead>
+    <tbody>
+      <tr><td>Recall ≥ 0.90</td><td>0.69</td><td>0.617 ± 0.003</td></tr>
+    </tbody>
+  </table>
+  <div class="ptable-note">Precision reported at the recall floor; full precision–recall curve in the paper.</div>
+</div>
+
+<h2>4. Deliverables Shipped</h2>
+<ul>
+  <li>emotion2vec reproduction + multi-model tester + Hugging Face Space deployment.</li>
+  <li>Voice affect web demo (FastAPI + static sample picker).</li>
+  <li>Headless Kaggle GPU run driver (drive GPU runs from session).</li>
+  <li>Suicide-risk dataset enriched to 10k + static dataset viewer + fetch script.</li>
+  <li>23+ structured paper reading notes (related-work base for both papers).</li>
+</ul>
+
+<h2>5. Two-Paper Plans (IEEE)</h2>
+
+<h3>Paper 1 — Text</h3>
+<p><i>Weakly-Supervised Augmentation for Ordinal Suicide-Risk Classification: An Honest Gold-Holdout Study.</i></p>
+<p><b>Done:</b> dual-head + tri-objective architecture, 3-point comparison, per-class gold.<br>
+<b>Remaining:</b> <span class="p-red">●</span> LLM-label quality (Cohen's κ vs gold) · <span class="p-red">●</span> ablation table (CORAL vs CE, ±augment, ±balance, ±focal) · baselines · Behavior-collapse fix · ethics &amp; provenance.</p>
+
+<h3>Paper 2 — Voice</h3>
+<p><i>Backbone Selection and Recall-Floored Heterogeneous Heads for Crisis-Sensitive Speech Affect.</i></p>
+<p><b>Done:</b> paired-delta backbone selection, recall-floor distress head, end-to-end verifier.<br>
+<b>Remaining:</b> <span class="p-red">●</span> MSP-Podcast access + loader (real V/A/D labels) · <span class="p-red">●</span> Kaggle MTL-heads run (M3–M5) · <span class="p-red">●</span> CCC affect head on real labels · ablation (Kendall vs GradNorm/PCGrad) · eGeMAPS SER baseline.</p>
+
+<h2>6. Critical Path &amp; Next Actions</h2>
+<table>
+  <thead><tr><th>Priority</th><th>Action</th><th>Stream</th><th>Why now</th></tr></thead>
+  <tbody>
+    <tr><td><span class="p-red">🔴 1</span></td><td>Verify the LLM↔gold overlap set exists; compute Cohen's κ</td><td>Text</td><td>Gates Paper 1 contribution #3; external latency</td></tr>
+    <tr><td><span class="p-red">🔴 2</span></td><td>Submit MSP-Podcast access request (+ define fallback)</td><td>Voice</td><td>Longest external latency; gates Paper 2 affect head</td></tr>
+    <tr><td><span class="p-yellow">🟡 3</span></td><td>Run Kaggle MTL-heads (M3–M5); pull 10-fold metrics</td><td>Voice</td><td>In our control; runs in parallel while waiting on data</td></tr>
+    <tr><td><span class="p-yellow">🟡 4</span></td><td>Lock the 0.385 number; run the 4-config ablation + 2 baselines</td><td>Text</td><td>Every table/abstract depends on the locked number</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <b>Key risk:</b> both critical-path items are <b>data / label acquisition</b>, not model code — start them first because their latency is outside our control.
+</div>
+
+<footer>
+  Sources: <code>docs/papers/finetuning-message/PAPER-PLAN-text-ordinal-suicide.md</code>,
+  <code>docs/papers/voice/PAPER-PLAN-voice-crisis-affect.md</code>,
+  <code>docs/tasks/*.md</code>,
+  <code>kaggle/finetuning-message/r2-suicide-risk-dualhead/KET-QUA-PHAN-TICH.md</code>.
+  Generated 2026-06-25.
+</footer>
+
+</div>
+</body>
+</html>

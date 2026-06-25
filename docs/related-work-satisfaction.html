@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Related Work — User Satisfaction Estimation từ Next-Turn</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2029; --ink: #e6edf3; --muted: #9aa7b4;
+    --accent: #58a6ff; --accent2: #7ee787; --border: #2d3742;
+    --code-bg: #11161d; --warn: #ffa657; --bad: #ff7b72; --good: #7ee787;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7; font-size: 16px; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 24px 120px; }
+  h1 { font-size: 1.85rem; line-height: 1.28; margin: 0 0 8px; }
+  h2 { font-size: 1.35rem; margin: 50px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 1.06rem; margin: 24px 0 10px; color: var(--accent2); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  blockquote { margin: 16px 0; padding: 12px 18px; background: var(--panel);
+    border-left: 4px solid var(--accent); border-radius: 6px; color: var(--muted); }
+  blockquote strong { color: var(--ink); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em; color: var(--accent2); }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: var(--panel);
+    border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
+  th, td { padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #232c38; color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  ul, ol { padding-left: 24px; } li { margin: 7px 0; }
+  .lead { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 22px; margin: 20px 0; color: var(--muted); }
+  .lead strong { color: var(--ink); }
+  .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 22px; margin: 24px 0; }
+  .toc h3 { margin-top: 0; color: var(--ink); } .toc ol { margin: 0; }
+  .warn-box { background: linear-gradient(135deg, #2a2113, #1a2029); border: 1px solid var(--warn);
+    border-radius: 10px; padding: 2px 20px; margin: 18px 0; }
+  .contrib { background: linear-gradient(135deg, #16271a, #1a2029); border: 1px solid var(--good);
+    border-radius: 10px; padding: 4px 22px; margin: 22px 0; }
+  .contrib h3 { color: var(--good); }
+  .meta { font-size: 0.9rem; color: var(--muted); }
+  .star { color: var(--warn); }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 6px 22px 14px; margin: 18px 0; }
+  .card h3 { color: var(--accent2); }
+  .closeness { color: var(--muted); font-size: 0.92em; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .muted { color: var(--muted); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Related Work — User Satisfaction Estimation từ Next-Turn</h1>
+<p class="meta">Prior art cho hướng pivot · Compiled 2026-06-25</p>
+
+<div class="lead">
+<strong>Use case.</strong> Hệ thống chat với AI; sau mỗi câu trả lời của AI, dựa vào <strong>message kế tiếp của user</strong> (rephrase, sửa lại, bực bội, cảm ơn, bỏ ngang) để biết câu trả lời trước có làm user hài lòng không — tức suy ra satisfaction từ <em>implicit feedback</em>.
+</div>
+
+<blockquote>
+<strong>Vì sao xét pivot này từ <code>r2-suicide-risk-dualhead</code>.</strong> Về cỗ máy ML hai bài toán giống ~60–70%: cùng fine-tune một text-encoder + (multi-)classification head để suy ra một <em>trạng thái cảm xúc/thái độ từ text hội thoại ngắn</em>. Kiến trúc <strong>dual-head</strong> và <strong>ordinal head</strong> chuyển sang gần như nguyên vẹn. Khác biệt thật: (1) <strong>nguồn nhãn</strong> — satisfaction phải suy từ tín hiệu implicit nhiễu, không có nhãn lâm sàng sẵn; (2) <strong>input là cặp/hội thoại</strong> <code>[câu trả lời AI] [SEP] [lượt kế tiếp]</code>, không phải đơn message.
+</blockquote>
+
+<div class="toc">
+<h3>Dimensions xếp hạng (chỉnh cho pivot)</h3>
+<ol>
+<li><strong>D1</strong> — Encoder + multi-head (MTL) cho satisfaction (khớp dual-head)</li>
+<li><strong>D2</strong> — USE từ next-turn / implicit feedback (đúng use case)</li>
+<li><strong>D3</strong> — Dataset có nhãn satisfaction turn-level để khởi động</li>
+<li><strong>D4</strong> — LLM teacher → encoder student (silver-label distillation)</li>
+<li><strong>D5</strong> — Encoder backbone (~250M)</li>
+</ol>
+</div>
+
+<h2>Bảng tổng quan xếp hạng</h2>
+<table>
+<thead><tr><th>#</th><th>Paper</th><th>Venue / Year</th><th>Closeness mạnh</th><th>Vai trò cho project</th></tr></thead>
+<tbody>
+<tr><td>1 <span class="star">★</span></td><td>USDA — Sequential Dialogue Act + USE</td><td>WWW 2022</td><td>D1, D2, D5</td><td>Baseline kiến trúc #1</td></tr>
+<tr><td>2 <span class="star">★</span></td><td>STMAN — USE + Sentiment (MTL adversarial)</td><td>2024</td><td>D1, D2</td><td>Bằng chứng dual-head satisfaction+sentiment</td></tr>
+<tr><td>3</td><td>USS — Simulating User Satisfaction</td><td>SIGIR 2021</td><td>D3</td><td>Nguồn nhãn vàng để khởi động</td></tr>
+<tr><td>4</td><td>User Feedback in Human-LLM Dialogues</td><td>EMNLP 2025</td><td>D2</td><td>Cảnh báo: nhãn implicit nhiễu</td></tr>
+<tr><td>5</td><td>SPUR — Interpretable USE with LLMs</td><td>2024</td><td>D4, D2</td><td>LLM teacher → silver labels</td></tr>
+<tr><td>6</td><td>User Frustration Detection (TOD)</td><td>COLING 2025</td><td>D2</td><td>Catalog tín hiệu next-turn</td></tr>
+</tbody>
+</table>
+
+<h2>1 · USDA — Sequential Dialogue Act Modeling for USE <span class="star">★ sát nhất</span></h2>
+<div class="card">
+<p class="meta">Deng, Zhang, Lam, Cheng, Meng — <strong>WWW 2022</strong> · <a href="https://arxiv.org/abs/2202.02912">arXiv:2202.02912</a> · open</p>
+<p>Hierarchical Transformer encode toàn bộ ngữ cảnh hội thoại; <strong>multi-task</strong> jointly học <em>User Satisfaction Estimation</em> + <em>Dialogue Act Recognition</em>, khai thác chuỗi chuyển dịch dialogue-act. 2 biến thể (supervised/unsupervised) + 2 chiến lược task-adaptive pre-training. Validate trên 4 dataset goal-oriented; vượt baseline ổn định.</p>
+<p class="closeness"><strong>Closeness:</strong> D1 (rất mạnh — đúng "encoder + 2 head trên ngữ cảnh hội thoại"), D2, D5.</p>
+<p><strong>Why it matters:</strong> Gần đúng kiến trúc project đã có. Map thẳng: đổi head <em>dialogue-act</em> → head <em>sentiment/emotion</em>, giữ head <em>satisfaction</em>. <strong>Baseline #1 để bám theo.</strong></p>
+</div>
+
+<h2>2 · STMAN — Speaker Turn-Aware Multi-Task Adversarial Net <span class="star">★</span></h2>
+<div class="card">
+<p class="meta">Song, Kang, Liu, Li, Sun, Liu — <strong>2024</strong> · <a href="https://arxiv.org/abs/2410.09556">arXiv:2410.09556</a> · open</p>
+<p>Joint <strong>USE (dialogue-level) + Sentiment Analysis (utterance-level)</strong> — hai head ở hai mức hạt, cộng adversarial task-discriminator (biểu diễn task-specific) + speaker-turn interaction (đặc trưng chung bổ trợ). Đánh giá trên 2 dataset hội thoại dịch vụ thực.</p>
+<p class="closeness"><strong>Closeness:</strong> D1 (rất mạnh — combo satisfaction+sentiment dual-head), D2.</p>
+<p><strong>Why it matters:</strong> Bằng chứng học thuật rằng <strong>dual-head satisfaction + sentiment</strong> bổ trợ nhau — chính phương án transfer đề xuất.</p>
+</div>
+
+<h2>3 · USS — Simulating User Satisfaction (dataset)</h2>
+<div class="card">
+<p class="meta">Sun et al. — <strong>SIGIR 2021</strong> · <a href="https://arxiv.org/abs/2105.03748">arXiv:2105.03748</a> · open</p>
+<p>Bộ nhãn satisfaction quy mô lớn, turn-level: ~6.8k annotation cho 500 dialog (CCPE) + ~12.5k cho 1000 dialog (MultiWOZ), kèm các domain khác. Vốn cho user simulation nhưng dùng được như dataset USE chuẩn nhất hiện có.</p>
+<p class="closeness"><strong>Closeness:</strong> D3 (rất mạnh — dataset gold turn-level), D2.</p>
+<p><strong>Why it matters:</strong> <strong>Nguồn nhãn vàng để khởi động</strong>, giải đúng "vấn đề số 1" (lấy nhãn). Train/đánh giá ở đây trước khi sang dữ liệu sản phẩm thật.</p>
+</div>
+
+<h2>4 · User Feedback in Human-LLM Dialogues — "noisy as a learning signal"</h2>
+<div class="card">
+<p class="meta">Liu, Zhang, Choi — <strong>EMNLP 2025</strong> · <a href="https://arxiv.org/abs/2507.23158">arXiv:2507.23158</a> · open</p>
+<p>Trích <strong>implicit feedback từ next turn</strong> trên WildChat &amp; LMSYS (dialog thực với LLM). Kết luận: tín hiệu này hữu ích để hiểu user nhưng <em>nhiễu khi dùng làm signal huấn luyện</em> — giúp ở câu hỏi ngắn/curated (MTBench) nhưng không ở câu dài/phức tạp (WildBench).</p>
+<p class="closeness"><strong>Closeness:</strong> D2 (rất mạnh — đúng y use case: LLM chat, suy từ lượt kế tiếp).</p>
+</div>
+
+<div class="warn-box">
+<p><strong>⚠ Cảnh báo phương pháp luận then chốt.</strong> Đừng coi nhãn implicit next-turn là sạch. Đây định hình thiết kế label-noise handling, calibration, và cách validate — và cũng là <strong>khoảng trống mở để đóng góp</strong>.</p>
+</div>
+
+<h2>5 · SPUR — Interpretable USE with LLMs</h2>
+<div class="card">
+<p class="meta">Lin, Neville, Stokes et al. — <strong>2024</strong> · <a href="https://arxiv.org/abs/2403.12388">arXiv:2403.12388</a> · open</p>
+<p><strong>SPUR</strong> dùng LLM + iterative prompting (rubric có giám sát từ ví dụ gán nhãn) để trích tín hiệu satisfaction; vượt embedding-based; áp cho cả ChatGPT lẫn chatbot task-oriented; cho điểm kèm rubric diễn giải được.</p>
+<p class="closeness"><strong>Closeness:</strong> D4 (mạnh — LLM teacher), D2.</p>
+<p><strong>Why it matters:</strong> Dùng làm <strong>teacher/silver-labeler</strong> để distill nhãn satisfaction cho encoder student — đúng pattern "LLM teacher → smaller student" Pebble vốn dùng.</p>
+</div>
+
+<h2>6 · User Frustration Detection in Task-Oriented Dialog</h2>
+<div class="card">
+<p class="meta"><strong>COLING 2025 (Industry)</strong> · <a href="https://aclanthology.org/2025.coling-industry.23.pdf">ACL Anthology 2025.coling-industry.23</a> · open</p>
+<p>Phát hiện frustration/dissatisfaction kể cả khi không có ngôn ngữ tiêu cực rõ — termination, interruption, abandonment, error-correcting language ("no, …", "I said …"), reformulation.</p>
+<p class="closeness"><strong>Closeness:</strong> D2 (mạnh — catalog tín hiệu implicit cụ thể).</p>
+</div>
+
+<h3>Bổ sung (chưa đọc sâu, độ tin cậy thấp hơn)</h3>
+<ul>
+<li><em>Schema-Guided USS</em> — <a href="https://arxiv.org/pdf/2305.16798">arXiv:2305.16798</a> (2023)</li>
+<li><em>CAUSE — Counterfactual Assessment of USE</em> — <a href="https://arxiv.org/pdf/2403.19056">arXiv:2403.19056</a> (2024)</li>
+<li><em>Personalized Turn-Level User Conversation Satisfaction Benchmark</em> — <a href="https://arxiv.org/html/2605.29711">arXiv:2605.29711</a> (2026, <strong>cần xác minh</strong> — id rất mới)</li>
+</ul>
+
+<hr>
+
+<div class="contrib">
+<h3>Synthesis</h3>
+<p>Bám <strong>USDA (#1)</strong> làm xương kiến trúc (encoder + dual-head trên ngữ cảnh hội thoại — đúng cái project đã có), <strong>STMAN (#2)</strong> chứng minh combo <em>satisfaction + sentiment</em> dual-head hoạt động, lấy nhãn khởi động từ <strong>USS (#3)</strong>, và đọc kỹ <strong>#4 (EMNLP'25)</strong> vì nó cảnh báo đúng rủi ro lớn nhất của use case "suy từ lượt kế tiếp": <strong>nhãn implicit rất nhiễu</strong>. <strong>SPUR (#5)</strong> cho con đường sinh nhãn bằng LLM teacher để bù thiếu nhãn.</p>
+<p><strong>Kết luận transfer:</strong> topic này có related-work chín muồi và kiến trúc dual-head/encoder của project chuyển sang gần như nguyên vẹn — không phải làm lại từ đầu. Khoảng trống còn mở để đóng góp: xử lý <strong>label-noise của implicit next-turn feedback</strong> một cách có nguyên tắc (đúng chỗ #4 bỏ ngỏ).</p>
+</div>
+
+</div>
+</body>
+</html>

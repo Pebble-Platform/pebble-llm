@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phân tích kết quả Kaggle — R2 Dual-Head (A &amp; B)</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2029; --ink: #e6edf3; --muted: #9aa7b4;
+    --accent: #58a6ff; --accent2: #7ee787; --border: #2d3742;
+    --code-bg: #11161d; --warn: #ffa657; --bad: #ff7b72; --good: #7ee787;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7; font-size: 16px; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 24px 120px; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 8px; }
+  h2 { font-size: 1.35rem; margin: 50px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 1.08rem; margin: 26px 0 10px; color: var(--accent2); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  blockquote { margin: 16px 0; padding: 12px 18px; background: var(--panel);
+    border-left: 4px solid var(--accent); border-radius: 6px; color: var(--muted); }
+  blockquote strong { color: var(--ink); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em; color: var(--accent2); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; line-height: 1.55; margin: 16px 0; font-size: 0.86rem; }
+  pre code { background: none; padding: 0; color: var(--ink); }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: var(--panel);
+    border-radius: 8px; overflow: hidden; font-size: 0.92rem; }
+  th, td { padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #232c38; color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bad { color: var(--bad); font-weight: 600; }
+  .good { color: var(--good); font-weight: 600; }
+  .warnum { color: var(--warn); font-weight: 600; }
+  ul, ol { padding-left: 24px; } li { margin: 7px 0; }
+  .lead { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; margin: 20px 0; color: var(--muted); }
+  .lead strong { color: var(--ink); }
+  .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 22px; margin: 24px 0; }
+  .toc h3 { margin-top: 0; color: var(--ink); } .toc ol { margin: 0; }
+  .warn-box { background: linear-gradient(135deg, #2a2113, #1a2029); border: 1px solid var(--warn);
+    border-radius: 10px; padding: 4px 22px; margin: 24px 0; }
+  .warn-box h2 { color: var(--warn); border: none; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 20px 0; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card .big { font-size: 2rem; font-weight: 700; line-height: 1; margin: 6px 0; }
+  .card .lab { font-size: 0.82rem; color: var(--muted); }
+  .card.a { border-color: var(--bad); } .card.a .big { color: var(--bad); }
+  .card.bv { border-color: var(--border); } .card.bv .big { color: var(--warn); }
+  .card.bg { border-color: var(--good); } .card.bg .big { color: var(--good); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .muted { color: var(--muted); font-size: 0.92em; }
+  @media (max-width: 680px) { .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Phân tích kết quả Kaggle — R2 Hierarchical Dual-Head</h1>
+<p class="muted">
+  Hai kernel Kaggle đã COMPLETE (24/06/2026). Backbone:
+  <code>welsachy/mental-roberta-base-finetuned-depression</code> · GPU + Internet ON.<br>
+  <strong>B:</strong> <code>r2-suicide-risk-dual-head-mentalroberta</code> &nbsp;·&nbsp;
+  <strong>A:</strong> <code>r2-within-dist-cv-10k-balanced</code>
+</p>
+
+<div class="toc">
+  <h3>Mục lục</h3>
+  <ol>
+    <li><a href="#what">Hai luồng thực sự đã chạy gì</a></li>
+    <li><a href="#raw">Kết quả thô</a></li>
+    <li><a href="#interp">Diễn giải — ba con số, một câu chuyện</a></li>
+    <li><a href="#warn">Cảnh báo cấu hình Luồng A</a></li>
+    <li><a href="#next">Đề xuất bước tiếp theo</a></li>
+  </ol>
+</div>
+
+<h2 id="what">1. Hai luồng thực sự đã chạy gì <span class="muted" style="font-size:0.7em">(đọc từ log)</span></h2>
+<table>
+  <tr><th></th><th>Luồng A <code>within-dist-cv-10k-balanced</code></th><th>Luồng B <code>dual-head-mentalroberta</code></th></tr>
+  <tr><td><code>gold_holdout</code></td><td class="bad">False</td><td class="good">True</td></tr>
+  <tr><td>Data nạp</td><td><code>load_cssrs</code> → tải Zenodo, <strong>392 seq</strong> CSSRS-500 <code>[99,171,77,45]</code></td><td><code>load_combined</code> → pool <strong>9 680</strong> <code>[3992,3612,634,1442]</code> + gold <strong>392</strong></td></tr>
+  <tr><td>Cách đánh giá</td><td>5-fold CV ngay trên 392 mẫu lâm sàng</td><td>Train trên pool nhãn-LLM, eval mọi fold trên 392 gold</td></tr>
+  <tr><td>Thời gian</td><td>~19 phút (1 134 s)</td><td><strong>~9.2 giờ</strong> (33 115 s)</td></tr>
+  <tr><td>Early stop</td><td>Cả 5 fold dừng sớm @epoch 5–8</td><td>Chạy đủ 10 epoch/fold</td></tr>
+</table>
+
+<h2 id="raw">2. Kết quả thô</h2>
+<h3>Luồng A — CV trên 392 mẫu lâm sàng</h3>
+<pre><code>CV macro-F1: mean=<span style="color:#ff7b72">0.1888</span>  std=0.0335  folds=[0.147, 0.172, 0.228, 0.229, 0.169]
+per-class: Indicator ~0.35–0.49 | Ideation ≈ 0 | Behavior ≈ 0 | Attempt ~0.15–0.31
+best fold macro-F1 = 0.2290</code></pre>
+
+<h3>Luồng B — train 10k pool, eval gold</h3>
+<pre><code>GOLD macro-F1: mean=<span style="color:#7ee787">0.3849</span>  std=0.0071  folds=[0.393, 0.384, 0.387, 0.388, 0.372]
+(val-on-LLM macro-F1: mean=<span style="color:#ffa657">0.6661</span>  folds=[0.674, 0.671, 0.659, 0.675, 0.652])
+per-class-F1 gold (TB): Indicator 0.50 | Ideation 0.48 | Behavior 0.18 | Attempt 0.37
+best GOLD macro-F1 = 0.3934</code></pre>
+
+<h3>Per-class F1 trên gold (luồng B), từng fold</h3>
+<table>
+  <tr><th class="num">Fold</th><th class="num">Indicator</th><th class="num">Ideation</th><th class="num">Behavior</th><th class="num">Attempt</th></tr>
+  <tr><td class="num">0</td><td class="num">0.514</td><td class="num">0.479</td><td class="num">0.211</td><td class="num">0.370</td></tr>
+  <tr><td class="num">1</td><td class="num">0.471</td><td class="num">0.461</td><td class="num">0.194</td><td class="num">0.411</td></tr>
+  <tr><td class="num">2</td><td class="num">0.523</td><td class="num">0.478</td><td class="num">0.174</td><td class="num">0.372</td></tr>
+  <tr><td class="num">3</td><td class="num">0.487</td><td class="num">0.509</td><td class="num">0.208</td><td class="num">0.348</td></tr>
+  <tr><td class="num">4</td><td class="num">0.516</td><td class="num">0.472</td><td class="num">0.130</td><td class="num">0.370</td></tr>
+  <tr><td class="num"><strong>TB</strong></td><td class="num good">0.502</td><td class="num good">0.480</td><td class="num bad">0.183</td><td class="num warnum">0.374</td></tr>
+</table>
+
+<h2 id="interp">3. Diễn giải — ba con số, một câu chuyện</h2>
+<div class="cards">
+  <div class="card a"><div class="lab">A · CV trên 392 gold</div><div class="big">0.19</div><div class="lab">Model sụp đổ vì thiếu data</div></div>
+  <div class="card bv"><div class="lab">B (val) · within-dist 10k LLM</div><div class="big">0.67</div><div class="lab">Tốt nhưng lạc quan (đo trên nhãn LLM)</div></div>
+  <div class="card bg"><div class="lab">B (gold) · 10k → gold lâm sàng</div><div class="big">0.385</div><div class="lab">Con số trung thực để báo cáo</div></div>
+</div>
+
+<h3>Bốn kết luận chính</h3>
+<ol>
+  <li><strong>Dữ liệu là nút thắt, không phải kiến trúc.</strong> Train chỉ trên 392 mẫu gold (A) → macro-F1 0.19, hai class Ideation/Behavior gần như bằng 0. Đổ thêm 9 680 mẫu nhãn-LLM (B) → gold macro-F1 <strong>0.385, gấp đôi</strong>. Augment bằng nhãn-LLM thực sự cứu model.</li>
+  <li><strong>Khoảng cách LLM↔gold ≈ 0.28</strong> (0.67 → 0.385): nhãn LLM không khớp hoàn toàn nhãn lâm sàng. Nếu chỉ báo cáo 0.67 là tự đánh lừa — đây đúng là lý do thiết kế gold-holdout.</li>
+  <li><strong>Behavior là điểm yếu cố hữu</strong> (F1 chỉ ~0.18 trên gold). Nguyên nhân lộ rõ ở phân bố pool: Behavior chỉ <strong>634/9 680 ≈ 6.5%</strong>. <code>R2_BALANCE</code> (WeightedRandomSampler) chưa đủ vá — vì sampling lặp lại không tạo thêm đa dạng ngữ nghĩa.</li>
+  <li><strong>B rất ổn định</strong> (std 0.007 qua 5 fold) → con số 0.385 đáng tin để đưa vào thesis.</li>
+</ol>
+
+<div class="warn-box">
+<h2 id="warn">4. ⚠️ Cảnh báo cấu hình Luồng A</h2>
+<p>Tên kernel là <strong>"within-dist-cv-10k-balanced"</strong> nhưng log cho thấy nó <strong>không hề đụng tới 10k</strong> — vì <code>gold_holdout=False</code> nên đi nhánh <code>load_cssrs</code>, tải CSSRS-500 từ Zenodo và CV trên 392 mẫu. Tức A <strong>không phải</strong> "within-distribution CV trên 10k" như tên gọi; nó là baseline "train trên gold nhỏ".</p>
+<p>May là con số "within-dist trên 10k" đã có sẵn = <code>val-on-LLM mean = 0.667</code> bên trong B. Nên về mặt khoa học vẫn đủ 3 điểm so sánh.</p>
+<p>→ Nếu A định chạy đúng nghĩa CV-trên-10k riêng: code hiện <strong>không có</strong> nhánh CV trên combined-pool khi <code>gold_holdout=False</code>; nó luôn dùng CSSRS-500.</p>
+</div>
+
+<h2 id="next">5. Đề xuất bước tiếp theo</h2>
+<ul>
+  <li><strong>Cải thiện Behavior:</strong> thay sampling-lặp bằng <strong>oversample có augment mạnh</strong> riêng cho class Behavior (paraphrase/back-translation), hoặc nâng <code>focal_gamma</code> / trọng số class Behavior trong loss.</li>
+  <li><strong>Lọc nhãn-LLM:</strong> kiểm tra độ tin cậy nhãn LLM cho Behavior (class hiếm + dễ nhầm với Attempt) — có thể nhãn nhiễu nhiều nhất ở đây.</li>
+  <li><strong>Báo cáo thesis:</strong> dùng <strong>gold macro-F1 = 0.385 ± 0.007</strong> làm số chính, kèm bảng 3-mức (gold-CV 0.19 / within-LLM 0.67 / cross-to-gold 0.385) để minh hoạ giá trị của augment + tính trung thực của gold-holdout.</li>
+</ul>
+
+<hr>
+<h3>Phụ lục — số liệu nguồn</h3>
+<ul class="muted">
+  <li><strong>B data split:</strong> <code>test(gold)=392 [99,171,77,45]</code> | <code>train-pool=9680 [3992,3612,634,1442]</code></li>
+  <li><strong>B gold folds:</strong> <code>[0.3934, 0.3841, 0.3868, 0.388, 0.3721]</code> → mean 0.3849, std 0.0071</li>
+  <li><strong>B val (LLM) folds:</strong> <code>[0.6735, 0.6705, 0.6592, 0.6749, 0.6523]</code> → mean 0.6661</li>
+  <li><strong>A CV folds:</strong> <code>[0.1465, 0.1716, 0.2276, 0.229, 0.1691]</code> → mean 0.1888, std 0.0335</li>
+</ul>
+<p class="muted">Sinh từ log Kaggle — Pebble-LLM · finetuning-message · R2</p>
+
+</div>
+</body>
+</html>

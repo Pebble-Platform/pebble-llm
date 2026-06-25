@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nghiên cứu bài báo gốc — Hierarchical Dual-Head (Yang et al., 2025)</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2029; --ink: #e6edf3; --muted: #9aa7b4;
+    --accent: #58a6ff; --accent2: #7ee787; --border: #2d3742;
+    --code-bg: #11161d; --warn: #ffa657; --bad: #ff7b72; --good: #7ee787;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7; font-size: 16px; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 40px 24px 120px; }
+  h1 { font-size: 1.85rem; line-height: 1.28; margin: 0 0 8px; }
+  h2 { font-size: 1.35rem; margin: 50px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 1.06rem; margin: 24px 0 10px; color: var(--accent2); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  blockquote { margin: 16px 0; padding: 12px 18px; background: var(--panel);
+    border-left: 4px solid var(--accent); border-radius: 6px; color: var(--muted); }
+  blockquote strong { color: var(--ink); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em; color: var(--accent2); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; line-height: 1.5; margin: 16px 0; font-size: 0.84rem; }
+  pre code { background: none; padding: 0; color: var(--ink); }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: var(--panel);
+    border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
+  th, td { padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #232c38; color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bad { color: var(--bad); font-weight: 600; }
+  .good { color: var(--good); font-weight: 600; }
+  .warnum { color: var(--warn); font-weight: 600; }
+  ul, ol { padding-left: 24px; } li { margin: 7px 0; }
+  .lead { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 22px; margin: 20px 0; color: var(--muted); }
+  .lead strong { color: var(--ink); }
+  .toc { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 22px; margin: 24px 0; }
+  .toc h3 { margin-top: 0; color: var(--ink); } .toc ol { margin: 0; }
+  .warn-box { background: linear-gradient(135deg, #2a2113, #1a2029); border: 1px solid var(--warn);
+    border-radius: 10px; padding: 2px 20px; margin: 18px 0; }
+  .meta { font-size: 0.9rem; color: var(--muted); }
+  .contrib { background: linear-gradient(135deg, #16271a, #1a2029); border: 1px solid var(--good);
+    border-radius: 10px; padding: 4px 22px; margin: 22px 0; }
+  .contrib h3 { color: var(--good); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .muted { color: var(--muted); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Nghiên cứu bài báo gốc<br>Hierarchical Dual-Head Model for Suicide Risk Assessment via MentalRoBERTa</h1>
+<p class="meta">
+  <strong>Yang, Wang, Tan, Tan, Ji, Zhou</strong> — 2025 IEEE International Conference on Big Data ·
+  arXiv:2510.20085 (23/10/2025) · IEEE BigData 2025 Cup.<br>
+  Nguồn: arXiv abstract + full-text (ar5iv). Bản nghiên cứu lại, đối chiếu số liệu chính xác.
+</p>
+
+<div class="toc">
+  <h3>Mục lục</h3>
+  <ol>
+    <li><a href="#prob">Bài toán</a></li>
+    <li><a href="#arch">Kiến trúc — 6 khối</a></li>
+    <li><a href="#loss">Hàm loss tri-objective</a></li>
+    <li><a href="#train">Chiến lược huấn luyện</a></li>
+    <li><a href="#data">Dataset &amp; pipeline làm giàu</a></li>
+    <li><a href="#res">Kết quả gốc</a></li>
+    <li><a href="#lim">Hạn chế</a></li>
+    <li><a href="#repro">Đối chiếu với bản tái hiện của ta</a></li>
+    <li><a href="#pebble">Map sang Pebble</a></li>
+  </ol>
+</div>
+
+<h2 id="prob">1. Bài toán</h2>
+<p>Dự đoán <strong>mức nguy cơ tự sát của 1 user</strong> <code>y ∈ {0,1,2,3}</code> từ chuỗi bài đăng Reddit theo thời gian.</p>
+<table>
+  <tr><th>Mức</th><th>Tên</th><th>Ý nghĩa</th></tr>
+  <tr><td class="num">0</td><td><strong>Indicator</strong></td><td>Dấu hiệu/cảnh báo, không ý định chết (gồm cả nói về người khác)</td></tr>
+  <tr><td class="num">1</td><td><strong>Ideation</strong></td><td>Có ý nghĩ/mong muốn chết, chưa có kế hoạch</td></tr>
+  <tr><td class="num">2</td><td><strong>Behavior</strong></td><td>Chuẩn bị/lên kế hoạch, tự hại không rõ ý định chết</td></tr>
+  <tr><td class="num">3</td><td><strong>Attempt</strong></td><td>Đã từng cố tự sát</td></tr>
+</table>
+<p>Ba thách thức nêu ở abstract: <strong>(1)</strong> mất cân bằng lớp nghiêm trọng, <strong>(2)</strong> độ phức tạp thời gian, <strong>(3)</strong> bản chất kép <em>ordinal + categorical</em>. Cấu trúc mẫu: <strong>1 sequence = 5 bài liên tiếp + timestamp</strong>; bài thứ 6 làm tham chiếu gán nhãn.</p>
+
+<h2 id="arch">2. Kiến trúc — 6 khối (Fig 1)</h2>
+<pre><code>5 bài + Δt
+   │
+[1] MentalRoBERTa (đóng băng 50%)  → eᵢ ∈ ℝ⁷⁶⁸  (lấy [CLS] mỗi bài)
+   │  + [2] Temporal embedding  ēᵢ = eᵢ + eᵢᵗⁱᵐᵉ
+   ▼
+[3] Sequence Transformer (3 lớp, 8-head)  → S = [s₁..s₅]
+   ▼
+[4] Attention Pooling (4-head, query học được)  → u ∈ ℝ⁷⁶⁸
+   │  + [5] Statistical features (optional)  u_fused
+   ▼
+[6] Dual Heads:  CORAL (ordinal) + Classification (categorical)
+   ▼
+p_final = 0.5·p_CORAL + 0.5·p_class   (ensemble lúc infer)</code></pre>
+<ol>
+  <li><strong>Post-Level Encoding — MentalRoBERTa.</strong> RoBERTa-base 12 lớp, hidden 768, 125M, pretrain Reddit MH. Mỗi bài → max-len <strong>512</strong> → <code>[CLS]</code>. Đóng băng embedding + 6 lớp đầu (50%) → ~70M trainable.</li>
+  <li><strong>Temporal Embedding.</strong> <code>Δtᵢ = min(tᵢ₊₁−tᵢ, 365)</code>, <code>Δt₀=0</code>. <code>eᵢᵗⁱᵐᵉ = Dropout(ReLU(LayerNorm(Wₜ·Δtᵢ+bₜ)))</code>.</li>
+  <li><strong>Sequence Transformer.</strong> 3 lớp, 8-head (head dim 96), FFN 3072 + GELU.</li>
+  <li><strong>Attention Pooling.</strong> 4-head MHA với query học được, key-padding-mask cho bài pad.</li>
+  <li><strong>Statistical Features (optional).</strong> Thống kê độ dài bài + time-interval → MLP → fuse.</li>
+  <li><strong>Dual Heads.</strong> CORAL (chia sẻ <code>w_c</code> + bias có thứ tự, dự đoán đơn điệu) + Classification 4 lớp.</li>
+</ol>
+
+<h2 id="loss">3. Hàm loss — tri-objective</h2>
+<pre><code>L_total = 0.5·L_CORAL + 0.3·L_CE + 0.2·L_Focal</code></pre>
+<ul>
+  <li><strong>CORAL</strong>: target nhị phân <code>t_k = 𝟙[y&gt;k]</code>, BCE — chia sẻ trọng số + bias có thứ tự ⇒ đơn điệu.</li>
+  <li><strong>CE + label smoothing</strong> ε=0.1 — giảm overconfidence.</li>
+  <li><strong>Focal</strong> γ=2, α nghịch tần suất lớp — chống mất cân bằng.</li>
+</ul>
+
+<h2 id="train">4. Chiến lược huấn luyện</h2>
+<ul>
+  <li>Đóng băng embedding + 6 lớp đầu → ~70M trainable.</li>
+  <li><strong>LR phân biệt</strong>: <code>2e-5</code> (RoBERTa mở băng), <code>1e-4</code> (phần mới).</li>
+  <li>AdamW (wd 0.01), cosine + 10% warmup, grad-accum 2 × batch 8 (effective 16), clip 1.0.</li>
+  <li>Dropout 0.3, label smoothing 0.1, AMP.</li>
+  <li><strong>Text augmentation</strong> (mỗi bài, 50%): xóa 10% từ / hoán đổi 2 từ / synonym WordNet.</li>
+  <li><strong>5-fold stratified CV</strong>, early stopping patience 5 theo val macro-F1.</li>
+</ul>
+
+<h2 id="data">5. Dataset &amp; pipeline làm giàu <span class="muted" style="font-size:0.7em">(quan trọng nhất cho bài của ta)</span></h2>
+<p><strong>Nguồn:</strong> dataset tự xây từ Reddit (r/depression, r/SuicideWatch) — <strong>không phải benchmark public</strong>.</p>
+<table>
+  <tr><th>Tập</th><th class="num">Tổng</th><th class="num">L0 Indicator</th><th class="num">L1 Ideation</th><th class="num">L2 Behavior</th><th class="num">L3 Attempt</th></tr>
+  <tr><td><strong>Gốc</strong> (post-level)</td><td class="num">7 383</td><td class="num">2 480</td><td class="num">3 536</td><td class="num">1 019</td><td class="num">348</td></tr>
+  <tr><td><strong>Sau augment</strong> (~)</td><td class="num">~11 105</td><td class="num">~3 198</td><td class="num">~5 423</td><td class="num warnum">~1 950 (+92%)</td><td class="num warnum">~701 (+53%)</td></tr>
+</table>
+<h3>Pipeline làm giàu (2 nhánh)</h3>
+<ul>
+  <li><strong>Nhánh 1 — In-sample LLM generation:</strong> ưu tiên lớp hiếm (Level 3). Sinh <strong>3 biến thể/bài</strong> bằng paraphrase + back-translation mô phỏng, giữ ngữ nghĩa + ngôi thứ nhất + mức nguy cơ.</li>
+  <li><strong>Nhánh 2 — External crawl + LLM label:</strong> crawl r/SuicideWatch → ghép 5 bài/user → "bài thứ 6 làm tham chiếu" → <strong>ensemble nhiều LLM bỏ phiếu</strong> (majority voting) → lọc còn <strong>3 722 sequence</strong>.</li>
+</ul>
+
+<h2 id="res">6. Kết quả gốc <span class="muted" style="font-size:0.7em">(số chính xác)</span></h2>
+<h3>Bảng I — So với baseline</h3>
+<table>
+  <tr><th>Model</th><th class="num">Macro-F1</th><th class="num">QWK</th><th class="num">Weighted-F1</th></tr>
+  <tr><td>BiLSTM-MTL</td><td class="num">0.4194</td><td class="num">0.3419</td><td class="num">0.4688</td></tr>
+  <tr><td>Transformer-HAN</td><td class="num">0.4906</td><td class="num">0.4329</td><td class="num">0.5028</td></tr>
+  <tr><td><strong>Proposed</strong></td><td class="num good">0.5091</td><td class="num good">0.4692</td><td class="num">0.4870</td></tr>
+</table>
+<h3>Bảng II — Ablation</h3>
+<table>
+  <tr><th>Variant</th><th class="num">Macro-F1</th><th class="num">MAE</th><th class="num">QWK</th></tr>
+  <tr><td>No Transformer</td><td class="num">0.5020</td><td class="num">0.6747</td><td class="num">0.4421</td></tr>
+  <tr><td>No Features</td><td class="num">0.5094</td><td class="num">0.6706</td><td class="num">0.4439</td></tr>
+  <tr><td><strong>Full Model</strong></td><td class="num good">0.5193</td><td class="num good">0.6446</td><td class="num">0.4575</td></tr>
+</table>
+<h3>Tác động augmentation</h3>
+<table>
+  <tr><th>Dữ liệu</th><th class="num">Macro-F1</th><th class="num">MAE</th><th class="num">QWK</th></tr>
+  <tr><td>Original (imbalanced)</td><td class="num bad">0.3540</td><td class="num">0.7244</td><td class="num">0.2410</td></tr>
+  <tr><td><strong>Augmented (full)</strong></td><td class="num good">0.5098</td><td class="num">0.6474</td><td class="num">0.4692</td></tr>
+</table>
+<p>→ Augment cho <strong>+0.155 macro-F1 (~+44% rel)</strong>, QWK <code>0.241 → 0.469</code>.</p>
+<div class="warn-box">
+<p>⚠️ <strong>Số chính của paper không nhất quán tuyệt đối:</strong> macro-F1 model đề xuất xuất hiện dưới 3 giá trị <code>0.5091 / 0.5098 / 0.5193</code> ở 3 bảng khác nhau. Khi trích dẫn nên ghi rõ <strong>lấy từ bảng nào</strong> — và đây cũng là quan sát đáng nêu trong related-work của ta.</p>
+</div>
+
+<h2 id="lim">7. Hạn chế <span class="muted" style="font-size:0.7em">(paper không có mục riêng)</span></h2>
+<ol>
+  <li><strong>Mất cân bằng vẫn chỉ vá một phần</strong> dù augment (Behavior/Attempt vẫn yếu).</li>
+  <li><strong>Phụ thuộc cửa sổ 5 bài</strong> — không hỗ trợ đơn-bài; không khảo sát độ nhạy độ dài chuỗi.</li>
+  <li><strong>Macro-F1 ~0.51</strong> — còn nhiều dư địa.</li>
+  <li><strong>Chủ yếu tiếng Anh / Reddit</strong> — chưa rõ tổng quát.</li>
+  <li><strong>Nhãn-LLM nhánh crawl</strong> chỉ kiểm bằng majority-voting; <strong>không đo agreement với nhãn lâm sàng</strong> → khe hở mà bài reproduction của ta khai thác.</li>
+</ol>
+
+<h2 id="repro">8. Đối chiếu với bản tái hiện của ta</h2>
+<table>
+  <tr><th>Khía cạnh</th><th>Paper gốc</th><th>Bản của ta</th></tr>
+  <tr><td>Dataset</td><td>Reddit tự xây, 7 383 → ~11k</td><td><strong>CSSRS-500 public</strong> (392) + làm giàu <strong>9 680 nhãn-LLM</strong></td></tr>
+  <tr><td>Augment</td><td>In-sample LLM + crawl + <strong>ensemble-LLM</strong></td><td>scrape pullpush + <strong>đơn-LLM</strong> (gpt-5.4-mini), lọc confidence</td></tr>
+  <tr><td>Timestamp</td><td>Có Δt thật</td><td><strong>Δt=0</strong> → temporal head ≈ bias hằng</td></tr>
+  <tr><td>Đánh giá</td><td>5-fold CV in-distribution</td><td><strong>gold-holdout</strong> (train nhãn-LLM → test gold lâm sàng)</td></tr>
+  <tr><td>Macro-F1</td><td class="good">0.51 (augmented)</td><td><strong class="warnum">0.385 gold</strong> / 0.667 within-LLM</td></tr>
+</table>
+<div class="contrib">
+<h3>Ba điểm bài reproduction của ta đóng góp thêm</h3>
+<ol>
+  <li><strong>Đánh giá trung thực hơn.</strong> Paper đo in-distribution (CV trên chính tập đã augment-LLM) → lạc quan. Ta dùng gold-holdout, lộ khoảng cách nhãn-LLM↔lâm sàng <strong>≈ 0.28</strong> mà paper không đo.</li>
+  <li><strong>Định lượng giá trị augment trên benchmark public</strong> (CSSRS-500): 0.19 (gold-only) → 0.385 (LLM-augmented).</li>
+  <li><strong>Phơi bày nút thắt lớp hiếm.</strong> Behavior chỉ 6.5% pool → F1 ~0.18; augment đơn-LLM không tự giải quyết lớp hiếm.</li>
+</ol>
+</div>
+
+<h2 id="pebble">9. Map sang Pebble</h2>
+<ul>
+  <li><strong>CORAL ordinal head</strong> = ứng viên cho head <code>severity</code> (thay CE phẳng) — giải "lỗi adjacent".</li>
+  <li><strong>Tri-objective CORAL+CE+Focal</strong> = trộn ordinal + categorical + chống imbalance.</li>
+  <li><strong>Freeze 50% + differentiated LR</strong> = trùng kế hoạch staged-unfreeze.</li>
+  <li><strong>Ensemble 2 head</strong> = ý tưởng cho head đa-mục-tiêu.</li>
+</ul>
+
+<hr>
+<p class="muted">Nguồn: arXiv:2510.20085 (abstract + ar5iv full-text) · số liệu tái hiện: KET-QUA-PHAN-TICH.md, log Kaggle A/B · Pebble-LLM · finetuning-message · R2</p>
+
+</div>
+</body>
+</html>
