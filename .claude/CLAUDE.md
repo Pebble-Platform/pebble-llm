@@ -1,50 +1,64 @@
-# Claude Code Project Instructions
+# Pebble-LLM — Ordinal Suicide-Risk research
 
-> These instructions are specific to Claude Code and supplement the root `AGENTS.md`.
-> For project architecture, coding conventions, commands, and patterns, refer to `AGENTS.md` — it is the single source of truth.
+A **research repo** (Python · `uv` · `ruff`/`mypy`/`pytest`), not a product build.
+It asks whether LLM weak labels *honestly* augment a scarce clinical gold set for
+**ordinal** suicide-risk classification, and produces an IEEE paper plus the
+experiment infrastructure behind it. The single most important constraint:
+**gold-holdout — never report a metric trained and evaluated on the same label
+source** (within-LLM 0.67 ≠ honest gold 0.385).
 
-## Quick Reference
+> This file is a loader. Full rules: [`WORKFLOW.md`](../WORKFLOW.md).
+> It previously described a TypeScript/pnpm/Biome/`AGENTS.md` stack — a
+> wrong-project artifact flagged in `README.md`; removed at IDD init. The
+> correct Python tooling lives in `WORKFLOW.md` → Tooling.
 
-- **Package manager**: `pnpm` (never use npm or yarn)
-- **Node**: >= 20
-- **Linter/Formatter**: Biome (`pnpm lint:fix`, `pnpm format`)
-- **Type check**: `pnpm type-check`
-- **Unit tests**: `pnpm test:unit`
-- **E2E tests**: `pnpm test`
-- **DB migrations**: `pnpm db:generate` then `pnpm db:migrate`
+## How this repo is organized (three-layer intent-driven workflow)
 
-## Rules (Claude Code only)
+The change discipline for a file is determined by its directory:
 
-- Do NOT run `pnpm build`, `pnpm dev`, `pnpm install`, or `pnpm add` unless explicitly asked
-- After writing or modifying code, run `pnpm lint:fix` and `pnpm type-check` to validate
-- All other coding rules are in `AGENTS.md` — do not duplicate them here
+| Layer | Path | Change discipline |
+|---|---|---|
+| Intent | `docs/intent/` | Rarely; explicit human decision only. Never edit as a side effect of a code/spec change. |
+| Spec — state | `docs/spec/capabilities/` | Current truth per capability; a behavior/result change updates it in the same PR. |
+| Spec — change | `docs/spec/changes/NNN-*/` | One folder per unit of work / experiment round; immutable once shipped. `docs/spec/decisions/` holds ADRs. |
+| Execution | `src/pebble_llm/`, `kaggle/`, `scripts/`, `tests/` | Derived; must satisfy the layers above or it doesn't land. |
 
-## Commit Convention
-Format: `type(module): [NA-ticket] summary` — scope always required, ticket ID required for `feat`/`fix`/`refactor`/`perf`/`revert`, optional for `chore`/`docs`/`ci`/`build`/`test`/`pick`.
+**Ambiguity escalates up, never gets improvised downward.** If the spec doesn't
+answer a question, fix the spec before coding. If it can't answer without knowing
+why, a human decides. A number obtained by guessing past a protocol hole is worse
+than no number.
 
-## Commands
+## Hard constraints (always binding — full list in `docs/intent/`)
 
-| Command | Purpose |
-|---------|---------|
-| `/na-plan` | Phase 1 planning workflow — produces `01-spec.md`, `02-tdd.md`, `03-plan.md`, `04-task.md` for a ticket |
-| `/na-investigate-bug` | Bug investigation workflow — produces `bug-context.md`, RCA docs, and the 3-doc fix package |
+- **Gold-holdout always:** train on weak/LLM labels, evaluate on held-out clinical gold; the pools are disjoint by example.
+- **Subject-level integrity:** splits/folds by user, never by post (same user ⇒ same split).
+- **Reproducible by construction:** pinned Kaggle stack + fixed seed + multi-fold with std; every headline number traces to a kernel + log.
+- **Clinical-data ethics:** suicide-risk corpora are de-identified and **never committed** (`data/**` stays gitignored); provenance documented.
+- The invariants in `docs/intent/invariants.md` (I1–I6) are mirrored by the permanent `tests/invariants/` suite; a PR that breaks one is wrong by definition.
+
+## Before working
+
+1. Read `docs/intent/constraints.md` (short) — the constraints that bound any valid result.
+2. Read the change folder you're working in under `docs/spec/changes/` — its exit criteria + Verification table are the success criteria.
+3. Check the touched files in `docs/spec/capabilities/`; a behavior/result change updates them in the same PR.
+
+## Tooling
+
+`make check` = `ruff` + `mypy` + `pytest` (Python ≥ 3.11, `uv`). GPU runs use the
+pinned Kaggle stack — see `WORKFLOW.md` → Tooling. **Never pnpm/npm/Biome.**
 
 ## Skills
 
 | Skill | When to Use |
 |-------|-------------|
-| `/na-analyze-requirement` | Analyze a raw request → `01-spec.md` (used by `/na-plan`) |
-| `/write-phase-plan` | Generate phased roadmap from spec + TDD → `03-plan.md` (used by `/na-plan`) |
-| `/na-bug-reproduce` | Capture bug repro + logs → `bug-context.md` (used by `/na-investigate-bug`) |
-| `/na-bug-rca` | Root-cause analysis from logs (used by `/na-investigate-bug`) |
-| `/na-bug-fix-package` | Produce the 3-doc fix package (used by `/na-investigate-bug`) |
-| `/azure-devops-cli` | Manage ADO resources via `az` CLI |
-| `/diagram` | Generate Mermaid or ASCII diagrams |
-| `/summarize-release` | Generate release summary in `docs/releases/` |
 | `/research-paper` | Find papers related to a topic, ranked by closeness to Pebble (agent: `research-paper`) |
 | `/analysis-paper` | Score a paper's % overlap with Pebble + pick the best transferable point (agent: `analysis-paper`) |
 | `/find-dataset` | Find a paper's dataset, check license/gate, download open ones to `data/<stream>/external/` (agent: `find-dataset`) |
 | `/long-task` | Run a long/multi-session task against a living doc at `docs/tasks/<slug>.md`; auto-spawns research on blocking uncertainties (agent: `task-researcher`) |
+| `/diagram` | Generate Mermaid or ASCII diagrams |
+| `/summarize-release` | Generate release summary in `docs/releases/` |
+
+(Other skills — planning/bug workflows — are surfaced by the harness; they are generic, not tuned to this repo.)
 
 ## Hooks
 
@@ -52,7 +66,7 @@ Format: `type(module): [NA-ticket] summary` — scope always required, ticket ID
 |------|-------|---------|
 | `file-guard.js` | PreToolUse | Block access to sensitive files (.env, keys, credentials) |
 | `search-before-code.js` | PreToolUse | Remind to search existing patterns before writing code |
-| `post-edit-biome.js` | PostToolUse | Auto-format files with Biome after edits |
+| `post-edit-biome.js` | PostToolUse | Auto-format on edit (configured globally; Python files format via `ruff`) |
 
 ## Shared Protocols (`.claude/skills/shared/`)
 
@@ -65,23 +79,11 @@ Format: `type(module): [NA-ticket] summary` — scope always required, ticket ID
 
 ## MCP Servers
 
-The following MCP servers are enabled in `settings.json`:
-
-| Server               | Purpose                                              |
-| -------------------- | ---------------------------------------------------- |
-| `context7`           | Library documentation lookup — use for up-to-date API references |
-| `memory`             | Persistent memory across conversations               |
-| `sequential-thinking`| Step-by-step reasoning for complex problems           |
-
-## Code Validation Checklist
-
-Before considering a task complete, verify:
-
-1. **Lint**: `pnpm lint:fix` passes with no errors
-2. **Types**: `pnpm type-check` passes with no errors
-3. **Tests**: `pnpm test:unit` passes (if tests exist for modified code)
-4. **Imports**: All imports use `@/*` alias, no unused imports
-5. **Patterns**: Follow existing patterns in `AGENTS.md` (API routes, server actions, components)
+| Server | Purpose |
+|---|---|
+| `context7` | Library documentation lookup — up-to-date API references |
+| `memory` | Persistent memory across conversations |
+| `sequential-thinking` | Step-by-step reasoning for complex problems |
 
 <!-- CODEGRAPH_START -->
 ## CodeGraph
