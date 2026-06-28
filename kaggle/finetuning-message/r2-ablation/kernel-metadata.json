@@ -1,0 +1,16 @@
+{
+  "id": "phatneurondai/r2-ablation-flatce",
+  "title": "r2-ablation-flatce",
+  "code_file": "r2-ablation.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": ["gpu"],
+  "dataset_sources": ["phatneurondai/r2-cssrs-combined-10k"],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}

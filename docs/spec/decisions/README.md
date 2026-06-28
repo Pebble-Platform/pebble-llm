@@ -23,4 +23,4 @@ evidence**, record it here as an ADR and stop tracking it as "open".
 
 | ADR | Title | Status |
 |---|---|---|
-| _(none yet — open decisions 1–4 in change 001 resolve here as runs land)_ | | |
+| [001](ADR-001-loss-family-corn-gce.md) | Ordinal loss family = CORN+GCE (resolves change 001 open decision #2) | accepted |

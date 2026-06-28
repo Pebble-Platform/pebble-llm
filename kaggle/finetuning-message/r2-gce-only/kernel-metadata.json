@@ -1,0 +1,16 @@
+{
+  "id": "phatneurondai/r2-gce-only",
+  "title": "r2-gce-only",
+  "code_file": "r2-gce-only.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": ["gpu"],
+  "dataset_sources": ["phatneurondai/r2-cssrs-combined-10k"],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}
