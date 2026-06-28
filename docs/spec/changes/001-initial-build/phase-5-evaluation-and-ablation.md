@@ -11,10 +11,13 @@ to a run.
 
 - **Within-distribution 5-fold CV** on the 10k (macro-F1 0.653 ±0.005 > paper
   0.5098) — framed as a *comparable protocol*, not the gated benchmark.
-- **Gold-holdout** (clinical CSSRS held out): macro-F1 0.385 → 0.418, QWK,
-  MAE, per-class F1. See `kaggle/finetuning-message/r2-within-dist-cv/`,
-  `src/pebble_llm/evaluation/`, `PAPER-PLAN` §5.
-- **Ablation:** dual-CORAL / flat-CE / CORN+GCE; CORN-only vs GCE-only; ±LLM-augment.
+- **Gold-holdout** (clinical CSSRS held out): best ordinal config CORN+GCE
+  macro-F1 0.385 → **0.402**, QWK, MAE, per-class F1. See
+  `kaggle/finetuning-message/r2-within-dist-cv/`, `src/pebble_llm/evaluation/`,
+  `PAPER-PLAN` §5.
+- **Ablation (✅ 2×2 complete):** dual-CORAL 0.385/0.183 · flat-CE 0.422/0.285 ·
+  gce-only 0.399/0.229 · corn-only 0.410/0.250 · corn+gce 0.402/0.260 → CORN is
+  the primary lever (ADR-001). Still: ±LLM-augment.
 - **Baselines:** plain-RoBERTa-CE, BiLSTM-MTL on the same split.
 - OUT of scope: prose write-up (phase 6).
 
@@ -27,16 +30,20 @@ to a run.
 - Encoder and loss-family decisions (open decisions 1–2) are resolved on data
   and recorded as ADRs in `../../decisions/`.
 
-## Verification (filled when phase formalized)
+## Verification
 
-| # | Intent | Check | Where |
-|---|---|---|---|
-| 1 | Honest framing, no benchmark overclaim (constraints §3) | report states "comparable within-dist protocol", not the gated benchmark | review, per PR |
-| 2 | Ordinal metrics on every comparison (I6) | report-lint over the metric tables | CI report-lint |
-| 3 | Each number cites a run (I5) | every table cell links a kernel id + log | review |
+| # | Intent | Check | Where | Status |
+|---|---|---|---|---|
+| 1 | Honest framing, no benchmark overclaim (constraints §3) | report states "comparable within-dist protocol", not the gated benchmark | reports + PAPER-PLAN §2 | ✅ |
+| 2 | Ordinal metrics on every comparison (I6) | QWK/MAE alongside macro-F1 in every ablation cell | `r2-corn-gce/corn-only/gce-only` logs | ✅ |
+| 3 | Each ablation cell cites a run (I5) | 2×2 grid → kernel id + log per cell | `kaggle/finetuning-message/r2-{corn-gce,corn-only,gce-only}/out/` | ✅ |
+| 4 | Baselines on common split | plain-RoBERTa-CE (`seq_model=mean`+CE) + BiLSTM-MTL (`seq_model=bilstm`+CORAL/CE), 5-fold×10ep same split/seed | `kaggle/finetuning-message/r2-baseline-{roberta,bilstm}/` · running on `fabiocarava` (phatneurondai out of quota) | 🔄 running |
+| 5 | Number-sync 0.385/0.357 → canonical | one run chosen across all docs | author decision | ⬜ owed |
 
 ## Review notes
 
+- **Ablation grid done (✅):** 2×2 [CORAL/CORN × Focal/GCE] all real 5-fold runs;
+  loss-family open decision #2 resolved → **ADR-001** (CORN primary lever).
 - **Number-sync is a non-engineering blocker:** 0.385 (rebalance) vs 0.357
   (older spec) must be unified by the author choosing the canonical run before
   submission — name the owner.

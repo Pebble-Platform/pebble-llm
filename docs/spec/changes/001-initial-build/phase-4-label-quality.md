@@ -27,19 +27,21 @@ into a measured, addressed quantity.
 - The ordinal-CL cleaning and the label-shift correction each have a reproducible
   artifact (Kaggle diag run / local numpy) with its number.
 
-## Verification (filled when phase formalized)
+## Verification
 
-| # | Intent | Check | Where |
-|---|---|---|---|
-| 1 | κ + confusion computed | artifact + number in `docs/papers`/`docs/reports` | per result PR |
-| 2 | Cleaning/correction reproducible (I5) | documented re-run reproduces the reported lift | Sign-off |
+| # | Intent | Check | Where | Status |
+|---|---|---|---|---|
+| 1 | Ordinal-CL diagnostic reproducible (I5) | 35.8% Behavior flagged; ordinal-CJ cleans 100% far / keeps 78% adj | `kaggle/finetuning-message/r2-tier1-cleanlab/out/` (`cl_issues.npz` + log) | ✅ |
+| 2 | Label-shift correction reproducible (I5) | shift 3.0×; logit-adjust Behavior-F1 0.357→0.41 (oracle 0.44) | `kaggle/finetuning-message/r2-label-shift/posthoc_label_shift.py` | ✅ |
+| 3 | κ + confusion computed | artifact + number in `docs/papers`/`docs/reports` | overlap set TBD | ⬜ owed |
+| 4 | Cleaned-pool retrain (B-Arm2) | retrain on ordinal-cleaned pool → Behavior-F1 lift | not yet run | ⬜ owed |
 
 ## Review notes
 
 - **Biggest project risk lives here.** Behavior-F1 0.18 is the macro-F1 drag and
   the clinical weak spot (missing "planning"); the three levers (CORN+GCE,
-  logit-adjust, ordinal-CL) are verified individually but the *cleaned-pool
-  retrain* (B-Arm2) is not yet run — that's the open item.
+  logit-adjust, ordinal-CL) are **verified individually** (✅ above) but the
+  *cleaned-pool retrain* (B-Arm2) and κ are the open items.
 - **Blocking dependency:** κ needs the LLM/gold overlap set recovered (see
   `docs/tasks/enrich-suicide-risk-dataset.md`) — a data-provenance task, owner
   TBD, must resolve before §4 can be written.

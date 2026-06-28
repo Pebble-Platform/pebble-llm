@@ -25,7 +25,7 @@ the middle behind a working eval skeleton; the paper write-up last.
 | 0 | [phase-0-foundations.md](phase-0-foundations.md) | Reproducible runner + leakage/holdout invariants encoded as permanent tests | in progress |
 | 1 | [phase-1-data-and-labeling.md](phase-1-data-and-labeling.md) | CSSRS gold + scrape + LLM weak labels assembled, de-identified, provenance documented | mostly done |
 | 2 | [phase-2-splits-and-holdout.md](phase-2-splits-and-holdout.md) | Subject-level splits + gold-holdout separation | mostly done |
-| 3 | [phase-3-ordinal-modeling.md](phase-3-ordinal-modeling.md) | Dual-head + noise-robust ordinal loss (CORN+GCE) | mostly done |
+| 3 | [phase-3-ordinal-modeling.md](phase-3-ordinal-modeling.md) | Dual-head + noise-robust ordinal loss (CORN+GCE) | done (5-fold verified; encoder → phase 5) |
 | 4 | [phase-4-label-quality.md](phase-4-label-quality.md) | Ordinal-aware CL + label-shift correction + κ-vs-gold | partial |
 | 5 | [phase-5-evaluation-and-ablation.md](phase-5-evaluation-and-ablation.md) | Within-dist CV + gold-holdout + baselines + ablation table | partial |
 | 6 | [phase-6-paper-and-ethics.md](phase-6-paper-and-ethics.md) | IEEE draft + ethics/provenance + number-synced reports | not started |
@@ -53,8 +53,9 @@ from stub to authoritative — phase "done" includes that update.
 1. **Encoder choice** (MentalRoBERTa vs gated/NeoBERT) — *measurement-decided*;
    resolve when phase 5 baselines run on a common split. Blocked partly on a real
    gated encoder needing an HF token (noted as further work).
-2. **Loss family** (CORN+GCE vs flat-CE vs dual CORAL) — phase 3/5 ablation
-   decides; CORN+GCE currently leads on Behavior-F1 while holding ordinal QWK.
+2. ~~**Loss family** (CORN+GCE vs flat-CE vs dual CORAL)~~ — **RESOLVED → [ADR-001](../../decisions/ADR-001-loss-family-corn-gce.md)** (2026-06-28).
+   2×2 ablation: CORN is the primary lever; chosen ordinal config = CORN+GCE
+   (0.402/Beh 0.260, beats dual; flat-CE 0.422 leads macro on gold as an honest finding).
 3. **Number synchronization** — 0.385 (rebalance) vs 0.357 (older spec) must be
    unified to the rebalance numbers before submission (phase 5/6). Non-engineering
    blocker: needs the author to pick the canonical run.
