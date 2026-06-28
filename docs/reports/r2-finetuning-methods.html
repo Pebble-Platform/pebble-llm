@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R2 — Finetuning methods từ các bài báo nổi tiếng (→ IEEE)</title>
+<style>
+  :root{--ink:#1a1d24;--mut:#6b7280;--line:#e5e7eb;--bg:#f7f8fa;--card:#fff;
+        --acc:#2563eb;--good:#16a34a;--warn:#d97706;--bad:#dc2626;
+        --t1:#16a34a;--t2:#2563eb;--t3:#6b7280;--fr:#7c3aed}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .page{max-width:980px;margin:0 auto;padding:32px 24px 64px}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:18px;margin:36px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:15.5px;margin:22px 0 8px}
+  .sub{color:var(--mut);font-size:13.5px}
+  .cards{display:flex;flex-wrap:wrap;gap:14px;margin:20px 0}
+  .card{flex:1;min-width:170px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card .k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .card .n{font-size:26px;font-weight:800;margin-top:2px}
+  .card .d{font-size:12.5px;font-weight:600;margin-top:2px}
+  .up{color:var(--good)} .muted{color:var(--mut)} .down{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13.5px;margin:8px 0}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f1f3f7;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#46505f}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  td.c,th.c{text-align:center}
+  .hl{background:#eef4ff}
+  .statusbox{border-radius:12px;padding:14px 18px;margin:14px 0;border:1px solid var(--line)}
+  .ok{background:#f0fdf4;border-left:4px solid var(--good)}
+  .key{background:#eff6ff;border-left:4px solid var(--acc)}
+  .pending{background:#fffaf0;border-left:4px solid var(--warn)}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+  .roi{display:inline-block;font-weight:800;font-variant-numeric:tabular-nums}
+  .roidots{letter-spacing:1px}
+  ul{margin:8px 0;padding-left:20px} li{margin:5px 0}
+  .tier{border-radius:12px;border:1px solid var(--line);background:var(--card);padding:4px 18px 14px;margin:12px 0}
+  .tierhd{font-weight:800;font-size:14px;margin:12px 0 6px;display:flex;align-items:center;gap:8px}
+  .note{color:var(--mut);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  code{background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:12.5px}
+  a{color:var(--acc);text-decoration:none} a:hover{text-decoration:underline}
+  .w{font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>R2 — Finetuning methods từ các bài báo nổi tiếng</h1>
+  <div class="sub">Phân tích 12 bài (42–53) qua 4 nhóm · mỗi bài → "Apply to R2" + thí nghiệm Kaggle · mục tiêu nộp IEEE · 2026-06-25</div>
+
+  <h2>TL;DR — phát hiện quyết định</h2>
+  <div class="statusbox key">
+    <b>Nút thắt của R2 (Behavior gold-F1 0.183) là vấn đề CHẤT LƯỢNG NHÃN, không phải sampling/loss.</b>
+    Vì vậy các đòn bẩy <i>nhãn</i> (Snorkel, Confident Learning, Distillation) có ROI cao nhất và đồng thời
+    <b>đóng đúng gap #1 của IEEE</b> (định lượng κ nhãn-LLM vs gold). Các đòn imbalance/PEFT (42–44, 50) đều bị
+    "trần nhãn" giới hạn ROI. Cặp ordinal (48 CORAL verify + 49 CORN) và 51 Focal là các ablation rẻ, bắt buộc cho bảng IEEE.
+  </div>
+  <div class="cards">
+    <div class="card"><div class="k">Bài phân tích mới</div><div class="n">12</div><div class="d muted">42–53 · 4 nhóm</div></div>
+    <div class="card"><div class="k">Baseline R2 (Run B)</div><div class="n">0.385</div><div class="d up">gold macro-F1 · QWK 0.398</div></div>
+    <div class="card"><div class="k">Nút thắt</div><div class="n down">0.183</div><div class="d down">Behavior gold-F1 (W1/W4)</div></div>
+    <div class="card"><div class="k">Đòn ROI cao (≥4)</div><div class="n">6</div><div class="d muted">45·46·47·48·49·51</div></div>
+  </div>
+
+  <h2>R2 — hệ thống đích & 4 điểm yếu</h2>
+  <p>Phân loại <b>ordinal 4 mức C-SSRS</b> (Indicator/Ideation/Behavior/Attempt) từ chuỗi post Reddit. Kiến trúc
+  <b>hierarchical dual-head</b>: encoder mỗi post (MentalRoBERTa mirror) → seq-Transformer 3 lớp → attention-pooling →
+  2 head (CORAL ordinal + CE softmax), loss tri-objective <code>0.5·CORAL + 0.3·CE + 0.2·Focal</code>, freeze 6 lớp encoder, max_len 256.
+  Run B (gold-holdout + balance): gold macro-F1 <b>0.3849</b>, QWK 0.398, MAE 0.822; per-class gold F1
+  Indicator 0.502 · Ideation 0.480 · <b class="down">Behavior 0.183</b> · Attempt 0.374.</p>
+  <table>
+    <tr><th>W</th><th>Điểm yếu</th><th>Bài tấn công</th></tr>
+    <tr><td class="c"><span class="w">W1</span></td><td>Behavior collapse = chất lượng nhãn (634 mẫu LLM nhiễu)</td><td>46, 45, 47 (gốc); 49, 51, 50 (giảm nhẹ)</td></tr>
+    <tr><td class="c"><span class="w">W2</span></td><td>Encoder là mirror (không phải gated mental-roberta) + cắt 256 token</td><td>42, 43, 44</td></tr>
+    <tr><td class="c"><span class="w">W3</span></td><td>Δt=0, temporal head chưa khai thác</td><td>52</td></tr>
+    <tr><td class="c"><span class="w">W4</span></td><td>Nhãn đơn-LLM, không có κ liên-annotator / label-model</td><td>45, 47, 46</td></tr>
+  </table>
+
+  <h2>12 phân tích — kèm thí nghiệm & ROI</h2>
+  <div class="sub" style="margin-bottom:8px">Nhóm: <span class="pill" style="background:var(--fr)">A PEFT</span>
+    <span class="pill" style="background:var(--t1)">B weak-sup</span>
+    <span class="pill" style="background:var(--t2)">C ordinal/imbalance</span>
+    <span class="pill" style="background:var(--t3)">D MH-SOTA</span> · ROI = ước lượng 1–5 cho R2 · dossier đầy đủ trong <code>docs/papers/finetuning-message/</code></div>
+  <table>
+    <tr><th>#</th><th>Bài</th><th>Nhóm</th><th>W</th><th>Kỹ thuật (1 dòng)</th><th>Thí nghiệm Kaggle</th><th class="c">ROI</th></tr>
+    <tr><td>42</td><td><a href="../papers/finetuning-message/42-lora.md">LoRA</a> <span class="muted">ICLR'22</span></td><td><span class="pill" style="background:var(--fr)">A</span></td><td>W2</td><td>ΔW=(α/r)BA trên q/v, freeze W₀</td><td><code>R2_LORA=1</code> vs freeze-6</td><td class="c"><span class="roi">2</span></td></tr>
+    <tr><td>43</td><td><a href="../papers/finetuning-message/43-adapters-houlsby.md">Adapters (Houlsby)</a> <span class="muted">ICML'19</span></td><td><span class="pill" style="background:var(--fr)">A</span></td><td>W2</td><td>Bottleneck adapter mỗi lớp, ~3.6% params</td><td><code>R2_ADAPTER=1</code> vs freeze-6</td><td class="c"><span class="roi">2</span></td></tr>
+    <tr><td>44</td><td><a href="../papers/finetuning-message/44-bitfit.md">BitFit</a> <span class="muted">ACL'22</span></td><td><span class="pill" style="background:var(--fr)">A</span></td><td>W2</td><td>Chỉ train bias (~0.09% params)</td><td><code>R2_FREEZE_MODE∈{layers,bitfit}</code></td><td class="c"><span class="roi">3</span></td></tr>
+    <tr class="hl"><td>45</td><td><a href="../papers/finetuning-message/45-snorkel.md">Snorkel</a> <span class="muted">VLDB'17/'20</span></td><td><span class="pill" style="background:var(--t1)">B</span></td><td>W4·W1</td><td>Nhiều LF + LabelModel → soft label đã khử nhiễu</td><td>đơn-LLM vs vote vs LabelModel soft</td><td class="c"><span class="roi up">4</span></td></tr>
+    <tr class="hl"><td>46</td><td><a href="../papers/finetuning-message/46-confident-learning.md">Confident Learning</a> <span class="muted">JAIR'21</span></td><td><span class="pill" style="background:var(--t1)">B</span></td><td>W1</td><td>Confident-joint → prune/reweight nhãn sai</td><td>±cleanlab-pruned pool (dùng OOF probs sẵn có)</td><td class="c"><span class="roi up">4</span></td></tr>
+    <tr class="hl"><td>47</td><td><a href="../papers/finetuning-message/47-knowledge-distillation.md">Knowledge Distillation</a> <span class="muted">Hinton'15</span></td><td><span class="pill" style="background:var(--t1)">B</span></td><td>W4·W1</td><td>Soft target nhiệt độ T + KL ("dark knowledge")</td><td>hard-CE vs conf-spread vs LLM-logprob soft</td><td class="c"><span class="roi up">4</span></td></tr>
+    <tr class="hl"><td>48</td><td><a href="../papers/finetuning-message/48-coral.md">CORAL</a> <span class="muted">PRL'20</span></td><td><span class="pill" style="background:var(--t2)">C</span></td><td>W1·cite</td><td>K−1 binary chia sẻ weight (rank-monotone)</td><td>flat-CE vs CORAL-only vs dual-head</td><td class="c"><span class="roi up">4</span></td></tr>
+    <tr class="hl"><td>49</td><td><a href="../papers/finetuning-message/49-corn.md">CORN</a> <span class="muted">PAA'23</span></td><td><span class="pill" style="background:var(--t2)">C</span></td><td>W1</td><td>Conditional-prob thresholds, KHÔNG chia weight</td><td><code>R2_ORDINAL_HEAD=coral|corn</code></td><td class="c"><span class="roi up">4</span></td></tr>
+    <tr><td>50</td><td><a href="../papers/finetuning-message/50-class-balanced-loss.md">Class-Balanced Loss</a> <span class="muted">CVPR'19</span></td><td><span class="pill" style="background:var(--t2)">C</span></td><td>W1</td><td>Reweight theo effective number (1−β^n)/(1−β)</td><td>inverse-freq vs eff-num β∈{.99,.999,.9999}</td><td class="c"><span class="roi">3</span></td></tr>
+    <tr class="hl"><td>51</td><td><a href="../papers/finetuning-message/51-focal-loss.md">Focal Loss</a> <span class="muted">ICCV'17</span></td><td><span class="pill" style="background:var(--t2)">C</span></td><td>W1·cite</td><td>(1−p_t)^γ hạ trọng số mẫu dễ</td><td>±focal + γ∈{0,1,2,3,5} + w_focal</td><td class="c"><span class="roi up">4</span></td></tr>
+    <tr><td>52</td><td><a href="../papers/finetuning-message/52-statenet.md">STATENet</a> <span class="muted">EMNLP'20</span></td><td><span class="pill" style="background:var(--t3)">D</span></td><td>W3</td><td>Transformer time-aware trên Δt thật giữa post</td><td>±real-Δt (chỉ nếu có timestamp)</td><td class="c"><span class="roi">2</span></td></tr>
+    <tr><td>53</td><td><a href="../papers/finetuning-message/53-yates-2017.md">Yates et al.</a> <span class="muted">EMNLP'17</span></td><td><span class="pill" style="background:var(--t3)">D</span></td><td>framing</td><td>CNN mức-user + ordinal-margin loss; corpus RSDD</td><td>baseline CNN floor cho bảng IEEE</td><td class="c"><span class="roi">2</span></td></tr>
+  </table>
+
+  <h2>Roadmap thí nghiệm "chạy tiếp" (theo ROI × chi phí)</h2>
+  <div class="statusbox pending">⚠ Mọi run đang <b>blocked</b> bởi vấn đề GPU/Internet Kaggle (cần phone-verify <code>pathnguyen</code> — xem
+    <code>docs/tasks/r2-beat-paper-dual-report.md</code>). Đây là <i>kế hoạch</i>; số liệu mới chờ mở khóa.
+    <b>Quy tắc thứ tự:</b> Tier 1 (khử nhiễu) trước → Tier 2 (tune trên nhãn sạch) → Tier 3.</div>
+
+  <div class="tier">
+    <div class="tierhd"><span class="pill" style="background:var(--t1)">TIER 1</span> Tấn công trần nhãn (ROI cao nhất; đóng gap #1 IEEE)</div>
+    <ul>
+      <li><b>Confident Learning (46)</b> — tái dùng OOF probs 5-fold sẵn có → <code>cleanlab.find_label_issues</code> trên pool (đặc biệt Behavior) → retrain ±pruned/down-weight. Gần như không tốn thêm compute; trả lời thẳng "Behavior có phải nhiễu?".</li>
+      <li><b>Snorkel multi-LF relabel (45)</b> — biến labeler đơn-LLM thành ≥3 LF (2–3 prompt/model LLM + 1 lexicon), fit LabelModel → soft label + κ từng LF. Cho đúng con số <b>κ-vs-gold</b> mà gap #1 đòi. Chi phí chủ yếu offline.</li>
+      <li><b>LLM soft-target distillation (47)</b> — truy vấn lại teacher lấy phân bố lớp / dùng confidence-spread; thay term hard-CE bằng KL nhiệt-độ. Bản "conf-spread" miễn phí trước; bản logprob cần 1 lần re-query.</li>
+    </ul>
+  </div>
+  <div class="tier">
+    <div class="tierhd"><span class="pill" style="background:var(--t2)">TIER 2</span> Ablation tách đóng góp (rẻ, bắt buộc, lấp bảng paper)</div>
+    <ul>
+      <li><b>Ordinal-head ablation (48)</b> — flat-CE vs CORAL-only vs dual-head qua env <code>w_coral/w_ce/w_focal</code>; báo cáo QWK/MAE/adjacent-error. Kèm audit rank-monotonicity của CORAL trong R2 (thứ tự bias + xác suất không âm).</li>
+      <li><b>CORN upgrade (49)</b> — <code>R2_ORDINAL_HEAD=corn</code> drop-in vs CORAL; theo dõi QWK + adjacent-error của Behavior.</li>
+      <li><b>Focal sweep (51)</b> — ±focal + γ∈{0,1,2,3,5} + w_focal. ⚠ γ cao khuếch đại nhãn sai → chạy <i>sau</i> khi khử nhiễu Tier 1.</li>
+      <li><b>Class-Balanced α (50)</b> — effective-number (β grid) vs inverse-freq; kỳ vọng bump nhỏ nhưng defensible.</li>
+    </ul>
+  </div>
+  <div class="tier">
+    <div class="tierhd"><span class="pill" style="background:var(--t3)">TIER 3</span> PEFT recipes (ROI headline thấp; câu chuyện methodology/robustness sạch)</div>
+    <ul>
+      <li><b>BitFit / Adapters / LoRA (44/43/42)</b> — 1 nhánh PEFT vs freeze-6. Lợi ích chính: <b>tách W1 (nhãn) khỏi W2 (capacity encoder)</b> — nếu PEFT không nhấc Behavior thì đó là bằng chứng nút thắt là nhãn.</li>
+    </ul>
+  </div>
+  <div class="tier">
+    <div class="tierhd"><span class="pill" style="background:var(--t3)">FRAMING</span> Không chạy / baseline rẻ</div>
+    <ul>
+      <li><b>STATENet (52)</b> — Δt=0 là hạn chế dữ liệu thật; nêu trong Limitations + cite (Path B). Chỉ wire Δt thật nếu lấy lại được timestamp.</li>
+      <li><b>Yates (53)</b> — cite làm tiền lệ user-level + ordinal-loss; tùy chọn 1 hàng baseline CNN pre-transformer.</li>
+    </ul>
+  </div>
+
+  <h2>Ánh xạ sang gap-list IEEE</h2>
+  <table>
+    <tr><th>Gap IEEE (PAPER-PLAN §3)</th><th>Bài/đòn bẩy đóng gap</th></tr>
+    <tr><td>🔴 1 — Định lượng chất lượng nhãn-LLM (κ, confusion vs gold)</td><td><b>45 Snorkel</b> (κ từng LF) + <b>46 Confident Learning</b> (joint nhiễu↔thật)</td></tr>
+    <tr><td>🔴 2 — Bảng ablation (tách đóng góp)</td><td><b>48 CORAL</b> (flat-CE/CORAL/dual-head) + <b>49 CORN</b> + <b>51 Focal</b> (±focal) + <b>50 CB</b></td></tr>
+    <tr><td>🟡 3 — Baselines</td><td><b>53 Yates</b> (CNN floor) + plain-RoBERTa-CE; nhánh PEFT 42–44 làm cột so</td></tr>
+    <tr><td>🟡 4 — Behavior collapse (F1 0.18)</td><td><b>46 + 45 + 47</b> (khử nhiễu) là đòn gốc; 49/51/50 giảm nhẹ</td></tr>
+    <tr><td>🟡 5 — Ethics &amp; provenance · 🟢 6 — Δt</td><td><b>52 STATENet</b> đóng khung Δt=0 trong Limitations</td></tr>
+  </table>
+
+  <div class="note">
+    Nguồn: 12 dossier per-paper <code>docs/papers/finetuning-message/42-…-53-*.md</code> (mỗi bài có khối
+    <b>▶ Apply to R2</b> + <b>▶ Kaggle experiment</b> + citation đã verify) ·
+    tracking <code>docs/tasks/r2-finetuning-methods-for-ieee.md</code> ·
+    baseline <code>docs/reports/r2-ab-results.html</code> ·
+    kế hoạch paper <code>docs/papers/finetuning-message/PAPER-PLAN-text-ordinal-suicide.md</code> ·
+    code <code>kaggle/finetuning-message/r2-suicide-risk-dualhead/r2-suicide-risk-dualhead.py</code>.
+    Biên soạn 2026-06-25 bằng 12 agent <code>analysis-paper</code> chạy song song.
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R2 — Kết quả Run A (within-dist) + Run B (gold) + ablation</title>
+<style>
+  :root{--ink:#1a1d24;--mut:#6b7280;--line:#e5e7eb;--bg:#f7f8fa;--card:#fff;
+        --acc:#2563eb;--good:#16a34a;--warn:#d97706;--bad:#dc2626;
+        --l0:#3b82f6;--l1:#f59e0b;--l2:#ef6c3b;--l3:#e11d48}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .page{max-width:920px;margin:0 auto;padding:32px 24px 64px}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:18px;margin:34px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  .sub{color:var(--mut);font-size:13.5px}
+  .cards{display:flex;flex-wrap:wrap;gap:14px;margin:20px 0}
+  .card{flex:1;min-width:160px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .card .k{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .card .n{font-size:26px;font-weight:800;margin-top:2px}
+  .card .d{font-size:12.5px;font-weight:600;margin-top:2px}
+  .up{color:var(--good)} .muted{color:var(--mut)} .down{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;margin:8px 0}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:#f1f3f7;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:#46505f}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .hl{background:#eef4ff} .best{color:var(--good);font-weight:700}
+  .statusbox{border-radius:12px;padding:14px 18px;margin:14px 0;border:1px solid var(--line)}
+  .ok{background:#f0fdf4;border-left:4px solid var(--good)}
+  .key{background:#eff6ff;border-left:4px solid var(--acc)}
+  .warnbox{background:#fffaf0;border-left:4px solid var(--warn)}
+  .bars{margin:6px 0}
+  .barrow{display:flex;align-items:center;gap:8px;margin:5px 0}
+  .barrow .lab{width:96px;font-size:13px}
+  .bar{height:16px;border-radius:4px}
+  .barrow .v{color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+  ul{margin:8px 0;padding-left:20px} li{margin:5px 0}
+  .note{color:var(--mut);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  code{background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>R2 — Kết quả Run A &amp; Run B + ablation ordinal</h1>
+  <div class="sub">"Vượt paper" trên 2 thước đo · within-distribution (sạch) + gold-holdout có rebalance + ablation flat-CE · cập nhật 2026-06-26</div>
+  <div class="sub">Baseline: gold-holdout 0.3569 (chưa rebalance) · paper 0.5098 (within-distribution CV)</div>
+
+  <h2>TL;DR</h2>
+  <div class="cards">
+    <div class="card"><div class="k">Run A · within-dist CV</div><div class="n">0.653</div>
+      <div class="d up">▲ &gt; paper 0.5098 (+0.143, +28%)</div></div>
+    <div class="card"><div class="k">Gold tốt nhất (flat-CE)</div><div class="n">0.4215</div>
+      <div class="d up">▲ &gt; dual-head 0.3849</div></div>
+    <div class="card"><div class="k">Run B · gold (dual-head)</div><div class="n">0.3849</div>
+      <div class="d up">▲ +0.028 vs 0.3569 (rebalance)</div></div>
+    <div class="card"><div class="k">Behavior F1 (flat-CE)</div><div class="n">0.285</div>
+      <div class="d up">▲ +0.10 vs 0.183 (dual-head)</div></div>
+  </div>
+  <div class="statusbox ok"><b>✅ VƯỢT PAPER (số sạch).</b> Run A đã tải đúng <b>10,072 mẫu</b> từ 10k (sửa lỗi
+    mount) → 5-fold within-distribution CV = <b>0.6530 ±0.0048</b> &gt; paper <b>0.5098</b>. Thay cho proxy
+    val-on-LLM 0.666 trước đây. (Cùng <i>giao thức</i> within-distribution trên tập 10k đã làm giàu của ta,
+    không phải benchmark gated gốc của paper.)</div>
+  <div class="statusbox key"><b>🔬 Phát hiện ablation:</b> CE thuần (bỏ CORAL+Focal) cho gold macro-F1 <b>0.4215 &gt;
+    0.3849</b> của tri-objective, và <b>cứu lớp Behavior</b> (0.183 → 0.285). Tri-objective đang <i>kém hơn</i>
+    CE thuần trên gold — xem §4.</div>
+
+  <h2>1. Run B — gold-holdout + rebalance (HỢP LỆ)</h2>
+  <div class="sub">Train pool 9,680 (nhãn-LLM) <code>[3992,3612,634,1442]</code> · test = gold lâm sàng CSSRS-500 392 <code>[99,171,77,45]</code> · ~9.2h.</div>
+  <table>
+    <tr><th>Metric</th><th class="num">Baseline (no balance)</th><th class="num">Run B (balance)</th><th class="num">Δ</th></tr>
+    <tr><td>GOLD macro-F1</td><td class="num">0.3569</td><td class="num best">0.3849 ±0.0071</td><td class="num up">+0.028</td></tr>
+    <tr><td>GOLD QWK</td><td class="num">0.378</td><td class="num best">0.398</td><td class="num up">+0.020</td></tr>
+    <tr><td>GOLD MAE</td><td class="num">0.840</td><td class="num best">0.822</td><td class="num up">−0.018 (tốt hơn)</td></tr>
+    <tr><td>val-on-LLM</td><td class="num">0.638</td><td class="num">0.666</td><td class="num up">+0.028</td></tr>
+  </table>
+  <div class="sub">Per-class F1 (gold, trung bình 5 fold):</div>
+  <div class="bars">
+    <div class="barrow"><span class="lab">Indicator</span><div class="bar" style="width:50%;background:var(--l0)"></div><span class="v">0.502</span></div>
+    <div class="barrow"><span class="lab">Ideation</span><div class="bar" style="width:48%;background:var(--l1)"></div><span class="v">0.480</span></div>
+    <div class="barrow"><span class="lab">Behavior ⚠</span><div class="bar" style="width:18.3%;background:var(--l2)"></div><span class="v">0.183</span></div>
+    <div class="barrow"><span class="lab">Attempt</span><div class="bar" style="width:37.4%;background:var(--l3)"></div><span class="v">0.374</span></div>
+  </div>
+  <p>→ Rebalance <b>giúp toàn cục</b> (macro-F1, QWK, MAE đều lên). Nhưng <b>Behavior vẫn là nút thắt (0.183)</b> với
+  dual-head — chỉ 634 mẫu Behavior, phần lớn là nhãn-LLM (under-label + nhiễu). Trần Behavior với cấu hình này là
+  <b>chất lượng nhãn</b>, không phải sampling.</p>
+
+  <h2>2. Run A — within-distribution CV (HỢP LỆ, 2026-06-26)</h2>
+  <ul>
+    <li>Chạy trên account đã phone-verify <code>phatneurondai</code>. Tải đúng dataset mount (recursive glob
+      <code>**/sequences.csv</code>): <b>10,072 sequences</b> <code>[4091, 3783, 711, 1487]</code> — không còn rơi về Zenodo 392.</li>
+    <li><b>5-fold within-distribution CV macro-F1 = 0.6530 ±0.0048</b> (folds [0.649, 0.660, 0.656, 0.654, 0.646]).</li>
+    <li><b>vs paper 0.5098 → +0.143 (+28% rel) — VƯỢT PAPER</b> trên thước đo within-distribution của họ.</li>
+    <li>Lịch sử: 2 lần đầu hỏng do lỗi đường dẫn <code>/kaggle/input</code> → tải nhầm Zenodo 392; đã sửa bằng recursive glob.</li>
+    <li>Log: <code>kaggle/finetuning-message/r2-within-dist-cv/out/r2-within-dist-cv-10k-balanced.log</code>.</li>
+  </ul>
+
+  <h2>3. Verdict "vượt paper"</h2>
+  <table>
+    <tr><th>Thước đo</th><th class="num">Mốc paper</th><th class="num">Của ta</th><th>Trạng thái</th></tr>
+    <tr class="hl"><td>Within-distribution (5-fold CV sạch)</td><td class="num">0.5098</td><td class="num best">0.6530</td><td class="up">✅ vượt (+0.143; số sạch, không còn proxy)</td></tr>
+    <tr><td>Gold-holdout (trung thực, khó hơn)</td><td class="num">— (paper không đo)</td><td class="num best">0.4215 (flat-CE) / 0.3849 (dual)</td><td>▲ cải thiện từ 0.3569; flat-CE tốt nhất hiện tại</td></tr>
+  </table>
+
+  <h2>4. Ablation ordinal-head: flat-CE vs dual-head (gold-holdout, 2026-06-26)</h2>
+  <div class="sub">Cùng giao thức gold-holdout + balance + epochs 10; chỉ đổi trọng số loss
+    (<code>R2_W_CORAL/CE/FOCAL</code>). Eval đã sửa để chỉ blend head được train (flat-CE → chỉ head CE).</div>
+  <table>
+    <tr><th>Cấu hình</th><th class="num">GOLD macro-F1</th><th class="num">QWK</th><th class="num">MAE</th><th>Per-class (Ind·Idea·Beh·Att)</th></tr>
+    <tr><td>Dual-head (0.5/0.3/0.2 + Focal) — Run B</td><td class="num">0.3849</td><td class="num">0.398</td><td class="num">0.822</td><td>0.502·0.480·<b class="down">0.183</b>·0.374</td></tr>
+    <tr class="hl"><td><b>flat-CE (1/0/0)</b></td><td class="num best">0.4215 ±0.024</td><td class="num">0.388</td><td class="num">0.785</td><td>0.488·0.524·<b class="up">0.285</b>·0.390</td></tr>
+  </table>
+  <div class="statusbox warnbox">→ <b>Bất ngờ: CE thuần vượt tri-objective trên gold (+0.037)</b>, và <b>cứu lớp Behavior</b>
+    (+0.10, 0.183→0.285). Gợi ý CORAL+Focal đang <i>kìm</i> Behavior khi chuyển sang gold (có thể overfit phân bố
+    nhãn-LLM). ⚠ Một seed/một run — cần chạy <b>CORAL-only</b> + lặp seed để chốt; nhưng là một dòng ablation mạnh cho bài IEEE.</div>
+
+  <h2>5. Hạn chế còn lại (theo thứ tự đáng làm tiếp)</h2>
+  <ul>
+    <li><b>Loss design</b> — flat-CE &gt; tri-objective trên gold (§4): chạy nốt CORAL-only + lặp seed; xem lại trọng số.</li>
+    <li><b>Chất lượng nhãn Behavior</b> — vẫn là nút thắt (kể cả flat-CE mới 0.285). Tier-1 cleanlab (đã build) để đo/lọc nhiễu.</li>
+    <li><b>Encoder mirror + max-len 256</b> — chưa dùng <code>mental/mental-roberta-base</code> thật (gated) và bị cắt 256 token.</li>
+    <li><b>Δt=0, đa số 1-post</b> — temporal head chưa khai thác.</li>
+  </ul>
+
+  <div class="note">
+    <b>Provenance.</b>
+    Run A (within-dist, sạch): kernel <code>phatneurondai/r2-within-dist-cv-10k-balanced</code> ·
+    log <code>kaggle/finetuning-message/r2-within-dist-cv/out/</code>. ·
+    flat-CE ablation: kernel <code>phatneurondai/r2-ablation-flatce</code> ·
+    log <code>kaggle/finetuning-message/r2-ablation/out/</code>. ·
+    Run B (gold + balance, dual-head): kernel <code>r2-suicide-risk-dual-head-mentalroberta</code> v7. ·
+    Baseline gold-holdout (0.3569): <code>docs/reports/r2-gold-holdout-report.html</code>. ·
+    Tracking: <code>docs/tasks/r2-beat-paper-dual-report.md</code> · <code>docs/tasks/r2-finetuning-methods-for-ieee.md</code>. ·
+    Bản Markdown: <code>docs/reports/r2-ab-results.md</code>.
+  </div>
+
+</div>
+</body>
+</html>
