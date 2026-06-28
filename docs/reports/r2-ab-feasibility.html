@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R2 — Vì sao hướng A &amp; B khả thi</title>
+<style>
+  :root{--ink:#1a1d24;--mut:#6b7280;--line:#e5e7eb;--bg:#f7f8fa;--card:#fff;
+        --acc:#2563eb;--good:#16a34a;--warn:#d97706;--bad:#dc2626;
+        --a:#2563eb;--b:#7c3aed}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.65 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .page{max-width:920px;margin:0 auto;padding:32px 24px 64px}
+  h1{font-size:24px;margin:0 0 4px}
+  h2{font-size:18px;margin:36px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+  h3{font-size:15px;margin:18px 0 6px}
+  .sub{color:var(--mut);font-size:13.5px}
+  .lead{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--acc);
+        border-radius:10px;padding:14px 18px;margin:18px 0}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+        border-radius:12px;overflow:hidden;font-size:14px;margin:6px 0}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f1f3f7;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;color:#46505f}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .twocol{display:flex;gap:16px;flex-wrap:wrap}
+  .col{flex:1;min-width:300px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 18px 16px}
+  .col.a{border-top:4px solid var(--a)} .col.b{border-top:4px solid var(--b)}
+  .badge{display:inline-block;color:#fff;font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;margin:12px 0 4px}
+  .badge.a{background:var(--a)} .badge.b{background:var(--b)}
+  ul{margin:8px 0;padding-left:20px} li{margin:6px 0}
+  .ok::marker{content:"✓ "} .ok{list-style:none;position:relative;padding-left:20px}
+  .ok::before{content:"✓";color:var(--good);position:absolute;left:0;font-weight:800}
+  .risk{list-style:none;position:relative;padding-left:20px}
+  .risk::before{content:"!";color:var(--warn);position:absolute;left:0;font-weight:800}
+  .formula{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px 18px;font-size:15px;
+           font-family:ui-monospace,Menlo,Consolas,monospace;margin:10px 0;overflow-x:auto}
+  .formula b{color:#fca5a5}
+  .bars{margin:6px 0}
+  .barrow{display:flex;align-items:center;gap:8px;margin:5px 0}
+  .barrow .lab{width:96px;font-size:13px}
+  .bar{height:16px;border-radius:4px}
+  .barrow .v{color:var(--mut);font-size:12.5px;font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#fff}
+  .note{color:var(--mut);font-size:12.5px;margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
+  code{background:#eef0f4;padding:1px 5px;border-radius:4px;font-size:13px}
+  .key{background:#fffaf0;border-left:4px solid var(--warn);border-radius:10px;padding:12px 16px;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Vì sao hai hướng A &amp; B khả thi để “vượt paper”</h1>
+  <div class="sub">R2 Hierarchical Dual-Head · giải thích phương pháp &amp; tính khả thi · 2026-06-24
+    · <i>kết quả đang chạy — đây là tài liệu lý do, không phải kết quả</i></div>
+
+  <div class="lead"><b>Vấn đề cốt lõi:</b> “vượt paper (0.5098)” không phải một câu hỏi mà là <b>hai</b>,
+    vì con số của ta (gold-holdout <b>0.3569</b>) và của paper được đo bằng <b>hai thước đo khác nhau</b>.
+    Mỗi hướng giải một phiên bản — và cả hai đều khả thi vì những lý do khác nhau dưới đây.</div>
+
+  <h2>1. Tại sao 0.3569 và 0.5098 không so trực tiếp được</h2>
+  <table>
+    <thead><tr><th>Tiêu chí</th><th>Paper (0.5098)</th><th>Gold-holdout của ta (0.3569)</th></tr></thead>
+    <tbody>
+      <tr><td>Giao thức eval</td><td>5-fold CV</td><td>5-fold CV + <b>test giữ riêng</b></td></tr>
+      <tr><td>Train vs Test distribution</td><td><b>Cùng</b> nguồn nhãn</td><td><b>Khác</b>: train nhãn-LLM → test nhãn lâm sàng</td></tr>
+      <tr><td>Độ khó</td><td>Dễ hơn (nội phân phối)</td><td><b>Khó hơn</b> (cross-distribution)</td></tr>
+      <tr><td>Tính trung thực</td><td>Có thể lạc quan (cùng phân phối)</td><td>Trung thực, không circular</td></tr>
+    </tbody>
+  </table>
+  <div class="key">📌 <b>Bằng chứng mấu chốt:</b> trong run gold-holdout, <b>val-on-LLM = 0.638</b> (đo nội phân
+    phối, kiểu paper) đã <b>&gt; 0.5098</b>. Nghĩa là trên thước đo của paper, ta <b>nhiều khả năng đã vượt</b> —
+    chỉ là 0.3569 đo trên thước đo khó hơn nhiều.</div>
+
+  <div class="twocol">
+    <!-- RUN A -->
+    <div class="col a">
+      <span class="badge a">RUN A · Within-distribution CV</span>
+      <h3>So trực tiếp với paper</h3>
+      <div class="sub">5-fold CV trên toàn bộ 10k (train + test cùng phân phối), giống hệt giao thức paper.</div>
+      <h3>Vì sao khả thi</h3>
+      <ul>
+        <li class="ok"><b>Cùng giao thức</b>: 5-fold CV, train/test cùng nguồn → so apples-to-apples.</li>
+        <li class="ok"><b>Nhiều dữ liệu hơn ~2.7×</b>: 10,072 mẫu vs 3,722 của paper → tổng quát hoá tốt hơn.</li>
+        <li class="ok"><b>Tín hiệu prior mạnh</b>: val-on-LLM 0.638 đã &gt; 0.5098.</li>
+        <li class="ok"><b>Nhãn LLM nhất quán nội bộ</b> → dễ fit hơn nhãn lâm sàng nhiễu, đẩy số nội-phân-phối lên.</li>
+      </ul>
+      <h3>Rủi ro</h3>
+      <ul>
+        <li class="risk">Số này “dễ” hơn — đo độ khớp nhãn-LLM, không phải độ chính xác lâm sàng. Vì vậy cần <b>cả Run B</b>.</li>
+      </ul>
+    </div>
+    <!-- RUN B -->
+    <div class="col b">
+      <span class="badge b">RUN B · Gold-holdout + rebalance</span>
+      <h3>Nâng con số trung thực</h3>
+      <div class="sub">Giữ nguyên eval khó (gold lâm sàng), tấn công đúng nút thắt: lớp Behavior.</div>
+      <h3>Vì sao khả thi</h3>
+      <ul>
+        <li class="ok"><b>Đánh đúng bottleneck</b>: macro-F1 là trung bình per-class → lớp yếu nhất kéo cả điểm.</li>
+        <li class="ok"><b>Kỹ thuật chuẩn, rủi ro thấp</b>: WeightedRandomSampler (cân bằng batch) — không cần data mới, không đổi kiến trúc.</li>
+        <li class="ok"><b>Đo được</b>: in per-class F1 + eval trên gold → thấy ngay Behavior có lên không.</li>
+      </ul>
+      <h3>Rủi ro &amp; giảm thiểu</h3>
+      <ul>
+        <li class="risk">Cân bằng quá tay có thể hại lớp đa số → <b>giữ focal loss</b> + đo per-class + gold để bắt lỗi.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>2. Trọng tâm Run B: vì sao Behavior là đòn bẩy</h2>
+  <p>Macro-F1 đối xử mọi lớp ngang nhau, bất kể tần suất:</p>
+  <div class="formula">macro-F1 = ( F1<sub>Indicator</sub> + F1<sub>Ideation</sub> + <b>F1<sub>Behavior</sub></b> + F1<sub>Attempt</sub> ) / 4</div>
+  <p>Behavior chỉ chiếm <b>6.5%</b> train-pool → model ít thấy → recall thấp → <b>F1<sub>Behavior</sub> nhỏ kéo tụt
+     cả trung bình</b>. Nâng riêng lớp này có tác động lớn nhất trên macro-F1.</p>
+  <div class="bars">
+    <div class="barrow"><span class="lab"><span class="pill" style="background:#3b82f6">Indicator</span></span>
+      <span class="bar" style="width:100%;background:#3b82f6"></span><span class="v">3,992 (41%)</span></div>
+    <div class="barrow"><span class="lab"><span class="pill" style="background:#f59e0b">Ideation</span></span>
+      <span class="bar" style="width:90%;background:#f59e0b"></span><span class="v">3,612 (37%)</span></div>
+    <div class="barrow"><span class="lab"><span class="pill" style="background:#ef6c3b">Behavior</span></span>
+      <span class="bar" style="width:16%;background:#ef6c3b"></span><span class="v">634 (6.5%) ⚠ nút thắt</span></div>
+    <div class="barrow"><span class="lab"><span class="pill" style="background:#e11d48">Attempt</span></span>
+      <span class="bar" style="width:36%;background:#e11d48"></span><span class="v">1,442 (15%)</span></div>
+  </div>
+  <p class="sub">WeightedRandomSampler gán trọng số mỗi mẫu = 1/tần-suất-lớp → mỗi minibatch xấp xỉ cân bằng 4 lớp,
+     model “thấy” Behavior nhiều như Indicator dù dữ liệu lệch.</p>
+
+  <h2>3. Mỗi run trả lời câu hỏi gì</h2>
+  <table>
+    <thead><tr><th>Run</th><th>Câu hỏi</th><th class="num">Mốc so</th><th>Kỳ vọng</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill" style="background:var(--a)">A</span> within-dist</td>
+        <td>Trên thước đo của paper, ta có vượt không?</td><td class="num">0.5098</td>
+        <td>Khả năng cao <b>đã vượt</b> (val 0.638)</td></tr>
+      <tr><td><span class="pill" style="background:var(--b)">B</span> gold+balance</td>
+        <td>Rebalance đẩy con số trung thực lên bao nhiêu?</td><td class="num">0.3569</td>
+        <td>Kỳ vọng <b>tăng</b>, nhất là F1<sub>Behavior</sub></td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Vì sao chạy được trong thực tế (khả thi kỹ thuật)</h2>
+  <ul>
+    <li class="ok"><b>Không cần dữ liệu/khoá mới</b>: rebalance chỉ là sampler; cả hai dùng lại dataset 10k đã upload (private Kaggle).</li>
+    <li class="ok"><b>Thay đổi tối thiểu</b>: bật bằng env (<code>R2_BALANCE</code>, <code>R2_GOLD_HOLDOUT</code>) — hành vi mặc định không đổi.</li>
+    <li class="ok"><b>Trong giới hạn GPU</b>: epochs cap 10 → mỗi run ~9h &lt; cap 12h; chạy <b>song song</b> 2 kernel → ~9h wall-clock.</li>
+    <li class="ok"><b>Đã smoke-test</b> cả hai mode local trước khi push.</li>
+  </ul>
+
+  <h2>5. Trung thực — giới hạn còn lại</h2>
+  <ul>
+    <li>Run A “dễ” hơn: vượt 0.5098 ở đây ≠ ngang paper về chất lượng lâm sàng. Cần đọc kèm Run B.</li>
+    <li>Vẫn dùng encoder mirror (không phải <code>mental/mental-roberta-base</code> gated) + max-len 256 → còn dư địa.</li>
+    <li>Nhãn train 84% là LLM (~82% đúng); khoảng cách LLM↔lâm sàng ~0.28 chưa đóng (cần ensemble — vòng sau).</li>
+    <li>Đa số sequence 1-post, Δt=0 → temporal head chưa khai thác (vòng sau).</li>
+  </ul>
+
+  <div class="note">
+    Tracking: <code>docs/tasks/r2-beat-paper-dual-report.md</code> ·
+    Baseline kết quả: <code>docs/reports/r2-gold-holdout-report.html</code> ·
+    Kernels: <code>r2-within-dist-cv-10k-balanced</code> (A) + <code>r2-suicide-risk-dual-head-mentalroberta</code> v7 (B).
+    Method reproduction + weak-supervision — không phải clinical-grade.
+  </div>
+
+</div>
+</body>
+</html>

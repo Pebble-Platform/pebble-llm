@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R2 — 3 cải tiến phương pháp (đóng góp NCKH)</title>
+<style>
+  :root{
+    --ink:#1a2030; --muted:#5a6478; --line:#e3e7ef; --bg:#f6f8fc; --card:#fff;
+    --accent:#2d5bd7; --accent-soft:#eaf0ff; --good:#1a7f4b; --good-soft:#e6f6ec;
+    --warn:#b06a00; --warn-soft:#fff3e0; --bad:#b3261e; --bad-soft:#fdecea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.62;font-size:15.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 22px 80px}
+  header.hero{background:linear-gradient(135deg,#1a7f4b,#2d5bd7);color:#fff;border-radius:18px;
+    padding:34px;box-shadow:0 10px 30px rgba(45,91,215,.22)}
+  header.hero h1{margin:0 0 6px;font-size:26px;letter-spacing:-.3px}
+  header.hero .sub{opacity:.93;font-size:15px}
+  header.hero .meta{margin-top:14px;font-size:13px;opacity:.85;display:flex;flex-wrap:wrap;gap:6px 18px}
+  h2{margin:40px 0 14px;font-size:20px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{margin:22px 0 10px;font-size:16.5px;color:#2a3550}
+  p{margin:10px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;
+    box-shadow:0 1px 3px rgba(20,30,60,.04)}
+  .feedback{background:var(--warn-soft);border:1px solid #f1d5a8;border-left:5px solid var(--warn)}
+  .dir{border-left:5px solid var(--accent)}
+  .dir.d1{border-left-color:var(--good)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0f3f9;font-weight:700;color:#33405c;font-size:13px}
+  tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center}
+  .win{color:var(--good);font-weight:800}
+  .flag{color:var(--bad);font-weight:700}
+  .big{font-weight:800;color:var(--accent)}
+  code{background:#eef1f7;border-radius:5px;padding:1px 6px;font-size:12.5px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;color:#33405c}
+  .tag{font-size:12px;font-weight:700;padding:1px 8px;border-radius:6px;white-space:nowrap}
+  .t-good{background:var(--good-soft);color:var(--good)} .t-acc{background:var(--accent-soft);color:var(--accent)}
+  .t-warn{background:var(--warn-soft);color:var(--warn)} .t-bad{background:var(--bad-soft);color:var(--bad)}
+  .lever{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 11px;background:var(--accent-soft);color:var(--accent)}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0}
+  @media(max-width:720px){.kpi{grid-template-columns:repeat(2,1fr)}}
+  .kpi .b{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .kpi .v{font-size:21px;font-weight:800;color:var(--good);line-height:1.1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
+  .note{font-size:13.5px;color:var(--muted);background:#f0f2f7;border-radius:10px;padding:12px 14px;border-left:4px solid #c4ccda}
+  footer{margin-top:42px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;word-break:break-word}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>R2 — 3 cải tiến phương pháp (đóng góp NCKH)</h1>
+  <div class="sub">Từ feedback "cần cải tiến từ phương pháp cũ, phải <b>hiệu quả</b>" → 3 đòn bẩy bù nhau, <b>đã verify bằng số thật</b>.</div>
+  <div class="meta"><span>📅 2026‑06‑27</span><span>🧪 verify: Kaggle P100 + local CPU</span><span>⏱ quota dùng ~7h/10h</span><span>🎯 IEEE</span></div>
+</header>
+
+<div class="card feedback">
+  <b>Bối cảnh (feedback của sếp):</b> "với hàm lượng tri thức như vầy thì không có đóng góp gì cho NCKH — cần sự cải tiến từ phương pháp cũ, <b>phải hiệu quả</b>." → Tài liệu này trình bày 3 cải tiến phương pháp, mỗi cái <b>cải tiến đo được vs method cũ</b> và đã kiểm chứng trên dataset nhỏ.
+</div>
+
+<div class="note">
+  <b>Baseline (method cũ):</b> hierarchical dual-head, loss <code>0.5·CORAL + 0.3·CE + 0.2·Focal</code>, gold-holdout. gold macro-F1 <b>0.385</b>, <b>Behavior-F1 0.183</b> (nút thắt). Phát hiện gây băn khoăn: flat-CE thuần (0.422) lại <i>vượt</i> tri-objective → nghi CORAL+Focal overfit nhãn-LLM nhiễu.
+</div>
+
+<div class="kpi">
+  <div class="b"><div class="v">0.260</div><div class="l">Behavior-F1 (CORN+GCE) ▲ từ 0.183</div></div>
+  <div class="b"><div class="v">0.41</div><div class="l">Behavior-F1 (label-shift) ▲ từ 0.357</div></div>
+  <div class="b"><div class="v">35.8%</div><div class="l">nhãn Behavior cleanlab nghi sai</div></div>
+  <div class="b"><div class="v">~7h</div><div class="l">quota P100 dùng (/10h)</div></div>
+</div>
+
+<!-- DIRECTION 1 / D -->
+<h2>Đóng góp 1 — CORN + GCE: loss ordinal bền‑nhiễu <span class="lever">đòn bẩy: model / loss</span></h2>
+<div class="card dir d1">
+  <h3 style="margin-top:0">Cải tiến gì vs method cũ</h3>
+  <p>Thay <b>CORAL</b> (shared-weight → 1 nhãn hiếm nhiễu làm hỏng <i>mọi</i> ngưỡng) bằng <b>CORN</b> (mỗi ngưỡng 1 weight riêng, train trên tập điều kiện); thay <b>Focal</b> (khuếch đại mẫu "khó" = thường là nhiễu) bằng <b>GCE</b> <code>(1−p_y^q)/q</code> (giảm trọng số mẫu tin-cậy-thấp). Loss mới <code>0.5·CORN + 0.3·CE + 0.2·GCE</code>.</p>
+  <h3>Kết quả chính thức (gold-holdout, Kaggle <b>5-fold×10ep</b>)</h3>
+  <table>
+    <tr><th>Cấu hình</th><th class="c">gold macro-F1</th><th class="c">Behavior-F1</th><th class="c">QWK</th></tr>
+    <tr><td>dual-head CORAL+CE+Focal (cũ)</td><td class="c">0.385</td><td class="c flag">0.183</td><td class="c">0.398</td></tr>
+    <tr style="background:var(--good-soft)"><td><b>CORN + CE + GCE</b></td><td class="c"><b>0.402</b> ±0.013</td><td class="c win">0.260</td><td class="c">0.361</td></tr>
+    <tr><td>flat-CE (bỏ ordinal)</td><td class="c">0.422</td><td class="c">0.285</td><td class="c">0.388</td></tr>
+  </table>
+  <p><b>Ý nghĩa khoa học (trung thực):</b> CORN+GCE <b>vượt dual-head cũ rõ rệt</b> (macro +0.017, <b>Behavior +0.077</b>) và <b>giữ cấu trúc ordinal</b> → xác nhận cơ chế: CORAL shared-weight + Focal hại lớp hiếm; thay bằng CORN+GCE phục hồi đáng kể. <b>Nhưng vẫn &lt; flat-CE</b> (0.422/0.285) → finding: trên phân bố gold, <b>bỏ ordinal vẫn tốt nhất</b>; CORN+GCE là <i>ordinal head tốt nhất</i> — dùng khi cần QWK/ranking. <span class="tag t-good">CORN+GCE &gt; CORAL+Focal; flat-CE vẫn dẫn đầu gold</span></p>
+  <p class="note">⚠ Preview 3-fold×6ep trước cho 0.418/0.317 (std 0.003) — lạc quan quá; số 5-fold chính thức thấp hơn (std 0.013).</p>
+  <h3>Ablation 2×2 — tách đóng góp CORN vs GCE (5-fold×10ep)</h3>
+  <table>
+    <tr><th>head ＼ 3rd-loss</th><th class="c">Focal</th><th class="c">GCE</th></tr>
+    <tr><td><b>CORAL</b></td><td class="c">dual 0.385 / 0.183</td><td class="c">gce-only 0.399 / 0.229</td></tr>
+    <tr><td><b>CORN</b></td><td class="c">corn-only <b>0.410</b> / 0.250</td><td class="c">corn+gce 0.402 / <b>0.260</b></td></tr>
+  </table>
+  <p><b>Tách đóng góp (từ dual 0.385/0.183):</b> <b>CORN (head) là đòn bẩy chính</b> (macro +0.025, Behavior +0.067); <b>GCE độc lập</b> giúp nhỏ hơn (+0.014 / +0.046); kết hợp <b>sub-additive</b> trên macro nhưng <b>Behavior cao nhất ở CORN+GCE (0.260)</b>. Khác biệt giữa 3 biến thể trong khoảng nhiễu (std 0.015–0.025).</p>
+</div>
+
+<!-- DIRECTION 2 / A -->
+<h2>Đóng góp 2 — Label‑Shift Correction <span class="lever">đòn bẩy: inference</span></h2>
+<div class="card dir">
+  <h3 style="margin-top:0">Cải tiến gì vs method cũ</h3>
+  <p>Method cũ bỏ qua việc <code>P_train(y) ≠ P_gold(y)</code>. Đo được: Behavior <b>7.3% (train) → 19.7% (gold)</b> = under-label <b>3.0×</b>. Thêm <b>hiệu chỉnh hậu kỳ KHÔNG train lại</b>: Logit-Adjustment <code>logit_k −= τ·log π_train_k</code> / SLD-EM.</p>
+  <h3>Kết quả (post-hoc trên checkpoint, local CPU, 0 GPU)</h3>
+  <table>
+    <tr><th>Method</th><th class="c">macro-F1</th><th class="c">Behavior-F1</th></tr>
+    <tr><td>baseline (chưa sửa)</td><td class="c">0.462</td><td class="c">0.357</td></tr>
+    <tr style="background:var(--good-soft)"><td><b>logit-adjust τ=0.5</b></td><td class="c"><b>0.467</b></td><td class="c win">0.410 (+0.053)</td></tr>
+    <tr><td>SLD-EM</td><td class="c">0.446</td><td class="c">0.412</td></tr>
+    <tr><td><i>ORACLE</i> (π_gold thật)</td><td class="c"><i>0.491</i></td><td class="c"><i>0.441 (+0.084)</i></td></tr>
+  </table>
+  <p><b>Ý nghĩa khoa học:</b> một bước correction <b>rẻ nhất (0 GPU, không train lại)</b> nâng đúng lớp nút thắt Behavior <b>+0.05</b> (deploy) tới <b>+0.08</b> (oracle). → đóng khung <b>"LLM-annotation → clinical-gold là <i>label shift có hệ thống</i>"</b>; tỉ số <code>w(y)=π_gold/π_train</code> = thước đo bias nhãn-LLM theo lớp. Gap deploy→oracle = headroom cho ước lượng prior tốt hơn.</p>
+</div>
+
+<!-- DIRECTION 3 / B -->
+<h2>Đóng góp 3 — Ordinal‑aware Confident Learning <span class="lever">đòn bẩy: data</span></h2>
+<div class="card dir">
+  <h3 style="margin-top:0">Cải tiến gì vs method cũ</h3>
+  <p>Cleanlab gốc coi nhãn <b>nominal</b> — lỗi kề Behavior→Ideation bị xử như lỗi xa Behavior→Indicator. Thêm <b>trọng số khoảng-cách-hạng</b> <code>(1−p_self)·|ỹ−ŷ|²</code> (khớp phạt bậc-2 của QWK) + ngưỡng xác suất tích lũy CORAL → quy tắc <b>"clean far, keep adjacent"</b>.</p>
+  <h3>Kết quả (cleanlab diagnostic Kaggle ~4h + Arm1 numpy 0 GPU)</h3>
+  <p><b>Chẩn đoán:</b> <span class="big">35.8%</span> nhãn Behavior (227/634) bị cleanlab nghi sai (toàn cục 16.2%) → <b>xác nhận nút thắt Behavior = chất lượng nhãn</b> (đáp thẳng yêu cầu IEEE gap #1).</p>
+  <table>
+    <tr><th>Bộ lọc</th><th class="c">flag Behavior</th><th class="c">của lỗi-xa (78)</th><th class="c">của lỗi-kề (370)</th></tr>
+    <tr><td>Nominal CL</td><td class="c">227 (35.8%)</td><td class="c">79%</td><td class="c flag">45% (flag bừa borderline)</td></tr>
+    <tr style="background:var(--good-soft)"><td><b>Ordinal RD-CJ</b></td><td class="c">159 (25.1%)</td><td class="c win">100%</td><td class="c win">22% (giữ borderline)</td></tr>
+  </table>
+  <p><b>Ý nghĩa khoa học:</b> tín hiệu "<b>clean far +21pp, keep adjacent −23pp</b>" — chứng minh ordinal-awareness đổi <i>tập được làm sạch</i> theo hướng <b>đúng lâm sàng</b> (cắt nhiễu rõ, giữ gradation mơ hồ). Novelty vì <b>cleanlab không có chế độ ordinal</b>; prior gần nhất là ảnh, không phải NLP lâm sàng.</p>
+</div>
+
+<!-- VERDICT -->
+<h2>🏁 Verdict — cả 3 đều có bằng chứng hiệu quả, bù nhau</h2>
+<table>
+  <tr><th>Đóng góp</th><th>Đòn bẩy</th><th>Kết quả đo được</th><th class="c">Chi phí</th></tr>
+  <tr><td><b>1. CORN+GCE</b></td><td>model/loss</td><td>macro <b>0.402</b> (&gt;dual +0.017, &lt;flat-CE), <b>Behavior 0.260</b> (&gt;dual +0.077), giữ ordinal</td><td class="c">~8.8h GPU</td></tr>
+  <tr><td><b>2. Label-shift</b></td><td>inference</td><td>Behavior-F1 <b>+0.05</b> (deploy) / +0.08 (oracle), macro nhích</td><td class="c">0 GPU</td></tr>
+  <tr><td><b>3. Ordinal-CL</b></td><td>data</td><td>35.8% nhãn Behavior nhiễu; clean 100% far / keep 78% adj</td><td class="c">~4h GPU</td></tr>
+</table>
+<div class="card" style="border-left:5px solid var(--good)">
+  <b>Khung đóng góp IEEE:</b> một bài <i>"Honest Weak-Supervision cho Ordinal Clinical NLP"</i> — <b>(2) label-shift correction</b> (hiệu quả nhất trên Behavior, rẻ nhất) + <b>(3) ordinal-aware cleaning</b> làm 2 trụ; <b>(1) CORN+GCE</b> = "ordinal head bền-nhiễu (CORN+GCE &gt; CORAL+Focal)" kèm <b>finding trung thực</b>: trên gold, flat-CE (bỏ ordinal) vẫn tốt nhất — cái giá của cấu trúc ordinal dưới shift LLM→gold. <b>3 hướng bù nhau, không trùng.</b>
+</div>
+
+<h2>Future work (không blocking)</h2>
+<ul>
+  <li><b>D:</b> nâng lên 5-fold×10ep cho khớp bảng baseline; tách <b>CORN-only</b> / <b>GCE-only</b> để phân bổ đóng góp; q-sweep (0.5).</li>
+  <li><b>A:</b> chạy correction trên cả 5 fold checkpoint (hiện 1 best-fold); ước lượng target-prior tốt hơn (thu hẹp gap deploy→oracle).</li>
+  <li><b>B:</b> Arm2 retrain 3-fold trên pool đã ordinal-clean (drop far / downweight) → đo Behavior-F1 sau làm sạch.</li>
+</ul>
+
+<footer>
+  <b>Nguồn:</b> docs/tasks/r2-method-improvements-for-contribution.md (living doc, grounding 4 task-researcher) ·
+  docs/papers/finetuning-message/PAPER-PLAN-text-ordinal-suicide.md ·
+  logs: kaggle/finetuning-message/{r2-corn-gce,r2-tier1-cleanlab,r2-label-shift}/out ·
+  refs: Shi CORN PAA'23 · Zhang&Sabuncu GCE NeurIPS'18 · Menon logit-adjust ICLR'21 · Saerens SLD'02 · Northcutt CL JAIR'21.
+</footer>
+
+</div>
+</body>
+</html>
+</content>

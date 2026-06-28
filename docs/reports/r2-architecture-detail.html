@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>R2 · Kiến trúc chi tiết — Hierarchical Dual-Head (spec sheet tĩnh)</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#121a31; --panel2:#0e1528; --ink:#e7ecff; --mut:#8a97c2;
+    --line:#26304f; --cyan:#39d0ff; --cyan2:#1aa6d6; --orange:#ff9e45; --green:#37e1a0;
+    --pink:#ff5d8f; --yellow:#ffd166; --violet:#9d7bff; --frozen:#3b4a72;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 700px at 70% -10%, #18213d 0%, var(--bg) 60%);color:var(--ink);font:14px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 20px 70px}
+  a{color:var(--cyan)}
+  h1{font-size:23px;margin:0 0 4px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:14px}
+  code{background:#0c142b;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:#bcd0ff;font-size:12px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 6px}
+  .badge{border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:12px;background:var(--panel2)}
+  .badge b{color:var(--green)}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 22px;font-size:12.5px}
+  .toc a{border:1px solid var(--line);border-radius:8px;padding:5px 10px;text-decoration:none;color:#cfe0ff;background:var(--panel)}
+  .toc a:hover{border-color:var(--cyan)}
+  section{margin:26px 0}
+  h2{font-size:16px;border-left:3px solid var(--cyan);padding-left:10px;margin:0 0 12px}
+  h2 .n{color:var(--mut);font-weight:400;font-size:13px}
+  .lead{color:#b9c5ee;font-size:12.5px;margin:-4px 0 12px}
+  /* layer cards */
+  .layer{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel),var(--panel2));margin:0 0 10px;overflow:hidden}
+  .lhead{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line)}
+  .lhead .idx{width:26px;height:26px;border-radius:8px;background:#1b2545;color:var(--cyan);display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+  .lhead .nm{font-weight:700;font-size:14px}
+  .lhead .mod{color:var(--mut);font-size:11.5px;margin-left:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .lbody{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  @media(max-width:720px){.lbody{grid-template-columns:1fr}}
+  .cell{padding:9px 14px;border-top:1px solid var(--line)}
+  .cell:nth-child(odd){border-right:1px solid var(--line)}
+  .cell .k{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+  .cell .v{font-size:12.5px;color:#dde6ff}
+  .io{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+  .pill{display:inline-block;font-size:10.5px;padding:1px 8px;border-radius:20px;border:1px solid var(--line);margin:2px 4px 0 0}
+  .pill.frozen{color:#aebbe0;border-color:var(--frozen);background:rgba(59,74,114,.25)}
+  .pill.train{color:var(--green);border-color:#1f5d46;background:rgba(55,225,160,.07)}
+  .pill.lr{color:var(--violet);border-color:#3c3168}
+  .arrow{text-align:center;color:#41507e;font-size:14px;margin:-4px 0 6px}
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:8px 11px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:#16203d;color:#cfe0ff;font-size:11px;letter-spacing:.3px;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td code{font-size:11.5px}
+  .best{color:var(--green);font-weight:700}
+  .warn{color:var(--orange)}
+  .dim{color:var(--mut)}
+  /* math / formula blocks */
+  .formula{background:#0c142b;border:1px solid var(--line);border-radius:9px;padding:11px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#d6e2ff;overflow-x:auto;margin:8px 0}
+  .formula .c{color:var(--mut)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:720px){.two{grid-template-columns:1fr}}
+  .note{border:1px solid var(--line);border-left:3px solid var(--yellow);border-radius:8px;padding:9px 13px;font-size:12px;color:#e9deba;background:rgba(255,209,102,.05)}
+  .contrib{border:1px solid var(--line);border-radius:11px;padding:12px 14px;background:linear-gradient(180deg,var(--panel),var(--panel2));margin:0 0 10px}
+  .contrib h4{margin:0 0 5px;font-size:13.5px;color:var(--yellow)}
+  .contrib .d{font-size:12.5px;color:#cdd8f6}
+  .contrib .m{font-size:11.5px;color:var(--green);margin-top:5px}
+  .foot{color:var(--mut);font-size:11.5px;margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
+  .link-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .printbtn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer}
+  @media print{body{background:#fff;color:#000}.toc,.printbtn{display:none}.layer,.contrib,table{break-inside:avoid}}
+  /* ── block diagram (sơ đồ khối) ── */
+  .diagram{display:flex;flex-direction:column;align-items:center;margin:8px 0 2px}
+  .blk{width:min(580px,94%);border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,var(--panel),var(--panel2));padding:10px 14px;text-align:left}
+  .blk .bt{display:flex;align-items:center;gap:10px}
+  .blk .bi{width:24px;height:24px;border-radius:7px;background:#1b2545;color:var(--cyan);display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+  .blk .bn{font-weight:700;font-size:13.5px}
+  .blk .bm{margin-left:auto;color:var(--mut);font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .blk .bd{color:#b9c5ee;font-size:11px;margin-top:3px;padding-left:34px}
+  .blk.s-in{border-left:3px solid var(--cyan)}
+  .blk.s-enc{border-left:3px solid var(--frozen)}
+  .blk.s-mix{border-left:3px solid var(--violet)}
+  .blk.s-pool{border-left:3px solid var(--green)}
+  .blk.s-out{border-left:3px solid var(--yellow)}
+  .conn{display:flex;flex-direction:column;align-items:center;color:#54639a;line-height:1}
+  .conn .pipe{width:2px;height:11px;background:var(--line)}
+  .conn .shape{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cyan);background:#0c142b;border:1px solid var(--line);border-radius:20px;padding:1px 9px;margin:3px 0}
+  .conn .ar{font-size:12px;margin-top:-1px}
+  .headgrp{width:min(580px,94%);border:1px dashed var(--pink);border-radius:12px;padding:9px 10px;background:rgba(255,93,143,.05)}
+  .headgrp .glab{font-size:11.5px;color:var(--pink);font-weight:700;margin-bottom:8px;text-align:center}
+  .headrow{display:flex;gap:10px}
+  @media(max-width:520px){.headrow{flex-direction:column}}
+  .headrow .blk{width:auto;flex:1}
+  .headrow .blk.coral-b{border-left:3px solid var(--cyan)}
+  .headrow .blk.cls-b{border-left:3px solid var(--pink)}
+  /* ── VGG-style 3D feature-map volumes ── */
+  .isowrap{background:#efe9d8;border:1px solid #d8cfb5;border-radius:12px;padding:46px 18px 20px;overflow-x:auto}
+  .iso{display:flex;align-items:flex-end;justify-content:center;gap:30px;min-width:780px}
+  .stage3d{display:flex;flex-direction:column;align-items:center;position:relative}
+  .op{position:absolute;bottom:calc(100% + 8px);white-space:nowrap;font-size:11px;color:#37466e;font-weight:700;text-align:center}
+  .op::after{content:'';position:absolute;left:50%;top:100%;width:1px;height:10px;background:#9aa0b0;transform:translateX(-.5px)}
+  .cuboid{position:relative;width:var(--w,34px);height:var(--h,90px);margin-top:var(--d,22px);margin-right:var(--d,22px)}
+  .cuboid > div{position:absolute;border:1px solid #7f879a;box-sizing:border-box}
+  .cuboid .front{inset:0;background:linear-gradient(160deg,#d7dae1,#bcc2cd)}
+  .cuboid .top{bottom:100%;left:0;width:100%;height:var(--d,22px);background:#e7eaf0;transform-origin:bottom left;transform:skewX(-45deg)}
+  .cuboid .side{top:0;left:100%;width:var(--d,22px);height:100%;background:#a9afbd;transform-origin:top left;transform:skewY(-45deg)}
+  .cuboid .accent{top:0;right:0;width:32%;height:100%;background:linear-gradient(160deg,#5b8def,#3b6fd6);border:1px solid #2c54a8;border-top:none;border-bottom:none}
+  .dim3d{margin-top:12px;text-align:center;font-size:11.5px;color:#222c45;font-weight:800;line-height:1.3}
+  .dim3d small{display:block;font-weight:600;color:#5a6680;font-size:10px;margin-top:1px}
+  .dim3d .nm{display:block;font-weight:700;color:#6b7390;font-size:10px;margin-top:3px}
+  .isonote{font-size:11.5px;color:var(--mut);margin-top:10px}
+  .isonote b{color:#cfe0ff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="link-top">
+    <div></div>
+    <button class="printbtn" onclick="window.print()">🖨 In / xuất PDF</button>
+  </div>
+  <h1>R2 · Kiến trúc chi tiết — Hierarchical Dual-Head cho Ordinal Suicide-Risk</h1>
+  <div class="sub">Spec sheet tĩnh. Mọi config lấy đúng từ <code>Config</code> &amp; module trong
+    <code>kaggle/finetuning-message/r2-suicide-risk-dualhead/r2-suicide-risk-dualhead.py</code>.
+    Bản animation luồng training: <a href="r2-architecture-training-animation.html">r2-architecture-training-animation.html</a>.</div>
+
+  <div class="badges">
+    <span class="badge">Encoder <b>MentalRoBERTa</b> (h=768, 12L)</span>
+    <span class="badge">4 lớp ordinal <b>Indicator&lt;Ideation&lt;Behavior&lt;Attempt</b></span>
+    <span class="badge">Gold-holdout macro-F1 <b>0.385 → 0.418</b></span>
+    <span class="badge">Within-dist 5-fold <b>0.653</b> (paper 0.5098)</span>
+    <span class="badge">QWK <b>~0.39</b></span>
+  </div>
+
+  <div class="toc">
+    <a href="#flow">① Sơ đồ tổng</a>
+    <a href="#layers">② Chi tiết từng module</a>
+    <a href="#heads">③ Dual-head &amp; blend</a>
+    <a href="#loss">④ Loss tri-objective</a>
+    <a href="#cfg">⑤ Hyperparameters</a>
+    <a href="#data">⑥ Data &amp; protocol</a>
+    <a href="#ablation">⑦ Biến thể / ablation</a>
+    <a href="#contrib">⑧ 3 cải tiến mới nhất</a>
+    <a href="#params">⑨ Frozen vs trainable</a>
+    <a href="#iso">⑩ Sơ đồ khối 3D</a>
+  </div>
+
+  <!-- ① FLOW ------------------------------------------------------------------>
+  <section id="flow">
+    <h2>① Sơ đồ tổng <span class="n">— forward, từ chuỗi post tới mức nguy cơ</span></h2>
+    <div class="diagram">
+
+      <div class="blk s-in">
+        <div class="bt"><div class="bi">in</div><div class="bn">Input · 1 user = ≤5 post</div><div class="bm">tokenize · pad</div></div>
+        <div class="bd">256 tok/post, pad post rỗng</div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">input_ids (B, 5, 256)</div><div class="ar">▼</div></div>
+
+      <div class="blk s-enc">
+        <div class="bt"><div class="bi">1</div><div class="bn">Post-Encoder · MentalRoBERTa</div><div class="bm">❄ emb + L0–5</div></div>
+        <div class="bd">mã hoá từng post độc lập → vector [CLS]</div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">post-emb (B, 5, 768)</div><div class="ar">▼</div></div>
+
+      <div class="blk s-mix">
+        <div class="bt"><div class="bi">2</div><div class="bn">+ Temporal embedding</div><div class="bm">ReLU(LN(W·Δt+b))</div></div>
+        <div class="bd">cộng nhúng Δt vào mỗi post (Δt=0 ở dataset này)</div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">(B, 5, 768)</div><div class="ar">▼</div></div>
+
+      <div class="blk s-mix">
+        <div class="bt"><div class="bi">3</div><div class="bn">Sequence-Transformer × 3</div><div class="bm">8 heads · FFN 3072</div></div>
+        <div class="bd">self-attention TRỘN thông tin giữa 5 post (pad-mask)</div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">(B, 5, 768)</div><div class="ar">▼</div></div>
+
+      <div class="blk s-pool">
+        <div class="bt"><div class="bi">4</div><div class="bn">Attention-Pooling</div><div class="bm">query · 4 heads</div></div>
+        <div class="bd">learnable query gộp 5 post → 1 vector chuỗi</div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">(B, 768)</div><div class="ar">▼</div></div>
+
+      <div class="blk s-pool">
+        <div class="bt"><div class="bi">5</div><div class="bn">+ Stat-feature fusion</div><div class="bm">8→64 ⊕ fuse</div></div>
+        <div class="bd">ghép đặc trưng thống kê độ dài post</div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">u = (B, 768)</div><div class="ar">▼</div></div>
+
+      <div class="headgrp">
+        <div class="glab">⑥ DUAL HEAD — input u (B, 768), 2 nhánh bù nhau</div>
+        <div class="headrow">
+          <div class="blk coral-b">
+            <div class="bt"><div class="bi" style="color:var(--cyan)">C</div><div class="bn">CORAL head ↗</div></div>
+            <div class="bd" style="padding-left:0;margin-top:5px">w_c chung + 3 ngưỡng có thứ tự<br><b>→ coral_logits (B,3)</b> = P(y&gt;k)</div>
+          </div>
+          <div class="blk cls-b">
+            <div class="bt"><div class="bi" style="color:var(--pink)">N</div><div class="bn">CLS head ◎</div></div>
+            <div class="bd" style="padding-left:0;margin-top:5px">Linear(768 → 4) → softmax<br><b>→ cls_logits (B,4)</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="conn"><div class="pipe"></div><div class="shape">0.5·coral_p + 0.5·cls_p</div><div class="ar">▼</div></div>
+
+      <div class="blk s-out">
+        <div class="bt"><div class="bi" style="color:var(--yellow)">ŷ</div><div class="bn">argmax → mức nguy cơ (ordinal)</div></div>
+        <div class="bd">Indicator (0) &lt; Ideation (1) &lt; Behavior (2) &lt; Attempt (3)</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ② LAYER DETAIL ---------------------------------------------------------->
+  <section id="layers">
+    <h2>② Chi tiết từng module <span class="n">— config · in/out · tham số</span></h2>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">0</div><div class="nm">Input &amp; tokenization</div><div class="mod">CSSRSDataset.__getitem__ · AutoTokenizer</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">Nhiệm vụ</div><div class="v">Lấy <code>seq_len=5</code> post gần nhất, augment (train), tokenize, pad chuỗi &amp; pad token.</div></div>
+        <div class="cell"><div class="k">Config</div><div class="v"><code>max_length=256</code> · <code>padding=max_length</code> · <code>aug_prob=0.5</code></div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">1 user = list[str] post</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">input_ids, attention_mask (B,5,256) · valid (B,5) · dt (B,5) · feats (B,8)</div></div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">1</div><div class="nm">Post-Encoder · MentalRoBERTa</div><div class="mod">AutoModel.from_pretrained</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">Nhiệm vụ</div><div class="v">Mã hoá từng post độc lập; lấy vector <code>[CLS]</code> = <code>last_hidden_state[:,0]</code>.</div></div>
+        <div class="cell"><div class="k">Backbone</div><div class="v"><code>welsachy/mental-roberta-base-finetuned-depression</code> (base = MentalRoBERTa, 12 layer, h=768)</div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">input_ids (B·5, 256)</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">post-embeddings (B, 5, 768)</div></div>
+        <div class="cell" style="grid-column:1/-1"><div class="k">Đóng băng (freeze_layers=6)</div>
+          <div class="v"><span class="pill frozen">❄ embeddings.*</span><span class="pill frozen">❄ encoder.layer.0–5</span><span class="pill train">🔥 encoder.layer.6–11</span><span class="pill lr">lr 2e-5</span></div></div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">2</div><div class="nm">Temporal embedding</div><div class="mod">time_fc · time_ln · time_drop</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">Nhiệm vụ</div><div class="v">Nhúng Δt thành vector, cộng vào mỗi post-embedding: <code>e + ReLU(LN(W·Δt+b))</code>.</div></div>
+        <div class="cell"><div class="k">Module</div><div class="v"><code>Linear(1,768)</code> → <code>LayerNorm(768)</code> → ReLU → <code>Dropout(0.3)</code></div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">dt (B,5)→(B,5,1) + e (B,5,768)</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">(B, 5, 768)</div></div>
+        <div class="cell" style="grid-column:1/-1"><div class="v dim">⚠ Dataset CSSRS không có timestamp → <code>Δt=0</code>; nhánh này hiện là hằng số (sẵn sàng cho dữ liệu có Δt).</div></div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">3</div><div class="nm">Sequence Transformer × 3</div><div class="mod">nn.TransformerEncoder</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">Nhiệm vụ</div><div class="v">Self-attention TRỘN thông tin giữa 5 post (<code>src_key_padding_mask=~valid</code>).</div></div>
+        <div class="cell"><div class="k">Config</div><div class="v"><code>d_model=768</code> · <code>nhead=8</code> · <code>dim_feedforward=3072</code> · <code>dropout=0.3</code> · gelu · batch_first · ×3 layer</div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">(B, 5, 768) độc lập</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">(B, 5, 768) có ngữ cảnh chuỗi</div></div>
+        <div class="cell" style="grid-column:1/-1"><div class="v"><span class="pill train">🔥 train</span><span class="pill lr">lr 1e-4</span></div></div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">4</div><div class="nm">Attention-Pooling</div><div class="mod">query (Parameter) · nn.MultiheadAttention</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">Nhiệm vụ</div><div class="v">1 learnable query "hút" các post quan trọng → 1 vector chuỗi (Q=query, K=V=seq).</div></div>
+        <div class="cell"><div class="k">Module</div><div class="v"><code>query (1,1,768)·0.02</code> · <code>MultiheadAttention(768, heads=4, dropout=0.3)</code> · Dropout(0.3)</div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">query (B,1,768) + seq (B,5,768)</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">u (B, 768)</div></div>
+        <div class="cell" style="grid-column:1/-1"><div class="v"><span class="pill train">🔥 train</span><span class="pill lr">lr 1e-4</span></div></div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">5</div><div class="nm">Statistical-feature fusion</div><div class="mod">feat_mlp · fuse</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">Nhiệm vụ</div><div class="v">MLP hoá 8 đặc trưng thống kê độ dài post rồi ghép vào vector chuỗi.</div></div>
+        <div class="cell"><div class="k">Module</div><div class="v"><code>Linear(8,64)→ReLU→Linear(64,64)→ReLU</code> · <code>fuse: Linear(768+64, 768)</code></div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">u (B,768) + feats (B,8)</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">u (B, 768)</div></div>
+        <div class="cell" style="grid-column:1/-1"><div class="v dim">feats = [mean, std, min, max độ dài post] + 4 số 0 (time-interval, chưa có) → 8 chiều · <span class="pill train">🔥</span><span class="pill lr">lr 1e-4</span></div></div>
+      </div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer">
+      <div class="lhead"><div class="idx">6</div><div class="nm">Dual Head</div><div class="mod">coral_fc · coral_bias · cls_head</div></div>
+      <div class="lbody">
+        <div class="cell"><div class="k">CORAL head (ordinal)</div><div class="v"><code>coral_fc: Linear(768,1, bias=False)</code> = w_c chung + <code>coral_bias (3)</code> ngưỡng có thứ tự → <code>(B,3)</code></div></div>
+        <div class="cell"><div class="k">CLS head (nominal)</div><div class="v"><code>cls_head: Linear(768,4)</code> → <code>(B,4)</code></div></div>
+        <div class="cell"><div class="k">Input</div><div class="v io">u (B, 768)</div></div>
+        <div class="cell"><div class="k">Output</div><div class="v io">coral_logits (B,3) = P(y&gt;k) · cls_logits (B,4)</div></div>
+        <div class="cell" style="grid-column:1/-1"><div class="v"><span class="pill train">🔥 cả 2 head train</span><span class="pill lr">lr 1e-4</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ HEADS / BLEND --------------------------------------------------------->
+  <section id="heads">
+    <h2>③ Dual-head &amp; cách gộp (blend) <span class="n">— ordinal + nominal bù nhau</span></h2>
+    <div class="two">
+      <div>
+        <div class="lead"><b>CORAL → xác suất lớp</b> (luỹ tích P(y&gt;k) → per-class):</div>
+        <div class="formula">
+P(y&gt;k) = σ(coral_logits)   <span class="c"># k=0..2</span>
+probs[0]  = 1 − P(y&gt;0)
+probs[k]  = P(y&gt;k−1) − P(y&gt;k)
+probs[3]  = P(y&gt;2)
+<span class="c"># giữ thứ bậc: ngưỡng coral_bias có thứ tự</span>
+        </div>
+      </div>
+      <div>
+        <div class="lead"><b>Blend lúc eval</b> (chỉ gộp head thực sự được train):</div>
+        <div class="formula">
+coral_p = coral_to_probs(coral_logits)
+cls_p   = softmax(cls_logits)
+p_final = 0.5·coral_p + 0.5·cls_p   <span class="c"># nếu cả 2 head bật</span>
+        ŷ = argmax(p_final)
+<span class="c"># ablation: chỉ 1 head → dùng riêng head đó</span>
+        </div>
+      </div>
+    </div>
+    <div class="note">CORAL cho <b>thứ bậc</b> (nhầm Indicator↔Attempt bị phạt nặng hơn nhầm kề), CLS cho <b>sắc lớp</b>. Blend 50/50 lấy ưu điểm cả hai.</div>
+  </section>
+
+  <!-- ④ LOSS ------------------------------------------------------------------>
+  <section id="loss">
+    <h2>④ Loss tri-objective <span class="n">— paper eq.4</span></h2>
+    <div class="formula">
+L = <b>0.5</b>·L<sub>CORAL</sub> + <b>0.3</b>·L<sub>CE</sub>(label_smoothing=0.1) + <b>0.2</b>·L<sub>Focal</sub>(γ=2)   <span class="c"># trọng số env-gated: R2_W_CORAL/CE/FOCAL</span>
+
+L<sub>CORAL</sub> = BCEWithLogits( coral_logits , t )      t<sub>k</sub> = 1[y &gt; k]          <span class="c"># mục tiêu nhị phân luỹ tích</span>
+L<sub>Focal</sub> = mean( −α<sub>y</sub>·(1−p<sub>y</sub>)<sup>γ</sup>·log p<sub>y</sub> )   α = N / (C·count)   <span class="c"># α nghịch tần suất lớp</span>
+    </div>
+    <div class="note">Đây là loss của bản <b>đã ship</b> (CORAL+CE+Focal). Bản <b>mới nhất</b> thay CORAL→<b>CORN</b> (weight riêng mỗi ngưỡng) và Focal→<b>GCE</b> (giảm trọng số mẫu tin-cậy-thấp) — xem mục ⑧.</div>
+  </section>
+
+  <!-- ⑤ CONFIG ---------------------------------------------------------------->
+  <section id="cfg">
+    <h2>⑤ Hyperparameters <span class="n">— dataclass Config</span></h2>
+    <table>
+      <tr><th>Nhóm</th><th>Tham số</th><th>Giá trị</th></tr>
+      <tr><td>Kiến trúc</td><td>seq_len · max_length · n_classes</td><td><code>5 · 256 · 4</code></td></tr>
+      <tr><td></td><td>freeze_layers · n_transformer_layers · n_heads · ffn_dim</td><td><code>6 · 3 · 8 · 3072</code></td></tr>
+      <tr><td></td><td>pool_heads · dropout · use_features</td><td><code>4 · 0.3 · True</code></td></tr>
+      <tr><td>Loss</td><td>w_coral · w_ce · w_focal</td><td><code>0.5 · 0.3 · 0.2</code></td></tr>
+      <tr><td></td><td>label_smoothing · focal_gamma</td><td><code>0.1 · 2.0</code></td></tr>
+      <tr><td>Tối ưu</td><td>lr_encoder · lr_new · weight_decay</td><td><code>2e-5 · 1e-4 · 0.01</code></td></tr>
+      <tr><td></td><td>optimizer · scheduler · warmup_ratio</td><td><code>AdamW · cosine · 0.1</code></td></tr>
+      <tr><td></td><td>batch_size · grad_accum (eff.) · max_grad_norm</td><td><code>8 · 2 (16) · 1.0</code></td></tr>
+      <tr><td>Training</td><td>epochs · patience · n_folds · seed</td><td><code>10–15 · 5 · 5 · 42</code></td></tr>
+      <tr><td></td><td>aug_prob · AMP</td><td><code>0.5 · fp16 (CUDA)</code></td></tr>
+    </table>
+    <div class="note">2 nhóm LR phân biệt (discriminative): tham số <code>encoder.*</code> → <code>2e-5</code>; mọi module mới (time/seq/pool/feat/fuse/heads) → <code>1e-4</code>. Param <code>requires_grad=False</code> bị loại khỏi optimizer.</div>
+  </section>
+
+  <!-- ⑥ DATA ------------------------------------------------------------------>
+  <section id="data">
+    <h2>⑥ Data &amp; giao thức đánh giá</h2>
+    <div class="two">
+      <div>
+        <div class="lead"><b>2 khung đánh giá</b></div>
+        <table>
+          <tr><th>Khung</th><th>Train</th><th>Eval</th></tr>
+          <tr><td><b>Gold-holdout</b></td><td>pool nhãn-LLM (av9ash + scraped)</td><td>CSSRS-500 lâm sàng held-out</td></tr>
+          <tr><td><b>Within-dist</b></td><td colspan="2">5-fold StratifiedKFold trên toàn 10k</td></tr>
+        </table>
+        <div class="lead" style="margin-top:10px"><b>Nhãn</b> (5 C-SSRS → 4 ordinal, bỏ "Supportive")</div>
+        <div class="formula">Indicator 0 · Ideation 1 · Behavior 2 · Attempt 3</div>
+      </div>
+      <div>
+        <div class="lead"><b>Augmentation</b> (train-only, p=0.5/post)</div>
+        <table>
+          <tr><th>Op</th><th>Mô tả</th></tr>
+          <tr><td>delete</td><td>xoá ngẫu nhiên ~10% từ</td></tr>
+          <tr><td>swap</td><td>đổi chỗ 2 từ</td></tr>
+          <tr><td>synonym</td><td>thay từ đồng nghĩa (WordNet)</td></tr>
+        </table>
+        <div class="lead" style="margin-top:10px"><b>Class-balanced sampling</b> (<code>R2_BALANCE</code>)</div>
+        <div class="formula">WeightedRandomSampler, w = N/count  <span class="c"># nghịch tần suất → kéo Behavior (6.5%) lên</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ⑦ ABLATION -------------------------------------------------------------->
+  <section id="ablation">
+    <h2>⑦ Biến thể / ablation <span class="n">— cùng kiến trúc, đổi cấu hình loss (gold-holdout)</span></h2>
+    <table>
+      <tr><th>Cấu hình</th><th>w_coral / w_ce / w_focal</th><th>gold macro-F1</th><th>Behavior-F1</th><th>QWK</th></tr>
+      <tr><td>dual-head (đã ship)</td><td><code>0.5 / 0.3 / 0.2</code></td><td>0.385</td><td class="warn">0.183</td><td>~0.39</td></tr>
+      <tr><td>flat-CE (ablation)</td><td><code>0 / 1 / 0</code></td><td>0.422</td><td>0.285</td><td class="dim">thấp (nominal)</td></tr>
+      <tr><td><b>CORN + GCE</b> (mới nhất)</td><td><code>thay CORAL+Focal</code></td><td class="best">0.418</td><td class="best">0.317</td><td>~0.39</td></tr>
+      <tr><td>within-dist 5-fold</td><td><code>0.5 / 0.3 / 0.2</code></td><td colspan="3"><b class="best">0.653 ±0.005</b> &gt; paper 0.5098 (+28% rel)</td></tr>
+    </table>
+    <div class="note">Per-class gold (dual-head): Indicator <b>0.50</b> · Ideation <b>0.48</b> · Behavior <b class="warn">0.18</b> · Attempt <b>0.37</b>. Behavior là điểm nghẽn macro-F1 → mục tiêu của 3 cải tiến bên dưới.</div>
+  </section>
+
+  <!-- ⑧ CONTRIBUTIONS --------------------------------------------------------->
+  <section id="contrib">
+    <h2>⑧ 3 cải tiến mới nhất <span class="n">— delta kiến trúc/inference/data so với bản ship</span></h2>
+    <div class="contrib"><h4>1 · CORN + GCE — loss ordinal bền-nhiễu (xương sống)</h4>
+      <div class="d">Thay <b>CORAL</b> (1 weight chung → 1 nhãn hiếm nhiễu hỏng mọi ngưỡng) bằng <b>CORN</b> (weight riêng mỗi ngưỡng); thay <b>Focal</b> bằng <b>GCE</b> (giảm trọng số mẫu tin-cậy-thấp).</div>
+      <div class="m">→ Behavior-F1 0.183 → 0.317 · gold 0.385 → 0.418 · vẫn giữ ordinal (QWK ~0.39). Đổi ở <b>head + loss</b>.</div></div>
+    <div class="contrib"><h4>2 · Label-shift correction — sửa dịch-chuyển nhãn LLM→gold (inference, 0 train lại)</h4>
+      <div class="d">Đo <code>π_gold/π_train</code> Behavior = <b>3.0×</b> (LLM under-label); <b>Logit-Adjustment</b> hậu kỳ cộng <code>log w(y)</code> vào logits.</div>
+      <div class="m">→ Behavior-F1 0.357 → 0.41 (oracle 0.44), macro +0.005→+0.029. Chỉ đổi ở <b>bước inference</b>.</div></div>
+    <div class="contrib"><h4>3 · Ordinal-aware Confident Learning — làm sạch nhãn theo thứ bậc (data)</h4>
+      <div class="d">Confident-joint trọng số <code>|ỹ−ŷ|²</code>: sạch <b>100% lỗi-xa</b> (Behavior→Indicator) nhưng giữ <b>78% lỗi-kề</b> (borderline). Cleanlab nominal flag bừa 45% lỗi-kề.</div>
+      <div class="m">→ chẩn đoán 35.8% nhãn Behavior nghi sai; cleaning đúng lâm sàng. Đổi ở <b>tiền xử lý data</b>.</div></div>
+  </section>
+
+  <!-- ⑨ PARAM MAP ------------------------------------------------------------->
+  <section id="params">
+    <h2>⑨ Bản đồ Frozen vs Trainable <span class="n">— ai có gradient, học bằng LR nào</span></h2>
+    <table>
+      <tr><th>Thành phần</th><th>Trạng thái</th><th>Nhóm LR</th></tr>
+      <tr><td>encoder.embeddings.*</td><td><span class="pill frozen">❄ frozen</span></td><td class="dim">—</td></tr>
+      <tr><td>encoder.layer.0–5 (6 layer đầu)</td><td><span class="pill frozen">❄ frozen</span></td><td class="dim">—</td></tr>
+      <tr><td>encoder.layer.6–11 (6 layer trên)</td><td><span class="pill train">🔥 train</span></td><td><code>2e-5</code></td></tr>
+      <tr><td>time_fc · time_ln</td><td><span class="pill train">🔥 train</span></td><td><code>1e-4</code></td></tr>
+      <tr><td>seq_encoder (×3 transformer)</td><td><span class="pill train">🔥 train</span></td><td><code>1e-4</code></td></tr>
+      <tr><td>query · pool</td><td><span class="pill train">🔥 train</span></td><td><code>1e-4</code></td></tr>
+      <tr><td>feat_mlp · fuse</td><td><span class="pill train">🔥 train</span></td><td><code>1e-4</code></td></tr>
+      <tr><td>coral_fc · coral_bias · cls_head</td><td><span class="pill train">🔥 train</span></td><td><code>1e-4</code></td></tr>
+    </table>
+    <div class="note">Lý do freeze 50% encoder: dữ liệu lâm sàng nhỏ → giữ tri thức ngôn ngữ tầng thấp, chỉ tinh chỉnh tầng cao + các head mới ⇒ chống overfit. Head mới học nhanh hơn encoder (1e-4 ≫ 2e-5).</div>
+  </section>
+
+  <!-- ⑩ 3D VOLUME DIAGRAM (VGG-style) ---------------------------------------->
+  <section id="iso">
+    <h2>⑩ Sơ đồ khối 3D <span class="n">— kiểu feature-map volume (như VGG)</span></h2>
+    <div class="lead">Mỗi khối = tensor tại một tầng. <b>Chiều cao</b> ∝ độ dài chuỗi (5 post → 1 sau pooling); <b>độ dày 3D</b> ∝ số chiều ẩn (256 → 768 → 4); slab xanh = tầng có trọng số học chính.</div>
+    <div class="isowrap">
+      <div class="iso">
+
+        <div class="stage3d">
+          <div class="op">tokenize</div>
+          <div class="cuboid" style="--w:30px;--h:104px;--d:16px"><div class="front"></div><div class="top"></div><div class="side"></div></div>
+          <div class="dim3d">5 × 256<small>tokens</small><span class="nm">① Input</span></div>
+        </div>
+
+        <div class="stage3d">
+          <div class="op">RoBERTa [CLS] · ❄50%</div>
+          <div class="cuboid" style="--w:34px;--h:104px;--d:30px"><div class="front"></div><div class="top"></div><div class="side"></div><div class="accent"></div></div>
+          <div class="dim3d">5 × 768<small>[CLS]/post</small><span class="nm">② Encoder</span></div>
+        </div>
+
+        <div class="stage3d">
+          <div class="op">+Δt · Seq-Transformer ×3</div>
+          <div class="cuboid" style="--w:34px;--h:104px;--d:30px"><div class="front"></div><div class="top"></div><div class="side"></div><div class="accent"></div></div>
+          <div class="dim3d">5 × 768<small>có ngữ cảnh</small><span class="nm">③ Context</span></div>
+        </div>
+
+        <div class="stage3d">
+          <div class="op">Attention-Pool</div>
+          <div class="cuboid" style="--w:34px;--h:42px;--d:30px"><div class="front"></div><div class="top"></div><div class="side"></div></div>
+          <div class="dim3d">1 × 768<small>u</small><span class="nm">④ Pool</span></div>
+        </div>
+
+        <div class="stage3d">
+          <div class="op">⊕ stat-feats</div>
+          <div class="cuboid" style="--w:34px;--h:42px;--d:30px"><div class="front"></div><div class="top"></div><div class="side"></div></div>
+          <div class="dim3d">1 × 768<small>+feats</small><span class="nm">⑤ Fuse</span></div>
+        </div>
+
+        <div class="stage3d">
+          <div class="op">DUAL HEAD</div>
+          <div style="display:flex;gap:10px;align-items:flex-end">
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div class="cuboid" style="--w:20px;--h:22px;--d:12px"><div class="front" style="background:linear-gradient(160deg,#9ecbff,#5b8def)"></div><div class="top" style="background:#cfe2ff"></div><div class="side" style="background:#4f7fd6"></div></div>
+              <div class="dim3d" style="font-size:10px">B×3<small>CORAL</small></div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <div class="cuboid" style="--w:22px;--h:26px;--d:12px"><div class="front" style="background:linear-gradient(160deg,#ffc0d4,#ff5d8f)"></div><div class="top" style="background:#ffd8e4"></div><div class="side" style="background:#d6437a"></div></div>
+              <div class="dim3d" style="font-size:10px">B×4<small>CLS</small></div>
+            </div>
+          </div>
+          <div class="dim3d"><span class="nm">⑥ Heads</span></div>
+        </div>
+
+        <div class="stage3d">
+          <div class="op">blend · argmax</div>
+          <div class="cuboid" style="--w:26px;--h:30px;--d:8px"><div class="front" style="background:linear-gradient(160deg,#ffe08a,#ffd166)"></div><div class="top" style="background:#fff0c4"></div><div class="side" style="background:#d6ab3f"></div></div>
+          <div class="dim3d">4<small>ŷ ordinal</small><span class="nm">⑦ Output</span></div>
+        </div>
+
+      </div>
+    </div>
+    <div class="isonote">Đọc trái→phải như VGG: chuỗi 5 post (khối cao) được encode rồi trộn ngữ cảnh (giữ cao, dày 768), <b>Attention-Pool nén chuỗi 5→1</b> (khối thấp hẳn), ghép feats, rồi tách 2 head nhỏ (CORAL xanh = ordinal, CLS hồng = nominal) gộp lại thành 4 mức nguy cơ (khối vàng).</div>
+  </section>
+
+  <div class="foot">
+    Spec tĩnh — số liệu từ run gold-holdout đã verify (2026-06-27) &amp; <code>PAPER-PLAN-text-ordinal-suicide.md</code>.
+    Reimplementation của Yang et al., IEEE BigData 2025 (arXiv:2510.20085); dataset Reddit C-SSRS 500 (Gaur et al., Zenodo 2667859, CC-BY-4.0).
+    Kèm bản động: <a href="r2-architecture-training-animation.html">r2-architecture-training-animation.html</a>.
+  </div>
+</div>
+</body>
+</html>

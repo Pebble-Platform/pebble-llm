@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pebble‑LLM — Toàn cảnh Thesis</title>
+<style>
+  :root{
+    --ink:#1a2030; --muted:#5a6478; --line:#e3e7ef; --bg:#f6f8fc; --card:#fff;
+    --accent:#2d5bd7; --accent-soft:#eaf0ff; --good:#1a7f4b; --good-soft:#e6f6ec;
+    --warn:#b06a00; --warn-soft:#fff3e0; --bad:#b3261e; --bad-soft:#fdecea;
+    --r1:#7a3fb0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.62;font-size:15.5px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 22px 80px}
+  header.hero{background:linear-gradient(135deg,#2d5bd7,#5a3fd0);color:#fff;border-radius:18px;
+    padding:34px 34px 30px;box-shadow:0 10px 30px rgba(45,91,215,.22)}
+  header.hero h1{margin:0 0 6px;font-size:27px;letter-spacing:-.3px}
+  header.hero .sub{opacity:.92;font-size:15px}
+  header.hero .meta{margin-top:14px;font-size:13px;opacity:.85;display:flex;flex-wrap:wrap;gap:6px 18px}
+  h2{margin:42px 0 14px;font-size:20px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+  h3{margin:26px 0 10px;font-size:16.5px;color:#2a3550}
+  p{margin:10px 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;
+    box-shadow:0 1px 3px rgba(20,30,60,.04)}
+  .tldr{background:var(--accent-soft);border:1px solid #cfe0ff;border-left:5px solid var(--accent)}
+  .tldr ul{margin:8px 0 0;padding-left:20px}
+  .tldr li{margin:7px 0}
+  .pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 10px;vertical-align:middle}
+  .pill.a{background:var(--accent-soft);color:var(--accent)}
+  .pill.r1{background:#f1e8fa;color:var(--r1)}
+  .note{font-size:13.5px;color:var(--muted);background:#f0f2f7;border-radius:10px;padding:12px 14px;border-left:4px solid #c4ccda}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0f3f9;font-weight:700;color:#33405c;font-size:13px}
+  tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center}
+  .big{font-weight:800;color:var(--accent)}
+  .win{color:var(--good);font-weight:800}
+  .flag{color:var(--bad);font-weight:700}
+  code{background:#eef1f7;border-radius:5px;padding:1px 6px;font-size:13px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;color:#33405c}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .tag{font-size:12px;font-weight:700;padding:1px 8px;border-radius:6px}
+  .t-good{background:var(--good-soft);color:var(--good)} .t-warn{background:var(--warn-soft);color:var(--warn)}
+  .t-bad{background:var(--bad-soft);color:var(--bad)} .t-acc{background:var(--accent-soft);color:var(--accent)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;font-size:13.5px}
+  .flow .step{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-weight:600}
+  .flow .arrow{color:var(--muted);font-weight:700}
+  .step .num{color:var(--win,var(--good));font-weight:800}
+  footer{margin-top:46px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;word-break:break-word}
+  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0}
+  @media(max-width:720px){.kpi{grid-template-columns:repeat(2,1fr)}}
+  .kpi .b{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
+  .kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>Pebble‑LLM — Toàn cảnh Thesis</h1>
+  <div class="sub">Mô hình hoá cảm xúc nhạy‑khủng‑hoảng cho <b>Text</b> và <b>Voice</b> — từ mục đích ban đầu đến các version &amp; kết quả thực nghiệm.</div>
+  <div class="meta"><span>📅 Tổng hợp 2026‑06‑27</span><span>🌿 nhánh main</span><span>👥 Research team</span><span>🎯 2 bài IEEE</span></div>
+</header>
+
+<div class="card tldr">
+  <h3 style="margin-top:0">Tóm tắt 1 phút</h3>
+  <ul>
+    <li><b>Xuất phát:</b> thay kiến trúc <b>single‑call Gemini</b> (một lời gọi vừa chấm cảm xúc vừa sinh phản hồi) bằng <b>classifier cảm xúc fine‑tune riêng</b>, chạy <i>trước</i> generation để Decision Engine định tuyến tốt hơn.</li>
+    <li><b>Đã pivot</b> từ "classifier 6 đầu‑ra cho sản phẩm" sang <b>2 bài báo IEEE</b>: <b>(A) Text</b> — ordinal nguy cơ tự sát; <b>(B) Voice</b> — affect giọng nói nhạy‑khủng‑hoảng.</li>
+    <li><b>Text — VƯỢT PAPER:</b> within‑distribution macro‑F1 <span class="win">0.653 vs 0.510</span> (+28%); gold‑holdout trung thực cải thiện <b>0.19 → 0.42</b>.</li>
+    <li><b>Voice:</b> chọn xong backbone (<b>WavLM‑Large</b> thắng emotion2vec 3/3 seed) + crisis head <b>precision 0.617 @ recall ≥ 0.90</b>.</li>
+    <li><b>Đường tới‑hạn còn lại = dữ liệu/nhãn, không phải code</b>: đo κ chất lượng nhãn‑LLM (Text) &amp; xin quyền MSP‑Podcast (Voice).</li>
+  </ul>
+</div>
+
+<div class="note">
+  <b>Lưu ý thuật ngữ:</b> trong doc nội bộ, <span class="pill a">R2</span> = tên <b>paper tham chiếu</b> <i>"Hierarchical Dual‑Head"</i> (suicide‑risk 2025) mà nhóm <b>tái lập &amp; vượt</b> — KHÔNG phải "version 2" của hệ thống. <span class="pill r1">R1</span> = paper HMT‑BB (BERT+BiLSTM, 2025), dùng làm baseline thiết kế.
+</div>
+
+<!-- PHẦN A -->
+<h2>Phần A — Version đầu tiên: Emotion Classifier cho sản phẩm (Strategy v1 → v3)</h2>
+
+<h3>A.1 Mục đích ban đầu &amp; mong muốn</h3>
+<p>Thay single‑call Gemini bằng một classifier <b>chuyên biệt, fine‑tune, self‑hosted</b>, chạy trước bước generation. Bốn mong muốn:</p>
+<table>
+  <tr><th>#</th><th>Mong muốn</th></tr>
+  <tr><td class="c">1</td><td><b>Tăng tính nhất quán</b> khi chấm điểm (specialist ổn định hơn generalist được prompt)</td></tr>
+  <tr><td class="c">2</td><td><b>Decision Engine làm việc trên điểm có cấu trúc <i>trước</i> generation</b> → định tuyến giàu thông tin</td></tr>
+  <tr><td class="c">3</td><td><b>Tách khỏi vòng đời Gemini</b> ở inference (deprecate không đụng routing)</td></tr>
+  <tr><td class="c">4</td><td><b>Xoá lỗi JSON malformed</b> (encoder xuất head tensor có kiểu, không parse JSON)</td></tr>
+</table>
+<p><b>Đầu ra — 1 object/tin nhắn (6 chiều):</b> <code>energy</code> · <code>severity</code> · <code>socialIsolation</code> · <code>receptivity</code> · <code>detectedEmotion</code> · <code>safetyFlag</code>. (2 chiều <code>themeRepetition</code> &amp; <code>sessionTrajectory</code> để cho Decision Engine vì cần bộ nhớ xuyên‑phiên.)</p>
+
+<h3>A.2 Các version chiến lược</h3>
+<table>
+  <tr><th>Version</th><th>Quyết định kiến trúc chính</th><th>Vì sao đổi</th></tr>
+  <tr><td><b>v2.0 / v2.1</b></td><td><b>Gemini 2.5 Flash‑Lite SFT</b> là model chính (không cần serving)</td><td>Đơn giản; nhưng vẫn dính lỗi JSON + phụ thuộc Gemini</td></tr>
+  <tr><td><b>v3.0</b><br><span class="tag t-acc">hiện hành · May 2026</span></td><td><b>NeoBERT</b> (250M, self‑hosted, MIT) là <b>chính</b>; Gemini Flash‑Lite <b>hạ xuống backup</b>; ModernBERT fallback</td><td>Lấy nhất quán + decouple + bỏ lỗi JSON. <b>Đánh đổi: gánh nặng serving quay lại</b> (rủi ro lớn nhất)</td></tr>
+</table>
+<p class="note"><b>Kiến trúc v3:</b> multi‑task trên <code>[CLS]</code> 768‑dim — Score Head (sigmoid K chiều) · Emotion Head (warm‑start GoEmotions) · Safety Head (BCE, trọng số dương 10×). <b>Transfer:</b> GoEmotions 58k → emotion; SemEval‑2018 EI‑reg → severity.</p>
+
+<h3>A.3 Kết quả version đầu — thực chất là <i>nền tảng + kế hoạch</i></h3>
+<div class="card">
+  <p>Đây chủ yếu là <b>chiến lược + foundation code</b>, chưa ra số train sản phẩm (dừng ở <b>Phase 5</b>):</p>
+  <ul>
+    <li><b>Đã xong:</b> taxonomy 12‑nhãn + mapping GoEmotions; multi‑task heads + weighted loss; metrics §7; user‑level split; serving schema/FastAPI.</li>
+    <li><b>Kaggle GPU smoke test = GO:</b> NeoBERT (222M) load + forward/backward pass trên P100 — với <b>stack pin chuẩn</b> (<code>torch 2.5.1+cu121</code>, xformers 0.0.28, transformers 4.48.2). Gotcha còn dùng tới giờ.</li>
+    <li><b>Loaders + masked‑multitask assembler</b> xong (GoEmotions emotion + EI‑reg severity → bản ghi masked).</li>
+    <li><b>Thu hẹp v1:</b> chỉ học <code>detectedEmotion</code> + <code>severity</code>; 4 chiều còn lại thành heuristic; hoãn annotation/safety/Gemini.</li>
+  </ul>
+  <p class="note">➡️ <b>Cầu nối sang Phần B:</b> khi chuyển trọng tâm sang <b>đóng góp học thuật (IEEE)</b>, dự án tổ chức lại thành 2 stream <code>finetuning-message</code> (text) &amp; <code>voice</code>; bài toán cảm xúc tổng quát được <b>chuyên biệt hoá</b> thành 2 bài có gold‑standard rõ ràng.</p>
+</div>
+
+<!-- PHẦN B -->
+<h2>Phần B — Version hiện tại: 2 bài báo IEEE</h2>
+<table>
+  <tr><th>Stream</th><th>Bài báo</th><th class="c">Lõi thực nghiệm</th><th>Blocker tới‑hạn</th></tr>
+  <tr><td><b>Text/Message</b></td><td>Weakly‑Supervised Augmentation cho Ordinal Suicide‑Risk</td><td class="c"><span class="tag t-good">✅ Xong</span></td><td>κ chất lượng nhãn‑LLM ↔ gold</td></tr>
+  <tr><td><b>Voice</b></td><td>Backbone + Recall‑Floored Heterogeneous Heads cho Crisis Affect</td><td class="c"><span class="tag t-warn">🟡 Backbone xong</span></td><td>Quyền MSP‑Podcast</td></tr>
+</table>
+
+<!-- B1 -->
+<h2>B1 — Text: Ordinal Suicide‑Risk <span style="font-weight:400;font-size:15px;color:var(--muted)">(tái lập &amp; vượt paper "R2")</span></h2>
+<div class="card">
+  <p><b>Task:</b> phân loại <b>ordinal 4 mức C‑SSRS</b> (Indicator &lt; Ideation &lt; Behavior &lt; Attempt) từ chuỗi post Reddit.</p>
+  <p><b>Mô hình:</b> Hierarchical dual‑head — MentalRoBERTa(mirror) → seq‑transformer 3 lớp → attention‑pool → <b>CORAL head (ordinal) + CE head</b>; loss <code>0.5·CORAL + 0.3·CE + 0.2·Focal</code>; freeze 6 lớp; max_len 256.</p>
+  <p><b>Đóng góp phương pháp luận (không claim SOTA):</b> <span class="t-acc tag">gold‑holdout protocol</span> — train trên nhãn‑LLM (rẻ, nhiều), <b>đánh giá trên nhãn lâm sàng held‑out</b> → đo lợi ích weak‑supervision <b>trung thực, không circular</b>.</p>
+</div>
+
+<h3>B1.1 Chuỗi "version" thực nghiệm <span style="font-weight:400;font-size:14px;color:var(--muted)">— phần "các version tiếp theo"</span></h3>
+<div class="flow">
+  <span class="step"><span class="num">1</span> gold‑CV <b>0.19</b></span><span class="arrow">→</span>
+  <span class="step"><span class="num">2</span> within‑LLM <b>0.67</b> <span class="flag">⚠circular</span></span><span class="arrow">→</span>
+  <span class="step"><span class="num">3</span> gold‑holdout <b>0.357</b></span><span class="arrow">→</span>
+  <span class="step"><span class="num">4</span> +rebalance <b>0.385</b></span><span class="arrow">→</span>
+  <span class="step"><span class="num">5</span> within‑dist sạch <b class="win">0.653</b></span><span class="arrow">→</span>
+  <span class="step"><span class="num">6</span> flat‑CE <b>0.422</b></span>
+</div>
+<table>
+  <tr><th>#</th><th>Version / vòng</th><th>Thay đổi chính</th><th>Giao thức eval</th><th class="c">Macro‑F1</th><th>Ghi chú</th></tr>
+  <tr><td class="c">1</td><td><b>Baseline gold‑CV</b></td><td>Train trên gold lâm sàng (ít), eval trên gold</td><td>gold→gold</td><td class="c big">0.19</td><td>Quá ít nhãn lâm sàng → trần thấp</td></tr>
+  <tr><td class="c">2</td><td><b>Weak‑sup (within‑LLM)</b></td><td>Làm giàu ~10k post <b>nhãn‑LLM</b>, train+eval trên LLM</td><td><span class="flag">circular</span></td><td class="c big">0.67</td><td>Cao nhưng <i>tự đánh lừa</i> — chỉ để lộ tính circular</td></tr>
+  <tr><td class="c">3</td><td><b>Gold‑holdout (trung thực)</b></td><td>Train nhãn‑LLM, <b>eval gold lâm sàng held‑out</b></td><td>cross‑to‑gold</td><td class="c big">0.357</td><td>Con số trung thực đầu tiên</td></tr>
+  <tr><td class="c">4</td><td><b>+ Behavior rebalance (Run B)</b></td><td>WeightedRandomSampler nghịch‑tần (<code>R2_BALANCE</code>)</td><td>gold‑holdout</td><td class="c big">0.385</td><td>QWK 0.378→0.398, MAE 0.840→0.822 (đều tốt hơn)</td></tr>
+  <tr style="background:var(--good-soft)"><td class="c">5</td><td><b>Within‑dist CV sạch (Run A)</b></td><td>5‑fold CV trên đủ <b>10,072</b> mẫu (sửa bug mount)</td><td>within‑distribution</td><td class="c"><span class="win">0.653</span> <span style="font-weight:400">±0.005</span></td><td><b class="win">VƯỢT PAPER 0.510 (+28%)</b></td></tr>
+  <tr><td class="c">6</td><td><b>Ablation flat‑CE</b></td><td>Bỏ CORAL+Focal, chỉ CE thuần</td><td>gold‑holdout</td><td class="c big">0.422 <span style="font-weight:400">±0.024</span></td><td><b>Bất ngờ: &gt; dual‑head; cứu Behavior 0.183→0.285</b></td></tr>
+</table>
+
+<div class="grid2">
+  <div class="card">
+    <h3 style="margin-top:0">Bảng 3 giao thức (đóng gói cho paper)</h3>
+    <table>
+      <tr><th>Giao thức</th><th class="c">Train</th><th class="c">Eval</th><th class="c">M‑F1</th><th class="c">QWK</th></tr>
+      <tr><td>Gold‑CV</td><td class="c">gold</td><td class="c">gold</td><td class="c">0.19</td><td class="c">0.24</td></tr>
+      <tr><td>Within‑LLM <span class="flag">(circular)</span></td><td class="c">LLM</td><td class="c">LLM</td><td class="c">0.67</td><td class="c">—</td></tr>
+      <tr style="background:var(--accent-soft)"><td><b>Cross‑to‑gold (của ta)</b></td><td class="c">LLM</td><td class="c">gold</td><td class="c"><b>0.385</b></td><td class="c"><b>0.378</b></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">Per‑class gold (Run B)</h3>
+    <table>
+      <tr><th>Lớp</th><th class="c">F1</th></tr>
+      <tr><td>Indicator</td><td class="c">0.50</td></tr>
+      <tr><td>Ideation</td><td class="c">0.48</td></tr>
+      <tr><td><b>Behavior</b></td><td class="c"><span class="flag">0.18 ⚠</span></td></tr>
+      <tr><td>Attempt</td><td class="c">0.37</td></tr>
+    </table>
+    <p class="note" style="margin-bottom:0">Nút thắt <b>Behavior</b> = <b>chất lượng nhãn</b> (chỉ 634 mẫu, đa số nhãn‑LLM nhiễu), KHÔNG phải sampling.</p>
+  </div>
+</div>
+
+<h3>B1.2 Ba phát hiện quan trọng</h3>
+<table>
+  <tr><td class="c" style="width:34px">1</td><td><b>Vượt paper trên within‑distribution</b> (0.653 &gt; 0.510). Đóng khung: <i>"method vượt số báo cáo của paper trên giao thức within‑distribution tương đương"</i> (trên 10k đã làm giàu, không phải benchmark gated gốc).</td></tr>
+  <tr><td class="c">2</td><td><b>flat‑CE &gt; tri‑objective trên gold</b> (+0.037) &amp; <b>cứu lớp Behavior</b> → gợi ý CORAL+Focal đang <b>overfit phân bố nhãn‑LLM</b>. <span class="flag">⚠ mới 1 seed/1 run</span> — cần CORAL‑only + lặp seed để chốt.</td></tr>
+  <tr><td class="c">3</td><td><b>Nút thắt Behavior là CHẤT LƯỢNG NHÃN</b>, không phải sampling — rebalance không phá được trần này.</td></tr>
+</table>
+
+<h3>B1.3 Hai vòng nghiên cứu hỗ trợ paper</h3>
+<div class="grid2">
+  <div class="card"><b>Vòng "finetuning‑methods"</b><br>Phân tích <b>12 paper nổi tiếng (42–53)</b> qua 4 nhóm (PEFT · weak‑sup/distill · ordinal/imbalance · MH‑SOTA). <b>Kết luận:</b> vì nút thắt là <i>nhãn</i>, method <b>label‑centric</b> (Snorkel, cleanlab, Distillation) xếp hạng cao hơn → roadmap 3‑tier.</div>
+  <div class="card"><b>Vòng "emotional‑tone"</b><br><b>16 paper</b>; top‑4 chấm overlap: VADEC 38% · CLPsych‑2025 54% · MentaLLaMA 42% · Mitsios 35%. Dataset <b>IMHI ✅ tải về</b> (19,051 hàng, MIT); CLPsych ⛔ gated.</div>
+</div>
+
+<h3>B1.4 Còn thiếu để IEEE duyệt</h3>
+<table>
+  <tr><th class="c">Ưu tiên</th><th>Hạng mục</th><th>Việc cụ thể</th></tr>
+  <tr><td class="c"><span class="tag t-bad">🔴 1</span></td><td>Định lượng chất lượng nhãn‑LLM</td><td><b>Cohen's κ</b> + confusion LLM‑vs‑gold (giải thích "gap 0.28")</td></tr>
+  <tr><td class="c"><span class="tag t-bad">🔴 2</span></td><td>Bảng ablation đầy đủ</td><td>flat‑CE vs <b>CORAL‑only</b> vs dual‑head; ±augment; ±balance; ±focal</td></tr>
+  <tr><td class="c"><span class="tag t-warn">🟡 3</span></td><td>Baselines</td><td>plain‑RoBERTa‑CE; BiLSTM‑MTL</td></tr>
+  <tr><td class="c"><span class="tag t-warn">🟡 4</span></td><td>Vá Behavior &amp; Ethics/provenance</td><td>lọc nhãn‑LLM Behavior; mục data‑collection scrape + de‑identify</td></tr>
+</table>
+
+<!-- B2 -->
+<h2>B2 — Voice: Crisis‑sensitive speech affect</h2>
+<p>Chọn <b>backbone giọng nói</b> mạnh nhất rồi gắn các <b>head dị‑chủng</b> (emotion + affect CCC + crisis) với <b>sàn recall</b> cho head khủng hoảng.</p>
+<div class="kpi">
+  <div class="b"><div class="v">0.609</div><div class="l">WavLM macro‑F1 (thắng)</div></div>
+  <div class="b"><div class="v">0.537</div><div class="l">emotion2vec macro‑F1</div></div>
+  <div class="b"><div class="v">3/3</div><div class="l">seed WavLM thắng</div></div>
+  <div class="b"><div class="v">0.617</div><div class="l">crisis precision @ recall≥0.90</div></div>
+</div>
+<table>
+  <tr><th>Vòng</th><th>Thực nghiệm</th><th>Kết quả</th></tr>
+  <tr><td><b>V1 — Reproduction</b></td><td>emotion2vec linear‑probe trên RAVDESS</td><td>tái lập + deploy HF Space</td></tr>
+  <tr><td><b>V2 — Backbone selection</b></td><td>emotion2vec vs <b>WavLM‑Large</b> (frozen probe, 8‑class, 3 seed)</td><td><b class="win">WavLM thắng 0.609 vs 0.537</b>, paired Δ −0.071 (<b>3/3 seed</b>)</td></tr>
+  <tr><td><b>V3 — Crisis head</b></td><td>Distress head dưới ràng buộc cứng recall</td><td><b>Precision 0.617±0.003 tại recall ≥ 0.90</b> (ngưỡng 0.69)</td></tr>
+  <tr><td><b>V4 — MTL heads (M3–M5)</b></td><td>emotion + affect CCC + crisis cùng lúc</td><td><span class="tag t-warn">⏳ kernel đã build; đang chờ chạy Kaggle</span></td></tr>
+</table>
+<p class="note"><b>Còn thiếu:</b> 🔴 quyền <b>MSP‑Podcast</b> (nhãn V/A/D thật) · 🔴 chạy MTL‑heads lấy 10‑fold · CCC affect head trên nhãn thật · ablation Kendall vs GradNorm/PCGrad · baseline eGeMAPS SER.</p>
+
+<!-- C: DATA / DUA -->
+<h2>Phần C — Thu thập dữ liệu &amp; xin quyền sử dụng (DUA / EULA)</h2>
+<p>Đây là <b>đường tới‑hạn thật sự</b>: nhiều dataset lâm sàng bị <i>gated</i>, latency xin quyền <b>1–4 tuần</b> nằm ngoài tầm kiểm soát → phải khởi động sớm.</p>
+
+<h3>Chiến lược 2 nhánh (license là bộ lọc cứng)</h3>
+<table>
+  <tr><th>Nhánh</th><th>Nguồn được phép</th><th>Vì sao</th></tr>
+  <tr><td><b>Model triển khai (deployed)</b></td><td><b>CHỈ</b> CSSRS‑Reddit (CC‑BY‑4.0)</td><td>License duy nhất cho phép <i>serve</i> model đã train</td></tr>
+  <tr><td><b>Nghiên cứu / paper</b></td><td>CSSRS‑Reddit <b>+</b> DAIC‑WOZ <b>+</b> SMHD/RSDD</td><td>DUA research‑only: cho train + eval, <b>KHÔNG</b> cho deploy</td></tr>
+</table>
+<p class="note">⚠️ Checkpoint train trên <b>DAIC‑WOZ / SMHD/RSDD KHÔNG được ship</b> trong sản phẩm — chỉ dùng cho nhánh nghiên cứu.</p>
+
+<h3>Trạng thái từng dataset</h3>
+<table>
+  <tr><th>Dataset</th><th>Vai trò trong thesis</th><th>License / cổng</th><th class="c">Trạng thái</th></tr>
+  <tr><td><b>CSSRS‑Reddit</b><br><span style="font-size:12px;color:var(--muted)">Gaur, WWW'19</span></td><td>gold C‑SSRS 5 mức, 500 user, 4 bác sĩ tâm thần — nguồn crisis <b>serve được</b></td><td>CC‑BY‑4.0 (mở)</td><td class="c"><span class="tag t-good">✅ Đã tải</span></td></tr>
+  <tr style="background:var(--warn-soft)"><td><b>DAIC‑WOZ</b><br><span style="font-size:12px;color:var(--muted)">USC ICT</span></td><td>transcript phỏng vấn lâm sàng + <b>PHQ‑8 depression</b>, hội thoại (gần domain Pebble hơn Reddit) → nhãn <b>crisis cho voice head</b></td><td>Research‑only <b>EULA</b>, email học thuật</td><td class="c"><span class="tag t-bad">⚠️ CHƯA BẮT ĐẦU</span></td></tr>
+  <tr><td><b>SMHD / RSDD</b><br><span style="font-size:12px;color:var(--muted)">Georgetown</span></td><td>nhãn chẩn đoán (9 bệnh / depression) → <b>corpus domain‑adaptive pretrain</b></td><td>Research‑only <b>DUA</b></td><td class="c"><span class="tag t-warn">⚠️ chưa (~2–4 tuần)</span></td></tr>
+  <tr><td><b>MSP‑Podcast</b></td><td>nhãn <b>A/V/D thật</b> cho affect head (voice)</td><td>gated</td><td class="c"><span class="tag t-bad">🔴 cần xin</span></td></tr>
+  <tr><td><b>IMHI</b></td><td>OOD eval cho safety head (swmh / t‑sid)</td><td>MIT</td><td class="c"><span class="tag t-good">✅ đã tải</span></td></tr>
+  <tr><td><b>CLPsych UMD</b></td><td>(đã cân nhắc)</td><td>bắt <b>xoá data + model</b> sau workshop</td><td class="c"><span class="tag t-bad">❌ loại</span></td></tr>
+</table>
+
+<div class="card" style="border-left:5px solid var(--warn)">
+  <h3 style="margin-top:0">DAIC‑WOZ — các bước cần làm (bạn phải ký) <span class="tag t-bad">ACTION REQUIRED</span></h3>
+  <ol style="margin:6px 0">
+    <li>Vào cổng <code>dcapswoz.ict.usc.edu</code>, tải <b>EULA</b> (<code>Extended-DAIC-BLANK_EULA.pdf</code>).</li>
+    <li>Điền thông tin tổ chức (PI/lab), <b>ký</b>, gửi từ <b>email học thuật</b> (<code>@institution.edu</code>).</li>
+    <li>Turnaround <b>~1–3 tuần</b>. Cover‑note đã soạn sẵn trong <code>docs/dataset-acquisition-plan.md</code> (chỉ điền các trường <code>[BRACKETED]</code>).</li>
+  </ol>
+</div>
+
+<!-- D -->
+<h2>Phần D — Hạ tầng &amp; bài học vận hành</h2>
+<table>
+  <tr><td><b>Kaggle</b></td><td>Auth qua <code>~/.kaggle/access_token</code> (token <code>KGAT_</code>). Account hiện hành <b>phatneurondai</b> (đã <b>phone‑verify</b> → GPU P100 + Internet chạy được). <b>Tối đa 2 GPU session đồng thời</b>, quota tuần ≈ 30h P100.</td></tr>
+  <tr><td><b>Stack pin</b></td><td><code>torch==2.5.1+cu121</code> (P100 = sm_60; base‑image torch 2.10 không tương thích).</td></tr>
+  <tr><td><b>Bug mount đã sửa</b></td><td>Dataset mount sâu 3 cấp → recursive glob <code>**/sequences.csv</code> (trước đó rơi nhầm về Zenodo‑392 → CV vô hiệu).</td></tr>
+  <tr><td><b>Code env‑gate</b></td><td>Trọng số loss (<code>R2_W_CORAL/CE/FOCAL</code>), rebalance (<code>R2_BALANCE</code>), gold‑holdout (<code>R2_GOLD_HOLDOUT</code>); <code>evaluate</code> chỉ blend head được train (ablation hợp lệ); hook <code>sample_weight=</code> cho cleanlab.</td></tr>
+  <tr><td><b>⚠ Lưu ý</b></td><td><b>Không commit</b> <code>kaggle/**/out/best_model.pt</code> (~595 MB/file).</td></tr>
+</table>
+
+<!-- E -->
+<h2>Phần E — Trạng thái &amp; việc tiếp theo</h2>
+<table>
+  <tr><th class="c">#</th><th>Việc</th><th class="c">Stream</th><th>Vì sao</th></tr>
+  <tr><td class="c"><span class="tag t-bad">🔴 1</span></td><td>Đo <b>Cohen's κ</b> nhãn‑LLM ↔ gold trên tập overlap</td><td class="c">Text</td><td>Mở khoá đóng góp #3; latency ngoài tầm</td></tr>
+  <tr><td class="c"><span class="tag t-bad">🔴 2</span></td><td><b>Ký EULA DAIC‑WOZ</b> + xin <b>MSP‑Podcast / SMHD</b> (định fallback)</td><td class="c">Voice</td><td>Latency xin quyền 1–4 tuần; chặn affect/crisis head</td></tr>
+  <tr><td class="c"><span class="tag t-warn">🟡 3</span></td><td>Chạy <b>CORAL‑only ablation</b> + <b>cleanlab diagnostic</b></td><td class="c">Text</td><td>Hoàn thiện bảng ablation + đo nhiễu nhãn Behavior</td></tr>
+  <tr><td class="c"><span class="tag t-warn">🟡 4</span></td><td>Chạy <b>MTL‑heads (M3–M5)</b> lấy 10‑fold</td><td class="c">Voice</td><td>Trong tầm kiểm soát; chạy song song khi chờ data</td></tr>
+</table>
+<p class="note"><b>Rủi ro then chốt:</b> cả 2 việc tới‑hạn là <b>thu thập dữ liệu/nhãn</b>, không phải code → phải khởi động trước vì latency ngoài tầm kiểm soát.</p>
+
+<footer>
+  <b>Nguồn:</b> pebble-finetuning-strategy-v3.md · progress.md · docs/phases/ · docs/dataset-acquisition-plan.md · docs/reports/{PROJECT-WORK-REPORT, r2-ab-results, r2-finetuning-methods} · docs/tasks/{r2-beat-paper-dual-report, r2-finetuning-methods-for-ieee, emotional-tone-papers, SESSION-HANDOFF-2026-06-26} · docs/papers/finetuning-message/PAPER-PLAN-text-ordinal-suicide.md · docs/papers/voice/PAPER-PLAN-voice-crisis-affect.md
+</footer>
+
+</div>
+</body>
+</html>
+</content>

@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>R2 — Hierarchical Dual-Head: Kiến trúc & Animation Training</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#121a31; --panel2:#0e1528; --ink:#e7ecff; --mut:#8a97c2;
+    --line:#26304f; --cyan:#39d0ff; --cyan2:#1aa6d6; --orange:#ff9e45; --orange2:#ff7a18;
+    --green:#37e1a0; --pink:#ff5d8f; --yellow:#ffd166; --violet:#9d7bff; --frozen:#3b4a72;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:radial-gradient(1200px 700px at 70% -10%, #18213d 0%, var(--bg) 60%);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--cyan)}
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 18px 60px}
+  header h1{font-size:22px;margin:0 0 4px}
+  header .sub{color:var(--mut);font-size:13px;margin-bottom:6px}
+  .claim{background:linear-gradient(90deg,rgba(57,208,255,.10),rgba(157,123,255,.08));border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-size:12.5px;color:#cfe0ff}
+  .claim b{color:var(--green)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 14px}
+  button{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer;transition:.15s}
+  button:hover{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(57,208,255,.12)}
+  button.primary{background:linear-gradient(90deg,var(--cyan2),var(--cyan));color:#04263a;border:none}
+  .seg{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .seg button{padding:6px 10px;border:none;background:transparent;font-size:12px}
+  .seg button.on{background:var(--cyan);color:#04263a;border-radius:6px}
+  .phase-pill{margin-left:auto;font-size:12px;color:var(--mut)}
+  .phase-pill b{color:var(--yellow)}
+  .grid{display:grid;grid-template-columns:1fr 330px;gap:16px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .stage{position:relative;background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:14px 14px 18px;overflow:hidden}
+  .flow{display:flex;flex-direction:column;gap:10px;position:relative;z-index:2}
+  .layer{position:relative;border:1px solid var(--line);border-radius:11px;padding:11px 13px;background:rgba(20,28,52,.72);transition:box-shadow .25s,border-color .25s,transform .25s}
+  .layer .row{display:flex;align-items:center;gap:10px}
+  .layer .idx{width:22px;height:22px;border-radius:7px;background:#1b2545;color:var(--cyan);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+  .layer .name{font-weight:700;font-size:13.5px}
+  .layer .meta{color:var(--mut);font-size:11.5px;margin-left:auto;text-align:right}
+  .layer .desc{color:#b9c5ee;font-size:11.5px;margin-top:5px}
+  /* per-layer IO block: task / input / output */
+  .io{margin-top:8px;display:grid;gap:4px;background:rgba(8,13,28,.5);border:1px solid var(--line);border-radius:8px;padding:7px 9px}
+  .io-row{display:grid;grid-template-columns:84px 1fr;gap:8px;align-items:baseline;font-size:11px}
+  .iolab{font-weight:700;font-size:10px;letter-spacing:.2px;white-space:nowrap}
+  .iolab.task{color:var(--yellow)} .iolab.in{color:var(--cyan)} .iolab.out{color:var(--green)}
+  .ioval{color:#cdd8f6} .ioval code{font-size:10.5px;padding:0 4px}
+  .layer.fwd .io{border-color:rgba(57,208,255,.5)} .layer.bwd .io{border-color:rgba(255,158,69,.5)}
+  #liveCard{border-color:var(--cyan);box-shadow:0 0 24px rgba(57,208,255,.10)}
+  #liveCard .io-row{margin:5px 0;grid-template-columns:88px 1fr}
+  #liveCard .ioval{color:#fff}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--mut);margin-right:5px}
+  .tag.frozen{color:#9fb0d8;border-color:#3b4a72}
+  .tag.train{color:var(--green);border-color:#1f5d46;background:rgba(55,225,160,.06)}
+  .tag.lr{color:var(--violet);border-color:#3c3168}
+  /* active highlight during forward */
+  .layer.fwd{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 26px rgba(57,208,255,.30);transform:translateX(2px)}
+  .layer.bwd{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange),0 0 26px rgba(255,158,69,.28)}
+  .layer.frozen-lock{opacity:.86}
+  .layer .lock{position:absolute;right:11px;bottom:9px;font-size:11px;color:#7f8db6}
+  /* the dual-head split */
+  .heads{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .head{border:1px dashed var(--line);border-radius:10px;padding:9px 11px;background:rgba(15,21,40,.6)}
+  .head h4{margin:0 0 4px;font-size:12.5px}
+  .head.coral h4{color:var(--cyan)} .head.cls h4{color:var(--pink)}
+  .head small{color:var(--mut);font-size:11px}
+  /* connectors arrow */
+  .arrow{height:14px;display:grid;place-items:center;color:#41507e;font-size:13px;position:relative}
+  .arrow .dot{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);opacity:0;top:2px}
+  /* token strip */
+  .tokens{display:flex;gap:6px;flex-wrap:wrap}
+  .post{flex:1;min-width:70px;border:1px solid var(--line);border-radius:8px;padding:6px 7px;background:rgba(57,208,255,.04);font-size:10.5px;color:#bcd0ff;position:relative;overflow:hidden}
+  .post .ti{color:var(--mut);font-size:9.5px}
+  .post.pad{opacity:.35;border-style:dashed}
+  .post .pulse{position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(57,208,255,.4),transparent);transform:translateX(-110%);}
+  .post.fire .pulse{animation:sweep .7s ease}
+  @keyframes sweep{to{transform:translateX(110%)}}
+  /* output classes */
+  .out{display:flex;gap:8px;margin-top:2px}
+  .cls-out{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:rgba(20,28,52,.7);position:relative}
+  .cls-out .nm{font-size:11.5px;font-weight:700}
+  .cls-out .bar{height:7px;border-radius:6px;margin-top:6px;background:#16203d;overflow:hidden}
+  .cls-out .bar i{display:block;height:100%;width:10%;border-radius:6px;background:linear-gradient(90deg,var(--cyan2),var(--cyan));transition:width .35s}
+  .cls-out.win{border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 0 20px rgba(55,225,160,.25)}
+  .cls-out small{color:var(--mut);font-size:10px}
+  .ord{ text-align:center;color:var(--mut);font-size:10.5px;margin-top:6px}
+  /* side panel */
+  .side{display:flex;flex-direction:column;gap:14px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .card h3{margin:0 0 9px;font-size:13px;letter-spacing:.3px;color:#cfe0ff;text-transform:uppercase}
+  .kv{display:flex;justify-content:space-between;font-size:12px;margin:5px 0;color:#cdd8f6}
+  .kv b{color:#fff;font-variant-numeric:tabular-nums}
+  .bars .lab{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:7px}
+  .lbar{height:9px;border-radius:6px;background:#16203d;overflow:hidden;margin-top:3px}
+  .lbar i{display:block;height:100%;width:0;transition:width .4s}
+  .lbar.coral i{background:linear-gradient(90deg,#1aa6d6,#39d0ff)}
+  .lbar.ce i{background:linear-gradient(90deg,#b06bff,#9d7bff)}
+  .lbar.focal i{background:linear-gradient(90deg,#ff7a18,#ff9e45)}
+  .lbar.total i{background:linear-gradient(90deg,#ff5d8f,#ffd166)}
+  .metric{display:flex;align-items:baseline;gap:6px}
+  .metric .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--green)}
+  .metric .d{font-size:11px;color:var(--mut)}
+  .epoch-track{height:8px;background:#16203d;border-radius:6px;overflow:hidden;margin-top:4px}
+  .epoch-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan2),var(--green));transition:width .3s}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--mut);margin-top:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .swatch{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .contrib{font-size:11.5px;color:#c4d1f3}
+  .contrib li{margin:6px 0}
+  .contrib b{color:var(--yellow)}
+  .sampler{display:flex;gap:4px;align-items:flex-end;height:46px}
+  .sampler .col{flex:1;border-radius:5px 5px 0 0;background:#22305a;position:relative;transition:height .4s,background .4s}
+  .sampler .col span{position:absolute;bottom:-15px;left:0;right:0;text-align:center;font-size:9.5px;color:var(--mut)}
+  .foot{color:var(--mut);font-size:11.5px;margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+  code{background:#0c142b;border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:#bcd0ff;font-size:11.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>R2 · Hierarchical Dual-Head cho Ordinal Suicide-Risk — Kiến trúc & Animation Training</h1>
+    <div class="sub">MentalRoBERTa → Sequence-Transformer → Attention-Pool → Dual-Head (CORAL + CLS). Nguồn: <code>kaggle/finetuning-message/r2-suicide-risk-dualhead/r2-suicide-risk-dualhead.py</code></div>
+    <div class="claim">Giao thức <b>gold-holdout</b>: train trên nhãn-LLM (av9ash + scraped), đánh giá trên lâm sàng CSSRS-500 held-out → số trung thực, không circular. Gold macro-F1 <b>0.385</b> (CORAL+CE+Focal) → <b>0.418</b> (CORN+GCE), QWK ~0.39.</div>
+  </header>
+
+  <div class="controls">
+    <button id="play" class="primary">▶ Chạy training</button>
+    <button id="step">⏭ Từng bước</button>
+    <button id="reset">↺ Reset</button>
+    <div class="seg" id="speed">
+      <button data-s="1600">0.5×</button>
+      <button data-s="900" class="on">1×</button>
+      <button data-s="450">2×</button>
+      <button data-s="200">4×</button>
+    </div>
+    <div class="phase-pill">Pha: <b id="phaseName">— nghỉ —</b></div>
+  </div>
+
+  <div class="grid">
+    <!-- ========================= ARCHITECTURE FLOW ========================= -->
+    <div class="stage">
+      <div class="flow" id="flow">
+
+        <!-- INPUT -->
+        <div class="layer" id="L_in">
+          <div class="row"><div class="idx">in</div><div class="name">Input · chuỗi 5 post của 1 user</div>
+            <div class="meta">tokenize · 256 tok/post</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Lấy ≤5 post gần nhất của 1 user → tokenize → pad post rỗng</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval">1 user = list post (text)</span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval"><code>input_ids (B,5,256)</code> + mask + <code>feats(8)</code> + <code>Δt(5)</code></span></div>
+          </div>
+          <div class="tokens" id="tokens" style="margin-top:8px">
+            <div class="post" data-p><div class="ti">post t-4</div>“…”<div class="pulse"></div></div>
+            <div class="post" data-p><div class="ti">post t-3</div>“…”<div class="pulse"></div></div>
+            <div class="post" data-p><div class="ti">post t-2</div>“…”<div class="pulse"></div></div>
+            <div class="post" data-p><div class="ti">post t-1</div>“…”<div class="pulse"></div></div>
+            <div class="post" data-p><div class="ti">post t</div>“…”<div class="pulse"></div></div>
+          </div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- 1 ENCODER -->
+        <div class="layer frozen-lock" id="L1">
+          <div class="row"><div class="idx">1</div><div class="name">Post-Encoder · MentalRoBERTa</div>
+            <div class="meta">(B·S, 256) → [CLS] → (B, 5, 768)</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Mã hoá từng post độc lập, lấy vector <code>[CLS]</code></span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval"><code>input_ids (B·5, 256)</code></span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval">post-embeddings <code>(B, 5, 768)</code></span></div>
+          </div>
+          <div class="desc" style="margin-top:7px">
+            <span class="tag frozen">❄ embeddings + 6 layer đầu ĐÓNG BĂNG</span>
+            <span class="tag train">🔥 6 layer trên train</span>
+            <span class="tag lr">lr 2e-5</span>
+          </div>
+          <div class="lock">❄ 50% frozen</div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- 2 TIME -->
+        <div class="layer" id="L2">
+          <div class="row"><div class="idx">2</div><div class="name">+ Temporal embedding</div>
+            <div class="meta">ReLU(LN(W·Δt+b))</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Nhúng khoảng thời gian Δt, cộng vào mỗi post-embedding</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval"><code>Δt (B,5)</code> + e <code>(B,5,768)</code></span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval">e + e_time <code>(B, 5, 768)</code></span></div>
+          </div>
+          <div class="desc" style="margin-top:7px"><span class="tag train">🔥 train · lr 1e-4</span> Δt = 0 ở dataset này (không có timestamp).</div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- 3 SEQ TRANSFORMER -->
+        <div class="layer" id="L3">
+          <div class="row"><div class="idx">3</div><div class="name">Sequence Transformer ×3</div>
+            <div class="meta">8 heads · FFN 3072</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Self-attention TRỘN thông tin giữa 5 post (pad-mask post rỗng)</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval"><code>(B, 5, 768)</code> độc lập</span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval"><code>(B, 5, 768)</code> đã có ngữ cảnh chuỗi</span></div>
+          </div>
+          <div class="desc" style="margin-top:7px"><span class="tag train">🔥 train · lr 1e-4</span> Mô hình hoá diễn tiến hội thoại theo thời gian.</div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- 4 POOL -->
+        <div class="layer" id="L4">
+          <div class="row"><div class="idx">4</div><div class="name">Attention-Pooling</div>
+            <div class="meta">learnable query · 4 heads → (B, 768)</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">1 learnable query "hút" post quan trọng → 1 vector chuỗi</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval">query <code>(B,1,768)</code> + seq <code>(B,5,768)</code></span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval">u <code>(B, 768)</code></span></div>
+          </div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- 5 FEATURES -->
+        <div class="layer" id="L5">
+          <div class="row"><div class="idx">5</div><div class="name">+ Statistical-feature fusion</div>
+            <div class="meta">8 → 64 → fuse(768)</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Ghép đặc trưng thống kê độ dài post (mean/std/min/max)</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval">u <code>(B,768)</code> + feats <code>(B,8)</code> → MLP <code>(B,64)</code></span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval">fuse → u <code>(B, 768)</code></span></div>
+          </div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- 6 DUAL HEAD -->
+        <div class="layer" id="L6">
+          <div class="row"><div class="idx">6</div><div class="name">DUAL HEAD</div>
+            <div class="meta">2 nhánh bù nhau</div></div>
+          <div class="heads" style="margin-top:9px">
+            <div class="head coral" id="H_coral"><h4>CORAL head ↗ ordinal</h4>
+              <small>w_c chung + 3 ngưỡng có thứ tự → P(y&gt;k). Giữ thứ bậc Indicator&lt;…&lt;Attempt.</small></div>
+            <div class="head cls" id="H_cls"><h4>CLS head ◎ 4-way</h4>
+              <small>Linear(768→4) → softmax. Phân biệt sắc lớp từng class.</small></div>
+          </div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">2 head bù nhau dự đoán từ vector chuỗi u</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval">u <code>(B, 768)</code></span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval"><code>coral_logits (B,3)</code> = P(y&gt;k) &nbsp;+&nbsp; <code>cls_logits (B,4)</code></span></div>
+          </div>
+          <div class="ord">eval: <code>0.5·coral_p + 0.5·cls_p → argmax</code></div>
+        </div>
+        <div class="arrow"><span class="dot" data-dot></span>▼</div>
+
+        <!-- OUTPUT -->
+        <div class="layer" id="L_out">
+          <div class="row"><div class="idx">ŷ</div><div class="name">Dự đoán mức nguy cơ (ordinal)</div></div>
+          <div class="io">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Blend 2 head → xác suất 4 lớp → argmax</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval">coral_p <code>(B,4)</code> + cls_p <code>(B,4)</code></span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval">ŷ ∈ {0,1,2,3} = {Indicator, Ideation, Behavior, Attempt}</span></div>
+          </div>
+          <div class="out" id="out">
+            <div class="cls-out" data-c="0"><div class="nm">Indicator</div><div class="bar"><i></i></div><small>0</small></div>
+            <div class="cls-out" data-c="1"><div class="nm">Ideation</div><div class="bar"><i></i></div><small>1</small></div>
+            <div class="cls-out" data-c="2"><div class="nm">Behavior</div><div class="bar"><i></i></div><small>2</small></div>
+            <div class="cls-out" data-c="3"><div class="nm">Attempt</div><div class="bar"><i></i></div><small>3</small></div>
+          </div>
+        </div>
+
+        <!-- LOSS / BACKWARD overlay -->
+        <div class="arrow" style="height:18px">⟲ backward</div>
+        <div class="layer" id="L_loss" style="border-style:dashed">
+          <div class="row"><div class="idx">L</div><div class="name">Loss tri-objective → backprop</div>
+            <div class="meta">paper eq.4</div></div>
+          <div class="desc">
+            <span class="tag" style="color:#39d0ff;border-color:#1aa6d6">0.5 · CORAL</span>
+            <span class="tag" style="color:#9d7bff;border-color:#3c3168">0.3 · CE (smooth .1)</span>
+            <span class="tag" style="color:#ff9e45;border-color:#5a3a1c">0.2 · Focal (γ=2)</span>
+            &nbsp; AdamW · cosine + warmup · grad-accum 2 · clip 1.0
+          </div>
+          <div class="io" style="margin-top:8px">
+            <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval">Tính loss → backprop, cập nhật trọng số (layer 🔥)</span></div>
+            <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval">coral_logits, cls_logits, nhãn y</span></div>
+            <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval">scalar loss → gradients (layer ❄ giữ nguyên)</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================= SIDE PANEL ========================= -->
+    <div class="side">
+      <div class="card" id="liveCard">
+        <h3>Bước hiện tại · <span id="liveDir" style="color:var(--cyan)">—</span></h3>
+        <div class="io-row"><span class="iolab task">🎯 Nhiệm vụ</span><span class="ioval" id="liveTask">— nghỉ —</span></div>
+        <div class="io-row"><span class="iolab in">⬇ Input</span><span class="ioval" id="liveIn">—</span></div>
+        <div class="io-row"><span class="iolab out">⬆ Output</span><span class="ioval" id="liveOut">—</span></div>
+      </div>
+      <div class="card">
+        <h3>Trạng thái training</h3>
+        <div class="kv">Epoch <b><span id="ep">0</span> / 10</b></div>
+        <div class="epoch-track"><i id="epBar"></i></div>
+        <div class="kv" style="margin-top:9px">Batch / step <b id="stepN">0</b></div>
+        <div class="kv">LR encoder (frozen-aware) <b>2e-5</b></div>
+        <div class="kv">LR head mới <b>1e-4</b></div>
+        <div class="metric" style="margin-top:8px"><span class="v" id="goldF1">0.000</span><span class="d">GOLD macro-F1 (mục tiêu 0.418)</span></div>
+        <div class="kv">QWK <b id="qwk">0.00</b></div>
+        <div class="kv">Behavior-F1 <b id="behF1">0.00</b></div>
+      </div>
+
+      <div class="card bars">
+        <h3>Loss (forward → backward)</h3>
+        <div class="lab"><span>0.5·CORAL</span><span id="vCoral">—</span></div><div class="lbar coral"><i id="bCoral"></i></div>
+        <div class="lab"><span>0.3·CE</span><span id="vCe">—</span></div><div class="lbar ce"><i id="bCe"></i></div>
+        <div class="lab"><span>0.2·Focal</span><span id="vFocal">—</span></div><div class="lbar focal"><i id="bFocal"></i></div>
+        <div class="lab"><span><b>Σ total</b></span><span id="vTot">—</span></div><div class="lbar total"><i id="bTot"></i></div>
+      </div>
+
+      <div class="card">
+        <h3>Class-balanced sampler</h3>
+        <div style="font-size:11.5px;color:var(--mut);margin-bottom:18px">WeightedRandomSampler (inverse-freq): kéo Behavior (6.5% pool) lên cân bằng từng minibatch.</div>
+        <div class="sampler" id="sampler">
+          <div class="col" data-k><span>Indic.</span></div>
+          <div class="col" data-k><span>Ideat.</span></div>
+          <div class="col" data-k><span>Behav.</span></div>
+          <div class="col" data-k><span>Attem.</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>3 cải tiến mới nhất (latest)</h3>
+        <ol class="contrib">
+          <li><b>CORN + GCE</b> thay CORAL+Focal — loss ordinal bền-nhiễu: Behavior-F1 0.183 → <b>0.317</b>, giữ QWK ~0.39.</li>
+          <li><b>Label-shift correction</b> (logit-adjust, 0 train lại): π_gold/π_train Behavior = 3.0× → Behavior-F1 → 0.41.</li>
+          <li><b>Ordinal-aware Confident Learning</b>: dọn nhãn theo <code>|ỹ−ŷ|²</code> — sạch 100% lỗi-xa, giữ 78% lỗi-kề.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>Chú giải</h3>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--cyan)"></i> forward (tín hiệu lên)</span>
+          <span><i class="swatch" style="background:var(--orange)"></i> backward (gradient xuống)</span>
+          <span><i class="swatch" style="background:#3b4a72"></i> ❄ đóng băng (không update)</span>
+          <span><i class="swatch" style="background:var(--green)"></i> 🔥 train (có gradient)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Animation minh hoạ — số liệu lấy từ run gold-holdout đã verify (2026-06-27). Forward: input→encoder→seq-transformer→pool→dual-head→ŷ.
+    Backward: gradient chảy ngược, layer ❄ giữ nguyên, head mới học nhanh hơn (lr 1e-4 ≫ 2e-5). 5-fold CV trên train-pool, mỗi fold đánh giá lại trên GOLD CSSRS-500.
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+
+  // forward order of highlightable layers + their connector dots
+  const FWD = ["L_in","L1","L2","L3","L4","L5","L6","L_out"];
+  const FROZEN = new Set(["L1"]); // encoder is partially frozen (visual)
+  const dots = $$("[data-dot]");
+  const posts = $$("#tokens [data-p]");
+  const outs = $$("#out .cls-out");
+  const cols = $$("#sampler [data-k]");
+
+  // task / input / output per layer (forward direction)
+  const STEPINFO = {
+    L_in:{t:"Lấy ≤5 post gần nhất → tokenize → pad", i:"1 user = list post (text)", o:"input_ids (B,5,256) + mask + feats(8) + Δt(5)"},
+    L1:{t:"Mã hoá từng post độc lập, lấy [CLS]", i:"input_ids (B·5, 256)", o:"post-embeddings (B, 5, 768)"},
+    L2:{t:"Nhúng Δt, cộng vào mỗi post-embedding", i:"Δt (B,5) + e (B,5,768)", o:"e+e_time (B, 5, 768)"},
+    L3:{t:"Self-attention trộn 5 post (pad-mask)", i:"(B, 5, 768) độc lập", o:"(B, 5, 768) có ngữ cảnh chuỗi"},
+    L4:{t:"Learnable query gộp 5 post → 1 vector", i:"query(B,1,768) + seq(B,5,768)", o:"u (B, 768)"},
+    L5:{t:"Ghép đặc trưng thống kê độ dài post", i:"u(B,768) + feats(B,8)→MLP(64)", o:"u (B, 768)"},
+    L6:{t:"2 head bù nhau từ vector chuỗi u", i:"u (B, 768)", o:"coral_logits(B,3)=P(y>k) + cls_logits(B,4)"},
+    L_out:{t:"Blend 0.5·coral_p + 0.5·cls_p → argmax", i:"coral_p(B,4) + cls_p(B,4)", o:"ŷ ∈ {Indicator,Ideation,Behavior,Attempt}"}
+  };
+  const PHASEINFO = {
+    sample:{t:"Rút batch CÂN BẰNG lớp (WeightedRandomSampler)", i:"train-pool nhãn-LLM (Behavior chỉ 6.5%)", o:"minibatch cân bằng, B=8"},
+    loss:{t:"Tri-objective 0.5·CORAL + 0.3·CE + 0.2·Focal", i:"coral_logits, cls_logits, nhãn y", o:"scalar loss"},
+    update:{t:"AdamW step (cosine+warmup, clip 1.0)", i:"gradients (chỉ layer 🔥)", o:"trọng số mới → metrics ↑"}
+  };
+  function setLive(dir, color, info){
+    $("#liveDir").textContent = dir; $("#liveDir").style.color = color;
+    $("#liveTask").textContent = info.t; $("#liveIn").textContent = info.i; $("#liveOut").textContent = info.o;
+  }
+
+  let TICK = 900;          // ms per phase, set by speed
+  let playing = false, timer = null;
+  let epoch = 0, step = 0;
+  const STEPS_PER_EPOCH = 4, MAX_EPOCH = 10;
+
+  // metric trajectory toward the verified numbers
+  const lerp = (a,b,t)=>a+(b-a)*t;
+  function progress(){ return Math.min(1, (epoch + step/STEPS_PER_EPOCH) / MAX_EPOCH); }
+
+  // ---- phase machine: SAMPLE → FORWARD(per layer) → LOSS → BACKWARD(per layer) → UPDATE ----
+  const PHASES = [];
+  function buildTimeline(){
+    PHASES.length = 0;
+    PHASES.push({t:"sample"});
+    FWD.forEach((id,i)=>PHASES.push({t:"fwd",id,i}));
+    PHASES.push({t:"loss"});
+    [...FWD].reverse().forEach((id,i)=>PHASES.push({t:"bwd",id,i}));
+    PHASES.push({t:"update"});
+  }
+  buildTimeline();
+  let pi = 0;
+
+  function clearActive(){
+    FWD.forEach(id=>$("#"+id).classList.remove("fwd","bwd"));
+    $("#L_loss").classList.remove("bwd");
+    dots.forEach(d=>d.style.opacity=0);
+  }
+
+  function setPhaseLabel(txt){ $("#phaseName").textContent = txt; }
+
+  function runPhase(){
+    const ph = PHASES[pi];
+    if(ph.t==="sample"){
+      setPhaseLabel("① Sample (balanced) batch");
+      setLive("① SAMPLE", "var(--yellow)", PHASEINFO.sample);
+      clearActive();
+      // animate sampler bars: balanced heights despite skewed pool
+      const target = [0.55,0.7,1.0,0.65]; // behavior boosted
+      cols.forEach((c,k)=>{ c.style.height=(28+target[k]*16)+"px"; c.style.background = k===2 ? "#37e1a0" : "#2b3a6a"; });
+      posts.forEach(p=>p.classList.remove("fire","pad"));
+    }
+    else if(ph.t==="fwd"){
+      setPhaseLabel("② Forward — "+layerShort(ph.id));
+      setLive("② FORWARD ▲", "var(--cyan)", STEPINFO[ph.id]);
+      clearActive();
+      const el=$("#"+ph.id); el.classList.add("fwd");
+      if(ph.i>0){ const d=dots[ph.i-1]; if(d){ d.style.opacity=1; d.style.transition="none"; d.style.transform="translateY(0)"; requestAnimationFrame(()=>{d.style.transition="transform .5s,opacity .5s"; d.style.transform="translateY(10px)";}); } }
+      if(ph.id==="L_in"){ posts.forEach((p,k)=>setTimeout(()=>p.classList.add("fire"),k*70)); }
+      if(ph.id==="L6"){ $("#H_coral").style.borderColor="var(--cyan)"; $("#H_cls").style.borderColor="var(--pink)"; setTimeout(()=>{$("#H_coral").style.borderColor=""; $("#H_cls").style.borderColor="";},TICK); }
+      if(ph.id==="L_out"){ paintOutput(); }
+    }
+    else if(ph.t==="loss"){
+      setPhaseLabel("③ Loss tri-objective");
+      setLive("③ LOSS", "var(--pink)", PHASEINFO.loss);
+      clearActive();
+      $("#L_loss").classList.add("bwd");
+      paintLoss();
+    }
+    else if(ph.t==="bwd"){
+      setPhaseLabel("④ Backward — "+layerShort(ph.id)+(FROZEN.has(ph.id)?" (❄ một phần frozen)":""));
+      const si = STEPINFO[ph.id] || {o:"—",i:"—"};
+      setLive("④ BACKWARD ▼", "var(--orange)", {
+        t: (FROZEN.has(ph.id) ? "Tính gradient — 6 layer trên update, embeddings+6 layer đầu ❄ giữ nguyên"
+                              : "Lan gradient ngược qua "+layerShort(ph.id)),
+        i: "∂Loss/∂(output) = grad của " + si.o,
+        o: FROZEN.has(ph.id) ? "∂ chỉ tới 6 layer encoder train (lr 2e-5)" : "∂Loss/∂(input) → grad của " + si.i
+      });
+      clearActive();
+      const el=$("#"+ph.id); el.classList.add("bwd");
+      if(FROZEN.has(ph.id)){ el.style.outline="2px dashed #3b4a72"; setTimeout(()=>el.style.outline="",TICK); }
+    }
+    else if(ph.t==="update"){
+      setPhaseLabel("⑤ AdamW update → metrics");
+      setLive("⑤ UPDATE", "var(--green)", PHASEINFO.update);
+      clearActive();
+      step++;
+      if(step>=STEPS_PER_EPOCH){ step=0; epoch=Math.min(MAX_EPOCH,epoch+1); }
+      paintMetrics();
+    }
+    pi=(pi+1)%PHASES.length;
+  }
+
+  function layerShort(id){
+    return ({L_in:"Input/tokenize",L1:"Encoder MentalRoBERTa",L2:"Temporal +Δt",L3:"Seq-Transformer ×3",
+      L4:"Attention-Pool",L5:"Stat-feature fuse",L6:"Dual-Head",L_out:"Predict ŷ"})[id]||id;
+  }
+
+  function paintOutput(){
+    // distribution sharpens toward correct class as training progresses
+    const p = progress();
+    // simulate a Behavior-ish example getting better separated
+    const base=[0.30,0.30,0.22,0.18];
+    const sharp=[0.12,0.16,0.55,0.17];
+    const dist=base.map((b,k)=>lerp(b,sharp[k],p));
+    const sum=dist.reduce((a,b)=>a+b,0);
+    let win=0,wv=-1;
+    dist.forEach((d,k)=>{ const v=d/sum; outs[k].querySelector("i").style.width=(v*100)+"%";
+      outs[k].querySelector("small").textContent=v.toFixed(2); if(v>wv){wv=v;win=k;} });
+    outs.forEach((o,k)=>o.classList.toggle("win",k===win));
+  }
+
+  function paintLoss(){
+    const p=progress();
+    // losses decay over training; weighted components
+    const coral=lerp(0.62,0.22,p), ce=lerp(0.70,0.28,p), focal=lerp(0.40,0.12,p);
+    const wC=0.5*coral, wCe=0.3*ce, wF=0.2*focal, tot=wC+wCe+wF;
+    const setb=(id,v,frac)=>{ $(id).style.width=Math.min(100,frac*100)+"%"; };
+    $("#vCoral").textContent=wC.toFixed(3); setb("#bCoral",0,wC/0.31);
+    $("#vCe").textContent=wCe.toFixed(3); setb("#bCe",0,wCe/0.21);
+    $("#vFocal").textContent=wF.toFixed(3); setb("#bFocal",0,wF/0.08);
+    $("#vTot").textContent=tot.toFixed(3); setb("#bTot",0,tot/0.6);
+  }
+
+  function paintMetrics(){
+    const p=progress();
+    $("#ep").textContent=epoch; $("#stepN").textContent=(epoch*STEPS_PER_EPOCH+step);
+    $("#epBar").style.width=(epoch/MAX_EPOCH*100)+"%";
+    $("#goldF1").textContent=lerp(0.190,0.418,p).toFixed(3);
+    $("#qwk").textContent=lerp(0.10,0.39,p).toFixed(2);
+    $("#behF1").textContent=lerp(0.05,0.317,p).toFixed(2);
+  }
+
+  // ---- controls ----
+  function loop(){ if(!playing) return; runPhase(); timer=setTimeout(loop, TICK); }
+  function play(){ if(playing) return; playing=true; $("#play").textContent="⏸ Tạm dừng"; $("#play").classList.remove("primary"); loop(); }
+  function pause(){ playing=false; clearTimeout(timer); $("#play").textContent="▶ Chạy training"; $("#play").classList.add("primary"); }
+  function reset(){ pause(); pi=0; epoch=0; step=0; clearActive(); paintMetrics();
+    ["#vCoral","#vCe","#vFocal","#vTot"].forEach(s=>$(s).textContent="—");
+    ["#bCoral","#bCe","#bFocal","#bTot"].forEach(s=>$(s).style.width="0");
+    outs.forEach(o=>{o.classList.remove("win"); o.querySelector("i").style.width="10%"; o.querySelector("small").textContent="";});
+    cols.forEach(c=>{c.style.height="20px"; c.style.background="#22305a";});
+    setPhaseLabel("— nghỉ —");
+    $("#liveDir").textContent="—"; $("#liveDir").style.color="var(--cyan)";
+    $("#liveTask").textContent="— nghỉ —"; $("#liveIn").textContent="—"; $("#liveOut").textContent="—";
+  }
+
+  $("#play").onclick=()=>playing?pause():play();
+  $("#step").onclick=()=>{ pause(); runPhase(); };
+  $("#reset").onclick=reset;
+  $$("#speed button").forEach(b=>b.onclick=()=>{ $$("#speed button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); TICK=+b.dataset.s; });
+
+  reset();
+})();
+</script>
+</body>
+</html>
