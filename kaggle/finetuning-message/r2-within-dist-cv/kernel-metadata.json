@@ -1,5 +1,5 @@
 {
-  "id": "fabiocarava/r2-within-dist-cv-10k-balanced",
+  "id": "phatneurondai/r2-within-dist-cv-10k-balanced",
   "title": "R2 Within-Dist CV (10k, balanced)",
   "code_file": "r2-within-dist-cv.py",
   "language": "python",
@@ -8,8 +8,12 @@
   "enable_gpu": true,
   "enable_tpu": false,
   "enable_internet": true,
-  "keywords": ["gpu"],
-  "dataset_sources": ["fabiocarava/r2-cssrs-combined-10k"],
+  "keywords": [
+    "gpu"
+  ],
+  "dataset_sources": [
+    "phatneurondai/r2-cssrs-combined-10k"
+  ],
   "kernel_sources": [],
   "competition_sources": [],
   "model_sources": []

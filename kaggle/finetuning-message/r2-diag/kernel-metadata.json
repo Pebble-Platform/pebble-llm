@@ -1,0 +1,15 @@
+{
+  "id": "fabiocarava/r2-diag",
+  "title": "r2-diag",
+  "code_file": "r2-diag.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": ["fabiocarava/r2-cssrs-combined-10k"],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}

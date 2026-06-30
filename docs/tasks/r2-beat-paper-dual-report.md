@@ -54,8 +54,49 @@ Push R2 metrics toward / above the paper's 0.5098 macro-F1, on TWO honest framin
   - Run B (gold-holdout, vs 0.3569): `fabiocarava/r2-suicide-risk-dual-head-mentalroberta` v7 — gold-holdout +
     balance, epochs 10.
 
+## Results so far
+- **Run B (gold + balance) — VALID:** GOLD macro-F1 **0.3849** ±0.007 (baseline 0.3569, +0.028), QWK 0.398
+  (+0.020), MAE 0.822 (better), val-on-LLM 0.666. Per-class gold F1: Indicator 0.502 · Ideation 0.480 ·
+  **Behavior 0.183** (still the bottleneck) · Attempt 0.374. Rebalance helps globally; Behavior ceiling is now
+  a LABEL-QUALITY problem (634 noisy LLM labels), not sampling. Reports: `docs/reports/r2-ab-results.{md,html}`.
+- **Run A (within-dist) — failed twice on a data-mount bug, re-running v3:**
+  - v1: explicit `R2_DATA` path wrong → Zenodo fallback → 392 only.
+  - v2: `*/sequences.csv` glob (one level) → empty → Zenodo → 392 (CV 0.197, invalid).
+  - **Root cause (diagnostic kernel `r2-diag`):** the dataset mounts at
+    `/kaggle/input/datasets/fabiocarava/r2-cssrs-combined-10k/sequences.csv` (3 levels deep), so a one-level
+    glob misses it; `**/sequences.csv` (recursive) finds it. **Fix:** recursive glob in both `load_cssrs` +
+    `_combined_path`. v3 RUNNING.
+- **Within-dist proxy (interim):** Run B val-on-LLM 0.666 > paper 0.5098.
+
+- 2026-06-24 — **Switched Kaggle account** (fabiocarava hit GPU quota → `pathnguyen`). CLI auths via
+  `~/.kaggle/access_token` (overwrote with new KGAT_ token; old backed up). Re-uploaded the 10k as private
+  dataset `pathnguyen/r2-cssrs-combined-10k`; re-pushed Run A as `pathnguyen/r2-within-dist-cv-10k-balanced`
+  (v1, RUNNING) with the recursive-glob fix. Run B already valid on the old account — not re-run.
+
+## ✅ RUN A COMPLETE (2026-06-26): within-dist CV = 0.653 > paper 0.5098 — BEAT PAPER (clean number)
+On the phone-verified account `phatneurondai`, Run A (`r2-within-dist-cv-10k-balanced`) **COMPLETED**. It loaded the
+**full 10,072 sequences** `[4091, 3783, 711, 1487]` from the mounted dataset (recursive-glob fix worked — no Zenodo
+392 fallback). **5-fold within-distribution CV macro-F1 = 0.6530 ±0.0048** (folds [0.649, 0.660, 0.656, 0.654, 0.646]).
+→ **vs paper 0.5098: +0.143 (+28% rel) — we beat the paper on its own within-distribution framing**, replacing the
+earlier val-on-LLM 0.666 proxy with the clean apples-to-apples number. (Caveat: comparable protocol on our enriched
+10k, not the paper's exact gated benchmark — frame as "method beats the paper's reported number on a comparable
+within-distribution protocol".) Log: `kaggle/finetuning-message/r2-within-dist-cv/out/r2-within-dist-cv-10k-balanced.log`.
+
+### ✅ BLOCKER RESOLVED (2026-06-25): switched to phone-verified account `phatneurondai`
+User provided a new, **phone-verified** Kaggle account `phatneurondai` (GPU Tesla P100 + Internet both confirmed
+working via a probe kernel — `torch.cuda.is_available()=True`, urllib fetch HTTP 200). Re-uploaded the 10k as
+`phatneurondai/r2-cssrs-combined-10k` and re-pushed Run A with the recursive-glob fix + epochs 10 + balance ON.
+(Account lineage + verification gotcha saved to memory `kaggle-run-needs-token`.)
+
+## ⚠️ (HISTORICAL) BLOCKER (2026-06-24): pathnguyen not phone-verified
+Run A on `pathnguyen` ERRORed at pip install — **no internet in the kernel** (`Temporary failure in name
+resolution` → torch install failed). Kaggle disables Internet + GPU for **non-phone-verified** accounts even
+when `enable_internet: true` is requested. → **User must phone-verify `pathnguyen`** (Kaggle → Settings →
+Phone verification), then re-enable GPU+Internet. Then re-push Run A. (Offline workaround = pre-upload torch
+wheels + the HF model as datasets + run on GPU — but GPU also needs verification, so verification is required.)
+
 ## Remaining Action Items
-- [ ] Implement `R2_BALANCE` WeightedRandomSampler in train_fold (notebook + kaggle copy)
-- [ ] Smoke both modes locally
-- [ ] Create within-dist kernel dir; configure both kernels; push both
-- [ ] Poll → retrieve → dual report
+- [ ] **User: phone-verify `pathnguyen` on Kaggle** (unlocks Internet + GPU for kernels)
+- [ ] Re-push Run A (pathnguyen) → confirm it loaded 10k → record clean within-dist CV macro-F1 vs 0.5098
+- [ ] Update `docs/reports/r2-ab-results.{md,html}` with the clean Run A number + final verdict
+- [ ] (cleanup) delete the throwaway `r2-diag` kernel/dir

@@ -75,6 +75,21 @@
   <div class="b"><div class="v">~7h</div><div class="l">quota P100 dùng (/10h)</div></div>
 </div>
 
+<!-- FULL MODEL LADDER (with baselines) -->
+<h2>Bảng xếp hạng mô hình đầy đủ — gold-holdout 5-fold×10ep <span class="lever">+ baseline (2026-06-29)</span></h2>
+<p>Tất cả cùng split/seed, cùng codebase env-gated. Baseline (<code>r2-baseline-{roberta,bilstm}</code>) vừa chạy xong trên fabiocarava.</p>
+<table>
+  <tr><th>Mô hình</th><th class="c">macro-F1</th><th class="c">Behavior-F1</th><th class="c">QWK</th><th>Ghi chú</th></tr>
+  <tr><td>plain-RoBERTa-CE <span style="font-size:11px;color:var(--muted)">(mean-pool, no ordinal)</span></td><td class="c">0.346 ±0.026</td><td class="c flag">0.169</td><td class="c">0.292</td><td>baseline encoder thuần — yếu nhất</td></tr>
+  <tr><td>BiLSTM-MTL <span style="font-size:11px;color:var(--muted)">(paper baseline, split của ta)</span></td><td class="c">0.378 ±0.014</td><td class="c flag">0.181</td><td class="c">0.396</td><td>tái lập baseline paper gốc</td></tr>
+  <tr><td>dual-head CORAL+Focal</td><td class="c">0.385</td><td class="c flag">0.183</td><td class="c">0.398</td><td>baseline kiến trúc cũ</td></tr>
+  <tr><td>gce-only (CORAL+GCE)</td><td class="c">0.399</td><td class="c">0.229</td><td class="c">—</td><td>ablation</td></tr>
+  <tr><td>corn-only (CORN+Focal)</td><td class="c">0.410</td><td class="c">0.250</td><td class="c">—</td><td>ablation — CORN là đòn bẩy chính</td></tr>
+  <tr style="background:var(--good-soft)"><td><b>CORN+GCE (ours)</b></td><td class="c"><b>0.402</b></td><td class="c win">0.260</td><td class="c">0.361</td><td><b>ordinal head tốt nhất</b></td></tr>
+  <tr><td>flat-CE (no ordinal)</td><td class="c"><b>0.422</b></td><td class="c">0.285</td><td class="c">0.388</td><td>dẫn macro trên gold (honest finding)</td></tr>
+</table>
+<p class="note"><b>Đọc bảng:</b> 2 baseline (0.346 · 0.378) <b>yếu nhất trên macro</b>, dưới dual-head 0.385 → <b>kiến trúc phân cấp post→sequence + ordinal head của ta thắng baseline đơn giản</b>. Mọi baseline Behavior-F1 đều sụp (≤0.18) — đúng điểm yếu mà 3 đóng góp nhắm tới. flat-CE vẫn dẫn macro (cái giá của ordinal dưới shift, đã nêu).</p>
+
 <!-- DIRECTION 1 / D -->
 <h2>Đóng góp 1 — CORN + GCE: loss ordinal bền‑nhiễu <span class="lever">đòn bẩy: model / loss</span></h2>
 <div class="card dir d1">

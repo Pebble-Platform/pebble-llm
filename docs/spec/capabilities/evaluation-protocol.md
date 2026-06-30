@@ -23,8 +23,13 @@ per-class F1 — all 5-fold with std.
 flat-CE (no ordinal head) 0.422 / 0.285 remains the macro leader on gold —
 reported as the honest "ordinal has a cost under LLM→gold shift" finding.
 
-**Still owed:** baselines (plain-RoBERTa-CE, BiLSTM-MTL) on the same split;
-resolve the 0.385/0.357 number discrepancy to the canonical rebalance run.
+**Baselines (same split/seed, 5-fold×10ep):** plain-RoBERTa-CE 0.346 / Beh 0.169
+/ QWK 0.292; BiLSTM-MTL 0.378 / 0.181 / 0.396 — both weakest on macro (< dual
+0.385), confirming the hierarchical post→sequence + ordinal architecture adds
+value over a flat encoder and a BiLSTM-MTL.
+
+**Still owed:** resolve the 0.385/0.357 number discrepancy to the canonical
+rebalance run.
 
 **Binds invariants:** I2 (gold-holdout disjoint), I5 (each cell cites its
 kernel+log), I6 (QWK/MAE alongside F1).

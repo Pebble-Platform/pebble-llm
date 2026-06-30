@@ -19,14 +19,12 @@ from pathlib import Path
 
 IS_KAGGLE = Path("/kaggle").exists()
 
-# Run A — within-distribution 5-fold CV on the full 10k + Behavior rebalance (comparable to the paper's
-# 0.5098). Gold-holdout OFF → default CV (train+test on the same 10k distribution). Set before Config.
+# Run A — within-distribution 5-fold CV on the full 10k + Behavior rebalance (comparable to paper 0.5098).
+# gold-holdout OFF; load_cssrs auto-finds the mounted 10k via the recursive /kaggle/input glob.
 if IS_KAGGLE:
     os.environ.setdefault("R2_GOLD_HOLDOUT", "0")
     os.environ.setdefault("R2_BALANCE", "1")
     os.environ.setdefault("R2_EPOCHS", "10")
-    # default-CV path uses load_cssrs → point it at the uploaded 10k (not Zenodo's 392)
-    os.environ.setdefault("R2_DATA", "/kaggle/input/r2-cssrs-combined-10k/sequences.csv")
 
 # ── 0. Pinned GPU stack (Kaggle only; local uses .venv-voice) ───────────────────
 if IS_KAGGLE:
@@ -138,11 +136,19 @@ def _parse_posts(cell: str) -> list[str]:
 
 
 def load_cssrs(cfg: Config) -> tuple[list[list[str]], list[int]]:
-    # R2_DATA lets us point the loader at the enriched combined set (same User,Post,Label schema)
-    local = Path(os.environ.get("R2_DATA", "data/finetuning-message/external/cssrs/500_Reddit_users_posts_labels.csv"))
+    # Resolve data: R2_DATA env → Kaggle input dataset (glob) → local CSSRS-500 → Zenodo download.
+    # (Same User,Post,Label schema; the enriched combined CSV has an extra Source col that's ignored here.)
+    env = os.environ.get("R2_DATA")
+    kg = next(Path("/kaggle/input").glob("**/sequences.csv"), None) if Path("/kaggle/input").exists() else None
+    default_local = Path("data/finetuning-message/external/cssrs/500_Reddit_users_posts_labels.csv")
     cache = Path(cfg.output_dir) / "cssrs500.csv"
-    if local.exists():
-        path = local
+    if env and Path(env).exists():
+        path = Path(env)
+    elif kg is not None:
+        path = kg
+        print(f">>> using Kaggle input dataset: {path}", flush=True)
+    elif default_local.exists():
+        path = default_local
     else:
         Path(cfg.output_dir).mkdir(parents=True, exist_ok=True)
         if not cache.exists():
@@ -171,7 +177,7 @@ def _combined_path(cfg: Config) -> Path:
     """Resolve the enriched combined CSV: R2_DATA env → Kaggle input dir → local r2-combined."""
     if os.environ.get("R2_DATA"):
         return Path(os.environ["R2_DATA"])
-    for p in Path("/kaggle/input").glob("*/sequences.csv") if Path("/kaggle/input").exists() else []:
+    for p in Path("/kaggle/input").glob("**/sequences.csv") if Path("/kaggle/input").exists() else []:
         return p
     return Path("data/finetuning-message/external/r2-combined/sequences.csv")
 

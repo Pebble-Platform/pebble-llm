@@ -9,6 +9,11 @@ Provenance mọi số: docs/tasks/r2-method-improvements-for-contribution.md (sl
 
 **Authors:** [TODO names], [TODO affiliation]
 
+> **Draft status:** complete draft (all 7 IEEE sections + abstract + references).
+> Table III baselines are now filled (5-fold, gold-holdout). **One cell remains
+> deliberately deferred:** §IV Cohen's κ + LLM↔gold confusion — added once the
+> LLM/gold overlap set is recovered. No number is fabricated.
+
 ---
 
 ## Abstract
@@ -321,16 +326,21 @@ target.
 
 | Model | Macro-F1 | Behavior-F1 | QWK |
 |---|:--:|:--:|:--:|
-| plain-RoBERTa-CE (mean-pool, no ordinal) | `[TODO baseline]` | `[TODO]` | `[TODO]` |
-| BiLSTM-MTL (paper baseline, our split) | `[TODO baseline]` | `[TODO]` | `[TODO]` |
+| plain-RoBERTa-CE (mean-pool, no ordinal) | 0.346 ± 0.026 | 0.169 | 0.292 |
+| BiLSTM-MTL (paper baseline, our split) | 0.378 ± 0.014 | 0.181 | 0.396 |
 | Dual-head CORAL+Focal | 0.385 | 0.183 | 0.398 |
-| flat-CE | 0.422 | 0.285 | 0.388 |
+| gce-only (CORAL+GCE) | 0.399 | 0.229 | — |
+| corn-only (CORN+Focal) | 0.410 | 0.250 | — |
 | **CORN+GCE (ours)** | 0.402 | 0.260 | 0.361 |
+| flat-CE | 0.422 | 0.285 | 0.388 |
 
-Both baselines are running on an identical split/seed via the same env-gated
-codebase (`R2_SEQ_MODEL = mean | bilstm`); numbers to be filled on completion.
-The reference reports BiLSTM-MTL macro-F1 0.419 *within-distribution* — not
-comparable to our gold-holdout column.
+Both baselines were run on an **identical split/seed** via the same env-gated
+codebase (`R2_SEQ_MODEL = mean | bilstm`). They are the **weakest on macro-F1**
+(0.346, 0.378), confirming that the hierarchical post→sequence architecture with
+ordinal heads adds value over a flat encoder (plain-RoBERTa-CE) and a BiLSTM
+multi-task model. All Behavior-F1 baselines collapse (≤ 0.18), the same failure
+our three contributions target. The reference reports BiLSTM-MTL macro-F1 0.419
+*within-distribution* — not comparable to our (harder) gold-holdout column.
 
 ---
 

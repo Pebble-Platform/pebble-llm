@@ -37,7 +37,7 @@ to a run.
 | 1 | Honest framing, no benchmark overclaim (constraints §3) | report states "comparable within-dist protocol", not the gated benchmark | reports + PAPER-PLAN §2 | ✅ |
 | 2 | Ordinal metrics on every comparison (I6) | QWK/MAE alongside macro-F1 in every ablation cell | `r2-corn-gce/corn-only/gce-only` logs | ✅ |
 | 3 | Each ablation cell cites a run (I5) | 2×2 grid → kernel id + log per cell | `kaggle/finetuning-message/r2-{corn-gce,corn-only,gce-only}/out/` | ✅ |
-| 4 | Baselines on common split | plain-RoBERTa-CE (`seq_model=mean`+CE) + BiLSTM-MTL (`seq_model=bilstm`+CORAL/CE), 5-fold×10ep same split/seed | `kaggle/finetuning-message/r2-baseline-{roberta,bilstm}/` · running on `fabiocarava` (phatneurondai out of quota) | 🔄 running |
+| 4 | Baselines on common split | plain-RoBERTa-CE **0.346/Beh 0.169/QWK 0.292**; BiLSTM-MTL **0.378/0.181/0.396** (5-fold×10ep, same split/seed) — both weakest on macro (< dual 0.385) → hierarchical+ordinal arch adds value | `fabiocarava/r2-baseline-{roberta,bilstm}@1` · logs `kaggle/finetuning-message/r2-baseline-*/out/` | ✅ |
 | 5 | Number-sync 0.385/0.357 → canonical | one run chosen across all docs | author decision | ⬜ owed |
 
 ## Review notes

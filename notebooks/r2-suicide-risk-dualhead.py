@@ -75,12 +75,12 @@ class Config:
     pool_heads: int = 4              # attention-pooling heads
     use_features: bool = True
     dropout: float = 0.3
-    # loss weights (paper eq. 4)
-    w_coral: float = 0.5
-    w_ce: float = 0.3
-    w_focal: float = 0.2
+    # loss weights (paper eq. 4) — env-gated for ablations (flat-CE vs CORAL-only vs dual-head, focal sweep)
+    w_coral: float = float(os.environ.get("R2_W_CORAL", "0.5"))
+    w_ce: float = float(os.environ.get("R2_W_CE", "0.3"))
+    w_focal: float = float(os.environ.get("R2_W_FOCAL", "0.2"))
     label_smoothing: float = 0.1
-    focal_gamma: float = 2.0
+    focal_gamma: float = float(os.environ.get("R2_FOCAL_GAMMA", "2.0"))
     # training
     lr_encoder: float = 2e-5
     lr_new: float = 1e-4
@@ -129,11 +129,19 @@ def _parse_posts(cell: str) -> list[str]:
 
 
 def load_cssrs(cfg: Config) -> tuple[list[list[str]], list[int]]:
-    # R2_DATA lets us point the loader at the enriched combined set (same User,Post,Label schema)
-    local = Path(os.environ.get("R2_DATA", "data/finetuning-message/external/cssrs/500_Reddit_users_posts_labels.csv"))
+    # Resolve data: R2_DATA env → Kaggle input dataset (glob) → local CSSRS-500 → Zenodo download.
+    # (Same User,Post,Label schema; the enriched combined CSV has an extra Source col that's ignored here.)
+    env = os.environ.get("R2_DATA")
+    kg = next(Path("/kaggle/input").glob("**/sequences.csv"), None) if Path("/kaggle/input").exists() else None
+    default_local = Path("data/finetuning-message/external/cssrs/500_Reddit_users_posts_labels.csv")
     cache = Path(cfg.output_dir) / "cssrs500.csv"
-    if local.exists():
-        path = local
+    if env and Path(env).exists():
+        path = Path(env)
+    elif kg is not None:
+        path = kg
+        print(f">>> using Kaggle input dataset: {path}", flush=True)
+    elif default_local.exists():
+        path = default_local
     else:
         Path(cfg.output_dir).mkdir(parents=True, exist_ok=True)
         if not cache.exists():
@@ -162,7 +170,7 @@ def _combined_path(cfg: Config) -> Path:
     """Resolve the enriched combined CSV: R2_DATA env → Kaggle input dir → local r2-combined."""
     if os.environ.get("R2_DATA"):
         return Path(os.environ["R2_DATA"])
-    for p in Path("/kaggle/input").glob("*/sequences.csv") if Path("/kaggle/input").exists() else []:
+    for p in Path("/kaggle/input").glob("**/sequences.csv") if Path("/kaggle/input").exists() else []:
         return p
     return Path("data/finetuning-message/external/r2-combined/sequences.csv")
 
@@ -394,7 +402,15 @@ def evaluate(model, loader, cfg):
     for b in loader:
         coral, cls = model(b["input_ids"].to(DEVICE), b["attention_mask"].to(DEVICE),
                            b["valid"].to(DEVICE), b["dt"].to(DEVICE), b["feats"].to(DEVICE))
-        p_final = 0.5 * coral_to_probs(coral, cfg.n_classes) + 0.5 * F.softmax(cls, dim=-1)
+        # only blend heads that were actually trained → valid ordinal ablation (flat-CE / CORAL-only / dual)
+        use_coral = cfg.w_coral > 0
+        use_cls = (cfg.w_ce > 0) or (cfg.w_focal > 0)
+        coral_p = coral_to_probs(coral, cfg.n_classes)
+        cls_p = F.softmax(cls, dim=-1)
+        if use_coral and use_cls:
+            p_final = 0.5 * coral_p + 0.5 * cls_p
+        else:
+            p_final = coral_p if use_coral else cls_p
         preds.extend(p_final.argmax(-1).cpu().tolist())
         gts.extend(b["label"].tolist())
     f1 = f1_score(gts, preds, average="macro", zero_division=0)
