@@ -43,12 +43,15 @@ Literature sweep 2026-07-02 (task: `docs/tasks/bimodal-ser-papers.md`). Ưu tiê
 - **Awatef, Hayet, Zied** — Multimodal ER: Speech+Text for VAD Prediction — Annals of Telecommunications 2025 — https://link.springer.com/article/10.1007/s12243-025-01069-1 (topical fit rất cao — continuous VAD từ speech+text — cần institutional access)
 - **Hsu & Wu** — Segment-Level Attention on Bi-Modal Transformer Encoder — IEEE TAFFC 2023 — https://ieeexplore.ieee.org/document/10075429/
 
-## Gợi ý đọc trước (theo overlap M6 — profile voice-aware; chi tiết trong entry từng bài)
+## Xếp hạng overlap toàn sweep (M6+M7, profile voice-aware — chi tiết trong entry từng bài)
 
-1. **10 JMIR review — 42% (adjacent)** — domain match SER × suicide risk; baseline-to-beat cho crisis head (sens ~0.86 / AUC ~0.8).
-2. **01 C²SER — 35%** — Emotion2Vec-S checkpoint: ứng viên A/B thay frozen extractor của voice stream.
-3. **02 ABHINAYA — 19%** — baseline WavLM-Large trên MSP-Podcast (~34/33 macro-F1) cho emotion head.
-4. **03 EAA — 19%** — bidirectional dual cross-attention + residual concat cho bước fusion voice+text.
-5. **17 RJCMA — 19%** — code public làm template joint cross-modal attention fusion.
+| Band | Bài |
+|---|---|
+| **Adjacent (40–69%)** | **12 MSP-Podcast 46%** · **10 JMIR review 42%** |
+| Sát biên (35–38%) | 05 AudioLLM reasoning 38% · 01 C²SER 35% · 09 BLSP-Emo 35% |
+| Giữa (23–31%) | 13 MMERC survey 31% · 16 SER databases 27% · 07 BCAF 23% · 15 replication 23% |
+| Thấp (≤19%) | 02, 03, 06, 17, 19 (19%) · 18, 21 (15%) · 04, 08, 11 (12%) · 14 (8%) · 20 (4%) |
+
+**Finding xuyên suốt:** 21/21 bài không có recall-floor-as-objective (D6) → crisis-recall floor của Pebble là gap thật trong văn liệu bimodal SER. Phương án thesis rút từ sweep: xem section M8 trong `docs/tasks/bimodal-ser-papers.md`.
 
 > Điểm M5 (2026-07-02, chấm theo profile text-only stale trong skill cũ) đã bị supersede — xem Decision Log trong `docs/tasks/bimodal-ser-papers.md`.

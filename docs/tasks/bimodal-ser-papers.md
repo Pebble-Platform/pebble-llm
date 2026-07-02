@@ -1,8 +1,8 @@
 # Bimodal Speech Emotion Recognition — literature sweep + PDF download
 
 - **Slug:** bimodal-ser-papers
-- **Status:** done
-- **Created:** 2026-07-02  ·  **Updated:** 2026-07-02
+- **Status:** done (M8 đề xuất phương án bậc thang — chờ user confirm trước khi thực thi các tầng)
+- **Created:** 2026-07-02  ·  **Updated:** 2026-07-03
 - **Owner:** Fabio / Claude
 
 ## Goal
@@ -24,6 +24,8 @@ open-access) về `docs/papers/bimodal-ser/pdfs/` và ghi mỗi bài một entry
 - [x] M4 — Entries — 21 entry compact `docs/papers/bimodal-ser/NN-slug.md` + index `00-INDEX.md`
 - [x] M5 — Analysis top picks — 5 agent `analysis-paper` song song (01, 02, 03, 10, 17) — **superseded bởi M6** (chấm theo profile text-only stale)
 - [x] M6 — Re-score 5 bài với skill đã sửa (profile assemble từ intent + capabilities) — block trong entry đã thay, bảng M6 ở dưới
+- [x] M7 — Chấm overlap 16 bài còn lại (04–09, 11–16, 18–21) bằng rubric đã sửa — mỗi entry có analysis block, bảng M7 ở dưới
+- [x] M8 — Chọn phương án thesis — đề xuất **phương án bậc thang** (section M8 ở dưới), user quyết trước khi thực thi
 
 ## Decision Log
 - **2026-07-02 — Root-cause fix theo hướng user chỉ (profile đọc từ intent, không hardcode):** thay vì vá snapshot profile trong skill, sửa `analysis-paper` (skill + agent), `research-paper` (skill + agent) và `deep-read-paper` (agent) để **assemble profile lúc chạy** từ `docs/intent/constraints.md` + `docs/spec/capabilities/*.md` (text: ordinal-modeling/data-and-labeling/label-quality; voice: voice-multimodal) và phải in profile đã assemble ra output cho auditable. D7 mở rộng: backbone match với *stream đang active bất kỳ* (text BERT-family / voice emotion2vec-WavLM). Rejected: chỉ update đoạn profile hardcode (sẽ stale tiếp — đúng lỗi vừa xảy ra).
@@ -115,6 +117,50 @@ Rank theo độ transferable của fusion mechanism sang audio+text của Pebble
 | 17 | RJCMA (CVPRW 2024) | 19% | **19%** (giữ số, sửa cơ sở) | Điểm không đổi nhưng lập luận đảo: match dời từ "analog text yếu" sang **trùng trực tiếp affect head của voice stream + đúng cặp fusion voice+text**. CCC loss bị RETIRE khỏi best point (voice affect head đã dùng sẵn). **Best point mới:** fork code public RJCMA (github.com/praveena2j/RJCMA, ABAW6 hạng 2) làm template joint cross-modal attention cho bước fusion WavLM/emotion2vec + NeoBERT — điều mà bản phân tích text-only đã kết luận sai là "không chuyển được". |
 
 **Tổng kết M6 (so với M5):** re-score với profile voice-aware đổi kết quả đáng kể — JMIR lên **42% adjacent** (cao nhất sweep), C²SER 35%, ABHINAYA/EAA 19%, RJCMA giữ 19% nhưng sửa cơ sở. Quan trọng hơn %: **4/5 best point đổi hẳn sang hướng voice/fusion**, cho ra danh sách hành động mới cho `voice-mtl-heads`: (1) A/B **Emotion2Vec-S checkpoint** làm frozen extractor [01]; (2) anchor emotion head vs **WavLM-Large MSP-Podcast ~34/33 macro-F1** + thử attentive-statistics pooling [02]; (3) anchor crisis head vs **envelope SI-detection sens ~0.86 / AUC ~0.8** khi có nhãn DAIC [10]; (4) khi fusion voice+text: fork **RJCMA joint cross-modal attention** [17] và/hoặc dùng **bidirectional dual cross-attention + residual concat** [03]. Bài học hệ thống: profile stale làm sai không chỉ điểm số mà cả *kết luận chuyển giao* — 2 trong số đó (CCC "nên adopt" trong khi đã dùng; fusion "không chuyển được" trong khi là forward direction) đã bị đảo hoàn toàn.
+
+## Analysis results (M7 — 16 bài còn lại, rubric voice-aware, 2026-07-03)
+
+| # | Paper | Overlap | Best transferable point |
+|---|---|---|---|
+| 04 | MDAT (preprint 2024) | **12%** | Co-attention + graph attention trên 2 frozen encoder cho bước fusion voice+text (thay concat). Đính chính: k-shot adaptation của họ dùng nhãn gold thật — KHÔNG phải setting gold-holdout của Pebble. |
+| 06 | WavFusion (MMM 2025) | **19%** | **Gated cross-modal attention** (sigmoid gate per-channel, Eqs 10–11) — drop-in thay concat khi thêm text branch; có ablation concat 66.78 → gated 70.6 WF1 làm reference. Margin loss của họ cần paired samples — RAVDESS proxy không đáp ứng. |
+| 07 | BCAF (arXiv 2025) | **23%** | **Giữ auxiliary head per-modality** (audio-only + text-only logits cạnh fused logits) + correlative attention gate — chống collapse "text đè audio" khi fusion. **Resolve near-duplicate:** 2503.06405 (HBAF) là paper RIÊNG, cùng nhóm, mới hơn (thêm dynamic gating + contrastive) — nếu chỉ đọc 1 thì đọc HBAF. |
+| 12 | MSP-Podcast Corpus (arXiv 2025 → IEEE TAC) | **46% — adjacent, cao nhất toàn sweep** | D1=2 (baseline của corpus là heterogeneous heads thật: categorical focal + continuous CCC, staged rồi joint), D7=2 (WavLM/HuBERT ~310M). **Baseline to beat:** WavLM CCC Test1 V≈0.72 / A≈0.72 / D≈0.65 (Table VII) + recipe staged CCC→joint — adopt khi affect head swap sang nhãn thật. Lưu ý: baseline họ fine-tune SSL, Pebble frozen-probe → reference ceiling. Access qua DTA (đã nằm trong critical path EULA). |
+| 05 | Speech Emotion Reasoning AudioLLM (arXiv 2025) | **38%** — sát biên adjacent | D4=2: teacher-LLM sinh **rationale evidence-grounded** kèm nhãn (+20 điểm acc, Table 1: 38.2→58.1) + metric Groundedness (LLM-as-judge). **Áp dụng cho stream text NGAY:** khi sinh silver label Gemini, elicit thêm rationale quote-span và dùng groundedness làm **label-quality filter** (drop/down-weight nhãn có rationale hallucinated) — feed thẳng vào `label-quality.md`, không đụng gold-holdout. |
+| 09 | BLSP-Emo (arXiv 2024) | **35%** | D4=2 (LLM sinh supervision emotion-conditioned, distill qua KD — gần silver-label pipeline nhất trong nhóm speech). **Baseline to beat:** WavLM-Large 70.3% acc RAVDESS 5-class (Table 1) — sanity-check ballpark cho emotion head trong Kaggle run `voice-mtl-heads` (lưu ý không apples-to-apples: 5-class OOD vs 8-class 10-fold). |
+| 11 | Bridging Text-Speech (MDPI J.Int. 2025) | **12%** | **IG(text) + Occlusion(audio) attribution** quanh crisis head — mỗi flag dưới recall floor kèm giải thích "prosody vs lexical" (lớp clinical-auditability). Cảnh báo: MELD split không subject-disjoint — tái dùng nguyên trạng sẽ vi phạm I2. |
+| 13 | MMERC Survey (EMNLP 2025 Findings) | **31%** | **Design lesson chốt hướng fusion:** với hệ text-primary, kiến trúc thắng là **text-dominant primary-auxiliary fusion** (voice/prosody là auxiliary cue inject qua cross-modal attention vào text encoder) — thắng equal-weight concat, khớp đúng intent text-primary của Pebble, citable cho trục fusion. |
+| 15 | 15-Years SER Replication (arXiv 2025, Schuller) | **23%** | **Citation cho evaluation-protocol:** "progress" phụ thuộc tập so sánh; single-run ranking không ổn định; chỉ bootstrap 95% CI giữ câu chuyện trung thực — precedent SER-domain cho rule "multi-fold + std/CI" và thesis gold-holdout của Pebble. |
+| 16 | SER Databases Review (Data MDPI 2025) | **27%** | **Vetting map dataset:** framework Table 2 + quality index Q + Table 3 usage map — confirm MSP-Podcast là thay thế RAVDESS-proxy cho affect/CCC head (lưu ý: không có nhãn crisis native → vẫn cần DAIC-class); DAIC-WOZ không nằm trong scope review. |
+| 19 | HiCMAE (Information Fusion 2024) | **19%** | **Citable SOTA ceiling** trên chính các corpus voice stream dùng (RAVDESS/IEMOCAP WAR, code + checkpoint public) — frame số audio-only frozen-probe của Pebble là comparator trung thực, ít tài nguyên hơn (không apples-to-apples: họ có visual). |
+| 18 | Joint Multimodal Transformer (CVPRW 2024) | **15%** | Template fusion có **nhánh joint-representation thứ 3** làm cơ chế robust khi 1 modality nhiễu/thiếu (+1.3–1.8% vs vanilla cross-attention); giữ CCC loss chung trên affect target. D7=0 — audio branch là ResNet18 spectrogram, không phải SSL. |
+| 21 | Hybrid Multi-Attention (Mathematics MDPI 2025) | **15%** | **Design lesson an toàn:** cross-attention chuẩn giả định 2 modality bổ trợ nhau — case "giọng bình thản + text tự sát" là non-complementary safety-critical → fusion head phải giữ intramodal signal, chịu được missing stream, và **stress-test bằng modality dropout**. |
+| 14 | MCER Survey (ACM TOIS) | **8%** | **Dataset to reuse:** catalog §2 lộ 3 corpus continuous-affect hội thoại — MuSE (V/A/D), SEMAINE, CH-SIMS — ứng viên nhãn V/A thật cho affect head bên cạnh MSP-Podcast; đưa qua `/find-dataset` check license. |
+| 20 | AVT-CA (arXiv preprint) | **4%** — thấp nhất sweep | Chỉ trùng corpus RAVDESS; preprint chưa peer-review, số within-distribution (96% RAVDESS) không phải baseline gold-holdout. Bank cross-attention "agreement-driven" làm citation phụ cho chương fusion. |
+
+**Tổng kết M7 + xếp hạng toàn sweep (21 bài):** adjacent: **12 MSP-Podcast 46%**, **10 JMIR 42%**; sát biên: 05 (38%), 01 (35%), 09 (35%); giữa: 13 (31%), 16 (27%), 07 (23%), 15 (23%); còn lại ≤19%. **Finding xuyên suốt quan trọng nhất: 21/21 bài đều D6=0 hoặc 1** — không bài nào đặt recall floor làm objective huấn luyện → crisis-recall-floor của Pebble là gap thật trong văn liệu bimodal SER, đáng làm điểm novelty. Finding thứ hai: bake-off [08] cho thấy Whisper-L-V3 > WavLM-Large trên MSP-Podcast naturalistic — cần kiểm tra lại lựa chọn backbone khi swap nhãn thật.
+
+## M8 — Phương án thesis (đề xuất 2026-07-03)
+
+Bối cảnh (từ `docs/reports/STATUS-2026-07-02-vi.md`): thesis = 2 bài IEEE — (A) Text ordinal suicide-risk: thực nghiệm đủ, còn nợ κ + điền baseline; (B) Voice crisis-sensitive affect: backbone WavLM-Large đã chốt (0.609, thắng emotion2vec 3/3 seed), kernel MTL chờ chạy; critical path = EULA MSP-Podcast + DAIC (1–4 tuần).
+
+### Phương án chọn: **BẬC THANG** — chốt chắc 2 bài, fusion bimodal là tầng điều kiện
+
+**Tầng 1 (0 phụ thuộc, làm ngay):** hoàn thiện paper Text — đo Cohen's κ, điền bảng baseline; cộng 2 nâng cấp rẻ từ sweep: (a) **rationale-groundedness filter** cho silver labels [05] — mini-contribution mới cho §label-quality, chỉ tốn API; (b) cite [15] củng cố evaluation-protocol.
+
+**Tầng 2 (critical path — kích hoạt ngay, chạy khi nhãn về):** gửi EULA MSP-Podcast + DAIC **ngay hôm nay** (latency ngoài tầm kiểm soát); trong lúc chờ chạy kernel MTL RAVDESS-proxy (chứng minh mechanics). Khi MSP-Podcast về: (a) recipe **staged CCC→joint** + baseline WavLM CCC V≈0.72/A≈0.72 [12]; (b) mở rộng bake-off backbone thêm **Whisper-L-V3 + XEUS** [08] — kiểm tra lại WavLM-Large; (c) anchor emotion head vs ABHINAYA ~34/33 macro-F1 [02]; khi DAIC về: anchor crisis vs envelope JMIR sens ~0.86/AUC ~0.8 [10].
+
+**Tầng 3 (điều kiện — chỉ khi tầng 1+2 xong và còn quota):** chương/bài fusion voice+text với novelty đúng gap sweep tìm ra: **"bimodal fusion dưới hard crisis-recall floor"** (21/21 bài chưa ai làm). Recipe đã đủ từ sweep: text-dominant primary-auxiliary fusion [13] + per-modality auxiliary heads chống text-đè-audio [07] + gated cross-attention [06] + **stress-test modality dropout** cho case "giọng bình thản + text tự sát" [21]. Dataset khả thi duy nhất có audio+transcript+crisis: DAIC (đã nằm trong EULA tầng 2).
+
+### Phương án bị loại
+- **All-in bimodal (nâng bài Voice thành bài fusion ngay):** phụ thuộc kép EULA + GPU quota, DAIC là dataset duy nhất đủ điều kiện và đang gated; rủi ro trễ cả 2 bài. Fusion cũng chưa cần cho câu chuyện "honest weak supervision" đang là xương sống.
+- **Text-only (bỏ voice):** lãng phí kết quả voice đã có (WavLM 0.609; crisis precision 0.617 @ recall ≥0.90) và bỏ trống gap D6 mà sweep xác nhận là novelty khả thi nhất.
+
+### Căn cứ chính
+1. Sweep 21 bài xác nhận **không có prior art** cho recall-floor-as-objective trong bimodal SER → tầng 3 có novelty thật, nhưng không blocking 2 bài chính.
+2. Critical path thực tế là **nhãn, không phải method** (STATUS 3.4 + EULA) — nên method upgrades xếp sau việc gửi EULA.
+3. Mọi upgrade tầng 1 đều 0-GPU, phù hợp quota còn ~3h/10h tuần.
+| 08 | Graph-Fusion + Prosodic (Interspeech 2025 challenge) | **12%** | **Bake-off frozen backbone trên MSP-Podcast** (đúng corpus voice stream sắp dùng): Whisper-L-V3 0.366 > XEUS 0.323 > **WavLM-Large 0.313** > HuBERT > Wav2Vec2; concat 0.388 ≈ graph fusion 0.401 → khi swap sang MSP-Podcast, thêm Whisper/XEUS vào so sánh backbone và giữ concat làm fusion baseline. |
 
 ## Completed Work
 - 2026-07-02 — Tạo tracking doc + kick off 3 research-paper agents.
