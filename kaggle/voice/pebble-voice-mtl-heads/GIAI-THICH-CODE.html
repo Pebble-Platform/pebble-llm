@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giải thích pebble-voice-mtl-heads</title>
+<style>
+  :root {
+    --bg: #0f1419; --panel: #1a2029; --ink: #e6edf3; --muted: #9aa7b4;
+    --accent: #58a6ff; --accent2: #7ee787; --border: #2d3742;
+    --code-bg: #11161d; --warn: #ffa657;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7; font-size: 16px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 120px; }
+  h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 8px; }
+  h2 { font-size: 1.4rem; margin: 52px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 1.12rem; margin: 30px 0 10px; color: var(--accent2); }
+  p { margin: 12px 0; }
+  a { color: var(--accent); }
+  blockquote { margin: 16px 0; padding: 12px 18px; background: var(--panel);
+    border-left: 4px solid var(--accent); border-radius: 6px; color: var(--muted); }
+  blockquote strong { color: var(--ink); }
+  code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.85em; color: var(--accent2); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; overflow-x: auto; line-height: 1.55; margin: 18px 0; font-size: 0.84rem; }
+  pre code { background: none; padding: 0; color: var(--ink); font-size: 1em;
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; background: var(--panel);
+    border-radius: 8px; overflow: hidden; font-size: 0.92rem; }
+  th, td { padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: #232c38; color: var(--accent); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  ul, ol { padding-left: 24px; } li { margin: 6px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+  .muted { color: var(--muted); font-size: 0.92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Giải thích chi tiết — <code>pebble-voice-mtl-heads</code></h1>
+<blockquote>Kernel Kaggle: <strong>3 head dị chủng (heterogeneous MTL) trên một speech-encoder đông cứng</strong>.<br>Đây là phần mở rộng thesis của <code>pebble-emotion2vec-repro</code>: cùng backbone đông cứng<br>(<code>emotion2vec_base</code> / <code>WavLM-Large</code>) + cùng <strong>SUPERB trunk</strong>, nhưng <strong>3 head</strong> thay vì 1 —<br>emotion (8-lớp CE) · affect (valence+arousal, <strong>CCC</strong>) · crisis (BCE dưới <strong>recall-floor cứng</strong>) —<br>cân bằng bằng <strong>Kendall uncertainty weighting</strong>.<br><br>Mỗi mục: <strong>code thật</strong> ở trên, <strong>giải thích</strong> ngay dưới. Tài liệu giao thức + lý do thiết kế:<br><code>docs/tasks/voice-mtl-heads.md</code>.</blockquote>
+<hr>
+<h2>0. Tổng quan kiến trúc</h2>
+<p>Pipeline một chiều, encoder <strong>không train</strong> (frozen), chỉ train cái &quot;đầu&quot; nhẹ phía trên:</p>
+<pre><code>        ┌─────────────── FROZEN (không cập nhật gradient) ───────────────┐
+wav 16k │  WavLM-Large  →  frame features (T × 1024)                      │
+ ~3-5s  │  emotion2vec  →  frame features (T × 768)                       │
+        └────────────────────────────────────────────────────────────────┘
+                                   │  (cache 1 lần cho cả 1440 clip)
+                                   ▼
+                    SUPERB trunk:  Linear(d, 256) → ReLU
+                                   │
+                          masked-mean-pool theo frame hợp lệ
+                                   │   z = embedding utterance (256-d)
+                  ┌────────────────┼────────────────┐
+                  ▼                ▼                ▼
+          emo Linear(256,8)  reg Linear(256,2)  safe Linear(256,1)
+           emotion 8-lớp      valence+arousal     crisis (nhị phân)
+              CE loss           CCC loss          BCE + recall-floor
+                  └────────────────┼────────────────┘
+                                   ▼
+                  Kendall uncertainty weighting (gộp 3 loss)</code></pre>
+<p><strong>Điểm cốt lõi cần nhớ:</strong></p>
+<ul><li>Backbone <strong>đông cứng</strong> → chỉ extract feature 1 lần, rồi train head nhẹ → rất rẻ, hợp ràng buộc &quot;frozen-probe&quot; của thesis.</li><li>3 head <strong>dị chủng</strong> (phân lớp + hồi quy + nhị phân an toàn) dùng chung một trunk.</li><li><strong>Nhãn proxy:</strong> RAVDESS *không có* nhãn valence/arousal liên tục hay nhãn crisis lâm sàng. Hai head mới học <strong>nhãn giả</strong> suy ra từ 8 cảm xúc (Russell circumplex cho V/A; tập cảm xúc high-distress cho crisis). → kernel này <strong>validate cơ chế (mechanics)</strong>, không phải con số khoa học thật. Số CCC/crisis có ý nghĩa cần MSP-Podcast / DAIC (task sau).</li></ul>
+<hr>
+<h2>1. Cell 0 — cài stack đã ghim (<code>_cell_install.py</code>)</h2>
+<pre><code>import os
+os.environ[&quot;PYTHONIOENCODING&quot;] = &quot;utf-8&quot;
+os.environ[&quot;PYTHONUTF8&quot;] = &quot;1&quot;
+get_ipython().system(&#x27;pip install -q torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121&#x27;)
+get_ipython().system(&#x27;pip install -q transformers==4.48.2 datasets==3.2.0 librosa soundfile scikit-learn scipy&#x27;)
+get_ipython().system(&#x27;pip install -q funasr modelscope || echo &quot;funasr install failed -&gt; emotion2vec arm will be skipped&quot;&#x27;)</code></pre>
+<p><strong>Vì sao phải ghim cứng version:</strong></p>
+<ul><li><strong>P100 = kiến trúc sm_60.</strong> Torch mặc định của Kaggle (2.10) đã *bỏ* kernel cho sm_60 → crash khi chạy trên P100. Phải hạ về <code>torch==2.5.1</code> (cu121).</li><li>**<code>torchvision</code> phải khớp <code>torch</code>.** <code>transformers</code> lazy-import torchvision; nếu lệch version sẽ lỗi <code>operator torchvision::nms does not exist</code> và <strong>WavLM không load được</strong>.</li><li>**<code>transformers==4.48.2</code>** khớp config của các model.</li><li>**<code>funasr</code>/<code>modelscope</code>** là nhánh của emotion2vec. Cài có <code>|| echo ...</code> để <strong>nếu cài lỗi thì chỉ bỏ qua nhánh emotion2vec</strong>, WavLM vẫn cho ra kết quả — không làm hỏng cả run.</li></ul>
+<hr>
+<h2>2. Cell 1 — imports &amp; config (<code>c1_imports.py</code>)</h2>
+<h3>Hằng số chính</h3>
+<pre><code>SR = 16000                 # mọi encoder ăn audio 16 kHz
+MAX_SEC = 5.0              # clip RAVDESS ~3-5s; 5s phủ gần hết
+MAX_SAMPLES = int(SR * MAX_SEC)     # 80 000 mẫu
+FRAME_HOP = 320            # cả 2 encoder downsample 16kHz -&gt; 50Hz (hệ số 320)
+T_MAX = MAX_SAMPLES // FRAME_HOP    # 250 frame; feature mức-frame (T × d)
+
+N_FOLDS = 10              # random 10-fold CV (cùng giao thức repro)
+SPLIT = (0.80, 0.10, 0.10)         # train/val/test mỗi fold
+BASE_SEED = 42
+PROBE_EPOCHS, PROBE_LR, HEAD_DIM, WD = 100, 1e-3, 256, 1e-4
+RECALL_FLOOR = 0.90       # sàn recall cứng cho crisis (cơ chế &quot;novelty&quot; của thesis)</code></pre>
+<ul><li><code>FRAME_HOP = 320</code>: 16000 Hz / 320 = <strong>50 frame/giây</strong> → tính được số frame từ độ dài. <code>T_MAX = 250</code> là số frame của clip 5s.</li><li><code>PROBE_EPOCHS=100</code>, <code>PROBE_LR=1e-3</code>: head nhẹ, train nhanh, chọn epoch tốt nhất theo val-loss.</li></ul>
+<h3>Thứ tự nhãn cảm xúc RAVDESS</h3>
+<pre><code>EMOTIONS = [&quot;neutral&quot;, &quot;calm&quot;, &quot;happy&quot;, &quot;sad&quot;, &quot;angry&quot;, &quot;fearful&quot;, &quot;disgust&quot;, &quot;surprised&quot;]
+EMO2ID = {e: i for i, e in enumerate(EMOTIONS)}
+N_EMO = 8</code></pre>
+<p>Đúng thứ tự id chuẩn của RAVDESS (mã file <code>01..08</code> → <code>0..7</code>).</p>
+<h3>Nhãn PROXY cho 2 head mới (mấu chốt cần hiểu)</h3>
+<pre><code>VALENCE_AROUSAL = {
+    &quot;neutral&quot;: (0.0, 0.0), &quot;calm&quot;: (0.4, -0.6), &quot;happy&quot;: (0.8, 0.5),
+    &quot;sad&quot;: (-0.6, -0.4), &quot;angry&quot;: (-0.6, 0.8), &quot;fearful&quot;: (-0.6, 0.6),
+    &quot;disgust&quot;: (-0.7, 0.2), &quot;surprised&quot;: (0.3, 0.7),
+}
+CRISIS = {&quot;angry&quot;, &quot;fearful&quot;, &quot;sad&quot;, &quot;disgust&quot;}
+VA   = np.array([VALENCE_AROUSAL[e] for e in EMOTIONS], dtype=np.float32)   # (8, 2)
+SAFE = np.array([1.0 if e in CRISIS else 0.0 for e in EMOTIONS], ...)        # (8,)</code></pre>
+<ul><li>**<code>VALENCE_AROUSAL</code><strong>: bản đồ cố định </strong>Russell (1980) circumplex** — gán mỗi cảm xúc một điểm (valence, arousal) trong <code>[-1, 1]</code>. Đây chính là *nhãn giả* cho head affect: vì RAVDESS không có nhãn V/A liên tục, ta lấy giá trị &quot;lý thuyết&quot; theo cảm xúc.</li><li>**<code>CRISIS</code>**: tập cảm xúc &quot;high-distress&quot; → nhãn dương của head crisis (an toàn). Cũng là proxy.</li><li><code>VA[y]</code> và <code>SAFE[y]</code> cho phép tra ngược: từ id cảm xúc → cặp V/A và cờ crisis.</li></ul>
+<blockquote>⚠️ <strong>Đây là giới hạn lớn nhất của kernel.</strong> Hai head mới học nhãn *suy diễn máy móc từ cảm xúc*, nên gần như circular → số CCC/crisis ở đây <strong>chỉ chứng minh cơ chế chạy đúng</strong>, không phải bằng chứng khoa học. Đã chốt thay bằng MSP-Podcast (nhãn A/V/D thật).</blockquote>
+<hr>
+<h2>3. Cell 2 — nạp RAVDESS (<code>c2_data.py</code>)</h2>
+<pre><code>ds = load_dataset(&quot;narad/ravdess&quot;, split=&quot;train&quot;, trust_remote_code=True)
+INT2STR = ds.features[&quot;labels&quot;].int2str
+
+def fix_len(wav):
+    n = min(len(wav), MAX_SAMPLES)
+    flen = int(np.clip(round(n / FRAME_HOP), 1, T_MAX))   # số frame THẬT (trước pad)
+    if len(wav) &gt;= MAX_SAMPLES:
+        return wav[:MAX_SAMPLES], flen
+    return np.pad(wav, (0, MAX_SAMPLES - len(wav))), flen</code></pre>
+<ul><li>**<code>fix_len</code><strong> cắt/đệm mọi clip về đúng 5s (80 000 mẫu) để batch đều, </strong>đồng thời trả <code>flen</code>** = số frame hợp lệ thật. <code>flen</code> cực kỳ quan trọng: nó là cái mask để pooling chỉ tính trên frame thật, <strong>bỏ qua phần pad bằng 0</strong> (nếu không, mean-pool sẽ bị kéo loãng bởi các frame zero).</li></ul>
+<pre><code>def to_records(ds):
+    for ex in ds:
+        wav = np.asarray(ex[&quot;audio&quot;][&quot;array&quot;], dtype=np.float32)
+        if src_sr != SR:
+            wav = torchaudio.functional.resample(..., src_sr, SR).numpy()  # 48k -&gt; 16k
+        wav, flen = fix_len(wav.astype(np.float32))
+        recs.append({&quot;wav&quot;: wav, &quot;y&quot;: EMO2ID[emo], &quot;flen&quot;: flen})
+
+assert len(recs) == 1440      # tất cả 1440 clip speech của RAVDESS
+sf.write(f&quot;{ART}/sample_val.wav&quot;, recs[0][&quot;wav&quot;], SR)   # lưu 1 clip làm sample test local</code></pre>
+<ul><li>RAVDESS gốc 48 kHz → <strong>resample về 16 kHz</strong>.</li><li><code>assert len(recs) == 1440</code>: chốt cứng đủ 1440 clip speech (fail nhanh nếu dataset lệch).</li><li>Lưu 1 clip ra <code>sample_val.wav</code> để test artifact bằng <code>voice_mtl_infer.py</code> ở local.</li></ul>
+<hr>
+<h2>4. Cell 3 — extract feature đông cứng mức-frame (<code>c3_features.py</code>)</h2>
+<p>Mỗi encoder chạy <strong>một lần</strong> trên toàn bộ 1440 clip, trả về <code>(N, T_MAX, dim)</code> feature mức-frame. Pooling diễn ra <strong>sau</strong> <code>Linear+ReLU</code> ở cell 4 (đúng công thức <code>SuperbBaseModel</code> của emotion2vec/EmoBox).</p>
+<pre><code>def pad_T(arr):                          # (T, dim) -&gt; (T_MAX, dim)
+    if len(arr) &gt;= T_MAX: return arr[:T_MAX]
+    return np.pad(arr, ((0, T_MAX - len(arr)), (0, 0)))</code></pre>
+<h3>Nhánh WavLM</h3>
+<pre><code>def wavlm_extractor():
+    fe = AutoFeatureExtractor.from_pretrained(&quot;microsoft/wavlm-large&quot;)
+    model = WavLMModel.from_pretrained(&quot;microsoft/wavlm-large&quot;).to(DEVICE).eval()
+    @torch.no_grad()
+    def extract(wavs, bs=16):
+        for i in range(0, len(wavs), bs):
+            enc = fe(batch, sampling_rate=SR, return_tensors=&quot;pt&quot;, padding=True)
+            with torch.cuda.amp.autocast(...):
+                h = model(**enc).last_hidden_state          # (B, T, 1024)
+            out.append(pad_T(h[j]).astype(np.float16))      # GIỮ chiều thời gian
+        return np.stack(out)                                # (N, T_MAX, 1024)
+    return extract, 1024</code></pre>
+<ul><li><code>model.eval()</code> + <code>@torch.no_grad()</code> → <strong>đông cứng</strong>, không tính gradient cho backbone.</li><li>Lấy <code>last_hidden_state</code> (feature mức-frame), <strong>không</strong> mean-pool tại đây — giữ <code>(T, 1024)</code>.</li><li>Lưu <strong>float16</strong> để tiết kiệm RAM (1440 × 250 × 1024).</li></ul>
+<h3>Nhánh emotion2vec</h3>
+<pre><code>def emotion2vec_extractor():
+    from funasr import AutoModel as FunASR
+    model = FunASR(model=&quot;iic/emotion2vec_base&quot;, hub=&quot;hf&quot;, disable_update=True)
+    def extract(wavs, bs=None):
+        for w in wavs:
+            sf.write(tf.name, w, SR)                        # funasr đọc từ file
+            r = model.generate(path, granularity=&quot;frame&quot;, extract_embedding=True)
+            f = np.asarray(r[0][&quot;feats&quot;], dtype=np.float32) # (T, 768)
+            feats.append(pad_T(f).astype(np.float16))
+        return np.stack(feats)                              # (N, T_MAX, 768)
+    return extract, 768</code></pre>
+<ul><li><code>granularity=&quot;frame&quot;</code> → feature mức-frame <code>(T, 768)</code> (khác với &quot;utterance&quot; trả 1 vector).</li><li>funasr nhận đường dẫn file → phải <code>sf.write</code> ra file tạm rồi xoá.</li></ul>
+<h3>Vòng lặp + guard</h3>
+<pre><code>for name, builder in [(&quot;emotion2vec&quot;, ...), (&quot;wavlm-large&quot;, ...)]:
+    try:
+        extract, dim = builder()
+        X = extract(all_wavs)
+        BACKBONES[name] = {&quot;X&quot;: X, &quot;dim&quot;: dim}
+    except Exception as e:
+        print(f&quot;[{name}] SKIPPED -&gt; {type(e).__name__}: {e}&quot;)
+assert BACKBONES, &quot;no backbone produced features&quot;</code></pre>
+<ul><li>Bọc <code>try/except</code>: nếu emotion2vec hỏng (thiếu funasr) thì <strong>bỏ qua nhánh đó</strong>, WavLM vẫn chạy.</li><li><code>assert BACKBONES</code>: ít nhất một backbone phải ra feature, nếu không thì dừng.</li></ul>
+<hr>
+<h2>5. Cell 4 — 3-head MTL probe + Kendall weighting (<code>c4_heads.py</code>) ⭐</h2>
+<p>Đây là <strong>trái tim</strong> của kernel. Chia nhỏ từng phần:</p>
+<h3>5.1 Kiến trúc head</h3>
+<pre><code>class MTLHead(nn.Module):
+    def __init__(self, dim, hid=HEAD_DIM):
+        self.pre  = nn.Linear(dim, hid)     # SUPERB trunk dùng chung
+        self.emo  = nn.Linear(hid, N_EMO)   # emotion 8-lớp
+        self.reg  = nn.Linear(hid, 2)       # affect: valence, arousal
+        self.safe = nn.Linear(hid, 1)       # crisis nhị phân
+    def forward(self, x, mask):             # x (B,T,dim), mask (B,T)
+        h = F.relu(self.pre(x))
+        m = mask.unsqueeze(-1).float()
+        z = (h * m).sum(1) / m.sum(1).clamp(min=1.0)   # MASKED-mean pool
+        return self.emo(z), self.reg(z), self.safe(z).squeeze(-1)</code></pre>
+<ul><li>**<code>pre</code>** = trunk dùng chung: <code>Linear(dim, 256) → ReLU</code>. Cả 3 head nhìn vào cùng một embedding.</li><li><strong>Masked-mean-pool</strong>: nhân feature với mask (1 cho frame thật, 0 cho pad), cộng theo thời gian, chia cho số frame thật (<code>clamp(min=1)</code> chống chia 0). → utterance embedding <code>z</code> (256-d) <strong>không bị pad làm loãng</strong>.</li><li>3 head tuyến tính riêng → 3 output: logits cảm xúc, (valence, arousal), logit crisis.</li></ul>
+<h3>5.2 Kendall uncertainty weighting</h3>
+<pre><code>class UncertaintyWeighter(nn.Module):
+    def __init__(self, n=3):
+        self.log_var = nn.Parameter(torch.zeros(n))   # log σ² học được, 1 cho mỗi task
+    def forward(self, losses):
+        return sum(0.5 * torch.exp(-self.log_var[i]) * L + 0.5 * self.log_var[i]
+                   for i, L in enumerate(losses))</code></pre>
+<p>Công thức <strong>Kendall, Gal &amp; Cipolla (CVPR 2018)</strong> — homoscedastic uncertainty weighting:</p>
+<p><code>total = Σ_i [ ½·exp(−s_i)·L_i + ½·s_i ]</code>, với <code>s_i = log σ_i²</code> là tham số <strong>học được</strong>.</p>
+<ul><li>Task khó (loss cao) → mô hình tự tăng <code>σ²</code> → <code>exp(−s)</code> nhỏ → <strong>giảm trọng số</strong> task đó, tránh nó lấn át.</li><li>Số hạng <code>+½·s_i</code> là phạt regularization, chặn <code>σ²</code> phình vô hạn.</li><li>→ <strong>không cần dò tay trọng số 3 loss</strong>; mô hình tự cân. (Đây là comparator để sau này so với GradNorm/PCGrad trong bảng ablation.)</li></ul>
+<h3>5.3 CCC — loss &amp; metric cho affect</h3>
+<pre><code>def ccc_loss(pred, tgt):
+    pm, tm = pred.mean(), tgt.mean()
+    pv, tv = pred.var(unbiased=False), tgt.var(unbiased=False)
+    cov = ((pred - pm) * (tgt - tm)).mean()
+    return 1 - 2 * cov / (pv + tv + (pm - tm) ** 2 + 1e-8)
+
+def ccc_score(pred, tgt):   # giống trên nhưng trả CCC (không phải 1-CCC)
+    return float(2 * cov / (pred.var() + tgt.var() + (pm - tm) ** 2 + 1e-8))</code></pre>
+<ul><li><strong>CCC (Concordance Correlation Coefficient)</strong> ∈ <code>[-1, 1]</code>: đo vừa <strong>tương quan</strong> vừa <strong>khớp tuyệt đối</strong> (khác Pearson — phạt cả lệch mean/scale). Là metric chuẩn cho affect liên tục (AVEC).</li><li>**Loss = <code>1 − CCC</code>** → minimize loss = maximize CCC.</li><li>Áp <strong>riêng cho valence và arousal</strong> rồi cộng lại (xem 5.6).</li></ul>
+<h3>5.4 Recall-floor: chọn ngưỡng đảm bảo recall ≥ sàn</h3>
+<pre><code>def threshold_for_recall(probs, labels, floor):
+    pos = np.sort(probs[labels == 1])            # prob của các mẫu crisis thật, tăng dần
+    if len(pos) == 0: return 0.5
+    k = min(int(np.floor((1 - floor) * len(pos))), len(pos) - 1)
+    return float(pos[k])                          # ngưỡng cao nhất mà recall &gt;= floor</code></pre>
+<p><strong>Cơ chế an toàn cứng</strong> — logic:</p>
+<ul><li>Muốn <code>recall ≥ 0.90</code> nghĩa là <strong>bắt được ≥ 90% mẫu crisis thật</strong>.</li><li>Sắp prob của các mẫu crisis tăng dần. Nếu đặt ngưỡng tại phân vị <code>(1−floor)</code> từ dưới lên, ta &quot;thả&quot; nhiều nhất <code>10%</code> mẫu crisis có prob thấp nhất → recall vẫn ≥ 90%.</li><li>Lấy <strong>ngưỡng cao nhất</strong> thoả điều kiện → recall vừa đủ sàn nhưng <strong>precision tốt nhất có thể</strong>.</li><li>Ngưỡng được dò <strong>trên tập val</strong>, rồi áp lên test (không peek test).</li></ul>
+<h3>5.5 Chia fold</h3>
+<pre><code>def split_80_10_10(y, seed):
+    tr, tmp = train_test_split(idx, test_size=0.20, random_state=seed, stratify=y)
+    va, te  = train_test_split(tmp, test_size=0.5, random_state=seed, stratify=y[tmp])
+    return tr, va, te</code></pre>
+<ul><li><strong>Stratify theo cảm xúc</strong> → mỗi split giữ nguyên tỉ lệ 8 lớp.</li><li>Mỗi fold dùng <code>seed = BASE_SEED + fold</code> → 10 fold = 10 cách chia ngẫu nhiên khác nhau.</li></ul>
+<h3>5.6 <code>train_one</code> — train 1 fold</h3>
+<pre><code>def train_one(Xg, mask_g, y, va_tgt, safe_tgt, dim, seed):
+    tr, va, te = split_80_10_10(y, seed)
+    head = MTLHead(dim).to(DEVICE)
+    weighter = UncertaintyWeighter(3).to(DEVICE)
+    opt = torch.optim.Adam(list(head.parameters()) + list(weighter.parameters()), lr=PROBE_LR, weight_decay=WD)
+
+    best_val, best_state = 1e9, None
+    for _ in range(PROBE_EPOCHS):
+        # --- train (full-batch trên tập train) ---
+        e, r, s = head(Xg[tr_t], mask_g[tr_t])
+        losses = [F.cross_entropy(e, yt[tr_t]),                                  # emotion
+                  ccc_loss(r[:,0], vt[tr_t,0]) + ccc_loss(r[:,1], vt[tr_t,1]),   # affect = CCC(V)+CCC(A)
+                  F.binary_cross_entropy_with_logits(s, st[tr_t])]               # crisis
+        loss = weighter(losses)               # Kendall gộp 3
+        loss.backward(); opt.step()
+        # --- val: chọn epoch tốt nhất theo TỔNG loss (không trọng số) ---
+        vl = (CE + CCC_v + CCC_a + BCE) on val
+        if vl &lt; best_val: best_state = head.state_dict() copy
+    head.load_state_dict(best_state)          # early-stop &quot;mềm&quot;: lấy state val tốt nhất</code></pre>
+<ul><li>**Optimizer train cả <code>head</code> lẫn <code>weighter</code>** (vì <code>log_var</code> là Parameter học được).</li><li>Train <strong>full-batch</strong> (cả tập train một lần/epoch) — rẻ vì feature đã cache, head nhẹ.</li><li>3 loss: <strong>CE</strong> (emotion) · <strong>CCC(valence)+CCC(arousal)</strong> (affect) · <strong>BCE</strong> (crisis) → gộp bằng Kendall.</li><li><strong>Model selection</strong>: lưu lại state có <strong>tổng val-loss thấp nhất</strong> (early-stop mềm), tránh overfit.</li></ul>
+<pre><code>    # đánh giá trên test, áp recall-floor đã dò trên val
+    tau = threshold_for_recall(sigmoid(sv_val), safe_tgt[va], RECALL_FLOOR)
+    pred = (sigmoid(st_test) &gt;= tau).astype(int)
+    m = emo_metrics(y[te], et.argmax(-1))     # WA / UA / WF1
+    m.update({&quot;CCC_v&quot;: ..., &quot;CCC_a&quot;: ...,
+              &quot;crisis_recall&quot;: recall_score(...), &quot;crisis_prec&quot;: precision_score(...),
+              &quot;tau&quot;: tau})
+    return m, head</code></pre>
+<ul><li><code>emo_metrics</code>: <strong>WA</strong> (weighted acc), <strong>UA</strong> (unweighted/macro recall), <strong>WF1</strong> (weighted F1) — bộ 3 chuẩn SER.</li><li>Crisis: dò <code>tau</code> trên <strong>val</strong>, áp lên <strong>test</strong> → báo recall &amp; precision tại sàn.</li></ul>
+<h3>5.7 Vòng CV ngoài</h3>
+<pre><code>mask_all = (torch.arange(T_MAX)[None,:] &lt; torch.tensor(flen_all)[:,None])   # (N,T) mask từ flen
+va_all   = VA[y_all]      # (N,2) nhãn proxy V/A
+safe_all = SAFE[y_all]    # (N,)  nhãn proxy crisis
+
+for name, b in BACKBONES.items():
+    Xg = torch.tensor(b[&quot;X&quot;], dtype=torch.float, device=DEVICE)   # f16 -&gt; f32 trên GPU
+    for fold in range(N_FOLDS):
+        m, head = train_one(Xg, mask_all, y_all, va_all, safe_all, b[&quot;dim&quot;], BASE_SEED+fold)
+        results[name].append(m)
+        if fold == 0: artifacts[name] = head     # giữ head fold-0 làm artifact
+    # in mean ± std qua 10 fold</code></pre>
+<ul><li>**<code>mask_all</code>**: dựng từ <code>flen</code> — <code>frame_index &lt; flen</code> → True. Đây là mask cho masked-mean-pool.</li><li>Feature <code>f16</code> được nạp lên GPU và cast <code>f32</code> cho ổn định số học.</li><li>Mỗi backbone × 10 fold → list metric; <strong>giữ head của fold 0</strong> làm artifact để export/serve.</li></ul>
+<hr>
+<h2>6. Cell 5 — tổng hợp + lưu artifact (<code>c5_results.py</code>)</h2>
+<pre><code>for name, folds in results.items():
+    for k in (&quot;WA&quot;,&quot;UA&quot;,&quot;WF1&quot;,&quot;CCC_v&quot;,&quot;CCC_a&quot;,&quot;crisis_recall&quot;,&quot;crisis_prec&quot;):
+        vals = np.array([f[k] for f in folds])
+        agg[name][k] = (vals.mean(), vals.std())
+df.to_csv(f&quot;{ART}/results_voice_mtl.csv&quot;)
+
+for name, head in artifacts.items():       # 1 bundle / backbone (head fold-0)
+    torch.save(head.state_dict(), f&quot;{d}/mtl_head.pt&quot;)
+    cfg = {&quot;backbone_hf_id&quot;:..., &quot;embed_dim&quot;:..., &quot;emotions&quot;:..., &quot;valence_arousal&quot;:...,
+           &quot;crisis_set&quot;:..., &quot;recall_floor&quot;:..., &quot;crisis_tau&quot;: results[name][0][&quot;tau&quot;],
+           &quot;frame_hop&quot;:..., &quot;t_max&quot;:..., &quot;pooling&quot;:&quot;masked-mean&quot;, &quot;head&quot;:&quot;mtl-3head&quot;, ...}
+    json.dump(cfg, f&quot;{d}/config.json&quot;)</code></pre>
+<ul><li>Tổng hợp <strong>mean ± std</strong> qua 10 fold cho cả 7 metric → CSV + JSON.</li><li>Mỗi backbone lưu một <strong>bundle phục vụ/test</strong>: <code>mtl_head.pt</code> (trọng số head) + <code>config.json</code> (đủ siêu dữ liệu để tái dựng pipeline: backbone id, dim, bản đồ V/A, tập crisis, **<code>crisis_tau</code>** đã dò, cách pool...).</li><li><code>crisis_tau</code> lưu lại để inference local áp đúng ngưỡng recall-floor đã chọn.</li></ul>
+<p>**Output trong <code>/kaggle/working</code>:** <code>results_voice_mtl.{csv,json}</code>, <code>sample_val.wav</code>, <code>artifact_*/</code> (<code>mtl_head.pt</code> + <code>config.json</code>).</p>
+<hr>
+<h2>7. Inference local — <code>scripts/voice_mtl_infer.py</code></h2>
+<p>Test artifact đã pull về trên <strong>1 clip</strong>, không qua Kaggle:</p>
+<pre><code>class MTLHead(nn.Module):        # bản rút gọn: 1 clip -&gt; mọi frame hợp lệ -&gt; mean-pool thường
+    def forward(self, x):
+        z = F.relu(self.pre(x)).mean(1)   # không cần mask vì input không pad
+        return self.emo(z), self.reg(z), self.safe(z).squeeze(-1)
+
+cfg = json.load(bundle/&quot;config.json&quot;)
+X = feat_wavlm(wav, cfg[&quot;backbone_hf_id&quot;]) hoặc feat_emotion2vec(...)
+head.load_state_dict(torch.load(bundle/&quot;mtl_head.pt&quot;))
+emo_logits, reg, safe_logit = head(X)
+crisis_p = sigmoid(safe_logit);  tau = cfg[&quot;crisis_tau&quot;]
+print emotion top-3, valence/arousal, &quot;CRISIS&quot; nếu crisis_p &gt;= tau</code></pre>
+<ul><li><strong>Vì sao bỏ mask:</strong> một clip đưa vào *không pad* → mọi frame đều hợp lệ → masked-mean rút gọn thành mean thường. Tái dựng đúng đường c3→c4 của kernel.</li><li>In ra: cảm xúc (top-3), affect (valence/arousal proxy), và cờ <strong>CRISIS</strong> nếu <code>p ≥ tau</code> (ngưỡng recall-floor lưu trong config).</li><li>WavLM chạy chỉ với <code>transformers</code>; emotion2vec cần <code>funasr</code> cài local.</li></ul>
+<hr>
+<h2>8. Tóm tắt &amp; cách chạy</h2>
+<h3>Bản chất khoa học</h3>
+<table><thead><tr><th>Thành phần</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead><tbody><tr><td>Frozen probe + SUPERB trunk</td><td>✅ thật</td><td>tái dùng từ repro</td></tr><tr><td>3 head dị chủng + Kendall weighting</td><td>✅ cơ chế đúng</td><td>validate được trên feature thật</td></tr><tr><td>Emotion 8-lớp (CE → WA/UA/WF1)</td><td>✅ thật</td><td>nhãn RAVDESS thật</td></tr><tr><td><strong>Affect CCC (valence/arousal)</strong></td><td>⚠️ <strong>proxy</strong></td><td>nhãn Russell cố định → chưa meaningful; cần MSP-Podcast</td></tr><tr><td><strong>Crisis recall-floor</strong></td><td>⚠️ <strong>proxy</strong></td><td>nhãn = tập cảm xúc high-distress; cần nhãn lâm sàng (DAIC)</td></tr></tbody></table>
+<blockquote>Kernel này <strong>chứng minh cơ chế multi-head + recall-floor chạy đúng trên feature đông cứng thật</strong>.<br>Con số CCC / crisis chỉ có ý nghĩa khoa học khi thay nhãn proxy bằng nhãn liên tục + lâm sàng thật.</blockquote>
+<h3>Build + chạy</h3>
+<pre><code># build notebook từ các cell .py
+.venv-voice/Scripts/python.exe kaggle/voice/pebble-voice-mtl-heads/build_ipynb.py
+
+# push + chạy trên Kaggle GPU
+.venv-voice/bin/kaggle kernels push   -p kaggle/voice/pebble-voice-mtl-heads
+.venv-voice/bin/kaggle kernels status fabiocarava/pebble-voice-mtl-heads      # poll tới khi xong
+.venv-voice/bin/kaggle kernels output fabiocarava/pebble-voice-mtl-heads -p kaggle/voice/pebble-voice-mtl-heads/out
+
+# test artifact local trên 1 clip
+PYTHONPATH=src .venv-voice/bin/python scripts/voice_mtl_infer.py \
+  kaggle/voice/pebble-voice-mtl-heads/out/artifact_wavlm-large \
+  kaggle/voice/pebble-voice-mtl-heads/out/sample_val.wav</code></pre>
+<p><strong>Trạng thái hiện tại:</strong> kernel đã build xong, <strong>chưa chạy Kaggle</strong> (chưa có <code>out/</code>) → đây là việc kế tiếp (mốc M3–M5).</p>
+</div>
+</body>
+</html>

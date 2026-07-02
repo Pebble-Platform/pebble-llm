@@ -1,279 +1,336 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pebble‑LLM — Toàn cảnh Thesis</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pebble‑LLM — Độ chính xác qua từng thực nghiệm</title>
 <style>
   :root{
-    --ink:#1a2030; --muted:#5a6478; --line:#e3e7ef; --bg:#f6f8fc; --card:#fff;
-    --accent:#2d5bd7; --accent-soft:#eaf0ff; --good:#1a7f4b; --good-soft:#e6f6ec;
-    --warn:#b06a00; --warn-soft:#fff3e0; --bad:#b3261e; --bad-soft:#fdecea;
-    --r1:#7a3fb0;
+    --plane:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+    /* protocol categorical slots (validated light) */
+    --p-gold:#2a78d6;   /* cross‑to‑gold — honest */
+    --p-within:#eb6834; /* within‑distribution — inflated */
+    --p-goldcv:#4a3aa7; /* gold→gold baseline */
+    --p-llm:#e34948;    /* within‑LLM — circular */
+    --good:#006300;
+    --font: system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --plane:#0d0d0d; --surface:#1a1a19;
+      --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+      --p-gold:#3987e5; --p-within:#d95926; --p-goldcv:#9085e9; --p-llm:#e66767;
+      --good:#0ca30c;
+    }
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.62;font-size:15.5px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:980px;margin:0 auto;padding:40px 22px 80px}
-  header.hero{background:linear-gradient(135deg,#2d5bd7,#5a3fd0);color:#fff;border-radius:18px;
-    padding:34px 34px 30px;box-shadow:0 10px 30px rgba(45,91,215,.22)}
-  header.hero h1{margin:0 0 6px;font-size:27px;letter-spacing:-.3px}
-  header.hero .sub{opacity:.92;font-size:15px}
-  header.hero .meta{margin-top:14px;font-size:13px;opacity:.85;display:flex;flex-wrap:wrap;gap:6px 18px}
-  h2{margin:42px 0 14px;font-size:20px;padding-bottom:8px;border-bottom:2px solid var(--line)}
-  h3{margin:26px 0 10px;font-size:16.5px;color:#2a3550}
-  p{margin:10px 0}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;
-    box-shadow:0 1px 3px rgba(20,30,60,.04)}
-  .tldr{background:var(--accent-soft);border:1px solid #cfe0ff;border-left:5px solid var(--accent)}
-  .tldr ul{margin:8px 0 0;padding-left:20px}
-  .tldr li{margin:7px 0}
-  .pill{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 10px;vertical-align:middle}
-  .pill.a{background:var(--accent-soft);color:var(--accent)}
-  .pill.r1{background:#f1e8fa;color:var(--r1)}
-  .note{font-size:13.5px;color:var(--muted);background:#f0f2f7;border-radius:10px;padding:12px 14px;border-left:4px solid #c4ccda}
-  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
-  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-  th{background:#f0f3f9;font-weight:700;color:#33405c;font-size:13px}
-  tr:last-child td{border-bottom:none}
-  td.c,th.c{text-align:center}
-  .big{font-weight:800;color:var(--accent)}
-  .win{color:var(--good);font-weight:800}
-  .flag{color:var(--bad);font-weight:700}
-  code{background:#eef1f7;border-radius:5px;padding:1px 6px;font-size:13px;
-    font-family:"SF Mono",Menlo,Consolas,monospace;color:#33405c}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
-  .tag{font-size:12px;font-weight:700;padding:1px 8px;border-radius:6px}
-  .t-good{background:var(--good-soft);color:var(--good)} .t-warn{background:var(--warn-soft);color:var(--warn)}
-  .t-bad{background:var(--bad-soft);color:var(--bad)} .t-acc{background:var(--accent-soft);color:var(--accent)}
-  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0;font-size:13.5px}
-  .flow .step{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-weight:600}
-  .flow .arrow{color:var(--muted);font-weight:700}
-  .step .num{color:var(--win,var(--good));font-weight:800}
-  footer{margin-top:46px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;word-break:break-word}
-  .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0}
-  @media(max-width:720px){.kpi{grid-template-columns:repeat(2,1fr)}}
-  .kpi .b{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
-  .kpi .v{font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
-  .kpi .l{font-size:12px;color:var(--muted);margin-top:4px}
+  html{color-scheme:light dark}
+  body{margin:0;background:var(--plane);color:var(--ink);font-family:var(--font);
+       line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  header p{color:var(--ink2);margin:.3em 0}
+  h1{font-size:1.7rem;line-height:1.2;margin:0 0 .2em}
+  h2{font-size:1.2rem;margin:2.4em 0 .2em;letter-spacing:.01em}
+  .sub{color:var(--muted);font-size:.9rem;margin:0 0 1em}
+  .meta{color:var(--muted);font-size:.85rem}
+
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:24px 0 8px}
+  .tile{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px}
+  .tile .v{font-size:1.9rem;font-weight:650;letter-spacing:-.02em}
+  .tile .k{color:var(--ink2);font-size:.83rem;margin-top:4px}
+  .tile .d{font-size:.8rem;margin-top:6px}
+  .up{color:var(--good)}
+
+  /* chart card */
+  .card{background:var(--surface);border:1px solid var(--ring);border-radius:14px;
+        padding:20px 18px 12px;margin-top:14px;position:relative}
+  figure{margin:0}
+  figcaption{color:var(--ink2);font-size:.88rem;margin-bottom:6px}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .grid line{stroke:var(--grid);stroke-width:1}
+  .axis{stroke:var(--axis);stroke-width:1}
+  .tick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+  .vlabel{fill:var(--ink);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+  .xlabel{fill:var(--ink2);font-size:10.5px}
+  .whisker{stroke:var(--ink2);stroke-width:1.5;opacity:.7}
+  .bar{cursor:pointer;transition:filter .12s}
+  .bar:hover{filter:brightness(1.08)}
+
+  /* legend */
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:4px 0 2px;font-size:.82rem;color:var(--ink2)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;flex:none}
+
+  /* callout */
+  .note{background:var(--surface);border:1px solid var(--ring);border-left:4px solid var(--p-llm);
+        border-radius:10px;padding:12px 14px;margin:14px 0;font-size:.9rem;color:var(--ink2)}
+  .note b{color:var(--ink)}
+
+  /* tooltip */
+  #tip{position:fixed;pointer-events:none;z-index:10;opacity:0;transition:opacity .1s;
+       background:var(--ink);color:var(--surface);padding:8px 10px;border-radius:8px;
+       font-size:.8rem;max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+  #tip b{font-weight:650}
+
+  details{margin-top:10px;font-size:.85rem;color:var(--ink2)}
+  summary{cursor:pointer;color:var(--ink2)}
+  table{border-collapse:collapse;margin-top:8px;font-size:.82rem;width:100%}
+  th,td{border:1px solid var(--grid);padding:5px 8px;text-align:left}
+  td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+  footer{margin-top:40px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--grid);padding-top:14px}
+  code{background:var(--surface);border:1px solid var(--ring);border-radius:4px;padding:1px 5px;font-size:.85em}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <header>
+    <h1>Pebble‑LLM — Độ chính xác qua từng lần thực nghiệm</h1>
+    <p>Phân loại <b>ordinal</b> nguy cơ tự sát (4 mức C‑SSRS) · nhánh <code>main</code></p>
+    <p class="meta">Dựng từ <code>docs/reports/THESIS-OVERVIEW-vi.md</code> · số headline đã kiểm chứng khớp retained‑log 2026‑07‑02</p>
+  </header>
 
-<header class="hero">
-  <h1>Pebble‑LLM — Toàn cảnh Thesis</h1>
-  <div class="sub">Mô hình hoá cảm xúc nhạy‑khủng‑hoảng cho <b>Text</b> và <b>Voice</b> — từ mục đích ban đầu đến các version &amp; kết quả thực nghiệm.</div>
-  <div class="meta"><span>📅 Tổng hợp 2026‑06‑27</span><span>🌿 nhánh main</span><span>👥 Research team</span><span>🎯 2 bài IEEE</span></div>
-</header>
-
-<div class="card tldr">
-  <h3 style="margin-top:0">Tóm tắt 1 phút</h3>
-  <ul>
-    <li><b>Xuất phát:</b> thay kiến trúc <b>single‑call Gemini</b> (một lời gọi vừa chấm cảm xúc vừa sinh phản hồi) bằng <b>classifier cảm xúc fine‑tune riêng</b>, chạy <i>trước</i> generation để Decision Engine định tuyến tốt hơn.</li>
-    <li><b>Đã pivot</b> từ "classifier 6 đầu‑ra cho sản phẩm" sang <b>2 bài báo IEEE</b>: <b>(A) Text</b> — ordinal nguy cơ tự sát; <b>(B) Voice</b> — affect giọng nói nhạy‑khủng‑hoảng.</li>
-    <li><b>Text — VƯỢT PAPER:</b> within‑distribution macro‑F1 <span class="win">0.653 vs 0.510</span> (+28%); gold‑holdout trung thực cải thiện <b>0.19 → 0.42</b>.</li>
-    <li><b>Voice:</b> chọn xong backbone (<b>WavLM‑Large</b> thắng emotion2vec 3/3 seed) + crisis head <b>precision 0.617 @ recall ≥ 0.90</b>.</li>
-    <li><b>Đường tới‑hạn còn lại = dữ liệu/nhãn, không phải code</b>: đo κ chất lượng nhãn‑LLM (Text) &amp; xin quyền MSP‑Podcast (Voice).</li>
-  </ul>
-</div>
-
-<div class="note">
-  <b>Lưu ý thuật ngữ:</b> trong doc nội bộ, <span class="pill a">R2</span> = tên <b>paper tham chiếu</b> <i>"Hierarchical Dual‑Head"</i> (suicide‑risk 2025) mà nhóm <b>tái lập &amp; vượt</b> — KHÔNG phải "version 2" của hệ thống. <span class="pill r1">R1</span> = paper HMT‑BB (BERT+BiLSTM, 2025), dùng làm baseline thiết kế.
-</div>
-
-<!-- PHẦN A -->
-<h2>Phần A — Version đầu tiên: Emotion Classifier cho sản phẩm (Strategy v1 → v3)</h2>
-
-<h3>A.1 Mục đích ban đầu &amp; mong muốn</h3>
-<p>Thay single‑call Gemini bằng một classifier <b>chuyên biệt, fine‑tune, self‑hosted</b>, chạy trước bước generation. Bốn mong muốn:</p>
-<table>
-  <tr><th>#</th><th>Mong muốn</th></tr>
-  <tr><td class="c">1</td><td><b>Tăng tính nhất quán</b> khi chấm điểm (specialist ổn định hơn generalist được prompt)</td></tr>
-  <tr><td class="c">2</td><td><b>Decision Engine làm việc trên điểm có cấu trúc <i>trước</i> generation</b> → định tuyến giàu thông tin</td></tr>
-  <tr><td class="c">3</td><td><b>Tách khỏi vòng đời Gemini</b> ở inference (deprecate không đụng routing)</td></tr>
-  <tr><td class="c">4</td><td><b>Xoá lỗi JSON malformed</b> (encoder xuất head tensor có kiểu, không parse JSON)</td></tr>
-</table>
-<p><b>Đầu ra — 1 object/tin nhắn (6 chiều):</b> <code>energy</code> · <code>severity</code> · <code>socialIsolation</code> · <code>receptivity</code> · <code>detectedEmotion</code> · <code>safetyFlag</code>. (2 chiều <code>themeRepetition</code> &amp; <code>sessionTrajectory</code> để cho Decision Engine vì cần bộ nhớ xuyên‑phiên.)</p>
-
-<h3>A.2 Các version chiến lược</h3>
-<table>
-  <tr><th>Version</th><th>Quyết định kiến trúc chính</th><th>Vì sao đổi</th></tr>
-  <tr><td><b>v2.0 / v2.1</b></td><td><b>Gemini 2.5 Flash‑Lite SFT</b> là model chính (không cần serving)</td><td>Đơn giản; nhưng vẫn dính lỗi JSON + phụ thuộc Gemini</td></tr>
-  <tr><td><b>v3.0</b><br><span class="tag t-acc">hiện hành · May 2026</span></td><td><b>NeoBERT</b> (250M, self‑hosted, MIT) là <b>chính</b>; Gemini Flash‑Lite <b>hạ xuống backup</b>; ModernBERT fallback</td><td>Lấy nhất quán + decouple + bỏ lỗi JSON. <b>Đánh đổi: gánh nặng serving quay lại</b> (rủi ro lớn nhất)</td></tr>
-</table>
-<p class="note"><b>Kiến trúc v3:</b> multi‑task trên <code>[CLS]</code> 768‑dim — Score Head (sigmoid K chiều) · Emotion Head (warm‑start GoEmotions) · Safety Head (BCE, trọng số dương 10×). <b>Transfer:</b> GoEmotions 58k → emotion; SemEval‑2018 EI‑reg → severity.</p>
-
-<h3>A.3 Kết quả version đầu — thực chất là <i>nền tảng + kế hoạch</i></h3>
-<div class="card">
-  <p>Đây chủ yếu là <b>chiến lược + foundation code</b>, chưa ra số train sản phẩm (dừng ở <b>Phase 5</b>):</p>
-  <ul>
-    <li><b>Đã xong:</b> taxonomy 12‑nhãn + mapping GoEmotions; multi‑task heads + weighted loss; metrics §7; user‑level split; serving schema/FastAPI.</li>
-    <li><b>Kaggle GPU smoke test = GO:</b> NeoBERT (222M) load + forward/backward pass trên P100 — với <b>stack pin chuẩn</b> (<code>torch 2.5.1+cu121</code>, xformers 0.0.28, transformers 4.48.2). Gotcha còn dùng tới giờ.</li>
-    <li><b>Loaders + masked‑multitask assembler</b> xong (GoEmotions emotion + EI‑reg severity → bản ghi masked).</li>
-    <li><b>Thu hẹp v1:</b> chỉ học <code>detectedEmotion</code> + <code>severity</code>; 4 chiều còn lại thành heuristic; hoãn annotation/safety/Gemini.</li>
-  </ul>
-  <p class="note">➡️ <b>Cầu nối sang Phần B:</b> khi chuyển trọng tâm sang <b>đóng góp học thuật (IEEE)</b>, dự án tổ chức lại thành 2 stream <code>finetuning-message</code> (text) &amp; <code>voice</code>; bài toán cảm xúc tổng quát được <b>chuyên biệt hoá</b> thành 2 bài có gold‑standard rõ ràng.</p>
-</div>
-
-<!-- PHẦN B -->
-<h2>Phần B — Version hiện tại: 2 bài báo IEEE</h2>
-<table>
-  <tr><th>Stream</th><th>Bài báo</th><th class="c">Lõi thực nghiệm</th><th>Blocker tới‑hạn</th></tr>
-  <tr><td><b>Text/Message</b></td><td>Weakly‑Supervised Augmentation cho Ordinal Suicide‑Risk</td><td class="c"><span class="tag t-good">✅ Xong</span></td><td>κ chất lượng nhãn‑LLM ↔ gold</td></tr>
-  <tr><td><b>Voice</b></td><td>Backbone + Recall‑Floored Heterogeneous Heads cho Crisis Affect</td><td class="c"><span class="tag t-warn">🟡 Backbone xong</span></td><td>Quyền MSP‑Podcast</td></tr>
-</table>
-
-<!-- B1 -->
-<h2>B1 — Text: Ordinal Suicide‑Risk <span style="font-weight:400;font-size:15px;color:var(--muted)">(tái lập &amp; vượt paper "R2")</span></h2>
-<div class="card">
-  <p><b>Task:</b> phân loại <b>ordinal 4 mức C‑SSRS</b> (Indicator &lt; Ideation &lt; Behavior &lt; Attempt) từ chuỗi post Reddit.</p>
-  <p><b>Mô hình:</b> Hierarchical dual‑head — MentalRoBERTa(mirror) → seq‑transformer 3 lớp → attention‑pool → <b>CORAL head (ordinal) + CE head</b>; loss <code>0.5·CORAL + 0.3·CE + 0.2·Focal</code>; freeze 6 lớp; max_len 256.</p>
-  <p><b>Đóng góp phương pháp luận (không claim SOTA):</b> <span class="t-acc tag">gold‑holdout protocol</span> — train trên nhãn‑LLM (rẻ, nhiều), <b>đánh giá trên nhãn lâm sàng held‑out</b> → đo lợi ích weak‑supervision <b>trung thực, không circular</b>.</p>
-</div>
-
-<h3>B1.1 Chuỗi "version" thực nghiệm <span style="font-weight:400;font-size:14px;color:var(--muted)">— phần "các version tiếp theo"</span></h3>
-<div class="flow">
-  <span class="step"><span class="num">1</span> gold‑CV <b>0.19</b></span><span class="arrow">→</span>
-  <span class="step"><span class="num">2</span> within‑LLM <b>0.67</b> <span class="flag">⚠circular</span></span><span class="arrow">→</span>
-  <span class="step"><span class="num">3</span> gold‑holdout <b>0.357</b></span><span class="arrow">→</span>
-  <span class="step"><span class="num">4</span> +rebalance <b>0.385</b></span><span class="arrow">→</span>
-  <span class="step"><span class="num">5</span> within‑dist sạch <b class="win">0.653</b></span><span class="arrow">→</span>
-  <span class="step"><span class="num">6</span> flat‑CE <b>0.422</b></span>
-</div>
-<table>
-  <tr><th>#</th><th>Version / vòng</th><th>Thay đổi chính</th><th>Giao thức eval</th><th class="c">Macro‑F1</th><th>Ghi chú</th></tr>
-  <tr><td class="c">1</td><td><b>Baseline gold‑CV</b></td><td>Train trên gold lâm sàng (ít), eval trên gold</td><td>gold→gold</td><td class="c big">0.19</td><td>Quá ít nhãn lâm sàng → trần thấp</td></tr>
-  <tr><td class="c">2</td><td><b>Weak‑sup (within‑LLM)</b></td><td>Làm giàu ~10k post <b>nhãn‑LLM</b>, train+eval trên LLM</td><td><span class="flag">circular</span></td><td class="c big">0.67</td><td>Cao nhưng <i>tự đánh lừa</i> — chỉ để lộ tính circular</td></tr>
-  <tr><td class="c">3</td><td><b>Gold‑holdout (trung thực)</b></td><td>Train nhãn‑LLM, <b>eval gold lâm sàng held‑out</b></td><td>cross‑to‑gold</td><td class="c big">0.357</td><td>Con số trung thực đầu tiên</td></tr>
-  <tr><td class="c">4</td><td><b>+ Behavior rebalance (Run B)</b></td><td>WeightedRandomSampler nghịch‑tần (<code>R2_BALANCE</code>)</td><td>gold‑holdout</td><td class="c big">0.385</td><td>QWK 0.378→0.398, MAE 0.840→0.822 (đều tốt hơn)</td></tr>
-  <tr style="background:var(--good-soft)"><td class="c">5</td><td><b>Within‑dist CV sạch (Run A)</b></td><td>5‑fold CV trên đủ <b>10,072</b> mẫu (sửa bug mount)</td><td>within‑distribution</td><td class="c"><span class="win">0.653</span> <span style="font-weight:400">±0.005</span></td><td><b class="win">VƯỢT PAPER 0.510 (+28%)</b></td></tr>
-  <tr><td class="c">6</td><td><b>Ablation flat‑CE</b></td><td>Bỏ CORAL+Focal, chỉ CE thuần</td><td>gold‑holdout</td><td class="c big">0.422 <span style="font-weight:400">±0.024</span></td><td><b>Bất ngờ: &gt; dual‑head; cứu Behavior 0.183→0.285</b></td></tr>
-</table>
-
-<div class="grid2">
-  <div class="card">
-    <h3 style="margin-top:0">Bảng 3 giao thức (đóng gói cho paper)</h3>
-    <table>
-      <tr><th>Giao thức</th><th class="c">Train</th><th class="c">Eval</th><th class="c">M‑F1</th><th class="c">QWK</th></tr>
-      <tr><td>Gold‑CV</td><td class="c">gold</td><td class="c">gold</td><td class="c">0.19</td><td class="c">0.24</td></tr>
-      <tr><td>Within‑LLM <span class="flag">(circular)</span></td><td class="c">LLM</td><td class="c">LLM</td><td class="c">0.67</td><td class="c">—</td></tr>
-      <tr style="background:var(--accent-soft)"><td><b>Cross‑to‑gold (của ta)</b></td><td class="c">LLM</td><td class="c">gold</td><td class="c"><b>0.385</b></td><td class="c"><b>0.378</b></td></tr>
-    </table>
+  <div class="tiles">
+    <div class="tile"><div class="v">0.19 → 0.4215</div><div class="k">Macro‑F1 gold‑holdout trung thực</div><div class="d up">▲ ~×2.2 cải thiện</div></div>
+    <div class="tile"><div class="v">0.4215</div><div class="k">Cấu hình tốt nhất trên gold (flat‑CE)</div><div class="d">vượt cả 2 baseline IEEE</div></div>
+    <div class="tile"><div class="v">~0.25</div><div class="k">Gap LLM↔gold (0.67 within − 0.42 cross)</div><div class="d">đại lượng trung tâm của paper</div></div>
+    <div class="tile"><div class="v">35.8%</div><div class="k">Nhãn Behavior bị cleanlab nghi sai</div><div class="d">nút thắt = chất lượng nhãn</div></div>
   </div>
+
+  <!-- ============ CHART 1 ============ -->
+  <h2>1 · Macro‑F1 qua từng vòng thực nghiệm (Text)</h2>
+  <p class="sub">Mỗi cột = một lần thử. Màu = giao thức đánh giá — <b>chỉ các cột xanh (cross‑to‑gold) mới so sánh trực tiếp được với nhau.</b></p>
   <div class="card">
-    <h3 style="margin-top:0">Per‑class gold (Run B)</h3>
-    <table>
-      <tr><th>Lớp</th><th class="c">F1</th></tr>
-      <tr><td>Indicator</td><td class="c">0.50</td></tr>
-      <tr><td>Ideation</td><td class="c">0.48</td></tr>
-      <tr><td><b>Behavior</b></td><td class="c"><span class="flag">0.18 ⚠</span></td></tr>
-      <tr><td>Attempt</td><td class="c">0.37</td></tr>
-    </table>
-    <p class="note" style="margin-bottom:0">Nút thắt <b>Behavior</b> = <b>chất lượng nhãn</b> (chỉ 634 mẫu, đa số nhãn‑LLM nhiễu), KHÔNG phải sampling.</p>
+    <div class="legend" id="legend1"></div>
+    <figure><figcaption>Trục Y: Macro‑F1 (whisker = ±std nơi có 5‑fold)</figcaption>
+      <svg id="c1" viewBox="0 0 860 380" role="img" aria-label="Macro-F1 qua từng vòng thực nghiệm"></svg>
+    </figure>
+    <details><summary>Xem bảng số liệu</summary><div id="t1"></div></details>
   </div>
+  <div class="note">
+    <b>⚠ Cảnh báo giao thức (thông điệp lõi của thesis):</b> cột <span style="color:var(--p-llm)">đỏ</span> (within‑LLM 0.67)
+    là <b>circular</b> — train &amp; eval cùng nguồn nhãn‑LLM, tự đánh lừa, giữ lại chỉ để lộ vấn đề.
+    Cột <span style="color:var(--p-within)">cam</span> (within‑distribution 0.653) đo <b>trên nhãn‑LLM</b>, không phải benchmark gốc → không claim SOTA.
+    Con số trung thực để báo cáo là các cột <span style="color:var(--p-gold)">xanh</span>: <b>0.4215</b>.
+    Cột <b>gạch chéo</b> là <b>Paper R2 gốc (0.5098)</b>: tái lập kiến trúc của mình đạt 0.653 trên protocol tương đương, paper báo 0.510 trên benchmark của họ —
+    <b>khác dataset nên không so trực tiếp được</b>, chỉ đặt cạnh nhau cho có ngữ cảnh.
+  </div>
+
+  <!-- ============ CHART 2 ============ -->
+  <h2>2 · Ablation 2×2 [head × loss] trên gold‑holdout</h2>
+  <p class="sub">Cùng split/seed, 5‑fold × 10 epoch. Xếp theo Macro‑F1. Rê chuột để xem Behavior‑F1 &amp; QWK.</p>
+  <div class="card">
+    <figure><figcaption>Macro‑F1 trên gold (± std)</figcaption>
+      <svg id="c2" viewBox="0 0 860 320" role="img" aria-label="Ablation cấu hình head và loss"></svg>
+    </figure>
+    <details><summary>Xem bảng số liệu</summary><div id="t2"></div></details>
+  </div>
+
+  <!-- ============ CHART 3 ============ -->
+  <h2>3 · Behavior‑F1 — lớp yếu nhất được vá dần</h2>
+  <p class="sub">Behavior là lớp khó nhất (chỉ 7.3% pool LLM, under‑label 3.0×). 3 đóng góp phương pháp kéo nó lên.</p>
+  <div class="card">
+    <figure><figcaption>Behavior‑F1 theo phương pháp</figcaption>
+      <svg id="c3" viewBox="0 0 860 300" role="img" aria-label="Behavior-F1 qua các phương pháp"></svg>
+    </figure>
+    <details><summary>Xem bảng số liệu</summary><div id="t3"></div></details>
+  </div>
+
+  <!-- ============ CHART 4 ============ -->
+  <h2>4 · Voice — chọn backbone giọng nói</h2>
+  <p class="sub">Frozen linear‑probe, 8‑class, trung bình 3 seed trên RAVDESS. WavLM‑Large thắng 3/3 seed.</p>
+  <div class="card">
+    <figure><figcaption>Accuracy 8‑class (± std, 3 seed)</figcaption>
+      <svg id="c4" viewBox="0 0 860 220" role="img" aria-label="So sánh backbone giọng nói"></svg>
+    </figure>
+    <div class="tiles" style="margin-top:14px">
+      <div class="tile"><div class="v">0.617</div><div class="k">Crisis head — precision tại recall ≥ 0.90</div><div class="d">ngưỡng 0.69 (V3)</div></div>
+      <div class="tile"><div class="v">−0.071</div><div class="k">Paired Δ WavLM vs emotion2vec</div><div class="d up">thắng 3/3 seed</div></div>
+    </div>
+  </div>
+
+  <footer>
+    Nguồn: <code>docs/reports/THESIS-OVERVIEW-vi.md</code> §B1.1, §B1.2, §B2.1 ·
+    <code>kaggle/finetuning-message/results-summary.csv</code> ·
+    <code>docs/tasks/thesis-message-review.md</code>. Palette: dataviz skill (validated light+dark).
+  </footer>
 </div>
 
-<h3>B1.2 Ba phát hiện quan trọng</h3>
-<table>
-  <tr><td class="c" style="width:34px">1</td><td><b>Vượt paper trên within‑distribution</b> (0.653 &gt; 0.510). Đóng khung: <i>"method vượt số báo cáo của paper trên giao thức within‑distribution tương đương"</i> (trên 10k đã làm giàu, không phải benchmark gated gốc).</td></tr>
-  <tr><td class="c">2</td><td><b>flat‑CE &gt; tri‑objective trên gold</b> (+0.037) &amp; <b>cứu lớp Behavior</b> → gợi ý CORAL+Focal đang <b>overfit phân bố nhãn‑LLM</b>. <span class="flag">⚠ mới 1 seed/1 run</span> — cần CORAL‑only + lặp seed để chốt.</td></tr>
-  <tr><td class="c">3</td><td><b>Nút thắt Behavior là CHẤT LƯỢNG NHÃN</b>, không phải sampling — rebalance không phá được trần này.</td></tr>
-</table>
+<div id="tip"></div>
 
-<h3>B1.3 Hai vòng nghiên cứu hỗ trợ paper</h3>
-<div class="grid2">
-  <div class="card"><b>Vòng "finetuning‑methods"</b><br>Phân tích <b>12 paper nổi tiếng (42–53)</b> qua 4 nhóm (PEFT · weak‑sup/distill · ordinal/imbalance · MH‑SOTA). <b>Kết luận:</b> vì nút thắt là <i>nhãn</i>, method <b>label‑centric</b> (Snorkel, cleanlab, Distillation) xếp hạng cao hơn → roadmap 3‑tier.</div>
-  <div class="card"><b>Vòng "emotional‑tone"</b><br><b>16 paper</b>; top‑4 chấm overlap: VADEC 38% · CLPsych‑2025 54% · MentaLLaMA 42% · Mitsios 35%. Dataset <b>IMHI ✅ tải về</b> (19,051 hàng, MIT); CLPsych ⛔ gated.</div>
-</div>
+<script>
+"use strict";
+const tip = document.getElementById('tip');
+function showTip(html, e){ tip.innerHTML=html; tip.style.opacity=1;
+  const pad=14; let x=e.clientX+pad, y=e.clientY+pad;
+  if(x+270>innerWidth) x=e.clientX-270; if(y+120>innerHeight) y=e.clientY-120;
+  tip.style.left=x+'px'; tip.style.top=y+'px'; }
+function hideTip(){ tip.style.opacity=0; }
+const SVGNS='http://www.w3.org/2000/svg';
+function el(name,attrs,txt){ const n=document.createElementNS(SVGNS,name);
+  for(const k in attrs) n.setAttribute(k,attrs[k]); if(txt!=null) n.textContent=txt; return n; }
+const fmt=v=>v.toFixed(v<1?4:2).replace(/0+$/,'').replace(/\.$/,'')||'0';
+const f3=v=>v.toFixed(3);
 
-<h3>B1.4 Còn thiếu để IEEE duyệt</h3>
-<table>
-  <tr><th class="c">Ưu tiên</th><th>Hạng mục</th><th>Việc cụ thể</th></tr>
-  <tr><td class="c"><span class="tag t-bad">🔴 1</span></td><td>Định lượng chất lượng nhãn‑LLM</td><td><b>Cohen's κ</b> + confusion LLM‑vs‑gold (giải thích "gap 0.28")</td></tr>
-  <tr><td class="c"><span class="tag t-bad">🔴 2</span></td><td>Bảng ablation đầy đủ</td><td>flat‑CE vs <b>CORAL‑only</b> vs dual‑head; ±augment; ±balance; ±focal</td></tr>
-  <tr><td class="c"><span class="tag t-warn">🟡 3</span></td><td>Baselines</td><td>plain‑RoBERTa‑CE; BiLSTM‑MTL</td></tr>
-  <tr><td class="c"><span class="tag t-warn">🟡 4</span></td><td>Vá Behavior &amp; Ethics/provenance</td><td>lọc nhãn‑LLM Behavior; mục data‑collection scrape + de‑identify</td></tr>
-</table>
+const PROTO = {
+  goldcv:{c:'var(--p-goldcv)', name:'Gold‑CV (train+eval gold)'},
+  llm:   {c:'var(--p-llm)',    name:'Within‑LLM (circular)'},
+  gold:  {c:'var(--p-gold)',   name:'Cross‑to‑gold (trung thực)'},
+  within:{c:'var(--p-within)', name:'Within‑distribution (inflated)'},
+};
 
-<!-- B2 -->
-<h2>B2 — Voice: Crisis‑sensitive speech affect</h2>
-<p>Chọn <b>backbone giọng nói</b> mạnh nhất rồi gắn các <b>head dị‑chủng</b> (emotion + affect CCC + crisis) với <b>sàn recall</b> cho head khủng hoảng.</p>
-<div class="kpi">
-  <div class="b"><div class="v">0.609</div><div class="l">WavLM macro‑F1 (thắng)</div></div>
-  <div class="b"><div class="v">0.537</div><div class="l">emotion2vec macro‑F1</div></div>
-  <div class="b"><div class="v">3/3</div><div class="l">seed WavLM thắng</div></div>
-  <div class="b"><div class="v">0.617</div><div class="l">crisis precision @ recall≥0.90</div></div>
-</div>
-<table>
-  <tr><th>Vòng</th><th>Thực nghiệm</th><th>Kết quả</th></tr>
-  <tr><td><b>V1 — Reproduction</b></td><td>emotion2vec linear‑probe trên RAVDESS</td><td>tái lập + deploy HF Space</td></tr>
-  <tr><td><b>V2 — Backbone selection</b></td><td>emotion2vec vs <b>WavLM‑Large</b> (frozen probe, 8‑class, 3 seed)</td><td><b class="win">WavLM thắng 0.609 vs 0.537</b>, paired Δ −0.071 (<b>3/3 seed</b>)</td></tr>
-  <tr><td><b>V3 — Crisis head</b></td><td>Distress head dưới ràng buộc cứng recall</td><td><b>Precision 0.617±0.003 tại recall ≥ 0.90</b> (ngưỡng 0.69)</td></tr>
-  <tr><td><b>V4 — MTL heads (M3–M5)</b></td><td>emotion + affect CCC + crisis cùng lúc</td><td><span class="tag t-warn">⏳ kernel đã build; đang chờ chạy Kaggle</span></td></tr>
-</table>
-<p class="note"><b>Còn thiếu:</b> 🔴 quyền <b>MSP‑Podcast</b> (nhãn V/A/D thật) · 🔴 chạy MTL‑heads lấy 10‑fold · CCC affect head trên nhãn thật · ablation Kendall vs GradNorm/PCGrad · baseline eGeMAPS SER.</p>
+/* ---------- CHART 1: vertical grouped-by-protocol progression ---------- */
+const D1 = [
+  {x:'1', lab:'Baseline\ngold‑CV',    f1:0.19,   std:null,  p:'goldcv', note:'Train+eval trên gold lâm sàng (ít) → trần thấp'},
+  {x:'2', lab:'Within‑LLM',           f1:0.67,   std:null,  p:'llm',    note:'Train+eval cùng nhãn‑LLM — CIRCULAR, tự đánh lừa'},
+  {x:'3', lab:'Gold‑holdout\nđầu tiên',f1:0.3569,std:null,  p:'gold',   note:'Số trung thực đầu tiên: train LLM, eval gold held‑out'},
+  {x:'4', lab:'+ Behavior\nrebalance',f1:0.3849, std:0.007, p:'gold',   note:'WeightedRandomSampler nghịch‑tần · QWK 0.378→0.398'},
+  {x:'5', lab:'Within‑dist\nCV sạch', f1:0.6530, std:0.005, p:'within', note:'5‑fold trên 10,072 mẫu — đo TRÊN nhãn‑LLM, không phải gold'},
+  {x:'R2',lab:'Paper R2\n(within‑dist)',f1:0.5098,std:null, p:'within', paper:true, note:'Yang et al., IEEE BigData 2025 (Hierarchical Dual‑Head) — trên benchmark gated GỐC của họ. KHÔNG so trực tiếp: khác dataset, cùng giao thức within‑distribution'},
+  {x:'6', lab:'flat‑CE',              f1:0.4215, std:0.024, p:'gold',   note:'Bỏ ordinal → Macro‑F1 cao nhất trên gold (finding trung thực)'},
+  {x:'7', lab:'CORN+GCE\n(ĐG1)',      f1:0.4022, std:0.013, p:'gold',   note:'Ordinal head tốt nhất · Behavior 0.260'},
+  {x:'8', lab:'baseline\nRoBERTa',    f1:0.3456, std:0.026, p:'gold',   note:'Baseline IEEE plain‑RoBERTa‑CE'},
+  {x:'9', lab:'baseline\nBiLSTM‑MTL', f1:0.3783, std:0.014, p:'gold',   note:'Baseline paper gốc, reimpl'},
+];
 
-<!-- C: DATA / DUA -->
-<h2>Phần C — Thu thập dữ liệu &amp; xin quyền sử dụng (DUA / EULA)</h2>
-<p>Đây là <b>đường tới‑hạn thật sự</b>: nhiều dataset lâm sàng bị <i>gated</i>, latency xin quyền <b>1–4 tuần</b> nằm ngoài tầm kiểm soát → phải khởi động sớm.</p>
+function drawV(svgId, data, ymax, unit){
+  const svg=document.getElementById(svgId);
+  const W=860,H=380, L=44,R=16,T=18,B=64;
+  const pw=W-L-R, ph=H-T-B;
+  const y=v=> T+ph-(v/ymax)*ph;
+  // gridlines
+  const g=el('g',{class:'grid'});
+  for(let i=0;i<=5;i++){ const v=ymax*i/5;
+    g.appendChild(el('line',{x1:L,y1:y(v),x2:W-R,y2:y(v)}));
+    svg.appendChild(el('text',{x:L-8,y:y(v)+4,'text-anchor':'end',class:'tick'}, v.toFixed(2)));
+  }
+  svg.appendChild(g);
+  svg.appendChild(el('line',{class:'axis',x1:L,y1:T+ph,x2:W-R,y2:T+ph}));
+  const n=data.length, step=pw/n, bw=Math.min(58, step*0.6);
+  data.forEach((d,i)=>{
+    const cx=L+step*i+step/2, bx=cx-bw/2, by=y(d.f1), bh=T+ph-by;
+    let barAttrs={class:'bar',x:bx,y:by,width:bw,height:Math.max(bh,1),rx:4,fill:PROTO[d.p].c};
+    if(d.paper){
+      const pid=svgId+'-hatch-'+i;
+      const defs=el('defs',{}), pat=el('pattern',{id:pid,width:6,height:6,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'});
+      pat.appendChild(el('rect',{width:6,height:6,fill:PROTO[d.p].c,opacity:.16}));
+      pat.appendChild(el('line',{x1:0,y1:0,x2:0,y2:6,style:'stroke:'+PROTO[d.p].c,'stroke-width':2.4}));
+      defs.appendChild(pat); svg.appendChild(defs);
+      barAttrs={...barAttrs,fill:`url(#${pid})`,stroke:PROTO[d.p].c,'stroke-width':1.5,'stroke-dasharray':'4 3'};
+    }
+    const bar=el('rect',barAttrs);
+    const pname = d.paper ? 'Paper R2 — benchmark gốc (within‑distribution)' : PROTO[d.p].name;
+    const info=`<b>${d.lab.replace(/\n/g,' ')}</b><br>Macro‑F1 = ${f3(d.f1)}${d.std?' ±'+f3(d.std):''}<br><span style="opacity:.8">${pname}</span><br><span style="opacity:.7">${d.note}</span>`;
+    bar.addEventListener('mousemove',e=>showTip(info,e));
+    bar.addEventListener('mouseleave',hideTip);
+    svg.appendChild(bar);
+    if(d.std){ const yt=y(d.f1+d.std), yb=y(d.f1-d.std);
+      svg.appendChild(el('line',{class:'whisker',x1:cx,y1:yt,x2:cx,y2:yb}));
+      svg.appendChild(el('line',{class:'whisker',x1:cx-5,y1:yt,x2:cx+5,y2:yt}));
+      svg.appendChild(el('line',{class:'whisker',x1:cx-5,y1:yb,x2:cx+5,y2:yb}));
+    }
+    svg.appendChild(el('text',{x:cx,y:by-7,'text-anchor':'middle',class:'vlabel'}, f3(d.f1)));
+    // multi-line x label
+    d.lab.split('\n').forEach((ln,k)=>
+      svg.appendChild(el('text',{x:cx,y:T+ph+16+k*12,'text-anchor':'middle',class:'xlabel'}, ln)));
+  });
+}
+drawV('c1', D1, 0.70);
 
-<h3>Chiến lược 2 nhánh (license là bộ lọc cứng)</h3>
-<table>
-  <tr><th>Nhánh</th><th>Nguồn được phép</th><th>Vì sao</th></tr>
-  <tr><td><b>Model triển khai (deployed)</b></td><td><b>CHỈ</b> CSSRS‑Reddit (CC‑BY‑4.0)</td><td>License duy nhất cho phép <i>serve</i> model đã train</td></tr>
-  <tr><td><b>Nghiên cứu / paper</b></td><td>CSSRS‑Reddit <b>+</b> DAIC‑WOZ <b>+</b> SMHD/RSDD</td><td>DUA research‑only: cho train + eval, <b>KHÔNG</b> cho deploy</td></tr>
-</table>
-<p class="note">⚠️ Checkpoint train trên <b>DAIC‑WOZ / SMHD/RSDD KHÔNG được ship</b> trong sản phẩm — chỉ dùng cho nhánh nghiên cứu.</p>
+// legend 1
+const lg=document.getElementById('legend1');
+['gold','within','llm','goldcv'].forEach(k=>{
+  const s=document.createElement('span');
+  s.innerHTML=`<span class="sw" style="background:${PROTO[k].c}"></span>${PROTO[k].name}`;
+  lg.appendChild(s);
+});
+const sp=document.createElement('span');
+sp.innerHTML=`<span class="sw" style="background:repeating-linear-gradient(45deg,var(--p-within) 0 2px,transparent 2px 5px);border:1px dashed var(--p-within)"></span>Paper R2 (benchmark gốc)`;
+lg.appendChild(sp);
 
-<h3>Trạng thái từng dataset</h3>
-<table>
-  <tr><th>Dataset</th><th>Vai trò trong thesis</th><th>License / cổng</th><th class="c">Trạng thái</th></tr>
-  <tr><td><b>CSSRS‑Reddit</b><br><span style="font-size:12px;color:var(--muted)">Gaur, WWW'19</span></td><td>gold C‑SSRS 5 mức, 500 user, 4 bác sĩ tâm thần — nguồn crisis <b>serve được</b></td><td>CC‑BY‑4.0 (mở)</td><td class="c"><span class="tag t-good">✅ Đã tải</span></td></tr>
-  <tr style="background:var(--warn-soft)"><td><b>DAIC‑WOZ</b><br><span style="font-size:12px;color:var(--muted)">USC ICT</span></td><td>transcript phỏng vấn lâm sàng + <b>PHQ‑8 depression</b>, hội thoại (gần domain Pebble hơn Reddit) → nhãn <b>crisis cho voice head</b></td><td>Research‑only <b>EULA</b>, email học thuật</td><td class="c"><span class="tag t-bad">⚠️ CHƯA BẮT ĐẦU</span></td></tr>
-  <tr><td><b>SMHD / RSDD</b><br><span style="font-size:12px;color:var(--muted)">Georgetown</span></td><td>nhãn chẩn đoán (9 bệnh / depression) → <b>corpus domain‑adaptive pretrain</b></td><td>Research‑only <b>DUA</b></td><td class="c"><span class="tag t-warn">⚠️ chưa (~2–4 tuần)</span></td></tr>
-  <tr><td><b>MSP‑Podcast</b></td><td>nhãn <b>A/V/D thật</b> cho affect head (voice)</td><td>gated</td><td class="c"><span class="tag t-bad">🔴 cần xin</span></td></tr>
-  <tr><td><b>IMHI</b></td><td>OOD eval cho safety head (swmh / t‑sid)</td><td>MIT</td><td class="c"><span class="tag t-good">✅ đã tải</span></td></tr>
-  <tr><td><b>CLPsych UMD</b></td><td>(đã cân nhắc)</td><td>bắt <b>xoá data + model</b> sau workshop</td><td class="c"><span class="tag t-bad">❌ loại</span></td></tr>
-</table>
+/* ---------- CHART 2: horizontal ranked ablation ---------- */
+const D2 = [
+  {lab:'baseline plain‑RoBERTa‑CE', f1:0.3456, std:0.026, beh:null,  qwk:null,  hi:false},
+  {lab:'baseline BiLSTM‑MTL',       f1:0.3783, std:0.014, beh:null,  qwk:null,  hi:false},
+  {lab:'CORAL + Focal (dual cũ)',   f1:0.3849, std:0.007, beh:0.183, qwk:0.398, hi:false},
+  {lab:'CORAL + GCE (gce‑only)',    f1:0.3990, std:0.015, beh:0.229, qwk:0.382, hi:false},
+  {lab:'CORN + GCE (đóng góp 1)',   f1:0.4022, std:0.013, beh:0.260, qwk:0.361, hi:true},
+  {lab:'CORN + Focal (corn‑only)',  f1:0.4095, std:0.025, beh:0.250, qwk:0.377, hi:false},
+  {lab:'flat‑CE (bỏ ordinal)',      f1:0.4215, std:0.024, beh:0.285, qwk:0.388, hi:true},
+];
+function drawH(svgId, data, xmax, opts){
+  opts=opts||{};
+  const svg=document.getElementById(svgId);
+  const W=860, rowH=Math.max(30,(opts.rowH||34)), Ltxt=opts.labelW||210;
+  const T=10, B=28, R=64;
+  const H=T+B+data.length*rowH; svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const x0=Ltxt+8, pw=W-x0-R;
+  const x=v=> x0+(v/xmax)*pw;
+  const g=el('g',{class:'grid'});
+  for(let i=0;i<=5;i++){ const v=xmax*i/5;
+    g.appendChild(el('line',{x1:x(v),y1:T,x2:x(v),y2:T+data.length*rowH}));
+    svg.appendChild(el('text',{x:x(v),y:H-10,'text-anchor':'middle',class:'tick'}, v.toFixed(2)));
+  }
+  svg.appendChild(g);
+  svg.appendChild(el('line',{class:'axis',x1:x0,y1:T,x2:x0,y2:T+data.length*rowH}));
+  data.forEach((d,i)=>{
+    const cy=T+rowH*i+rowH/2, bh=Math.min(20,rowH-12);
+    const col = opts.color || 'var(--p-gold)';
+    const bar=el('rect',{class:'bar',x:x0,y:cy-bh/2,width:Math.max(x(d.f1)-x0,1),height:bh,rx:4,
+                         fill:col, opacity:d.hi?1:0.62});
+    const extra = (d.beh!=null?`<br>Behavior‑F1 = ${f3(d.beh)}`:'') + (d.qwk!=null?`<br>QWK = ${f3(d.qwk)}`:'');
+    const info=`<b>${d.lab}</b><br>Macro‑F1 = ${f3(d.f1)}${d.std?' ±'+f3(d.std):''}${extra}`;
+    bar.addEventListener('mousemove',e=>showTip(info,e));
+    bar.addEventListener('mouseleave',hideTip);
+    svg.appendChild(bar);
+    if(d.std){ const xr=x(d.f1+d.std), xl=x(d.f1-d.std);
+      svg.appendChild(el('line',{class:'whisker',x1:xl,y1:cy,x2:xr,y2:cy}));
+      svg.appendChild(el('line',{class:'whisker',x1:xr,y1:cy-4,x2:xr,y2:cy+4}));
+      svg.appendChild(el('line',{class:'whisker',x1:xl,y1:cy-4,x2:xl,y2:cy+4}));
+    }
+    svg.appendChild(el('text',{x:x(d.f1+(d.std||0))+8,y:cy+4,class:'vlabel'}, f3(d.f1)));
+    svg.appendChild(el('text',{x:Ltxt,y:cy+4,'text-anchor':'end',class:'xlabel',
+      'font-weight':d.hi?'700':'400'}, d.lab));
+  });
+}
+drawH('c2', D2, 0.50);
 
-<div class="card" style="border-left:5px solid var(--warn)">
-  <h3 style="margin-top:0">DAIC‑WOZ — các bước cần làm (bạn phải ký) <span class="tag t-bad">ACTION REQUIRED</span></h3>
-  <ol style="margin:6px 0">
-    <li>Vào cổng <code>dcapswoz.ict.usc.edu</code>, tải <b>EULA</b> (<code>Extended-DAIC-BLANK_EULA.pdf</code>).</li>
-    <li>Điền thông tin tổ chức (PI/lab), <b>ký</b>, gửi từ <b>email học thuật</b> (<code>@institution.edu</code>).</li>
-    <li>Turnaround <b>~1–3 tuần</b>. Cover‑note đã soạn sẵn trong <code>docs/dataset-acquisition-plan.md</code> (chỉ điền các trường <code>[BRACKETED]</code>).</li>
-  </ol>
-</div>
+/* ---------- CHART 3: Behavior-F1 progression ---------- */
+const D3 = [
+  {lab:'CORAL+Focal (dual cũ)', f1:0.183, hi:false},
+  {lab:'CORAL+GCE',             f1:0.229, hi:false},
+  {lab:'CORN+Focal',            f1:0.250, hi:false},
+  {lab:'CORN+GCE (ĐG1)',        f1:0.260, hi:true},
+  {lab:'flat‑CE',               f1:0.285, hi:true},
+  {lab:'+ Label‑shift (ĐG2)',   f1:0.41,  hi:true},
+].map(d=>({...d,std:null}));
+drawH('c3', D3, 0.50, {labelW:190});
 
-<!-- D -->
-<h2>Phần D — Hạ tầng &amp; bài học vận hành</h2>
-<table>
-  <tr><td><b>Kaggle</b></td><td>Auth qua <code>~/.kaggle/access_token</code> (token <code>KGAT_</code>). Account hiện hành <b>phatneurondai</b> (đã <b>phone‑verify</b> → GPU P100 + Internet chạy được). <b>Tối đa 2 GPU session đồng thời</b>, quota tuần ≈ 30h P100.</td></tr>
-  <tr><td><b>Stack pin</b></td><td><code>torch==2.5.1+cu121</code> (P100 = sm_60; base‑image torch 2.10 không tương thích).</td></tr>
-  <tr><td><b>Bug mount đã sửa</b></td><td>Dataset mount sâu 3 cấp → recursive glob <code>**/sequences.csv</code> (trước đó rơi nhầm về Zenodo‑392 → CV vô hiệu).</td></tr>
-  <tr><td><b>Code env‑gate</b></td><td>Trọng số loss (<code>R2_W_CORAL/CE/FOCAL</code>), rebalance (<code>R2_BALANCE</code>), gold‑holdout (<code>R2_GOLD_HOLDOUT</code>); <code>evaluate</code> chỉ blend head được train (ablation hợp lệ); hook <code>sample_weight=</code> cho cleanlab.</td></tr>
-  <tr><td><b>⚠ Lưu ý</b></td><td><b>Không commit</b> <code>kaggle/**/out/best_model.pt</code> (~595 MB/file).</td></tr>
-</table>
+/* ---------- CHART 4: voice backbone ---------- */
+const D4 = [
+  {lab:'WavLM‑Large',  f1:0.609, std:0.019, hi:true},
+  {lab:'emotion2vec',  f1:0.537, std:0.007, hi:false},
+].map(d=>({...d,beh:null,qwk:null}));
+drawH('c4', D4, 0.70, {rowH:44, labelW:150, color:'var(--p-gold)'});
 
-<!-- E -->
-<h2>Phần E — Trạng thái &amp; việc tiếp theo</h2>
-<table>
-  <tr><th class="c">#</th><th>Việc</th><th class="c">Stream</th><th>Vì sao</th></tr>
-  <tr><td class="c"><span class="tag t-bad">🔴 1</span></td><td>Đo <b>Cohen's κ</b> nhãn‑LLM ↔ gold trên tập overlap</td><td class="c">Text</td><td>Mở khoá đóng góp #3; latency ngoài tầm</td></tr>
-  <tr><td class="c"><span class="tag t-bad">🔴 2</span></td><td><b>Ký EULA DAIC‑WOZ</b> + xin <b>MSP‑Podcast / SMHD</b> (định fallback)</td><td class="c">Voice</td><td>Latency xin quyền 1–4 tuần; chặn affect/crisis head</td></tr>
-  <tr><td class="c"><span class="tag t-warn">🟡 3</span></td><td>Chạy <b>CORAL‑only ablation</b> + <b>cleanlab diagnostic</b></td><td class="c">Text</td><td>Hoàn thiện bảng ablation + đo nhiễu nhãn Behavior</td></tr>
-  <tr><td class="c"><span class="tag t-warn">🟡 4</span></td><td>Chạy <b>MTL‑heads (M3–M5)</b> lấy 10‑fold</td><td class="c">Voice</td><td>Trong tầm kiểm soát; chạy song song khi chờ data</td></tr>
-</table>
-<p class="note"><b>Rủi ro then chốt:</b> cả 2 việc tới‑hạn là <b>thu thập dữ liệu/nhãn</b>, không phải code → phải khởi động trước vì latency ngoài tầm kiểm soát.</p>
-
-<footer>
-  <b>Nguồn:</b> pebble-finetuning-strategy-v3.md · progress.md · docs/phases/ · docs/dataset-acquisition-plan.md · docs/reports/{PROJECT-WORK-REPORT, r2-ab-results, r2-finetuning-methods} · docs/tasks/{r2-beat-paper-dual-report, r2-finetuning-methods-for-ieee, emotional-tone-papers, SESSION-HANDOFF-2026-06-26} · docs/papers/finetuning-message/PAPER-PLAN-text-ordinal-suicide.md · docs/papers/voice/PAPER-PLAN-voice-crisis-affect.md
-</footer>
-
-</div>
+/* ---------- table views ---------- */
+function table(id, rows, head){
+  let h='<table><thead><tr>'+head.map((c,i)=>`<th class="${i?'n':''}">${c}</th>`).join('')+'</tr></thead><tbody>';
+  h+=rows.map(r=>'<tr>'+r.map((c,i)=>`<td class="${i?'n':''}">${c}</td>`).join('')+'</tr>').join('');
+  document.getElementById(id).innerHTML=h+'</tbody></table>';
+}
+table('t1',
+  D1.map(d=>[`${d.x}. ${d.lab.replace(/\n/g,' ')}`, f3(d.f1), d.std?'±'+f3(d.std):'—', d.paper?'Paper R2 — benchmark gốc':PROTO[d.p].name]),
+  ['Vòng','Macro‑F1','std','Giao thức']);
+table('t2',
+  D2.map(d=>[d.lab, f3(d.f1), d.std?'±'+f3(d.std):'—', d.beh!=null?f3(d.beh):'—', d.qwk!=null?f3(d.qwk):'—']),
+  ['Cấu hình','Macro‑F1','std','Behavior‑F1','QWK']);
+table('t3',
+  D3.map(d=>[d.lab, f3(d.f1)]),
+  ['Phương pháp','Behavior‑F1']);
+</script>
 </body>
 </html>
-</content>

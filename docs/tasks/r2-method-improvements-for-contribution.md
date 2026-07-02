@@ -95,7 +95,7 @@ Drop-in đổi target CE thành `softmax(−|rank−k|/τ)` (Diaz&Marathe CVPR'1
 | gce-only 0.399 / 0.229 | `phatneurondai/r2-gce-only@1` | `r2-gce-only/out/` |
 | ordinal-CL 35.8% | `phatneurondai/r2-tier1-cleanlab-diagnostic@1` | `r2-tier1-cleanlab/out/` |
 | label-shift Beh→0.41 | local (no kernel) | `r2-label-shift/posthoc_label_shift.py` |
-| baseline roberta-CE / bilstm-MTL | `fabiocarava/r2-baseline-{roberta,bilstm}@1` | 🔄 running |
+| baseline roberta-CE **0.3456 ±0.0256** / bilstm-MTL **0.3783 ±0.0139** (gold) | `fabiocarava/r2-baseline-{roberta,bilstm}@1` | ✅ xong 2026-06-28 · log pulled 2026-07-02 → `r2-baseline-{roberta,bilstm}/out/` |
 
 ## Research Findings
 <!-- task-researcher output blocks (condensed; agentId để continue nếu cần) -->

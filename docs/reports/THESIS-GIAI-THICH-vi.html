@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thesis Pebble‑LLM — Giải thích từ đầu</title>
+<style>
+  :root{
+    --plane:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --ring:rgba(11,11,11,.10);
+    --p-gold:#2a78d6; --p-within:#eb6834; --p-goldcv:#4a3aa7; --p-llm:#e34948;
+    --good:#0ca30c; --good-ink:#006300; --warn:#b26a00;
+    --font: system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --plane:#0d0d0d; --surface:#1a1a19;
+      --ink:#fff; --ink2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --ring:rgba(255,255,255,.10);
+      --p-gold:#3987e5; --p-within:#d95926; --p-goldcv:#9085e9; --p-llm:#e66767;
+      --good:#0ca30c; --good-ink:#0ca30c; --warn:#fab219;
+    }
+  }
+  *{box-sizing:border-box}
+  html{color-scheme:light dark}
+  body{margin:0;background:var(--plane);color:var(--ink);font-family:var(--font);
+       line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 80px}
+  h1{font-size:1.7rem;line-height:1.2;margin:0 0 .3em}
+  h2{font-size:1.28rem;margin:2.6em 0 .5em;padding-top:.3em;border-top:1px solid var(--grid)}
+  h2:first-of-type{border-top:none}
+  h3{font-size:1.02rem;margin:1.6em 0 .3em}
+  p{margin:.6em 0}
+  .meta{color:var(--muted);font-size:.85rem}
+  a{color:var(--p-gold)}
+  code{background:var(--surface);border:1px solid var(--ring);border-radius:4px;padding:1px 5px;font-size:.85em}
+  strong,b{color:var(--ink)}
+  .lead{color:var(--ink2);border-left:4px solid var(--p-gold);padding:2px 0 2px 14px;margin:16px 0;font-size:.96rem}
+
+  /* three-sentence cards */
+  .three{display:grid;gap:12px;margin:20px 0}
+  .three .c{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:14px 16px;position:relative;padding-left:52px}
+  .three .c .num{position:absolute;left:14px;top:14px;width:26px;height:26px;border-radius:50%;
+      background:var(--p-gold);color:#fff;font-weight:700;font-size:.85rem;display:grid;place-items:center}
+  .three .c b{display:block;margin-bottom:2px}
+
+  /* concept grid */
+  .concepts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}
+  .concept{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:14px 16px;font-size:.92rem}
+  .concept h4{margin:0 0 4px;font-size:.98rem}
+
+  /* callout */
+  .method{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px 18px;margin:14px 0;font-size:.95rem}
+
+  /* experiment cards */
+  .exp{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px 18px;margin:14px 0}
+  .exp .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .exp .eid{font-weight:700;font-size:.82rem;color:var(--p-gold);letter-spacing:.03em}
+  .exp .etitle{font-weight:650;font-size:1.02rem;flex:1;min-width:180px}
+  .chip{font-variant-numeric:tabular-nums;font-weight:650;font-size:.85rem;
+        background:color-mix(in srgb,var(--p-gold) 14%,transparent);color:var(--p-gold);
+        border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .badge{font-size:.78rem;font-weight:650;border-radius:999px;padding:2px 10px;white-space:nowrap;
+         display:inline-flex;align-items:center;gap:5px}
+  .badge.ok{color:var(--good-ink);background:color-mix(in srgb,var(--good) 15%,transparent)}
+  .badge.half{color:var(--warn);background:color-mix(in srgb,var(--warn) 18%,transparent)}
+  .exp dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.92rem}
+  .exp dt{color:var(--muted);font-weight:600;white-space:nowrap}
+  .exp dd{margin:0}
+
+  /* tables */
+  table{border-collapse:collapse;margin:14px 0;font-size:.9rem;width:100%}
+  th,td{border:1px solid var(--grid);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:var(--surface)}
+
+  /* chart */
+  .card{background:var(--surface);border:1px solid var(--ring);border-radius:14px;padding:18px 16px 10px;margin:16px 0}
+  figcaption{color:var(--ink2);font-size:.86rem;margin-bottom:6px}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .grid line{stroke:var(--grid);stroke-width:1}
+  .axis{stroke:var(--axis);stroke-width:1}
+  .tick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+  .vlabel{fill:var(--ink);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+  .xlabel{fill:var(--ink2);font-size:11px;font-weight:600}
+  .bar{cursor:pointer;transition:filter .12s}
+  .bar:hover{filter:brightness(1.08)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:2px 0 6px;font-size:.82rem;color:var(--ink2)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;flex:none}
+  #tip{position:fixed;pointer-events:none;z-index:10;opacity:0;transition:opacity .1s;
+       background:var(--ink);color:var(--surface);padding:8px 10px;border-radius:8px;
+       font-size:.8rem;max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+
+  footer{margin-top:44px;color:var(--muted);font-size:.82rem;border-top:1px solid var(--grid);padding-top:14px}
+  .quote{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px 18px;font-size:1rem;margin:18px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Thesis Pebble‑LLM — Giải thích từ đầu</h1>
+  <p class="meta">Cho người đọc lần đầu · 2026‑07‑02 · mọi con số đã kiểm chứng khớp log gốc
+    (<code>kaggle/finetuning-message/results-summary.csv</code>, <code>docs/tasks/thesis-message-review.md</code>)</p>
+  <p class="lead">Tài liệu trả lời 3 câu hỏi cho từng giai đoạn: <b>phương pháp là gì → thực nghiệm kiểm chứng điều gì → kết quả ra sao, có đạt mục đích không.</b></p>
+
+  <h2>0 · Thesis trong 3 câu</h2>
+  <div class="three">
+    <div class="c"><span class="num">1</span><b>Bài toán</b>Đọc chuỗi bài viết của một người trên mạng xã hội và xếp mức <b>nguy cơ tự sát</b> vào 1 trong 4 bậc <b>có thứ tự</b> (Indicator &lt; Ideation &lt; Behavior &lt; Attempt) — nhưng nhãn bác sĩ ("vàng") <b>cực kỳ khan hiếm</b> (chỉ 500 người dùng).</div>
+    <div class="c"><span class="num">2</span><b>Phương pháp</b>Dùng <b>LLM gán nhãn hàng loạt</b> (rẻ, nhiều, nhiễu) để train, và đề xuất <b>giao thức đánh giá trung thực (gold‑holdout)</b>: chỉ chấm trên nhãn bác sĩ giữ riêng — cộng 3 cải tiến xử lý cái giá của nhãn nhiễu.</div>
+    <div class="c"><span class="num">3</span><b>Kết quả</b>Nhãn LLM giúp thật — macro‑F1 trên nhãn bác sĩ tăng <b>0.19 → 0.42 (~×2.2)</b>; đồng thời định lượng được <i>vì sao</i> nhãn LLM chưa tốt hơn (chệch phân bố 3×, ~36% nhãn lớp hiếm nhiễu, cấu trúc ordinal phải trả giá dưới nhiễu).</div>
+  </div>
+
+  <h2>1 · Bối cảnh: từ "emotion classifier" thành "suicide risk"</h2>
+  <p><b>Xuất phát từ sản phẩm.</b> Pebble là app companion sức khoẻ tinh thần. Kiến trúc cũ dùng <b>một lời gọi Gemini</b> vừa chấm cảm xúc vừa sinh phản hồi. Kế hoạch ban đầu (Strategy v1→v3): thay bằng <b>một classifier fine‑tune riêng</b> xuất 6 chiều mỗi tin nhắn (<code>energy</code>, <code>severity</code>, <code>socialIsolation</code>, <code>receptivity</code>, <code>detectedEmotion</code>, <code>safetyFlag</code>) để Decision Engine định tuyến <i>trước</i> khi sinh phản hồi.</p>
+  <p><b>Vì sao pivot sang 2 bài báo?</b> Vì thesis cần <b>đóng góp học thuật</b> — mà "classifier 6 đầu ra cho app" không có benchmark, không gold‑standard, không publish được. Dự án <b>thu hẹp có chủ đích</b> vào 2 chiều có gold‑standard lâm sàng:</p>
+  <table>
+    <thead><tr><th>Chiều trong spec sản phẩm</th><th>Đi đâu trong thesis</th></tr></thead>
+    <tbody>
+      <tr><td><code>severity</code> + <code>safetyFlag</code></td><td>→ <b>Bài Text</b>: nâng safetyFlag nhị phân thành thang <b>ordinal 4 mức C‑SSRS</b> (thang lâm sàng chuẩn Columbia)</td></tr>
+      <tr><td><code>detectedEmotion</code> (+ affect)</td><td>→ <b>Bài Voice</b>: emotion + affect + crisis head cho giọng nói</td></tr>
+      <tr><td><code>energy</code>, <code>socialIsolation</code>, <code>receptivity</code></td><td>→ không học; thành heuristic của Decision Engine (quyết định từ v1)</td></tr>
+    </tbody>
+  </table>
+  <p>Điểm nối quan trọng: <b>câu hỏi phương pháp của thesis chính là vấn đề Pebble sẽ gặp</b> — Pebble không có nhãn người gán, nếu build classifier thật sẽ phải nhờ LLM gán nhãn. Thesis trả lời trước: <i>nhãn LLM dùng được đến đâu, chệch/nhiễu kiểu gì, đo thế nào cho khỏi tự lừa mình.</i> Cái chuyển giao về sản phẩm là <b>phương pháp + bài học về nhãn</b>, không phải checkpoint model.</p>
+
+  <h2>2 · Bốn khái niệm nền (đọc 2 phút, hiểu cả bài)</h2>
+  <div class="concepts">
+    <div class="concept"><h4>① Ordinal (có thứ tự)</h4>4 mức nguy cơ có thứ bậc — nhầm Behavior→Ideation (kề) <i>ít sai hơn</i> nhầm →Indicator (cách 2 bậc). Nên ngoài macro‑F1 còn đo <b>QWK</b> (phạt lỗi xa nặng, bậc hai) và <b>MAE</b> (độ lệch bậc trung bình).</div>
+    <div class="concept"><h4>② Nhãn vàng vs nhãn yếu</h4><b>Gold</b> = 4 bác sĩ tâm thần gán trên CSSRS‑Reddit 500 user — chuẩn nhưng quá ít. <b>Weak</b> = LLM đọc post gán nhãn — rẻ, ~10k mẫu, nhưng nhiễu và chệch.</div>
+    <div class="concept"><h4>③ Đánh giá circular (tự lừa mình)</h4>Train trên nhãn LLM rồi <i>chấm cũng trên nhãn LLM</i> — như ôn đúng bộ đề rồi thi lại chính nó. Điểm rất cao (0.67) nhưng vô nghĩa: đo "bắt chước LLM giỏi cỡ nào", không đo "đúng với bác sĩ cỡ nào".</div>
+    <div class="concept"><h4>④ Gold‑holdout (xương sống)</h4>Train <b>chỉ</b> trên nhãn LLM, chấm <b>chỉ</b> trên nhãn bác sĩ giữ riêng hoàn toàn (tách theo <i>người dùng</i>, không theo post, để không rò rỉ). Số nhỏ hơn (0.36–0.42) nhưng <b>thật</b>.</div>
+  </div>
+  <p><b>Nhân vật xuyên suốt — lớp Behavior</b> (đã có hành vi chuẩn bị/tự hại, lâm sàng quan trọng bậc nhất vì đứng ngay trước Attempt). Nó hiếm trong pool LLM (634/9680 ≈ 7%) và là lớp mọi thí nghiệm xoay quanh.</p>
+
+  <h2>3 · Phương pháp (version hiện tại)</h2>
+  <div class="method">
+    <p style="margin-top:0"><b>Mô hình:</b> tái lập kiến trúc paper "R2" (Yang et al., IEEE BigData 2025) — encoder MentalRoBERTa đọc từng post → transformer 3 lớp đọc <i>chuỗi</i> post của một người → attention‑pool → 2 đầu ra: <b>CORAL head</b> (ordinal) + <b>CE head</b> (phân loại thường), loss trộn <code>0.5·CORAL + 0.3·CE + 0.2·Focal</code>.</p>
+    <p><b>Giao thức:</b> gold‑holdout, 5‑fold, seed cố định, stack pin (mọi số kèm std + log).</p>
+    <p style="margin-bottom:0"><b>Ba cải tiến (đóng góp của ta):</b> (1) CORAL+Focal → <b>CORN+GCE</b> — loss ordinal bền nhiễu hơn; (2) <b>label‑shift correction</b> — sửa chệch phân bố LLM→gold <i>sau khi train, không train lại</i>; (3) <b>ordinal‑aware confident learning</b> — dò nhãn nhiễu có ý thức về thứ bậc.</p>
+  </div>
+
+  <h2>4 · Chuỗi thực nghiệm E1→E10</h2>
+  <p class="meta">Mỗi thí nghiệm: <b>để kiểm chứng gì → ra gì → đạt không.</b> Biểu đồ recap dưới đây tô màu theo giao thức — chỉ các cột cùng màu mới so trực tiếp được.</p>
+
+  <div class="card">
+    <div class="legend" id="legend"></div>
+    <figure><figcaption>Macro‑F1 theo từng thí nghiệm (E8 = Behavior‑F1, E9 = % nhãn nghi sai → không nằm trong biểu đồ)</figcaption>
+      <svg id="chart" viewBox="0 0 820 360" role="img" aria-label="Macro-F1 theo từng thí nghiệm"></svg>
+    </figure>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E1</span><span class="etitle">Train &amp; chấm đều trên gold (gold‑CV)</span><span class="chip">0.19</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Chỉ dùng 500 user nhãn bác sĩ thì học được đến đâu? (đo "trần" của hướng không‑augment)</dd>
+      <dt>Kết quả</dt><dd>0.19 — quá thấp, đúng lo ngại: dữ liệu gold không đủ để học.</dd>
+      <dt>Đạt?</dt><dd>Đạt mục đích <i>chẩn đoán</i>: xác lập lý do tồn tại của cả thesis (phải augment bằng nhãn rẻ).</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E2</span><span class="etitle">Train &amp; chấm đều trên nhãn LLM (within‑LLM)</span><span class="chip">0.67</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Minh hoạ bẫy circular — đo kiểu "tự chấm bài mình" thì số đẹp cỡ nào?</dd>
+      <dt>Kết quả</dt><dd>0.67 — cao gấp rưỡi số thật. <b>Không bao giờ</b> dùng làm kết quả; tồn tại để chỉ ra vấn đề.</dd>
+      <dt>Đạt?</dt><dd>"Bằng chứng buộc tội" cho luận điểm trung tâm: đánh giá within‑LLM tự lừa mình.</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E3</span><span class="etitle">Gold‑holdout đầu tiên: train LLM, chấm gold</span><span class="chip">0.3569</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Câu hỏi trung tâm — <i>nhãn LLM có giúp thật không, khi đo trung thực?</i></dd>
+      <dt>Kết quả</dt><dd>0.3569 — so với 0.19 của E1 là <b>gần gấp đôi</b>. Nhãn LLM giúp thật.</dd>
+      <dt>Đạt?</dt><dd>Trả lời trực tiếp câu hỏi nghiên cứu. Đồng thời lộ vấn đề mới: lớp Behavior gần sụp (F1 ~0.18).</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E4</span><span class="etitle">Thêm rebalance lớp hiếm (Run B)</span><span class="chip">0.3849 ±0.007</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Behavior yếu có phải vì <i>sampling</i> không? — thử cân bằng lại tần suất lấy mẫu.</dd>
+      <dt>Kết quả</dt><dd>Cả 3 metric toàn cục đều nhích (macro 0.357→0.385, QWK 0.378→0.398, MAE giảm) nhưng <b>Behavior vẫn 0.183</b>.</dd>
+      <dt>Đạt?</dt><dd>Đạt mục đích chẩn đoán dù "thất bại" về Behavior: <b>loại trừ giả thuyết sampling</b> → nút thắt ở <i>chất lượng nhãn</i> (E9 xác nhận độc lập).</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E5</span><span class="etitle">Within‑distribution CV trên đủ 10,072 mẫu (Run A)</span><span class="chip">0.6530 ±0.005</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Phần tái lập kiến trúc có đúng không — trong <i>cùng loại giao thức</i> paper dùng (within‑distribution), số ta đứng đâu so với 0.5098 của paper?</dd>
+      <dt>Kết quả</dt><dd>0.6530 — cao hơn số paper. <b>Caveat gắn liền:</b> cùng <i>giao thức</i> nhưng trên tập 10k tự làm giàu bằng nhãn LLM của ta, không phải benchmark gated gốc, và đo trên nhãn LLM — đúng loại số E2 dạy phải nghi ngờ. Không claim SOTA.</dd>
+      <dt>Đạt?</dt><dd>Sanity check: phần tái lập không "làm hỏng" kiến trúc, và cho một điểm so sánh tham khảo. (2 lần chạy đầu vô hiệu vì bug mount dataset — đã sửa, chạy lại sạch.)</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E6</span><span class="etitle">Ablation "bỏ hết ordinal, chỉ CE thuần" (flat‑CE)</span><span class="chip">0.4215 ±0.024 · Beh 0.285</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Bộ loss ordinal cầu kỳ (CORAL+Focal) đang <i>đóng góp</i> hay <i>phá</i>? — tháo ra xem.</dd>
+      <dt>Kết quả</dt><dd><b>Bất ngờ lớn nhất thesis:</b> bỏ ordinal lại TỐT HƠN (0.4215 vs 0.3849), Behavior hồi 0.183→0.285. Paired per‑fold: thắng <b>5/5 fold, p&lt;.05</b> — kết quả vững nhất chuỗi.</dd>
+      <dt>Đạt?</dt><dd>Đạt hơn mong đợi — <b>negative finding trung thực</b>: cấu trúc ordinal trả giá khi train trên nhãn nhiễu/chệch. Đặt câu hỏi cho E7: <i>vì sao?</i></dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E7</span><span class="etitle">CORN+GCE + bảng ablation 2×2</span><span class="chip">0.4022 ±0.013 · Beh 0.260</span><span class="badge half">⚠ Đạt một nửa</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Giải thích <i>cơ chế</i> nghịch lý E6: (a) CORAL dùng chung 1 vector trọng số cho mọi ngưỡng → 1 nhãn Behavior nhiễu làm bẩn <i>mọi</i> ranh giới; (b) Focal khuếch đại mẫu "khó" — thường chính là mẫu nhiễu. Nếu đúng, CORAL→CORN (mỗi ngưỡng trọng số riêng) + Focal→GCE (giảm trọng số mẫu đáng ngờ) phải phục hồi. Chạy đủ 2×2 để tách vai trò.</dd>
+      <dt>Kết quả</dt><dd>Đúng hướng — CORN+GCE 0.402/Beh 0.260 &gt; dual cũ (0.385/0.183); đổi head kéo nhiều hơn đổi loss. <b>Hai chữ "nhưng":</b> (i) vẫn thua flat‑CE (0.422/0.285); (ii) <b>QWK giảm</b> (dual 0.398 &gt; flat‑CE 0.388 &gt; CORN+GCE 0.361) → đổi <i>nhất quán xếp hạng</i> lấy <i>cứu lớp hiếm</i>. Thống kê: hơn dual chỉ mức xu hướng (4/5 fold, p&lt;.10).</dd>
+      <dt>Đạt?</dt><dd><b>Đạt một nửa.</b> Cơ chế đúng hướng (đóng góp 1 có cơ sở), nhưng phải viết dạng <b>trade‑off</b> chứ không phải "ordinal head tốt nhất mọi mặt"; cần thêm seed để khẳng định thống kê.</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E8</span><span class="etitle">Label‑shift correction (không train lại, 0 GPU)</span><span class="chip">Beh 0.357 → 0.410</span><span class="badge half">⚠ Đạt một nửa</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Gap LLM→gold có phải một phần là <b>chệch phân bố có hệ thống</b>? Đo trực tiếp: Behavior 7.3% pool LLM nhưng 19.7% gold → LLM <b>under‑label 3.0×</b>. Nếu là shift thật, hiệu chỉnh xác suất hậu kỳ (Logit Adjustment) phải cải thiện mà <b>không train lại</b>.</dd>
+      <dt>Kết quả</dt><dd>Đúng — Behavior‑F1 +0.053 (0.357→0.410), trần oracle 0.441. Chi phí: ~80 dòng Python chạy CPU.</dd>
+      <dt>Đạt?</dt><dd><b>Đạt về ý tưởng, mỏng về bằng chứng:</b> mới đo trên <b>1 checkpoint</b> (fold tốt nhất), và τ đang chọn trên chính tập gold báo cáo (lỗ hổng tune‑on‑test phải vá). Cần đủ 5 fold trước khi vào paper.</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E9</span><span class="etitle">Ordinal‑aware confident learning (chẩn đoán nhãn nhiễu)</span><span class="chip">35.8% Behavior nghi sai</span><span class="badge half">⚠ Đạt một nửa</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Khẳng định E4 ("nút thắt là chất lượng nhãn") bằng công cụ độc lập: cleanlab dò nhãn nghi sai từ xác suất out‑of‑fold. Cải tiến: cleanlab gốc coi nhãn <i>nominal</i> → thêm trọng số khoảng‑cách‑hạng <code>|ỹ−ŷ|²</code> để "cắt lỗi xa, giữ lỗi kề" (lỗi kề Behavior↔Ideation thường borderline hợp lệ).</dd>
+      <dt>Kết quả</dt><dd>227/634 = <b>35.8%</b> nhãn Behavior bị flag (toàn cục chỉ 16.2%) — xác nhận nút thắt đúng là nhãn. Biến thể ordinal: bắt 100% lỗi‑xa, giữ 78% lỗi‑kề (bản nominal flag bừa 45% lỗi‑kề).</dd>
+      <dt>Đạt?</dt><dd><b>Đạt phần chẩn đoán, thiếu phần hiệu quả:</b> chưa chạy <b>Arm2</b> — retrain trên pool đã làm sạch — nên chưa chứng minh làm sạch cải thiện model (~3h GPU; <code>cl_issues.npz</code> đã có local).</dd>
+    </dl>
+  </div>
+
+  <div class="exp">
+    <div class="head"><span class="eid">E10</span><span class="etitle">Hai baseline chuẩn IEEE</span><span class="chip">RoBERTa 0.3456 · BiLSTM‑MTL 0.3783</span><span class="badge ok">✅ Đạt</span></div>
+    <dl>
+      <dt>Kiểm chứng</dt><dd>Mọi kết quả trên có hơn các mốc so sánh đơn giản không (cột bắt buộc của reviewer)?</dd>
+      <dt>Kết quả</dt><dd>Mọi cấu hình của ta vượt cả 2 baseline (flat‑CE thắng BiLSTM 5/5 fold, p&lt;.05). Phát hiện thú vị: <b>dual‑head tái lập từ paper không phân biệt được với BiLSTM baseline trên gold</b> (0.385 vs 0.378, không ý nghĩa thống kê) — củng cố: dưới shift, giá trị nằm ở dữ liệu weak‑sup + loss đơn giản, không phải kiến trúc cầu kỳ.</dd>
+      <dt>Đạt?</dt><dd>Đạt.</dd>
+    </dl>
+  </div>
+
+  <h2>5 · Trả lời thẳng: mục đích có đạt không?</h2>
+  <p><b>Câu hỏi nghiên cứu trung tâm</b> — <i>"nhãn LLM có augment được tập gold khan hiếm cho phân loại ordinal nguy cơ tự sát không, đo trung thực?"</i> — <b>ĐÃ được trả lời: CÓ</b>, với 0.19 → 0.42 (~×2.2) dưới giao thức không tự lừa. Kèm theo, thesis định lượng <i>ba lý do</i> khiến nhãn LLM chưa tốt hơn — mỗi lý do đi cùng một cải tiến đo được:</p>
+  <table>
+    <thead><tr><th>Lý do gap LLM→gold</th><th>Bằng chứng</th><th>Cải tiến tương ứng</th><th>Trạng thái</th></tr></thead>
+    <tbody>
+      <tr><td>Chệch phân bố có hệ thống</td><td>Behavior under‑label <b>3.0×</b></td><td>Label‑shift correction (+0.05 Behavior, 0 train lại)</td><td>⚠ cần đủ 5 fold + vá chọn τ</td></tr>
+      <tr><td>Nhãn lớp hiếm nhiễu</td><td><b>35.8%</b> Behavior bị flag</td><td>Ordinal‑CL "cắt xa giữ kề"</td><td>⚠ cần Arm2 đo hiệu quả cuối</td></tr>
+      <tr><td>Cấu trúc ordinal khuếch đại nhiễu</td><td>flat‑CE &gt; mọi ordinal head (p&lt;.05)</td><td>CORN+GCE thu hẹp gap, cứu Behavior</td><td>⚠ viết lại thành trade‑off (QWK giảm)</td></tr>
+    </tbody>
+  </table>
+  <p><b>Những gì CHƯA đạt (trung thực):</b></p>
+  <ol>
+    <li>🔴 <b>Cohen's κ LLM↔gold chưa đo</b> — mảnh định lượng trực tiếp "nhãn LLM tệ đến đâu"; là câu hỏi đầu tiên reviewer sẽ hỏi.</li>
+    <li>Ba cải tiến mới ở mức "bằng chứng ban đầu": E7 cần reframe + seed, E8 cần 5 fold, E9 cần Arm2 (chi tiết: <code>docs/tasks/thesis-message-review.md</code>).</li>
+    <li>Behavior sau mọi nỗ lực vẫn ≤0.29–0.41 tùy phương pháp — đủ để <i>kể chuyện phương pháp</i>, chưa đủ để <i>dùng lâm sàng</i>. Thesis không giấu điều này.</li>
+  </ol>
+  <div class="quote"><b>Một câu cho người ngoài ngành:</b> thesis không cố đạt điểm cao nhất — nó chứng minh <i>cách đo trung thực</i> lợi ích của nhãn máy‑gán trong bài toán lâm sàng nhạy cảm, chỉ ra đúng chỗ nhãn máy hỏng, và đưa 3 công cụ vá từng chỗ hỏng đó với chi phí thấp.</div>
+
+  <h2>6 · Nhánh Voice (tóm tắt)</h2>
+  <p>Cùng triết lý "đo cho trung thực" áp vào giọng nói: <b>V1</b> tái lập emotion2vec (sanity) → <b>V2</b> so backbone công bằng (frozen probe, 3 seed): WavLM‑Large thắng emotion2vec <b>0.609 vs 0.537, 3/3 seed</b> — một <i>negative result sạch</i> cho giả định "emotion2vec là chính" → <b>V3</b> crisis head với <b>sàn recall ≥ 0.90</b> (ưu tiên không bỏ sót): precision đạt <b>0.617</b> → <b>V4</b> MTL 3 head (emotion + affect + crisis): kernel đã build, ⏳ chờ chạy; cần quyền MSP‑Podcast cho nhãn affect thật. <span class="meta">(chi tiết ở <code>docs/papers/voice/</code>)</span></p>
+
+  <h2>7 · Đọc tiếp ở đâu</h2>
+  <table>
+    <thead><tr><th>Cần gì</th><th>File</th></tr></thead>
+    <tbody>
+      <tr><td>Toàn cảnh + bảng số đầy đủ</td><td><code>docs/reports/THESIS-OVERVIEW-vi.md</code></td></tr>
+      <tr><td>Số máy‑đọc‑được, từng fold</td><td><code>kaggle/finetuning-message/results-summary.csv</code></td></tr>
+      <tr><td>Kiểm chứng provenance + paired stats</td><td><code>docs/tasks/thesis-message-review.md</code></td></tr>
+      <tr><td>3 cải tiến: thiết kế + research grounding</td><td><code>docs/tasks/r2-method-improvements-for-contribution.md</code></td></tr>
+      <tr><td>Kế hoạch &amp; draft bài IEEE</td><td><code>docs/papers/finetuning-message/PAPER-{PLAN,DRAFT}-text-ordinal-suicide.md</code></td></tr>
+    </tbody>
+  </table>
+
+  <footer>Dựng từ <code>docs/reports/THESIS-GIAI-THICH-vi.md</code> · palette: dataviz skill (validated light+dark).</footer>
+</div>
+
+<div id="tip"></div>
+
+<script>
+"use strict";
+const SVGNS='http://www.w3.org/2000/svg';
+const tip=document.getElementById('tip');
+function el(n,a,t){const e=document.createElementNS(SVGNS,n);for(const k in a)e.setAttribute(k,a[k]);if(t!=null)e.textContent=t;return e;}
+function showTip(html,e){tip.innerHTML=html;tip.style.opacity=1;let x=e.clientX+14,y=e.clientY+14;
+  if(x+270>innerWidth)x=e.clientX-270;if(y+120>innerHeight)y=e.clientY-120;tip.style.left=x+'px';tip.style.top=y+'px';}
+function hideTip(){tip.style.opacity=0;}
+const f3=v=>v.toFixed(3);
+
+const PROTO={
+  goldcv:{c:'var(--p-goldcv)',name:'Gold‑CV (train+eval gold)'},
+  llm:{c:'var(--p-llm)',name:'Within‑LLM (circular)'},
+  gold:{c:'var(--p-gold)',name:'Cross‑to‑gold (trung thực)'},
+  within:{c:'var(--p-within)',name:'Within‑distribution (inflated)'},
+};
+const D=[
+  {x:'E1',f1:0.19,  std:null, p:'goldcv',note:'Train+eval gold — đo trần không‑augment'},
+  {x:'E2',f1:0.67,  std:null, p:'llm',   note:'Within‑LLM CIRCULAR — không dùng làm kết quả'},
+  {x:'E3',f1:0.3569,std:null, p:'gold',  note:'Gold‑holdout đầu tiên — nhãn LLM giúp thật'},
+  {x:'E4',f1:0.3849,std:0.007,p:'gold',  note:'+ rebalance — loại trừ giả thuyết sampling'},
+  {x:'E5',f1:0.6530,std:0.005,p:'within',note:'Within‑dist trên nhãn LLM — sanity, không SOTA'},
+  {x:'E6',f1:0.4215,std:0.024,p:'gold',  note:'flat‑CE — tốt nhất trên gold (5/5 fold, p<.05)'},
+  {x:'E7',f1:0.4022,std:0.013,p:'gold',  note:'CORN+GCE — trade‑off cứu Behavior, QWK giảm'},
+  {x:'E10a',f1:0.3456,std:0.026,p:'gold',note:'baseline plain‑RoBERTa‑CE'},
+  {x:'E10b',f1:0.3783,std:0.014,p:'gold',note:'baseline BiLSTM‑MTL'},
+];
+
+(function draw(){
+  const svg=document.getElementById('chart');
+  const W=820,H=360,L=42,R=14,T=16,B=44,ymax=0.70;
+  const pw=W-L-R,ph=H-T-B,y=v=>T+ph-(v/ymax)*ph;
+  const g=el('g',{class:'grid'});
+  for(let i=0;i<=5;i++){const v=ymax*i/5;
+    g.appendChild(el('line',{x1:L,y1:y(v),x2:W-R,y2:y(v)}));
+    svg.appendChild(el('text',{x:L-8,y:y(v)+4,'text-anchor':'end',class:'tick'},v.toFixed(2)));}
+  svg.appendChild(g);
+  svg.appendChild(el('line',{class:'axis',x1:L,y1:T+ph,x2:W-R,y2:T+ph}));
+  const n=D.length,step=pw/n,bw=Math.min(52,step*0.62);
+  D.forEach((d,i)=>{
+    const cx=L+step*i+step/2,bx=cx-bw/2,by=y(d.f1),bh=T+ph-by;
+    const bar=el('rect',{class:'bar',x:bx,y:by,width:bw,height:Math.max(bh,1),rx:4,fill:PROTO[d.p].c});
+    const info=`<b>${d.x}</b> — Macro‑F1 = ${f3(d.f1)}${d.std?' ±'+f3(d.std):''}<br><span style="opacity:.8">${PROTO[d.p].name}</span><br><span style="opacity:.7">${d.note}</span>`;
+    bar.addEventListener('mousemove',e=>showTip(info,e));
+    bar.addEventListener('mouseleave',hideTip);
+    svg.appendChild(bar);
+    if(d.std){const yt=y(d.f1+d.std),yb=y(d.f1-d.std);
+      svg.appendChild(el('line',{stroke:'var(--ink2)','stroke-width':1.5,opacity:.7,x1:cx,y1:yt,x2:cx,y2:yb}));
+      svg.appendChild(el('line',{stroke:'var(--ink2)','stroke-width':1.5,opacity:.7,x1:cx-5,y1:yt,x2:cx+5,y2:yt}));
+      svg.appendChild(el('line',{stroke:'var(--ink2)','stroke-width':1.5,opacity:.7,x1:cx-5,y1:yb,x2:cx+5,y2:yb}));}
+    svg.appendChild(el('text',{x:cx,y:by-7,'text-anchor':'middle',class:'vlabel'},f3(d.f1)));
+    svg.appendChild(el('text',{x:cx,y:T+ph+16,'text-anchor':'middle',class:'xlabel'},d.x));
+  });
+})();
+
+const lg=document.getElementById('legend');
+['gold','within','llm','goldcv'].forEach(k=>{
+  const s=document.createElement('span');
+  s.innerHTML=`<span class="sw" style="background:${PROTO[k].c}"></span>${PROTO[k].name}`;
+  lg.appendChild(s);
+});
+</script>
+</body>
+</html>

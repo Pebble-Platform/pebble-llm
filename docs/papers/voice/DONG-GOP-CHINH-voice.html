@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ba đóng góp chính — BÀI 2 (Voice)</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161922; --ink:#e6e8ee; --muted:#9aa3b2;
+    --line:#262b38; --accent:#6ea8fe; --green:#46c98b; --amber:#e0a73a;
+    --chip:#1d2230;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 -apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
+  }
+  .wrap{max-width:980px; margin:0 auto; padding:40px 24px 80px}
+  h1{font-size:30px; line-height:1.25; margin:0 0 8px; letter-spacing:-.3px}
+  h2{font-size:23px; margin:48px 0 14px; padding-top:18px; border-top:1px solid var(--line)}
+  h3{font-size:17px; margin:22px 0 6px; color:var(--accent)}
+  h2 .num{color:var(--accent); font-weight:800}
+  p{margin:10px 0}
+  a{color:var(--accent)}
+  code{background:var(--chip); padding:2px 6px; border-radius:5px; font-size:13.5px;
+    font-family:"SF Mono",Consolas,Monaco,monospace; color:#d6deef}
+  .lead{background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:10px; padding:16px 20px; color:var(--muted); font-size:14.5px; margin:18px 0 8px}
+  .lead strong{color:var(--ink)}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:6px 24px 20px; margin:18px 0}
+  ul{margin:8px 0; padding-left:22px}
+  li{margin:5px 0}
+  table{border-collapse:collapse; width:100%; margin:16px 0; font-size:14px}
+  th,td{border:1px solid var(--line); padding:9px 11px; text-align:left; vertical-align:top}
+  th{background:#1b2030; color:#cdd6e6; font-weight:600}
+  tr:nth-child(even) td{background:#12151d}
+  .ok{color:var(--green); font-weight:600}
+  .warn{color:var(--amber); font-weight:600}
+  .pill{display:inline-block; font-size:12px; padding:3px 10px; border-radius:999px;
+    border:1px solid var(--line); background:var(--chip); margin-left:6px; vertical-align:middle}
+  .pill.ok{color:var(--green); border-color:#1f4a37}
+  .pill.warn{color:var(--amber); border-color:#4a3a1a}
+  blockquote{margin:14px 0; padding:12px 18px; background:#12151d; border-left:3px solid var(--green);
+    border-radius:8px; color:#c5cdda; font-style:italic}
+  strong{color:#f1f3f8}
+  .sub{color:var(--muted); font-size:13.5px; margin-top:2px}
+  .grid-label{font-weight:700; color:var(--ink)}
+  hr{border:none; border-top:1px solid var(--line); margin:30px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Ba đóng góp chính — BÀI 2 (Voice)</h1>
+<p class="sub"><em>Recall-Floored Heterogeneous Heads for Crisis-Sensitive Speech Affect</em></p>
+
+<div class="lead">
+  <strong>Mục đích.</strong> Giải thích chi tiết 3 đóng góp khoa học của luồng Voice, mỗi đóng góp theo cùng
+  một khung: <strong>phần cũ là gì → kết quả cũ → cải tiến là gì → kết quả mới → đóng góp gì</strong>.<br>
+  <strong>Nguồn số liệu:</strong> <code>results_voice_backbone.json</code> (đã chạy thật),
+  <code>docs/voice-method-selection.md</code>, <code>docs/tasks/voice-mtl-heads.md</code>,
+  code kernel <code>c4_probe.py</code> / <code>c4_heads.py</code>.<br>
+  <strong>Trạng thái tổng:</strong> Đóng góp 1 &amp; 2 <span class="ok">đã có số thật</span> (Kaggle P100, 3 seed).
+  Đóng góp 3 <span class="warn">đã build kernel, chưa chạy Kaggle</span> (nhãn affect/crisis hiện là proxy →
+  cần MSP-Podcast cho số meaningful).
+</div>
+
+<h2>Bối cảnh chung — Pebble "bên text" để biết "cái cũ"</h2>
+<div class="card">
+<p>Hệ thống gốc của Pebble là <strong>text-only</strong> (NeoBERT) cho phân loại nguy cơ tự tử dạng
+<strong>ordinal</strong>. Đặc trưng nhận diện (signature novelty) là <strong>heterogeneous heads dưới một
+sàn recall an toàn cứng</strong> (emotion softmax + regression liên tục + safety BCE ở recall ≥ 0.95).</p>
+<p>Toàn bộ luồng Voice là việc <strong>mang đặc trưng đó sang modality giọng nói</strong> — và trả lời các
+câu hỏi mở mà chính bản survey voice nêu ra. Mỗi đóng góp dưới đây = một bước
+<strong>"từ cái đã có (text / giả định) → cái mới (voice / đo thật)"</strong>.</p>
+</div>
+
+<!-- ĐÓNG GÓP 1 -->
+<h2><span class="num">1.</span> Paired-delta backbone selection: emotion2vec vs WavLM-Large
+  <span class="pill ok">đã chạy thật</span></h2>
+<div class="card">
+  <h3>Phần cũ là gì?</h3>
+  <ul>
+    <li><strong>Giả định trong survey:</strong> chọn <strong>emotion2vec làm backbone chính</strong> (đặc trưng
+      cảm xúc mạnh nhất / tham số, theo bảng linear-probe của chính paper), WavLM-Large chỉ là
+      <strong>baseline/fallback</strong> (MIT-licensed).</li>
+    <li>Mới là <strong>một lựa chọn chưa kiểm chứng</strong> — survey tự thừa nhận: <em>"backbone comparison
+      này tự nó là một chương luận văn sạch, không phải giả định để bảo vệ."</em></li>
+    <li>Bên text đã có <strong>phương pháp paired-delta 3-seed</strong> (seeds <code>[13, 42, 1337]</code>),
+      nhưng <strong>chưa từng áp dụng cho voice</strong>.</li>
+  </ul>
+  <h3>Kết quả cũ?</h3>
+  <p><strong>Không có.</strong> Chỉ là kỳ vọng "mô hình chuyên cảm xúc nên thắng mô hình tổng quát".</p>
+  <h3>Cải tiến là gì?</h3>
+  <ul>
+    <li><strong>Frozen probe:</strong> mỗi encoder đóng băng, chạy <strong>một lần</strong> để cache embedding
+      (WavLM-Large mean-pool → 1024-d; emotion2vec utterance → 768-d).</li>
+    <li>Chỉ train các <strong>MLP head nhỏ</strong> bên trên (vài giây / P100) — rẻ có chủ đích.</li>
+    <li><strong>3 seed</strong>, split <strong>speaker-independent</strong> (actor 1–20 train, 21–24 val) trên
+      <strong>RAVDESS</strong>. Verdict = <strong>paired delta theo từng seed</strong> (e2v − WavLM).</li>
+    <li>Arm emotion2vec được <strong>guard</strong>: <code>funasr</code> lỗi thì bỏ qua, WavLM vẫn đủ kết quả.</li>
+  </ul>
+  <h3>Kết quả mới? <span class="sub">(Kaggle P100, 3 seed)</span></h3>
+  <table>
+    <tr><th>Backbone</th><th>Emotion macro-F1</th><th>Distress recall@0.5</th><th>Precision @ recall-floor 0.90</th></tr>
+    <tr><td><strong>WavLM-Large (winner)</strong></td><td><strong>0.609 ± 0.019</strong></td><td>1.00 ± 0.00</td><td><strong>0.617 ± 0.003</strong> (thr 0.69)</td></tr>
+    <tr><td>emotion2vec</td><td>0.537 ± 0.007</td><td>1.00 ± 0.00</td><td>0.597 ± 0.012 (thr 0.72)</td></tr>
+    <tr><td><strong>paired delta</strong> (e2v − WavLM)</td><td><span class="ok">−0.071 ± 0.017 — 3/3 seed &lt; 0</span></td><td>—</td><td>−0.020 ± 0.015 (2/3 &lt; 0)</td></tr>
+  </table>
+  <ul>
+    <li><strong>WavLM-Large thắng</strong> ~7 điểm macro-F1, <strong>âm trên <em>mọi</em> seed</strong> → ổn định.</li>
+    <li><strong>Lý do:</strong> WavLM lớn hơn (1024 vs 768-d) + pretrain <strong>~360× audio</strong>;
+      emotion2vec chỉ validate trên emotion categorical; RAVDESS acted speech ưu ái encoder tổng quát.</li>
+  </ul>
+  <h3>Đóng góp gì?</h3>
+  <ol>
+    <li><strong>Trả lời dứt điểm câu hỏi mở của survey</strong> → trên protocol này, mô hình chuyên cảm xúc
+      <strong>KHÔNG</strong> thắng. Một negative result sạch, citable.</li>
+    <li><strong>Khuyến nghị backbone = WavLM-Large</strong> cho toàn luồng Voice (kèm MIT license).</li>
+    <li><strong>Chuyển phương pháp paired-delta 3-seed từ text sang voice</strong> → reproducible-by-construction.</li>
+  </ol>
+</div>
+
+<!-- ĐÓNG GÓP 2 -->
+<h2><span class="num">2.</span> Chuyển "hard crisis-recall-floor head" từ text sang giọng nói
+  <span class="pill ok">đã chạy thật</span></h2>
+<div class="card">
+  <h3>Phần cũ là gì?</h3>
+  <ul>
+    <li>Bên <strong>text</strong>: <strong>safety head = BCE dưới sàn recall cứng</strong> (recall ≥ 0.95) —
+      bỏ sót (false negative) là chi phí không chấp nhận được, nên hệ thống <em>bị ràng buộc cứng</em>
+      phải bắt tối thiểu X% ca dương rồi mới tối ưu precision.</li>
+    <li>Survey chỉ rõ đây là <strong>khoảng trống cho speech</strong>: <em>"không hệ thống công bố nào làm
+      heterogeneous … speech-driven affect MTL dưới một hard crisis-recall floor."</em></li>
+  </ul>
+  <h3>Kết quả cũ?</h3>
+  <p>Tồn tại bên <strong>text</strong> nhưng <strong>chưa có bản voice</strong> — recall-floor chưa từng
+    vận hành trên đặc trưng âm học.</p>
+  <h3>Cải tiến là gì?</h3>
+  <ul>
+    <li>Gắn <strong>distress/safety head</strong> (pos-weighted BCE, <code>SAFETY_POS_WEIGHT = 3.0</code>) lên
+      frozen speech encoder.</li>
+    <li>RAVDESS: <strong>distress = nhãn nhị phân suy ra</strong> từ emotion
+      <code>{sad, angry, fearful, disgust} = dương</code>.</li>
+    <li><strong>Tune ngưỡng τ trên val</strong> = ngưỡng <em>cao nhất</em> mà vẫn giữ <code>recall ≥ 0.90</code>,
+      rồi <strong>report precision@floor trên test</strong> — đúng safety framing
+      (<code>threshold_at_recall()</code> / <code>threshold_for_recall()</code>).</li>
+  </ul>
+  <h3>Kết quả mới? <span class="sub">(đã chạy thật)</span></h3>
+  <ul>
+    <li><strong>precision @ recall≥0.90 = 0.617 ± 0.003</strong> (WavLM, thr 0.69) — giữ ~62% precision
+      <em>trong khi bị buộc cứng</em> đạt 90% recall.</li>
+    <li><strong>Verify end-to-end</strong> qua FastAPI verifier (clip held-out RAVDESS):
+      fearful → <strong>0.84</strong> (flagged), angry → 0.76 (flagged), sad → 0.91 (flagged),
+      neutral → 0.68 (không flagged) → <strong>tách đúng</strong> high-distress khỏi neutral.</li>
+    <li>Báo cáo <strong>cả đường precision–recall</strong>, không chỉ một điểm 0.90.</li>
+  </ul>
+  <h3>Đóng góp gì?</h3>
+  <ol>
+    <li><strong>Lần đầu cắm novelty headline của Pebble (recall-floored safety head) vào speech.</strong></li>
+    <li><strong>Vận hành hoá ràng buộc an toàn</strong> thành quy trình đo: tune-on-val → report-on-test
+      precision@floor, tái dùng được cho StressID / DAIC.</li>
+    <li><strong>Caveat trung thực:</strong> RAVDESS distress là <strong>proxy</strong> (acted, không phải crisis
+      lâm sàng) → định khung đúng phạm vi kết luận.</li>
+  </ol>
+</div>
+
+<!-- ĐÓNG GÓP 3 -->
+<h2><span class="num">3.</span> Heterogeneous MTL: emotion CE + affect V/A CCC + crisis BCE, cân bằng bằng Kendall
+  <span class="pill warn">kernel built, chưa chạy Kaggle</span></h2>
+<div class="card">
+  <h3>Phần cũ là gì?</h3>
+  <ul>
+    <li>Backbone pilot (ĐG 1–2) chỉ có <strong>2 head</strong>: emotion softmax + distress BCE, train độc lập
+      (loss = tổng đơn giản hai số hạng).</li>
+    <li>Luận văn cần đúng <strong>topology head dị thể</strong>: phân loại + <strong>regression liên tục</strong>
+      + safety — bản voice mới chỉ có 2 head <strong>đồng nhất kiểu phân loại</strong>, <strong>chưa có</strong>
+      head regression và <strong>chưa có</strong> cơ chế cân bằng đa nhiệm.</li>
+  </ul>
+  <h3>Kết quả cũ?</h3>
+  <p>Có metric emotion + distress, nhưng <strong>không có affect liên tục (valence/arousal)</strong> và
+    <strong>không có balancing</strong> giữa các loss khác thang đo (CE vs CCC∈[0,2] vs BCE).</p>
+  <h3>Cải tiến là gì? <span class="sub">(kernel pebble-voice-mtl-heads)</span></h3>
+  <p><strong>3 head dị thể trên cùng shared SUPERB trunk</strong>
+    (<code>Linear(d,256) → ReLU → masked-mean-pool</code>):</p>
+  <table>
+    <tr><th>Head</th><th>Kiến trúc</th><th>Loss</th><th>Metric</th></tr>
+    <tr><td><strong>emotion</strong></td><td><code>Linear(256, 8)</code></td><td>Cross-entropy</td><td>WA / UA / WF1</td></tr>
+    <tr><td><strong>affect</strong></td><td><code>Linear(256, 2)</code></td><td><strong>CCC loss</strong> (valence + arousal)</td><td>CCC(v), CCC(a)</td></tr>
+    <tr><td><strong>crisis</strong></td><td><code>Linear(256, 1)</code></td><td>BCE dưới <strong>hard recall floor</strong></td><td>recall / precision@floor</td></tr>
+  </table>
+  <ul>
+    <li><strong>Kendall homoscedastic uncertainty weighting</strong> (CVPR 2018): mỗi task có
+      <strong>log-variance học được</strong>; loss tổng =
+      <code>Σ 0.5·exp(−log_var_i)·L_i + 0.5·log_var_i</code> → tự học trọng số, thay vì chỉnh tay.
+      Đây cũng là <strong>comparator</strong> vs GradNorm / PCGrad.</li>
+    <li><strong>CCC loss</strong> <code>1 − 2·cov/(var_p+var_t+(μ_p−μ_t)²)</code> — metric chuẩn dimensional
+      affect (dòng AVEC), thay cho MSE.</li>
+    <li><strong>random 10-fold CV 80/10/10</strong>; crisis threshold vẫn tune-on-val theo recall floor 0.90.</li>
+    <li><strong>MTL math đã smoke-test CPU</strong>: recall-floor đạt recall = 0.90 đúng bằng; local infer
+      <code>scripts/voice_mtl_infer.py</code>.</li>
+  </ul>
+  <h3>Kết quả mới?</h3>
+  <ul>
+    <li><span class="warn">Chưa có số khoa học meaningful</span> — và đây là điểm trung thực quan trọng nhất:</li>
+    <li>RAVDESS <strong>không có</strong> nhãn V/A liên tục và <strong>không có</strong> nhãn crisis → hai head
+      mới học <strong>nhãn proxy</strong> (user-approved 2026-06-23): affect = <strong>Russell (1980)
+      circumplex</strong> cố định; crisis = <code>{angry, fearful, sad, disgust}</code>.</li>
+    <li>Proxy circumplex <strong>gần circular</strong> → CCC <strong>không meaningful</strong>; chỉ chứng minh
+      <strong>cơ chế</strong> (3-head MTL + Kendall + recall-floor) <strong>chạy được trên frozen features thật</strong>.</li>
+    <li><strong>Việc còn lại để có số thật:</strong> (1) chạy Kaggle MTL-heads (M3) → 10-fold + artifact local (M4);
+      (2) <strong>nâng cấp bằng MSP-Podcast</strong> (A/V/D liên tục thật, <strong>voice-only</strong> nên không
+      vi phạm ràng buộc "không paired data") → CCC thật, citable so với AVEC.</li>
+  </ul>
+  <h3>Đóng góp gì?</h3>
+  <ol>
+    <li><strong>Topology head dị thể đầy đủ cho speech affect</strong> — phân loại + regression liên tục +
+      safety trong một mô hình; lần đầu mang đủ bộ "heterogeneous heads" của Pebble sang voice.</li>
+    <li><strong>Kendall uncertainty weighting cân bằng 3 loss khác thang đo</strong> + đặt nền cho ablation
+      Kendall vs GradNorm vs PCGrad.</li>
+    <li><strong>Kiến trúc + training loop đã proven chạy</strong> (smoke-tested), tách bạch rõ "cơ chế proven"
+      với "số khoa học cần dữ liệu thật" — sự trung thực phương pháp luận reviewer IEEE đánh giá cao.</li>
+  </ol>
+</div>
+
+<!-- TỔNG KẾT -->
+<h2>Bảng tổng kết — cũ → mới cho cả 3 đóng góp</h2>
+<table>
+  <tr><th>#</th><th>Phần cũ</th><th>Kết quả cũ</th><th>Cải tiến</th><th>Kết quả mới</th><th>Trạng thái</th></tr>
+  <tr>
+    <td>1</td>
+    <td>Giả định emotion2vec là backbone chính (chưa kiểm chứng)</td>
+    <td>Không có số voice</td>
+    <td>Paired-delta 3-seed frozen probe, e2v vs WavLM (RAVDESS)</td>
+    <td>WavLM thắng: Δ macro-F1 <strong>−0.071</strong>, 3/3 seed &lt; 0</td>
+    <td class="ok">✅ đã chạy thật</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Recall-floor safety head chỉ có bên text (NeoBERT)</td>
+    <td>Không có bản voice</td>
+    <td>Đưa recall-floor BCE sang frozen speech encoder, tune-on-val</td>
+    <td><strong>precision@recall0.90 = 0.617 ± 0.003</strong>; verify e2e OK</td>
+    <td class="ok">✅ đã chạy thật</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Mới có 2 head đồng nhất, train độc lập, không balancing</td>
+    <td>Có emotion + distress, <strong>thiếu</strong> affect liên tục &amp; balancing</td>
+    <td>3 head dị thể (CE + CCC + BCE) + Kendall weighting, 10-fold</td>
+    <td><strong>Cơ chế chạy</strong> (smoke-test); CCC/crisis cần MSP-Podcast</td>
+    <td class="warn">⚠️ kernel built, chưa chạy Kaggle</td>
+  </tr>
+</table>
+
+<h2>Đóng góp tổng <span class="sub">(1 câu cho abstract)</span></h2>
+<blockquote>
+  Pebble-Voice chuyển novelty "heterogeneous heads dưới hard crisis-recall floor" từ text sang speech,
+  <strong>chứng minh bằng paired-delta rằng WavLM-Large &gt; emotion2vec cho crisis-sensitive speech
+  affect</strong>, vận hành recall-floored safety head trên đặc trưng âm học (precision@recall0.90 = 0.617),
+  và đề xuất topology MTL dị thể (emotion CE + affect CCC + crisis BCE) cân bằng bằng Kendall uncertainty
+  weighting.
+</blockquote>
+
+</div>
+</body>
+</html>
