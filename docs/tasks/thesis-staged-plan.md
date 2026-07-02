@@ -23,6 +23,9 @@ có căn cứ số liệu.
 
 ## TẦNG 1 — Chốt paper Text (0 phụ thuộc, làm ngay, tuần này)
 
+> **Implementation plan chi tiết (tiếng Anh, cho executor Opus):** [[tier1-text-paper-implementation]]
+> (`docs/tasks/tier1-text-paper-implementation.md`) — self-contained, có guardrails I1/I5, acceptance criteria từng task.
+
 | # | Việc | Chi tiết | Verify | Chi phí |
 |---|---|---|---|---|
 | T1.1 | **Đo Cohen's κ(LLM, gold) + confusion matrix** trên overlap set | Blocker IEEE #1 (`label-quality.md`: "still owed"). Script local trên 392 gold + nhãn LLM tương ứng; κ weighted (linear/quadratic — chọn quadratic, khớp ordinal QWK) + confusion 4×4. Giải thích "gap 0.28" (0.653 within-dist vs 0.402 gold) | Số κ + bảng confusion nằm trong log/`out/`, điền vào §IV draft, không còn `[TODO κ]` | 0 GPU, ~nửa ngày |
