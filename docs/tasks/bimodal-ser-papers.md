@@ -156,6 +156,8 @@ Bối cảnh (từ `docs/reports/STATUS-2026-07-02-vi.md`): thesis = 2 bài IEEE
 - **All-in bimodal (nâng bài Voice thành bài fusion ngay):** phụ thuộc kép EULA + GPU quota, DAIC là dataset duy nhất đủ điều kiện và đang gated; rủi ro trễ cả 2 bài. Fusion cũng chưa cần cho câu chuyện "honest weak supervision" đang là xương sống.
 - **Text-only (bỏ voice):** lãng phí kết quả voice đã có (WavLM 0.609; crisis precision 0.617 @ recall ≥0.90) và bỏ trống gap D6 mà sweep xác nhận là novelty khả thi nhất.
 
+> **2026-07-03 — User duyệt phương án bậc thang; EULA đã gửi qua giáo sư.** Kế hoạch thực thi chi tiết: [[thesis-staged-plan]] (`docs/tasks/thesis-staged-plan.md`).
+
 ### Căn cứ chính
 1. Sweep 21 bài xác nhận **không có prior art** cho recall-floor-as-objective trong bimodal SER → tầng 3 có novelty thật, nhưng không blocking 2 bài chính.
 2. Critical path thực tế là **nhãn, không phải method** (STATUS 3.4 + EULA) — nên method upgrades xếp sau việc gửi EULA.
