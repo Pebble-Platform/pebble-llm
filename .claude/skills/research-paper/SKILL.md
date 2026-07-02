@@ -40,15 +40,15 @@ argument-hint: "<topic / method / question to search for> [how many papers]"
 ## Workflow
 
 ### 1. Scope the search
-Restate the topic in one line. Identify which **Pebble closeness dimensions** the user cares about (default: all). These are the project's ranking axes (source of truth: `docs/related-work-survey.md`):
+Restate the topic in one line. Identify which **Pebble closeness dimensions** the user cares about (default: all). Before ranking, cross-check the current project truth in `docs/intent/constraints.md` + the relevant `docs/spec/capabilities/*.md` (e.g. `voice-multimodal.md` for speech topics) — the axes below are a default list, not a substitute for those docs (a stale hardcoded profile once caused speech papers to be under-ranked):
 
 1. Multi-task encoder with **categorical + continuous** affect heads (ideally + safety head)
-2. **Mental-health / crisis** text classification with transformer encoders
+2. **Mental-health / crisis** classification with transformer encoders
 3. Transfer from **GoEmotions / EmpatheticDialogues / intensity corpora**
 4. **Silver-label distillation from a teacher LLM** into a smaller student
 5. **Principled multi-task loss balancing** (uncertainty weighting, GradNorm, PCGrad, Nash-MTL)
 6. **Safety/crisis recall constraint** as a training-time objective
-7. **Encoder backbone** match (BERT/RoBERTa/NeoBERT/ModernBERT, ~250M)
+7. **Encoder backbone** match with an active Pebble stream (text: BERT-family ~250M; voice: emotion2vec/WavLM-class SSL)
 
 ### 2. Search from ≥3 angles
 Run separate `WebSearch` queries: by **method**, by **task/domain**, and by **dataset/benchmark**. Prefer arXiv, ACL Anthology, ScienceDirect, Nature, ACM DL, PMC, Zenodo, Papers-with-Code. Use the current year for "recent" framing.

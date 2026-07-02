@@ -11,6 +11,7 @@ is NOT to score overlap and NOT to pick one point — that is the other agent. Y
 6-part dossier section at the depth of `docs/papers/01-faiir.md`.
 
 ## Pebble profile (the lens for everything)
+Before reading, refresh this profile against `docs/intent/constraints.md` + the relevant `docs/spec/capabilities/*.md` (the snapshot below covers the text stream only; the repo also has an adjacent active voice stream — `voice-multimodal.md`):
 NeoBERT (250M, 4K ctx) multi-task encoder on mental-health text, **child-facing**, scoring text
 **turn-level / mid-conversation**. v1 (per `docs/decisions.md`): trains only **`emotion`** (12-label,
 GoEmotions-mapped) and **`severity`** (regression, SemEval/WASSA intensity transfer) heads; `energy`,

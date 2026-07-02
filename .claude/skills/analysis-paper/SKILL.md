@@ -21,12 +21,30 @@ argument-hint: "<paper title / arXiv id / URL>"
 
 ## Pebble profile (what we score against)
 
-> Pebble fine-tunes **NeoBERT (~250M)** into a multi-task affect encoder with heterogeneous heads
-> on a shared `[CLS]`: a **continuous-score head** (severity/energy/…), a **softmax emotion head**
-> (GoEmotions-warm-started), and a **binary safety/crisis head** (target recall ≥ 0.95). Training
-> uses **teacher-LLM (Gemini) silver labels** + open data (GoEmotions, SemEval EI-reg, CSSRS-Reddit),
-> staged freeze→unfreeze, and is exploring **principled MTL loss balancing** (Kendall / GradNorm).
-> Domain: emotional-support / mental-health conversation. (Source of truth: `docs/related-work-survey.md`.)
+**Do not hardcode the profile — assemble it at analysis time from the repo's IDD
+layers** (intent = why/scope, capabilities = current truth). A snapshot written
+into this file goes stale (a pre-2026-07-02 version described Pebble as
+text-only and systematically under-scored speech papers).
+
+1. `docs/intent/constraints.md` — the research question, scope in/out, hard
+   constraints (gold-holdout, ethics). This bounds what "useful to Pebble" means.
+2. `docs/spec/capabilities/` — current truth per stream. Read the ones matching
+   the paper's modality/topic; at minimum:
+   - text / ordinal risk → `ordinal-modeling.md`, `data-and-labeling.md`, `label-quality.md`
+   - voice / multimodal → `voice-multimodal.md` (its authoritative detail lives in the task docs it names, e.g. `docs/tasks/voice-mtl-heads.md`)
+3. **State the assembled profile in 2–4 lines at the top of your output**, before
+   scoring — the score must be auditable against the profile actually used.
+
+> Orientation only (verify against the docs above, never score from this line):
+> the repo currently has a primary ordinal suicide-risk **text** program
+> (NeoBERT-class encoder, teacher-LLM silver labels, gold-holdout eval) and an
+> adjacent active **voice** stream (emotion2vec/WavLM backbone; MTL heads:
+> emotion + affect-CCC + crisis recall-floor), with voice+text fusion as the
+> forward direction.
+
+**Comparability note:** analysis blocks written before 2026-07-02 were scored
+against the stale text-only profile — re-score before comparing their % with
+newer ones.
 
 ## Step 1 — Read the paper
 Use `WebFetch` on the abstract/PDF (arXiv, ACL Anthology, DOI). If paywalled, use the abstract + any open preprint/sibling and **mark unread sections explicitly** — never guess scores for what you can't see.
@@ -38,12 +56,12 @@ Score each dimension **0 / 1 / 2** (0 = absent, 1 = partial, 2 = strong/direct m
 | # | Dimension | Weight |
 |---|-----------|--------|
 | D1 | Multi-task **heterogeneous heads** (categorical + continuous; +safety = strong) | 3 |
-| D2 | **Mental-health / crisis** text domain | 2 |
+| D2 | **Mental-health / crisis** domain | 2 |
 | D3 | **Emotion-transfer corpora** (GoEmotions / EmpatheticDialogues / intensity) | 1 |
 | D4 | **Teacher-LLM silver-label distillation** | 2 |
 | D5 | **Principled MTL loss balancing** (uncertainty / GradNorm / PCGrad / Nash-MTL) | 2 |
 | D6 | **Safety/crisis recall constraint** as an objective | 2 |
-| D7 | **Encoder backbone** match (BERT/RoBERTa/NeoBERT/ModernBERT, ~250M) | 1 |
+| D7 | **Encoder backbone** match with an active Pebble stream (text: BERT-family ~250M; voice: emotion2vec/WavLM-class SSL) | 1 |
 
 Write the scores out loud before computing:
 
@@ -88,4 +106,4 @@ Give it one **"How to apply to Pebble:"** line. Resist listing several — pick 
 - **Scores before the number.** The per-dimension line must appear before the %. The formula is fixed — same paper → same score.
 - **One point, not a list.** The deliverable is the single most useful takeaway, with a concrete apply-line.
 - **Don't score the unseen.** Paywalled section → mark it, don't fabricate a score; note it lowers confidence.
-- **Stay grounded in the Pebble profile above.** Overlap is with *this* project, not generic relevance.
+- **Stay grounded in the profile you assembled from intent + capabilities.** Overlap is with *this* project, not generic relevance.
