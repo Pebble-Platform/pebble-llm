@@ -87,7 +87,12 @@ Rank theo độ transferable của fusion mechanism sang audio+text của Pebble
 
 21 bài có PDF mở được tải về `docs/papers/bimodal-ser/pdfs/`; 2 bài paywalled ghi abstract-only (Awatef 2025 Annals Telecom; Hsu & Wu IEEE TAFFC 2023). Đánh số 01–21 theo nhóm: 01–09 audio+text (trục chính), 10–16 survey/benchmark, 17–21 audio-visual (đối chứng).
 
-## Analysis results (M5)
+## Analysis results (M5) — ❌ SUPERSEDED, chỉ giữ làm trace
+
+> **Đừng dùng bảng này.** Chấm theo Pebble profile text-only đã stale trong skill cũ
+> (user flag 2026-07-02 — xem Decision Log). Kết quả hiện hành: bảng **M6** ở section
+> dưới; block phân tích trong từng entry `docs/papers/bimodal-ser/NN-*.md` cũng đã
+> được thay bằng bản M6.
 
 | # | Paper | Overlap | Best transferable point |
 |---|---|---|---|
