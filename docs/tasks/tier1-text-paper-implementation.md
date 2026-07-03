@@ -220,12 +220,12 @@ in draft; capability updated. **Cost:** ~3h GPU.
 
 ## Exit criteria for Tier 1 (from the parent plan)
 
-- [ ] T1.1 κ + confusion measured, in draft + capability doc
-- [ ] T1.2 baseline rows filled from logs, provenance updated
-- [ ] T1.3 groundedness pilot run, adopt/reject decision recorded
-- [ ] T1.4 B-Arm2 paired numbers (or explicitly deferred with quota reason)
-- [ ] T1.5 refs + protocol citation in, PDF re-exported
-- [ ] Paper A is submit-ready except authors/affiliation
+- [ ] T1.1 κ + confusion measured, in draft + capability doc — **BLOCKED** (Azure LLM key returns 401; script ready)
+- [x] T1.2 baseline rows filled from logs, provenance updated — 2026-07-03
+- [ ] T1.3 groundedness pilot run, adopt/reject decision recorded — **BLOCKED** (same Azure 401)
+- [ ] T1.4 B-Arm2 paired numbers (or explicitly deferred with quota reason) — **DEFERRED** (see Decision Log)
+- [x] T1.5 refs + protocol citation in — 2026-07-03 (PDF re-export deferred: no export toolchain in repo)
+- [ ] Paper A is submit-ready except authors/affiliation — pending T1.1 κ only
 
 ## Guardrails (repeat offenders — do not violate)
 
@@ -250,10 +250,65 @@ in draft; capability updated. **Cost:** ~3h GPU.
 - **2026-07-03 — Quadratic-weighted κ primary:** matches QWK, ordinal-aware.
   Unweighted/linear reported alongside. Rejected: unweighted-only (ordinal-blind).
 - **2026-07-03 — T1.4 gated behind quota, T2.1 has GPU priority** (parent plan).
+- **2026-07-03 — T1.4 DEFERRED this session.** Not started: (a) it needs a ~3h
+  Kaggle GPU run on shared weekly quota that T2.1 (voice) has priority on —
+  launching it autonomously would spend quota without the coordination the plan
+  requires; (b) its optional groundedness input (T1.3) is itself blocked on the
+  Azure key. Ready to run once quota is confirmed and the paper's numeric blocker
+  (T1.1 κ) is unblocked. No silent skip — T1.5 was completed instead.
+- **2026-07-03 — Overlap set needs no seed reproduction.** The 392 gold sequences
+  are the entire `Source==cssrs500` slice (fixed test set every fold), so T1.1
+  labels all 392 directly — the "if you cannot reproduce the split, stop" caveat
+  does not bite.
+- **2026-07-03 — PDF re-export deferred (not invented).** No committed export
+  toolchain for the draft (`pandoc` exists on the machine but the repo has no
+  build script and no prior draft PDF); per plan T1.5-4 the PDF is left as-is and
+  flagged rather than producing it via a new, unvetted toolchain.
 
 ## Progress / Completed Work
 <!-- executor fills as it goes; keep timestamps absolute -->
 
+- **2026-07-03 — T1.2 DONE.** Read primary logs `r2-baseline-{roberta,bilstm}/out/*.log`.
+  GOLD 5-fold summaries: RoBERTa mean=0.3456 std=0.0256; BiLSTM mean=0.3783 std=0.0139.
+  Fold-mean Behavior-F1 / QWK computed from per-fold `per-class-F1[2]` / `QWK`:
+  RoBERTa 0.169 / 0.292; BiLSTM 0.181 / 0.396 — all match the status report exactly
+  (log wins; no discrepancy). Filled draft Table III (L324–325) + updated the caption
+  to past tense with log paths. Provenance table (`r2-method-improvements…` L98) was
+  already marked done — no `🔄 running` markers remain.
+- **2026-07-03 — Split gate CLEARED (T1.1 precondition).** The gold eval set is
+  reproduced exactly with **zero seed dependence**: it is every `Source==cssrs500`
+  row in `data/finetuning-message/external/r2-combined/sequences.csv` (n=392, class
+  counts [99,171,77,45] verified). The kernel (`r2-corn-gce.py:549-566`) uses the
+  whole cssrs500 slice as a fixed test set every fold; the K-fold split is over the
+  train pool only. So no approximation is involved.
+- **2026-07-03 — T1.1 script READY, run BLOCKED.** Wrote `scripts/r2_kappa_gold_overlap.py`
+  (reuses `r2_llm_label.py`'s PROMPT + provider path; `--report` computes quad/linear/
+  unweighted κ + 4×4 confusion + per-class agreement + conf≥0.6 subset + bootstrap CI).
+  Smoke test (`--limit 3`) hit **HTTP 401 "invalid subscription key"** on Azure →
+  the `.env` `AZURE_OPENAI_API_KEY` (dated Jun 21) is expired. Labeling cannot run.
+  Draft `[TODO κ]` left in place (no fabrication). **Escalated — needs a valid key.**
+- **2026-07-03 — T1.5 DONE (except PDF).** Added [Jo25] (JMIR dimensional-severity
+  framing) to the Introduction ordinal-severity sentence; added [Tr25]
+  (Triantafyllopoulos 2025, arXiv:2508.02448) to §V-A on multi-fold/fixed-split
+  reporting. Replaced informal `[refs N]` markers in §II with resolvable cite keys
+  ([Ji22],[EP25],[PG24],[LS24],[Hy25],[Sc25],[RSD25]) and added all 9 reference-list
+  entries; removed the `[TODO: expand to full IEEE citations]` note. Authors unknown
+  for entries 14–16 → cited by title+arXiv id (no fabricated names). **PDF re-export
+  deferred:** no export toolchain committed (only cited-paper PDFs under `pdfs/`; the
+  "30/06 export" is not in the repo). Per plan T1.5-4, left the PDF and noted it.
+- **Note:** `make check` not run — `uv`/`ruff` are not on PATH in this session (only
+  `.venv-voice`). New script is syntax-valid and imports resolve; needs `make check`
+  in a `uv` env before commit.
+
 ## Open Questions
-- [ ] Which exact LLM_MODEL produced the 9,680-pool labels? (Check `.env` history /
-  labeled.jsonl metadata; if undeterminable, ask the user before T1.1 step 2.)
+- [x] **RESOLVED — which LLM_MODEL produced the 9,680-pool labels?** `azure` /
+  **`gpt-5.4-mini`** (current `.env` + `docs/spec/capabilities/data-and-labeling.md`
+  L12: "single-model `gpt-5.4-mini`, conf ≥ 0.6"). Same model still configured →
+  no substitution, no paper caveat needed once the key is refreshed.
+- [ ] **BLOCKER — Azure LLM credentials expired.** `scripts/r2_kappa_gold_overlap.py`
+  and the T1.3 pilot both need a working `LLM_PROVIDER=azure` / `LLM_MODEL=gpt-5.4-mini`
+  key. `.env`'s `AZURE_OPENAI_API_KEY` returns 401. Need: a refreshed Azure key (same
+  endpoint/deployment `gpt-5.4-mini` to keep κ interpretable), OR a decision to switch
+  provider (which changes the model behind κ and requires stating the substitution in
+  the paper). Once fixed: `.venv-voice/bin/python scripts/r2_kappa_gold_overlap.py`
+  then `--report`.
