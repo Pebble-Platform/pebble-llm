@@ -87,12 +87,11 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
 
 ## Open Questions
 - [x] Yield thực tế ≥ 25%/tập không? → **CÓ: 33%** trên ep01 (M2–M3). GO.
-- [~] PhoWhisper-base đủ tốt trên thoại phim (nhạc đã tách) hay cần -medium? →
-  M3 đầy đủ: đủ cho weak-label M4 **kèm auto-filter** (`max_run≥5 | chars/s>28 |
-  TTR<0.3`, loại ~5%). Lỗi tập trung đúng chỗ cảm xúc mạnh (cười/khóc → loop;
-  quát → sai thanh điệu) → khi M4 so LLM-text-label vs acoustic-teacher, kỳ vọng
-  teacher âm học gánh phần high-arousal. Test `-medium` trên 8 đoạn flagged
-  trước khi scale. Chưa đóng hẳn.
+- [x] PhoWhisper-base đủ tốt trên thoại phim hay cần -medium? → **ĐÓNG (M4b,
+  2026-07-03): base đủ.** Similarity vs YouTube mean 87.2/median 90.5; lỗi tập
+  trung ở ~14 đoạn sim<70 (loop cười/khóc + quát sai thanh điệu) — vá bằng cột
+  `text_youtube` trong `transcripts_yt.csv` thay vì đổi model ASR. Khi scale:
+  bộ nào có YouTube caption thì luôn tải kèm (nguồn text tốt hơn, miễn phí).
 - [ ] Demucs artifact có làm hỏng đặc trưng âm học cảm xúc không? → so sánh
   `--cut-source vocals` vs `original` ở M4 (nghe mẫu + teacher disagreement).
 
@@ -144,7 +143,16 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   đáng làm cho 72 đoạn multi-speaker đã phát hiện; (b) **text-turn splitting
   (LLM đọc xưng hô cô/cháu trên YouTube text) bắt được đúng chỗ audio mù** —
   củng cố thiết kế kết hợp 2 nguồn; (c) thử `min/max_speakers` + threshold khi scale.
-- [ ] **M4b:** gán nhãn lại trên text YouTube đã align (chờ script align) + so sánh
-  `--cut-source vocals` vs `original` cho câu hỏi artifact.
+- [x] **M4b — align YouTube XONG (2026-07-03, Opus agent theo plan
+  `docs/tasks/m4b-align-youtube-plan.md`; verify độc lập pass):**
+  `align_youtube.py` + `transcripts_yt.csv` (158/158 coverage 100%, 0 rỗng) +
+  `m4b_wer_report.md`. Similarity PhoWhisper↔YouTube: mean **87.2**, median 90.5
+  (p10 71.8); proxy-WER tập sạch (n=10): **~0.31**. Spot-check: seg00034 nhận
+  được thoại thật thay loop (sim 41.6 → tự tố cáo đoạn hỏng); seg00113 chứa
+  "mày không xứng đáng". **Kết luận:** PhoWhisper-base đủ cho weak-label mức
+  utterance; **không cần -medium**; dùng cột `text_youtube` vá các đoạn sim thấp
+  (<70 ≈ 14 đoạn). Caveat giữ nguyên: YouTube cũng là ASR, không phải gold.
+- [ ] **M4c (tùy chọn):** gán nhãn lại 2-teacher trên `text_youtube` → so κ với
+  vòng PhoWhisper; so sánh `--cut-source vocals` vs `original` cho câu hỏi artifact.
 - [ ] **M5:** quyết định scale (số tập/bộ, port Kaggle) + cập nhật số thật (33%)
   vào `docs/papers/vietnamese-ser/04-pioneer-corpus-design.md`.
