@@ -23,12 +23,14 @@ uv pip install pyannote.audio
 # đặt file tập phim (mp4/mkv/...) vào data/vietnamese-ser/raw/  (gitignored — KHÔNG commit media)
 python scripts/vietnamese-ser/pilot_extract.py --input data/vietnamese-ser/raw/ep01.mp4
 # thêm diarization:  --hf-token hf_xxx
+# cắt tại ranh giới đổi người nói (utterance đơn-giọng): --turn-split (cần --hf-token)
 # chỉ đo yield, bỏ ASR: --skip-asr
 # ASR tốt hơn (chậm hơn): --whisper vinai/PhoWhisper-medium
 ```
 
-Output: `data/vietnamese-ser/pilot/<ep>/` — `report.md` (yield %), `segments.csv`,
-`clips/*.wav`, `transcripts.csv`, `speakers.csv` (nếu bật diarization).
+Output: `data/vietnamese-ser/pilot/<ep>/` — `report.md` (yield %), `segments.csv`
+(có cột `speaker`), `clips/*.wav`, `transcripts.csv`, `speakers.csv` +
+`diar_turns.csv` (nếu bật diarization / `--turn-split`).
 Mỗi stage cache kết quả — chạy lại lệnh là tiếp tục từ chỗ dừng.
 
 ## Thời gian chạy dự kiến (CPU, tập ~45 phút)

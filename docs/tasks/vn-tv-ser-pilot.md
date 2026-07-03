@@ -121,6 +121,19 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   `transcripts.csv` (158/158 có chữ). Fix crash cuối run (stdout utf-8,
   `pilot_extract.py:183`). Chưa chạy pyannote diarization (không có `--hf-token`).
 
+- [x] **Turn-aware cutting v1→v2 XONG (2026-07-03, 2 vòng Opus theo
+  `turn-split-implement-plan.md` + `turn-split-v2-implement-plan.md`; verify độc lập khớp):**
+  v1 (cắt toàn cục tại VAD∩turns) lợi ích ròng = 0 — yield sụp 11.9→5.5 phút vì
+  3 bệnh đo được: turns vụn (895 turns, avg 1.13s), lỗ "" phá chuỗi X-""-X
+  (vùng đơn co 5.5→3.4), MIN_UTT=2.0 giết câu đáp ngắn. v2 fix T1–T4 (premerge
+  turns <0.6s · region đơn-speaker giữ nguyên · nhập lỗ "" vào hàng xóm, DROP
+  là barrier · MIN_UTT_TURN=1.5) → **175 utt / 10.3 phút đơn-giọng-verified**
+  (vùng đơn phục hồi đủ 5.53 + cứu 4.73/6.4 phút đa-giọng = **+87% material
+  đơn-giọng so với chỉ lọc baseline**). Kernel scale: turn-split default BẬT
+  khi có HF_TOKEN. **Hệ quả scale P1 (120 tập): ~20.6h / ~21k utt đơn-giọng** —
+  gần giữ nguyên ước tính 23.8h của 05-scale-plan. Output verify:
+  `ep01-turnsplit2/` (v1 giữ ở `ep01-turnsplit/` làm chứng cứ so sánh).
+
 ## Remaining Action Items
 - [x] ~~User đặt tập vào `data/vietnamese-ser/raw/`~~ → `ep01.mp3` đã có, chạy xong.
 - [x] ~~Chạy `pilot_extract.py` → report.md~~ → yield 33%, GO.
