@@ -42,7 +42,19 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   rủi ro nhánh text bị nhiễu hệ thống ở high-arousal, đồng thời là bằng chứng
   sớm cho chính giả thuyết tone×emotion của paper.
 - [ ] M4 — (nếu yield ≥ ~25%/tập) weak-label thử 1 tập bằng LLM trên transcript → đo phân bố nhãn.
-- [ ] M5 — Quyết định scale: số tập/bộ, port Kaggle, cập nhật design doc bằng số thật.
+- [x] M5 — CHUẨN BỊ scale xong (2026-07-03, Opus agent theo
+  `docs/tasks/m5-scale-implement-plan.md`; verify độc lập: metadata JSON hợp lệ,
+  kernel compile OK, số học khớp): `docs/papers/vietnamese-ser/05-scale-plan.md`
+  (3 kịch bản; khuyến nghị **P1 = 3 bộ/120 tập → 23.8h thoại sạch/~18k utt
+  ≈ 7.5× ViSEC**; 36 GPU-h ≈ 2 tuần quota; label 2-teacher ~$22 Batch API;
+  target cũ "50–100h" = 250–500 tập → không khả thi, đã sửa §3 design doc thành
+  target v2 chờ chốt) + kernel `kaggle/vietnamese-ser/vnser-extract/` (pin torch
+  2.5.1/pyannote 3.x, HF token qua Kaggle Secrets, smoke 60s local PASS, CHƯA
+  push) + shortlist 8 phim (top-3: Sống chung với mẹ chồng 34t · Về nhà đi con
+  85t · Gạo nếp gạo tẻ 109t — đều chỉ có caption auto/ASR).
+  ⚠ Chờ USER quyết: (a) chốt kịch bản P1?, (b) phương án compute — upload media
+  lên Kaggle private dataset (rủi ro pháp lý bên-thứ-ba, nêu ở 05 §rủi ro) hay
+  local GPU; (c) 0.30 GPU-h/tập là ước lượng — batch Kaggle đầu sẽ chốt số thật.
 
 ## Decision Log
 - **2026-07-03 — pyannote 4.x: `token=` + đưa waveform in-memory, né torchcodec:**

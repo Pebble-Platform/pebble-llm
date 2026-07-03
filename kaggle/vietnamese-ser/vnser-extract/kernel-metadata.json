@@ -1,0 +1,16 @@
+{
+  "id": "phatneurondai/vnser-extract",
+  "title": "vnser-extract",
+  "code_file": "vnser-extract.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": ["gpu"],
+  "dataset_sources": ["phatneurondai/vnser-episodes"],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}
