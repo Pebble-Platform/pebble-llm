@@ -25,6 +25,8 @@ data/finetuning-message/interim/**
 data/finetuning-message/processed/**
 data/finetuning-message/external/**
 data/voice/external/**
+# vietnamese-ser: episode media + cut clips (copyrighted content — never commit)
+data/vietnamese-ser/**
 data/external/**
 !data/**/.gitkeep
 # tooling only (NOT data): the dataset viewer + its docs/fetch script
