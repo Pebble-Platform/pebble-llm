@@ -89,6 +89,13 @@ def main() -> None:
     eps = range(int(lo), int(hi or lo) + 1)
     rawdir = ROOT / "data" / "vietnamese-ser" / "raw" / args.series
     epsdir = ROOT / "data" / "vietnamese-ser" / "episodes" / args.series
+    # secrets from repo-root .env (gitignored) unless already set in the environment
+    envfile = ROOT / ".env"
+    if envfile.exists():
+        for line in envfile.read_text(encoding="utf-8").splitlines():
+            k, _, v = line.strip().partition("=")
+            if k and v and k not in os.environ:
+                os.environ[k] = v
     hf_token = os.environ.get("HF_TOKEN", "")
     env = {
         **os.environ,
