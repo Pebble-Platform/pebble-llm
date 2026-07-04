@@ -203,3 +203,16 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   vòng PhoWhisper; so sánh `--cut-source vocals` vs `original` cho câu hỏi artifact.
 - [ ] **M5:** quyết định scale (số tập/bộ, port Kaggle) + cập nhật số thật (33%)
   vào `docs/papers/vietnamese-ser/04-pioneer-corpus-design.md`.
+
+## Scale batch chuẩn bị (2026-07-04)
+- **Dataset layout v2 (series-based):** `raw/<series>/epNN.*` ·
+  `episodes/<series>/epNN/` (canonical ep01 = bản turn-split v2 + labels r2,
+  chuyển từ `pilot/ep01-turnsplit2`) · `_pilot-history/` (ep01 baseline +
+  turn-split v1 + smoke — bằng chứng so sánh). Media ep02–ep10 + caption `.vi.srt`
+  đã tải đủ (`download_youtube.py` của user, series **Về nhà đi con**).
+- **`run_batch.py` mới:** chạy tuần tự resumable ep02–ep10; convert SRT→caption
+  với auto-detect kiểu rolling của YouTube auto-sub (test ep02: 536 block,
+  0 trùng liền kề); dry-run ep01 → skip đúng, summary.csv chuẩn (175/10.3′/175).
+- **Open question mới — recap giữa các tập:** ep02 mở đầu bằng recap cảnh ep01
+  (trùng nguyên văn thoại). Khi gộp corpus cần cơ chế khử trùng lặp xuyên tập
+  (text-match giữa các ep liền kề, hoặc bỏ ~90s đầu mỗi tập) — quyết ở batch 1.

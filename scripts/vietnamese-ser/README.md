@@ -17,20 +17,44 @@ uv pip install demucs silero-vad "transformers[torch]" soundfile
 uv pip install pyannote.audio
 ```
 
-## Chạy pilot trên 1 tập phim
+## Bố cục dataset (layout v2, 2026-07-04 — series-based)
 
-```powershell
-# đặt file tập phim (mp4/mkv/...) vào data/vietnamese-ser/raw/  (gitignored — KHÔNG commit media)
-python scripts/vietnamese-ser/pilot_extract.py --input data/vietnamese-ser/raw/ep01.mp4
-# thêm diarization:  --hf-token hf_xxx
-# cắt tại ranh giới đổi người nói (utterance đơn-giọng): --turn-split (cần --hf-token)
-# chỉ đo yield, bỏ ASR: --skip-asr
-# ASR tốt hơn (chậm hơn): --whisper vinai/PhoWhisper-medium
+```
+data/vietnamese-ser/                     (toàn bộ gitignored — KHÔNG commit media)
+  raw/<series>/epNN.mp3 + epNN.vi.srt    media + caption (download_youtube.py)
+  episodes/<series>/epNN/                output chuẩn mỗi tập: segments.csv (cột speaker),
+                                         clips/, transcripts.csv, transcripts_yt.csv,
+                                         labels_*.csv, diar_turns.csv, report.md
+  episodes/<series>/summary.csv          bảng tổng hợp do run_batch.py sinh
+  _pilot-history/                        ep01 baseline + turn-split v1 + smoke (bằng chứng, đóng băng)
 ```
 
-Output: `data/vietnamese-ser/pilot/<ep>/` — `report.md` (yield %), `segments.csv`
-(có cột `speaker`), `clips/*.wav`, `transcripts.csv`, `speakers.csv` +
-`diar_turns.csv` (nếu bật diarization / `--turn-split`).
+Canonical của ep01 (pilot) = `episodes/ve-nha-di-con/ep01/` (chính là bản
+turn-split v2 + labels vòng 2; các bản so sánh cũ nằm trong `_pilot-history/`).
+
+## Chạy BATCH nhiều tập (khuyến nghị)
+
+```powershell
+# 0. tải media + caption (resumable, parse "Tập N" từ title):
+python scripts/vietnamese-ser/download_youtube.py --playlist <URL> --episodes 2-10 `
+    --outdir data/vietnamese-ser/raw/ve-nha-di-con
+# 1. chạy tuần tự (resumable — Ctrl-C rồi chạy lại vô hại; ~1.5–2h CPU/tập):
+$env:HF_TOKEN="hf_xxx"; $env:PYTHONIOENCODING="utf-8"
+python scripts/vietnamese-ser/run_batch.py --series ve-nha-di-con --episodes 2-10
+```
+
+`run_batch.py` tự: convert SRT→caption (auto-detect kiểu rolling của YouTube
+auto-sub), gọi `pilot_extract.py --turn-split`, align YouTube, và ghi
+`summary.csv`. Tập nào đủ output thì skip.
+
+## Chạy lẻ 1 tập
+
+```powershell
+python scripts/vietnamese-ser/pilot_extract.py --input data/vietnamese-ser/raw/<series>/epNN.mp3 `
+    --outdir data/vietnamese-ser/episodes/<series>/epNN --turn-split --hf-token hf_xxx
+# chỉ đo yield, bỏ ASR: --skip-asr · ASR tốt hơn (chậm): --whisper vinai/PhoWhisper-medium
+```
+
 Mỗi stage cache kết quả — chạy lại lệnh là tiếp tục từ chỗ dừng.
 
 ## Thời gian chạy dự kiến (CPU, tập ~45 phút)
