@@ -1,0 +1,11 @@
+experiment,kernel,protocol,gold_macro_f1_mean,gold_macro_f1_std,gold_macro_f1_folds,behavior_f1_mean,qwk_mean,log,verified
+dual-head CORAL+CE+Focal (Run B),fabiocarava/r2-suicide-risk-dual-head-mentalroberta@v7,gold-holdout 5f×10ep +balance,0.3849,0.0071,0.3934|0.3841|0.3868|0.3880|0.3722,0.183,0.398,r2-suicide-risk-dualhead/log.txt,2026-07-02
+flat-CE (no ordinal),phatneurondai/r2-ablation-flatce,gold-holdout 5f×10ep +balance,0.4215,0.0242,0.4288|0.4114|0.4619|0.4172|0.3881,0.2846,0.3876,r2-ablation/out/r2-ablation-flatce.log,2026-07-02
+CORN+CE+GCE,phatneurondai/r2-corn-gce@2,gold-holdout 5f×10ep +balance,0.4022,0.0132,0.4177|0.3888|0.3842|0.4081|0.4121,0.2596,0.3613,r2-corn-gce/out/r2-corn-gce.log,2026-07-02
+CORN-only (CORN+CE+Focal),phatneurondai/r2-corn-only@2,gold-holdout 5f×10ep +balance,0.4095,0.0254,0.4106|0.3971|0.4064|0.3782|0.4552,0.2499,0.3772,r2-corn-only/out/r2-corn-only.log,2026-07-02
+GCE-only (CORAL+CE+GCE),phatneurondai/r2-gce-only@1,gold-holdout 5f×10ep +balance,0.3990,0.0149,0.3873|0.4141|0.3800|0.3950|0.4183,0.2291,0.3817,r2-gce-only/out/r2-gce-only.log,2026-07-02
+baseline plain-RoBERTa-CE (mean-pool no seq no ordinal),fabiocarava/r2-baseline-roberta@1,gold-holdout 5f×10ep +balance,0.3456,0.0256,0.3266|0.3224|0.3376|0.3936|0.3479,,,r2-baseline-roberta/out/r2-baseline-roberta.log,2026-07-02
+baseline BiLSTM-MTL (paper baseline reimpl),fabiocarava/r2-baseline-bilstm@1,gold-holdout 5f×10ep +balance,0.3783,0.0139,0.3549|0.3958|0.3835|0.3723|0.3852,,,r2-baseline-bilstm/out/r2-baseline-bilstm.log,2026-07-02
+within-distribution 5-fold CV (LLM labels; comparability datapoint — NOT gold),phatneurondai/r2-within-dist-cv-10k-balanced,within-dist CV 10072 samples,0.6530,0.0048,0.6493|0.6595|0.6564|0.6536|0.6461,,,r2-within-dist-cv/out/r2-within-dist-cv-10k-balanced.log,2026-07-02
+ordinal confident-learning diagnostic (Behavior flagged 227/634=35.8%; total 1570/9680=16.2%),phatneurondai/r2-tier1-cleanlab-diagnostic@1,5-fold OOF diagnostic,,,,,,r2-tier1-cleanlab/out/r2-tier1-cleanlab-diagnostic.log,2026-07-02
+label-shift logit-adjust τ=0.5 (Behavior 0.357→0.410; 1 best-fold flat-CE ckpt),local posthoc (no kernel),post-hoc on 392 gold,,,,0.410,,r2-label-shift/posthoc_label_shift.py,2026-06-27

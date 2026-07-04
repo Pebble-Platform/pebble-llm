@@ -29,10 +29,10 @@ Không corpus nào trên thế giới (mọi ngôn ngữ) có **lớp thanh đi�
 
 ## 3. Quy mô & cấu trúc 2 tầng (đúng recipe thesis)
 
-| Tầng | Quy mô | Nhãn bởi | Vai trò |
-|---|---|---|---|
-| **Weak pool** | 50–100h (~40–80k utterance) | LLM trên transcript + acoustic teacher (WavLM fine-tuned) — 2 nguồn độc lập, lưu confidence + disagreement | train |
-| **Gold set** | 2.000–3.000 utterance (~4–6h) | ≥3 annotator người + clinical adjudication cho distress | **held-out eval** (không bao giờ train) |
+| Tầng | Quy mô (target v2 — đề xuất sau pilot, chờ chốt) | Số đo thật từ pilot (ep01) | Nhãn bởi | Vai trò |
+|---|---|---|---|---|
+| **Weak pool** | **~24h / ~18–19k utterance** (3 bộ ≈ 120 tập) — thay target cũ "50–100h" vốn quy ra **~250–500 tập ≈ 6–13 bộ**, không khả thi cho 1 người (chi tiết phép tính: `05-scale-plan.md` §2–§3) | 1 tập 35.6′ → **11.9′ thoại sạch** (yield 33%), **158 utt**, **54% đơn-người-nói** (lạc quan), κ 2-teacher **0.584** | LLM trên transcript + acoustic teacher (WavLM fine-tuned) — 2 nguồn độc lập, lưu confidence + disagreement | train |
+| **Gold set** | 2.000–3.000 utterance (~4–6h) | chọn từ weak pool bằng disagreement sampling (49/158 ca 2 teacher cãi nhau ở pilot) | ≥3 annotator người + clinical adjudication cho distress | **held-out eval** (không bao giờ train) |
 
 Gold chọn bằng **stratified + disagreement sampling** (ưu tiên chỗ 2 teacher cãi nhau — rẻ nhất về thông tin). Speaker của gold **disjoint** hoàn toàn với weak pool → gold-holdout by construction.
 
@@ -72,12 +72,13 @@ Gold chọn bằng **stratified + disagreement sampling** (ưu tiên chỗ 2 tea
 
 ## 8. Ngân sách & timeline thô (điền số khi có báo giá)
 
-| Hạng mục | Ước lượng |
+| Hạng mục | Ước lượng (cập nhật từ pilot — phép tính: `05-scale-plan.md` §4–§5) |
 |---|---|
-| Thu thập + pipeline weak-label (PhoWhisper + LLM + teacher) | tái dùng hạ tầng thesis; ~vài trăm USD API + GPU quota |
+| GPU extract pipeline (ffmpeg→Demucs→VAD→PhoWhisper→pyannote) trên Kaggle P100 | ~0.30 GPU-h/tập → 3 bộ/120 tập = **36 GPU-h ≈ 2 tuần** quota (30 GPU-h P100/tuần) |
+| Weak-label 2-teacher (Batch API) | 3 bộ ≈ 18k utt × $0.001225 = **~$22** (không còn là biến số lớn) |
 | Annotation gold 2–3k × 3 người | [BÁO GIÁ] — biến số lớn nhất |
 | Clinical adjudication | theo đối tác |
-| Thời gian | Pilot 1 tháng → thu + weak-label 1–2 tháng → gold annotation 2–3 tháng → dataset paper. Tổng **~6 tháng**, chỉ khởi động toàn lực **sau khi 2 bài thesis nộp** |
+| Thời gian | Pilot ✓ → GPU extract **~2 tuần** (3 bộ, Kaggle quota) + weak-label vài ngày → gold annotation 2–3 tháng → dataset paper. Tổng còn lại **~3–4 tháng** (extract rút từ ước lượng 1–2 tháng xuống ~2 tuần đo được), khởi động toàn lực **sau khi 2 bài thesis nộp** |
 
 ## 9. Rủi ro chính & giảm nhẹ
 
