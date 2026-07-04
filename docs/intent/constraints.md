@@ -1,73 +1,79 @@
-# Pebble-LLM (Ordinal Suicide-Risk research) — Intent & Constraints (intent layer)
+# Pebble-LLM (ViEmoSpeech — Vietnamese SER corpus & bimodal method) — Intent & Constraints (intent layer)
 
 > **Layer:** intent — changes rarely, only by deliberate human decision, never
 > as a side effect of implementation (see `WORKFLOW.md`). If a code or spec
 > change requires editing this file, stop: that is a human decision, not a PR
 > detail.
+>
+> **Pivot 2026-07-04 (human decision):** the repo's prior programs — ordinal
+> suicide-risk text classification and crisis-sensitive voice affect (the two
+> IEEE thesis streams) plus the v1–v3 product classifier — are **archived in
+> `archive/`** (fully recoverable; git history intact). Their methodology
+> (weak-label teachers + small professional gold + honest gold-holdout
+> evaluation + provenance discipline) is carried forward as the foundation of
+> this program.
 
-This repo is a **research program**, not a product build. It asks one question:
-**can LLM-generated weak labels honestly augment a small clinical gold set for
-*ordinal* suicide-risk classification on social media — and how do we measure
-that benefit without fooling ourselves?** The deliverable is an IEEE-class paper
-(*Weakly-Supervised Augmentation for Ordinal Suicide-Risk Classification: An
-Honest Gold-Holdout Study*) **plus the experiment infrastructure that makes
-every reported number reproducible and defensible**. "Done right" means a
-reviewer cannot find a number that is circular, leaked, or unrepeatable.
-
-The predecessor framing — a deployable Pebble emotion/risk classifier
-(`pebble-finetuning-strategy-v3.md`, `src/pebble_llm/serving/`) — is
-**deliberately deferred**. v1 reuses public dataset labels and produces honest
-research results first; production serving, a learned safety head, multi-LLM
-ensemble relabeling, and real Δt wiring are out of scope until the research
-validates quality. The classifier code remains as adjacent execution
-infrastructure, not the current intent.
+This repo is a **research program**, not a product build. It builds
+**ViEmoSpeech**: the first Vietnamese speech-emotion corpus that is
+free-content, multi-class, distress-flagged, syllable-tone-annotated, and
+clearly licensed — extracted from Vietnamese TV drama by a measured pipeline
+(music removal → VAD → speaker-turn cutting → dual-teacher weak labels →
+text-verified single-speaker filter), plus the **tone×emotion bimodal SER
+method paper** built on it (hook: Vietnamese tones are phonation-heavy — Shen,
+NAACL 2024 — so the semantic branch must carry more load than in non-tonal
+SER). "Done right" means every released label traces to a versioned prompt +
+model ID, every reported number traces to a run report, and nothing legally or
+ethically unreleasable ever leaves the machine.
 
 | | |
 |---|---|
-| **Scope (in)** | Ordinal suicide-risk text classification; weak-supervision & label-quality methods; the honest evaluation protocol; the paper and its reports. |
-| **Scope (out)** | Production deployment; learned safety head; multi-LLM ensemble relabel; real-time Δt wiring — all "further work", not blocking. |
-| **Hard constraint** | **Gold-holdout, always:** never report a metric that was trained and evaluated on the same label source. |
-| **Non-negotiable** | **Research validity and clinical-data ethics outrank any metric.** A higher score obtained by leakage, by evaluating within-LLM, or on un-deidentified data is worth nothing. |
+| **Scope (in)** | Corpus construction (extraction pipeline, weak labels, gold protocol); dataset paper; tone×emotion bimodal SER method paper; recall-floored distress head. |
+| **Scope (out)** | Production deployment; the archived text/voice thesis streams (revive = explicit human decision); full C-SSRS-style suicide labels on speech (ethically out of reach — distress proxy only). |
+| **Hard constraint** | **Copyrighted media never leaves the machine:** episode files, clips, and full transcripts are never committed and never released. |
+| **Non-negotiable** | **Legal/ethical releasability outranks corpus size.** A bigger corpus obtained by releasing copyrighted audio or unconsented content is worth nothing. |
 
 ## Design constraints that drive everything
 
-1. **Gold-holdout, always.** Training uses weak/LLM labels; evaluation uses
-   *held-out clinical gold* (CSSRS) labels — and the two pools are disjoint by
-   example. This **forbids** reporting a within-LLM validation number
-   (e.g. 0.67) as a headline result: the honest gold number (0.385) is a
-   different, smaller quantity, and conflating them is the central
-   self-deception this study exists to exclude.
+1. **Media legality.** Source episodes are copyrighted. `data/**` stays
+   gitignored; the releasable artifact is **features + timestamps + labels +
+   speaker ids** (design doc §4 option B) under **CC-BY 4.0 declared from the
+   first commit** — never raw audio, never full transcripts. This **forbids**
+   committing or publishing episode media in any form.
 
-2. **Subject-level integrity.** Splits and folds are assigned by **user/subject**,
-   never by post. This **forbids** random post-level splitting, which lets a
-   single user's posts straddle train and test and silently inflates every
-   metric. Same subject ⇒ same split, deterministically.
+2. **Single-speaker by construction.** A training clip carries one voice:
+   utterances are cut at (VAD ∩ speaker-turn) boundaries, and clips that text
+   analysis flags as containing multiple turns (OR of two independent teachers)
+   are dropped from the weak pool. Measured on ep01: κ between teachers rose
+   0.584 → 0.697 after this discipline — it is load-bearing, not cosmetic.
 
-3. **Honest framing over SOTA.** The contribution is *methodological*, not a
-   leaderboard win. "Beat the paper (0.5098 → 0.653)" is framed as a
-   *comparable within-distribution protocol on our enriched 10k*, **not** the
-   paper's exact gated benchmark. This **forbids** any claim of having run a
-   benchmark or matched a population we did not actually reproduce.
+3. **Speaker-disjoint splits.** Splits and folds are assigned by **speaker**,
+   never by clip; gold-set speakers are disjoint from the weak pool. Same
+   voice ⇒ same split. This **forbids** random clip-level splitting.
 
-4. **Reproducible by construction.** Every headline number comes from a
-   **pinned stack + fixed seed + multi-fold run with reported std**, and traces
-   to a runnable kernel and a retained log. This **forbids** floating
-   dependency versions on GPU hosts and **forbids** quoting a single-run point
-   estimate as a headline.
+4. **Honest weak-supervision protocol (inherited from the archived thesis).**
+   Weak labels come from ≥2 independent LLM teachers with recorded
+   disagreement; evaluation of any headline claim uses held-out
+   human-annotated gold. This **forbids** reporting teacher-agreement numbers
+   as accuracy, and **forbids** training and evaluating on the same label
+   source.
 
-5. **Clinical-data ethics & provenance.** Suicide-risk corpora (r/SuicideWatch
-   scrape, CSSRS gold) are **de-identified, content-filtered, and never
-   committed**; their provenance (source, scrape method, filter rate) is
-   documented. This **forbids** committing raw posts or PII, and **forbids**
-   using any corpus without a provenance trail. `data/**/{raw,interim,processed,external}`
-   stay gitignored.
+5. **Provenance by construction.** Every label row carries its model ID; the
+   labeling prompt is versioned in git (`scripts/vietnamese-ser/m4_prompt.md`);
+   every reported number traces to a report file generated by a committed
+   script. This **forbids** hand-edited numbers and ad-hoc chat labeling for
+   corpus data.
 
-6. **Ordinal-aware throughout.** Risk levels are ordered
-   (Indicator < Ideation < Behavior < Attempt); losses, label-cleaning, and
-   metrics must respect that order. This **forbids** evaluating the task as flat
-   nominal classification — QWK and MAE are reported alongside macro-F1 on every
-   model comparison, and a misclassification's *distance* matters.
+6. **Tone-aware by design.** Every utterance carries auto-generated
+   syllable-level tone annotations and dialect metadata (Bắc/Trung/Nam —
+   different tone systems); the corpus must stay analyzable for the
+   tone×emotion question it exists to answer.
+
+7. **Distress is a proxy, said plainly.** The distress flag means visible
+   psychological distress in acted drama — **not** clinical suicide risk.
+   Papers must state this; gold distress labels require clinical-partner
+   adjudication and annotator-wellbeing safeguards (design doc §5).
 
 The binding invariants derived from these constraints live in
-[invariants.md](invariants.md) and are mirrored by the permanent invariant test
-suite at `tests/invariants/`.
+[invariants.md](invariants.md). The archived thesis streams' invariant test
+suite moved to `archive/tests/`; a corpus-specific suite is rebuilt as the
+first change under `docs/spec/changes/`.

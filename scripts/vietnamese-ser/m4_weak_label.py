@@ -60,7 +60,9 @@ class ChunkLabels(BaseModel):
     labels: list[SegLabel]
 
 
-def label_all(client: anthropic.Anthropic, model_id: str, rows: list[dict], chunk: int) -> dict[str, SegLabel]:
+def label_all(
+    client: anthropic.Anthropic, model_id: str, rows: list[dict], chunk: int
+) -> dict[str, SegLabel]:
     out: dict[str, SegLabel] = {}
     for i in range(0, len(rows), chunk):
         part = rows[i : i + chunk]
@@ -109,12 +111,33 @@ def main() -> None:
         results[name] = labels
         with (outdir / f"labels_{name}.csv").open("w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["id", "model", "emotion", "valence", "arousal", "distress", "confidence", "multi_speaker_suspect"])
+            w.writerow(
+                [
+                    "id",
+                    "model",
+                    "emotion",
+                    "valence",
+                    "arousal",
+                    "distress",
+                    "confidence",
+                    "multi_speaker_suspect",
+                ]
+            )
             for r in rows:
                 lab = labels.get(r["id"])
                 if lab:
-                    w.writerow([lab.id, model_id, lab.emotion, lab.valence, lab.arousal,
-                                lab.distress, f"{lab.confidence:.2f}", lab.multi_speaker_suspect])
+                    w.writerow(
+                        [
+                            lab.id,
+                            model_id,
+                            lab.emotion,
+                            lab.valence,
+                            lab.arousal,
+                            lab.distress,
+                            f"{lab.confidence:.2f}",
+                            lab.multi_speaker_suspect,
+                        ]
+                    )
 
     # report
     lines = [f"# M4 weak-label report — {args.transcripts}", ""]
@@ -137,9 +160,13 @@ def main() -> None:
         disagreements = [i for i in common if la[i].emotion != lb[i].emotion]
         lines.append(f"## Agreement {na} vs {nb} (n={len(common)})")
         lines.append(f"- **Cohen's κ (emotion): {ka:.3f}**")
-        lines.append(f"- mean |Δvalence|: {dv:.2f} · mean |Δarousal|: {da:.2f} · distress agree: {dis_agree:.0%}")
-        lines.append(f"- {len(disagreements)} đoạn bất đồng emotion: {' '.join(disagreements[:20])}"
-                     + (" ..." if len(disagreements) > 20 else ""))
+        lines.append(
+            f"- mean |Δvalence|: {dv:.2f} · mean |Δarousal|: {da:.2f} · distress agree: {dis_agree:.0%}"
+        )
+        lines.append(
+            f"- {len(disagreements)} đoạn bất đồng emotion: {' '.join(disagreements[:20])}"
+            + (" ..." if len(disagreements) > 20 else "")
+        )
     report = outdir / "m4_report.md"
     report.write_text("\n".join(lines), encoding="utf-8")
     print(f"\n>> report: {report}")

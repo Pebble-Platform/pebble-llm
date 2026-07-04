@@ -44,12 +44,12 @@ import sys
 from pathlib import Path
 
 SR = 16000
-MIN_UTT = 2.0        # s — drop shorter (whole single-speaker region / no-turn-split mode)
-MIN_UTT_TURN = 1.5   # s — drop shorter for pieces carved from a multi-speaker region
-MAX_UTT = 10.0       # s — split longer
-MERGE_GAP = 0.4      # s — merge VAD regions separated by less than this
-PREMERGE_GAP = 0.6   # s — merge adjacent same-speaker turns closer than this (de-fragment)
-PAD = 0.10           # s — padding added to each side of a cut
+MIN_UTT = 2.0  # s — drop shorter (whole single-speaker region / no-turn-split mode)
+MIN_UTT_TURN = 1.5  # s — drop shorter for pieces carved from a multi-speaker region
+MAX_UTT = 10.0  # s — split longer
+MERGE_GAP = 0.4  # s — merge VAD regions separated by less than this
+PREMERGE_GAP = 0.6  # s — merge adjacent same-speaker turns closer than this (de-fragment)
+PAD = 0.10  # s — padding added to each side of a cut
 SMOKE_SECONDS = 60
 
 SMOKE = os.environ.get("VNSER_SMOKE") == "1"
@@ -64,12 +64,34 @@ def sh(cmd: list[str]) -> None:
 
 def _pip_install() -> None:
     # P100 = sm_60: pin torch 2.5.1+cu121 (default image torch won't run on P100).
-    sh([sys.executable, "-m", "pip", "install", "-q",
-        "torch==2.5.1", "torchaudio==2.5.1",
-        "--index-url", "https://download.pytorch.org/whl/cu121"])
+    sh(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "torch==2.5.1",
+            "torchaudio==2.5.1",
+            "--index-url",
+            "https://download.pytorch.org/whl/cu121",
+        ]
+    )
     # pyannote 3.x (torch 2.5.1 does not run pyannote 4.x).
-    sh([sys.executable, "-m", "pip", "install", "-q",
-        "demucs", "silero-vad", "transformers", "soundfile", "pyannote.audio==3.*"])
+    sh(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "demucs",
+            "silero-vad",
+            "transformers",
+            "soundfile",
+            "pyannote.audio==3.*",
+        ]
+    )
 
 
 def get_hf_token() -> str | None:
@@ -78,8 +100,9 @@ def get_hf_token() -> str | None:
         return tok
     try:
         from kaggle_secrets import UserSecretsClient
+
         return UserSecretsClient().get_secret("HF_TOKEN")
-    except Exception as e:  # noqa: BLE001 — any failure => run without diarization
+    except Exception as e:
         print(f"[warn] no HF_TOKEN secret ({e}); diarization sẽ bị bỏ qua")
         return None
 
@@ -100,15 +123,26 @@ def stage_demucs(wav: Path, outdir: Path) -> Path:
     if voc16.exists():
         return voc16
     # demucs auto-uses CUDA when available; writes <out>/htdemucs/<stem>/vocals.wav
-    sh([sys.executable, "-m", "demucs", "--two-stems", "vocals", "-n", "htdemucs",
-        "-o", str(outdir / "demucs"), str(wav)])
+    sh(
+        [
+            sys.executable,
+            "-m",
+            "demucs",
+            "--two-stems",
+            "vocals",
+            "-n",
+            "htdemucs",
+            "-o",
+            str(outdir / "demucs"),
+            str(wav),
+        ]
+    )
     raw_voc = outdir / "demucs" / "htdemucs" / wav.stem / "vocals.wav"
     sh(["ffmpeg", "-y", "-i", str(raw_voc), "-ac", "1", "-ar", str(SR), str(voc16)])
     return voc16
 
 
-def _premerge_turns(turns: list[tuple[float, float, str]]
-                    ) -> list[tuple[float, float, str]]:
+def _premerge_turns(turns: list[tuple[float, float, str]]) -> list[tuple[float, float, str]]:
     """T1: merge adjacent same-speaker turns < PREMERGE_GAP apart (de-fragment pyannote)."""
     by_spk: dict[str, list[list[float]]] = {}
     for a, b, spk in turns:
@@ -127,8 +161,9 @@ def _premerge_turns(turns: list[tuple[float, float, str]]
     return out
 
 
-def turn_split(merged: list[list[float]], turns: list[tuple[float, float, str]]
-               ) -> list[tuple[float, float, str, float]]:
+def turn_split(
+    merged: list[list[float]], turns: list[tuple[float, float, str]]
+) -> list[tuple[float, float, str, float]]:
     """Split merged VAD regions at speaker-turn boundaries (before the 2-10 s split).
 
     Hybrid design (v2): single-speaker regions are kept intact (never shrunk); only
@@ -145,13 +180,12 @@ def turn_split(merged: list[list[float]], turns: list[tuple[float, float, str]]
           is never folded across.
     """
     DROP = "\x00drop"
-    OVL_MIN = 0.05      # s — ignore mere edge-touch when deciding a region's speakers
-    mturns = _premerge_turns(turns)                                          # T1
+    OVL_MIN = 0.05  # s — ignore mere edge-touch when deciding a region's speakers
+    mturns = _premerge_turns(turns)  # T1
     out: list[list] = []
     for rstart, rend in merged:
-        region_spk = {spk for a, b, spk in mturns
-                      if min(b, rend) - max(a, rstart) > OVL_MIN}
-        if len(region_spk) <= 1:                                             # T2
+        region_spk = {spk for a, b, spk in mturns if min(b, rend) - max(a, rstart) > OVL_MIN}
+        if len(region_spk) <= 1:  # T2
             out.append([rstart, rend, next(iter(region_spk), ""), MIN_UTT])
             continue
         # T3 — carve the multi-speaker region at turn edges
@@ -168,7 +202,7 @@ def turn_split(merged: list[list[float]], turns: list[tuple[float, float, str]]
             mid = (a + b) / 2
             spks = [spk for ts, te, spk in mturns if ts <= mid < te]
             seq.append([a, b, DROP if len(spks) >= 2 else (spks[0] if spks else "")])
-        resolved: list[list] = []                                           # fold "" gaps
+        resolved: list[list] = []  # fold "" gaps
         for i, (a, b, lab) in enumerate(seq):
             if lab != "":
                 resolved.append([a, b, lab])
@@ -188,16 +222,22 @@ def turn_split(merged: list[list[float]], turns: list[tuple[float, float, str]]
             else:
                 resolved.append([a, b, ""])
         for a, b, lab in resolved:
-            if lab != DROP and out and out[-1][2] == lab and out[-1][3] == MIN_UTT_TURN \
-                    and a - out[-1][1] < MERGE_GAP:
+            if (
+                lab != DROP
+                and out
+                and out[-1][2] == lab
+                and out[-1][3] == MIN_UTT_TURN
+                and a - out[-1][1] < MERGE_GAP
+            ):
                 out[-1][1] = b
             else:
                 out.append([a, b, lab, MIN_UTT_TURN])
     return [(a, b, spk, md) for a, b, spk, md in out if spk != DROP]
 
 
-def stage_vad(voc16: Path, outdir: Path,
-              turns: list[tuple[float, float, str]] | None = None) -> list[dict]:
+def stage_vad(
+    voc16: Path, outdir: Path, turns: list[tuple[float, float, str]] | None = None
+) -> list[dict]:
     segf = outdir / "segments.json"
     if segf.exists():
         return json.loads(segf.read_text(encoding="utf-8"))
@@ -215,8 +255,9 @@ def stage_vad(voc16: Path, outdir: Path,
             merged.append([r["start"], r["end"]])
 
     # turn-split BEFORE the 2-10 s split; fallback: whole region, empty speaker
-    pieces = turn_split(merged, turns) if turns is not None else [
-        (s, e, "", MIN_UTT) for s, e in merged]
+    pieces = (
+        turn_split(merged, turns) if turns is not None else [(s, e, "", MIN_UTT) for s, e in merged]
+    )
 
     segs: list[dict] = []
     for start, end, spk, min_dur in pieces:
@@ -226,8 +267,14 @@ def stage_vad(voc16: Path, outdir: Path,
         for i in range(n):
             s, e = start + i * step, start + (i + 1) * step
             if e - s >= min_dur:
-                segs.append({"id": f"seg{len(segs):05d}", "start": round(s, 2),
-                             "end": round(e, 2), "speaker": spk})
+                segs.append(
+                    {
+                        "id": f"seg{len(segs):05d}",
+                        "start": round(s, 2),
+                        "end": round(e, 2),
+                        "speaker": spk,
+                    }
+                )
     segf.write_text(json.dumps(segs, indent=1), encoding="utf-8")
     return segs
 
@@ -243,15 +290,40 @@ def stage_cut(src_wav: Path, segs: list[dict], outdir: Path) -> Path:
                 continue
             start = max(0.0, s["start"] - PAD)
             dur = (s["end"] + PAD) - start
-            sh(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{start:.2f}", "-t", f"{dur:.2f}",
-                "-i", str(src_wav), "-ac", "1", "-ar", str(SR), str(clip)])
+            sh(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-loglevel",
+                    "error",
+                    "-ss",
+                    f"{start:.2f}",
+                    "-t",
+                    f"{dur:.2f}",
+                    "-i",
+                    str(src_wav),
+                    "-ac",
+                    "1",
+                    "-ar",
+                    str(SR),
+                    str(clip),
+                ]
+            )
         done_flag.touch()
     with (outdir / "segments.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["id", "start", "end", "dur", "speaker", "clip"])
         for s in segs:
-            w.writerow([s["id"], s["start"], s["end"], round(s["end"] - s["start"], 2),
-                        s.get("speaker", ""), f"clips/{s['id']}.wav"])
+            w.writerow(
+                [
+                    s["id"],
+                    s["start"],
+                    s["end"],
+                    round(s["end"] - s["start"], 2),
+                    s.get("speaker", ""),
+                    f"clips/{s['id']}.wav",
+                ]
+            )
     return clip_dir
 
 
@@ -271,6 +343,7 @@ def stage_asr(clip_dir: Path, segs: list[dict], outdir: Path, model_id: str) -> 
         import torchcodec  # noqa: F401
     except Exception:
         import transformers.pipelines.automatic_speech_recognition as _asr_mod
+
         _asr_mod.is_torchcodec_available = lambda: False
 
     device = 0 if torch.cuda.is_available() else -1
@@ -322,8 +395,9 @@ def load_diar_turns(voc16: Path, outdir: Path, hf_token: str) -> list[tuple[floa
     return turns
 
 
-def write_speakers_csv(turns: list[tuple[float, float, str]], segs: list[dict],
-                       outdir: Path) -> None:
+def write_speakers_csv(
+    turns: list[tuple[float, float, str]], segs: list[dict], outdir: Path
+) -> None:
     with (outdir / "speakers.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["id", "n_speakers", "speakers"])
@@ -365,8 +439,13 @@ def write_report(outdir: Path, inp: Path, segs: list[dict], full_wav: Path) -> d
     )
     (outdir / "report.md").write_text(report, encoding="utf-8")
     print(report)
-    return {"ep": inp.name, "total_min": total / 60, "speech_min": speech / 60,
-            "n_utt": len(segs), "single": single}
+    return {
+        "ep": inp.name,
+        "total_min": total / 60,
+        "speech_min": speech / 60,
+        "n_utt": len(segs),
+        "single": single,
+    }
 
 
 def find_episodes(root: Path) -> list[Path]:
@@ -411,19 +490,27 @@ def main() -> None:
 
     summaries = [process(ep, out_root, hf_token, whisper) for ep in eps]
 
-    lines = ["# vnser-extract — batch summary", "",
-             "| ep | phút | thoại(phút) | yield | utt | đơn-nói |",
-             "|---|---:|---:|---:|---:|---:|"]
+    lines = [
+        "# vnser-extract — batch summary",
+        "",
+        "| ep | phút | thoại(phút) | yield | utt | đơn-nói |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
     tot_utt = tot_speech = 0.0
     for s in summaries:
         y = s["speech_min"] / s["total_min"] if s["total_min"] else 0.0
         single = f"{s['single']}/{s['n_utt']}" if s["single"] is not None else "—"
-        lines.append(f"| {s['ep']} | {s['total_min']:.1f} | {s['speech_min']:.1f} | "
-                     f"{y:.0%} | {s['n_utt']} | {single} |")
+        lines.append(
+            f"| {s['ep']} | {s['total_min']:.1f} | {s['speech_min']:.1f} | "
+            f"{y:.0%} | {s['n_utt']} | {single} |"
+        )
         tot_utt += s["n_utt"]
         tot_speech += s["speech_min"]
-    lines += ["", f"**Tổng: {len(summaries)} tập · {tot_speech / 60:.1f}h thoại sạch · "
-              f"{int(tot_utt)} utterance.**"]
+    lines += [
+        "",
+        f"**Tổng: {len(summaries)} tập · {tot_speech / 60:.1f}h thoại sạch · "
+        f"{int(tot_utt)} utterance.**",
+    ]
     summary = "\n".join(lines) + "\n"
     (out_root / "SUMMARY.md").write_text(summary, encoding="utf-8")
     print(summary)

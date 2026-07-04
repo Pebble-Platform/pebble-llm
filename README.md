@@ -1,89 +1,56 @@
-# Pebble Emotion Classifier
+# Pebble-LLM — ViEmoSpeech
 
-Multi-task fine-tuning of **NeoBERT** (`chandar-lab/NeoBERT`) into a self-hosted
-emotion classifier for Pebble's Decision Engine. The classifier runs *before*
-generation and emits structured scores from typed heads. **Gemini 2.5 Flash-Lite
-is the backup path.**
+**ViEmoSpeech**: xây corpus cảm xúc giọng nói tiếng Việt đầu tiên đạt đủ 4 tiêu chí —
+**nói tự do · đa lớp (+VA, +distress) · có lớp thanh điệu âm tiết · license rõ (CC-BY)** —
+từ phim truyền hình VN, bằng pipeline đo lường được; và bài báo phương pháp
+**tone×emotion bimodal SER** xây trên nó.
 
-> Full rationale, datasets, gates, timeline, and open questions live in
-> [`pebble-finetuning-strategy-v3.md`](./pebble-finetuning-strategy-v3.md).
-> Code references it by section (e.g. `§5.2`).
+> Intent & ràng buộc cứng: [`docs/intent/constraints.md`](docs/intent/constraints.md) ·
+> Quy trình làm việc: [`WORKFLOW.md`](WORKFLOW.md) ·
+> Thiết kế corpus: [`docs/papers/vietnamese-ser/04-pioneer-corpus-design.md`](docs/papers/vietnamese-ser/04-pioneer-corpus-design.md) ·
+> Kế hoạch scale: [`docs/papers/vietnamese-ser/05-scale-plan.md`](docs/papers/vietnamese-ser/05-scale-plan.md)
+>
+> **Pivot 2026-07-04:** các chương trình trước (text ordinal suicide-risk, voice
+> crisis affect, product classifier v1–v3) đã đóng băng tại [`archive/`](archive/)
+> — xem `archive/README.md`. Phương pháp luận của chúng (weak-label teachers +
+> gold nhỏ chuẩn + honest gold-holdout + kỷ luật provenance) là nền của chương trình này.
 
-## What it produces
-
-One structured output per message (strategy §2):
-
-```json
-{ "energy": 0.0, "severity": 0.0, "socialIsolation": 0.0,
-  "receptivity": 0.0, "detectedEmotion": "", "safetyFlag": false }
-```
-
-`themeRepetition` and `sessionTrajectory` are intentionally **not** model outputs —
-the Decision Engine computes those.
-
-## Layout
+## Pipeline (đã chứng minh trọn vẹn trên 1 tập phim — pilot ep01)
 
 ```
-configs/            Hydra-style YAML (data / model / training / serving) → loaded into typed pydantic Config
-src/pebble_llm/
-  config.py         Typed config loading
-  data/             taxonomy + GoEmotions mapping, silver-label ingestion, external loaders, user-level splits
-  models/           multi-task heads, NeoBERT wrapper, weighted multi-task loss
-  training/         staged trainer (encoder freeze → unfreeze), GoEmotions pre-training
-  evaluation/       §7 metrics + Protocol B target checks
-  serving/          FastAPI /classify, schemas, inference
-  utils/            seeding, logging / experiment tracking
-scripts/            prepare_dataset, run_pretrain, run_train, run_eval, export_onnx (Track B spike)
-annotation/         Protocol A/B, viability gates, annotator wellbeing
-data/               raw / interim / processed / external (gitignored — never commit)
-serving/            Dockerfile + serving notes (Track A GPU baseline)
-tests/              taxonomy, heads, losses, metrics, splits
-notebooks/          EDA only
+video tập phim
+  → Demucs (tách nhạc) → silero VAD → cắt tại ranh giới đổi người nói (pyannote turn-split v2)
+  → PhoWhisper ASR + align YouTube caption
+  → 2 LLM teacher gán nhãn (emotion 7 lớp + V/A + distress) + flag đa-giọng-theo-text
+  → weak pool: clip đơn-giọng-verified + nhãn + speaker id
 ```
 
-## Setup
+Số đo pilot (tập 35.6′): **155 utterance sạch / 8.6 phút**; κ 2-teacher **0.697**;
+điểm mù diarization đo được **11.4%**. Chi tiết: `docs/tasks/vn-tv-ser-pilot.md`.
 
-```bash
-uv sync --all-extras --dev    # or: make install
-cp .env.example .env          # fill in W&B / GCP / serving values
-pre-commit install
+## Cấu trúc
+
+| Đường dẫn | Vai trò |
+|---|---|
+| `docs/intent/` | Ràng buộc bất biến (I1–I6): media không bao giờ vào git/release, provenance nhãn, đơn-giọng, speaker-disjoint |
+| `docs/papers/vietnamese-ser/` | Scoping research + corpus design + scale plan |
+| `docs/tasks/` | Tracking docs + các implement plan đã thực thi (provenance) |
+| `scripts/vietnamese-ser/` | Pipeline local (extract / align / weak-label / prompt versioned) |
+| `kaggle/vietnamese-ser/` | Kernel batch GPU (P100, stack pin) |
+| `archive/` | Các chương trình tiền nhiệm, đóng băng — không lint, không sửa |
+
+## Chạy
+
+```powershell
+# env tooling
+uv sync --dev && make check
+
+# env pipeline (một lần) — xem scripts/vietnamese-ser/README.md
+uv venv .venv-vnser && .venv-vnser\Scripts\activate
+uv pip install demucs silero-vad "transformers[torch]" soundfile pyannote.audio
+
+# pilot 1 tập
+make pilot-extract EP=data/vietnamese-ser/raw/ep01.mp3 HF_TOKEN=hf_xxx
 ```
 
-> NeoBERT needs FlashAttention/xformers on **GPU** for training. Those deps are
-> commented out in `pyproject.toml` — install them on GPU hosts. Pin the model
-> `revision` and vendor the modeling code before any real run (§6.1 Step 0).
-
-## Workflow
-
-```bash
-make data       # ingest silver labels → splits (§5.5)        [stub: wire Firestore]
-make pretrain   # emotion head on GoEmotions (§6.1 Step 1)    [stub]
-make train      # multi-task fine-tune, ≥3 seeds (§6.1 Step 2)
-make eval       # Protocol B test set vs §7 targets
-make serve      # local FastAPI /classify
-make check      # ruff + mypy + pytest
-```
-
-## Status
-
-Scaffold with functional skeletons. **Implemented & tested:** taxonomy + GoEmotions
-mapping, multi-task heads, weighted loss, §7 metrics, user-level splitting, serving
-schemas/app shape. **TODO (marked in-code):** Firestore ingestion, GoEmotions
-pre-training loop, train eval/checkpointing, ONNX export spike, checkpoint loading
-in serving.
-
-## Hard gates before deploy (from the strategy)
-
-- No deployment without a completed **Protocol B** evaluation (§6.1 Step 5).
-- `safetyFlag` recall **≥ 0.95** or the classifier's safety output is supplementary only (§7).
-- 0.5–0.8 severity-band MAE ≤ 0.15 — else **do not deploy** (§8.3).
-- Energy/severity independence check before training; drop the energy head if |r| > 0.7 (§5.2).
-- Generator migration off Gemini 2.0 Flash before **2026-06-01** (OQ5).
-
----
-
-### ⚠️ Note on `.claude/CLAUDE.md`
-
-The committed `.claude/CLAUDE.md` describes a **TypeScript/pnpm/Biome** stack — that
-belongs to a different project and does not match this Python ML repo. It should be
-rewritten for this project (uv, ruff, mypy, pytest) or removed. Flagged, not changed.
+**Media tập phim và mọi output audio nằm trong `data/**` (gitignored) — không bao giờ commit.**

@@ -220,11 +220,12 @@ in draft; capability updated. **Cost:** ~3h GPU.
 
 ## Exit criteria for Tier 1 (from the parent plan)
 
-- [ ] T1.1 κ + confusion measured, in draft + capability doc
-- [ ] T1.2 baseline rows filled from logs, provenance updated
+- [ ] T1.1 κ + confusion measured, in draft + capability doc — **gold set recovered + script ready; blocked on gpt-5.4-mini `.env` credentials for the label step**
+- [x] T1.2 baseline rows filled from logs, provenance updated — done 2026-07-03
 - [ ] T1.3 groundedness pilot run, adopt/reject decision recorded
 - [ ] T1.4 B-Arm2 paired numbers (or explicitly deferred with quota reason)
-- [ ] T1.5 refs + protocol citation in, PDF re-exported
+- [~] T1.5 refs + protocol citation in (steps 1–3 done 2026-07-03); PDF: no
+  toolchain/export artifact exists in-repo → left, per plan's "do not invent"
 - [ ] Paper A is submit-ready except authors/affiliation
 
 ## Guardrails (repeat offenders — do not violate)
@@ -253,7 +254,49 @@ in draft; capability updated. **Cost:** ~3h GPU.
 
 ## Progress / Completed Work
 <!-- executor fills as it goes; keep timestamps absolute -->
+- **2026-07-03 — T1.2 DONE.** Extracted 5-fold gold-holdout metrics from the primary
+  logs (`r2-baseline-roberta/out/`, `r2-baseline-bilstm/out/`): plain-RoBERTa-CE
+  0.346 ±0.026 / Beh 0.169 / QWK 0.292; BiLSTM-MTL 0.378 ±0.014 / Beh 0.181 / QWK 0.396.
+  Numbers match the plan's ballpark and the log wins. Filled Table III (draft lines
+  324–325) + updated the caption's "to be filled" sentence. Provenance (`r2-method-
+  improvements-for-contribution.md` line 98) was already ✅ done. `grep TODO baseline`
+  in draft → clean.
+- **2026-07-03 — T1.1 gold overlap set RECOVERED + verified.** The gold eval set =
+  all `Source==cssrs500` rows (used whole as the fixed test each fold; StratifiedKFold
+  folds only the pool — no seeded gold sub-split, so no reproduction risk). Recovered
+  deterministically from the public Zenodo record 2667859 (CSSRS-500, CC-BY-4.0) via
+  `from_cssrs500 + _norm + within-source dedup`; class dist **[99,171,77,45]=392** —
+  exact match. Artifact: `data/finetuning-message/interim/kappa-gold-overlap/gold_overlap.jsonl`.
+- **2026-07-03 — T1.1 script WRITTEN:** `scripts/r2_kappa_gold_overlap.py`
+  (recover/label/report; reuses PROMPT + provider callers from `r2_llm_label.py`,
+  gold-parse from the same logic as `r2_build_dataset.py`). `recover` verified.
+  Report step computes quadratic (primary) / linear / unweighted κ, 4×4 confusion
+  (raw + row-norm), per-class recall, conf≥0.6 subset, and a 1000-resample bootstrap
+  CI. **Needs `pip install scikit-learn` into `.venv-voice` at report time.**
+- **2026-07-03 — T1.5 steps 1–3 DONE.** Added [T25] Triantafyllopoulos/Batliner/
+  Schuller 2025 (arXiv:2508.02448) to the eval-protocol §V-A (motivates multi-fold +
+  std + fixed-split) and [J25] Jordan et al. JMIR MH 2025 (dimensional/RDoC-HiTOP
+  grounding) to the Introduction's ordinal-framing. Expanded the `[TODO: expand refs]`
+  placeholder into 7 verified IEEE entries ([Ji22] MentalBERT, [Sq24], [YL25], [Pa25],
+  [Zh25], [Sh25], [DP24]) — authors/titles fetched from arXiv, not fabricated. Draft
+  `grep TODO` → only `[TODO κ]` (T1.1, blocked) + authors/affiliation (user-owned).
+  Step 4 (PDF): no LaTeX/pandoc/export tooling or prior PDF exists in-repo → left
+  per plan's "do not invent a new toolchain."
+- **2026-07-03 — T1.1 quota-blocked, substitute-model decision PENDING user.** The
+  gpt-5.4-mini subscription ran out of funds. Options surfaced (all $0): (A) Gemini
+  free tier `gemini-2.5-flash` — script already supports it, closest mini-tier proxy,
+  recommended; (B) local Ollama — NOT installed on this machine, needs setup + a new
+  caller; (C) ship κ as future-work. **Any substitute changes κ's interpretation and
+  MUST be stated in §IV** (plan L76–78). Ollama checked: absent. Awaiting user choice
+  + a Gemini key in `.env`.
+- **2026-07-03 — T1.1 BLOCKED on credentials.** The label step needs gpt-5.4-mini
+  access in a local `.env` (none on this machine). Provider default map → `azure`
+  (`LLM_PROVIDER=azure`, `LLM_MODEL=gpt-5.4-mini`, `AZURE_OPENAI_ENDPOINT`,
+  `AZURE_OPENAI_API_KEY`). Once `.env` exists, run:
+  `.venv-voice/Scripts/python.exe scripts/r2_kappa_gold_overlap.py --steps label report`
+  then fill draft §IV (~L231, L340) + fold into `label-quality.md`.
 
 ## Open Questions
-- [ ] Which exact LLM_MODEL produced the 9,680-pool labels? (Check `.env` history /
-  labeled.jsonl metadata; if undeterminable, ask the user before T1.1 step 2.)
+- [x] **RESOLVED 2026-07-03 — training pool used `gpt-5.4-mini`** (user-confirmed).
+  `labeled.jsonl` stores no model field; interpretation of κ is tied to this model
+  (state it in the paper §IV).

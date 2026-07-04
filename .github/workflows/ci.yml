@@ -28,8 +28,5 @@ jobs:
       - name: Format check
         run: uv run ruff format --check .
 
-      - name: Type check
-        run: uv run mypy src
-
-      - name: Tests
-        run: uv run pytest
+      # mypy/pytest return when the corpus invariant suite lands
+      # (docs/intent/invariants.md — first change under docs/spec/changes/).

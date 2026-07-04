@@ -50,7 +50,7 @@ def parse_youtube(path: Path) -> list[dict]:
         if not m:
             raise ValueError(f"caption line has no M:SS prefix: {raw[:60]!r}")
         start = int(m.group(1)) * 60 + int(m.group(2))
-        rest = raw[m.end():]
+        rest = raw[m.end() :]
         rest = MIN_PREFIX_RE.sub("", rest, count=1)
         rest = SEC_PREFIX_RE.sub("", rest, count=1)
         text = rest.strip()
@@ -161,8 +161,14 @@ def truncate(text: str, n: int = 80) -> str:
 
 
 M3_FLAGGED = [
-    "seg00010", "seg00018", "seg00034", "seg00045",
-    "seg00049", "seg00105", "seg00109", "seg00148",
+    "seg00010",
+    "seg00018",
+    "seg00034",
+    "seg00045",
+    "seg00049",
+    "seg00105",
+    "seg00109",
+    "seg00148",
 ]
 
 
@@ -193,20 +199,28 @@ def write_report(rows: list[dict], blocks: list[dict], path: Path) -> None:
     L: list[str] = []
     L.append("# M4b — PhoWhisper-base vs YouTube caption (chất lượng transcript)")
     L.append("")
-    L.append("> YouTube caption cũng là ASR (không phải gold), nhưng text tốt hơn PhoWhisper "
-             "(đúng dấu thanh + có dấu câu). Dùng làm reference tương đối để đo PhoWhisper-base.")
+    L.append(
+        "> YouTube caption cũng là ASR (không phải gold), nhưng text tốt hơn PhoWhisper "
+        "(đúng dấu thanh + có dấu câu). Dùng làm reference tương đối để đo PhoWhisper-base."
+    )
     L.append("")
     L.append("## 1. Parse caption")
     L.append("")
-    L.append(f"- Tổng block: **{n_blocks}** | speech: **{n_speech}** | non-speech "
-             f"(`[âm nhạc]`/`[Vỗ tay]`): **{n_non}**")
-    L.append(f"- Coverage: **{n_cov}/{len(rows)}** segment có ≥1 block YouTube "
-             f"(**{100*n_cov/len(rows):.1f}%**)")
+    L.append(
+        f"- Tổng block: **{n_blocks}** | speech: **{n_speech}** | non-speech "
+        f"(`[âm nhạc]`/`[Vỗ tay]`): **{n_non}**"
+    )
+    L.append(
+        f"- Coverage: **{n_cov}/{len(rows)}** segment có ≥1 block YouTube "
+        f"(**{100 * n_cov / len(rows):.1f}%**)"
+    )
     L.append("")
     L.append("## 2. Phân bố similarity (partial_ratio PhoWhisper↔YouTube, 0–100)")
     L.append("")
-    L.append(f"- n = {len(sims)} | mean = **{mean(sims):.1f}** | median = **{median(sims):.1f}** "
-             f"| p10 = {percentile(sims,10):.1f} | p25 = {percentile(sims,25):.1f}")
+    L.append(
+        f"- n = {len(sims)} | mean = **{mean(sims):.1f}** | median = **{median(sims):.1f}** "
+        f"| p10 = {percentile(sims, 10):.1f} | p25 = {percentile(sims, 25):.1f}"
+    )
     L.append("")
     L.append("| bin | count |")
     L.append("|---|---|")
@@ -217,8 +231,10 @@ def write_report(rows: list[dict], blocks: list[dict], path: Path) -> None:
     L.append("## 3. Proxy-WER (tập sạch: n_yt_blocks==1 & length-ratio 0.7–1.3)")
     L.append("")
     if pw:
-        L.append(f"- n = **{len(pw)}** | mean = **{mean(pw):.3f}** | median = **{median(pw):.3f}** "
-                 "(word-level normalized Levenshtein; ref=YouTube, hyp=PhoWhisper)")
+        L.append(
+            f"- n = **{len(pw)}** | mean = **{mean(pw):.3f}** | median = **{median(pw):.3f}** "
+            "(word-level normalized Levenshtein; ref=YouTube, hyp=PhoWhisper)"
+        )
     else:
         L.append("- tập sạch rỗng.")
     L.append("")
@@ -227,8 +243,10 @@ def write_report(rows: list[dict], blocks: list[dict], path: Path) -> None:
     L.append("| id | sim | PhoWhisper | YouTube |")
     L.append("|---|---|---|---|")
     for r in low15:
-        L.append(f"| {r['id']} | {fmt_sim(r['sim'])} | {truncate(r['text_phowhisper'])} "
-                 f"| {truncate(r['text_youtube'])} |")
+        L.append(
+            f"| {r['id']} | {fmt_sim(r['sim'])} | {truncate(r['text_phowhisper'])} "
+            f"| {truncate(r['text_youtube'])} |"
+        )
     L.append("")
     L.append("## 5. 8 đoạn đã flag ở M3 — YouTube có cứu được không?")
     L.append("")
@@ -239,8 +257,10 @@ def write_report(rows: list[dict], blocks: list[dict], path: Path) -> None:
         if not r:
             L.append(f"| {sid} | — | — | (không có segment) | |")
             continue
-        L.append(f"| {sid} | {fmt_sim(r['sim'])} | {r['n_yt_blocks']} "
-                 f"| {truncate(r['text_phowhisper'])} | {truncate(r['text_youtube'])} |")
+        L.append(
+            f"| {sid} | {fmt_sim(r['sim'])} | {r['n_yt_blocks']} "
+            f"| {truncate(r['text_phowhisper'])} | {truncate(r['text_youtube'])} |"
+        )
     L.append("")
     L.append("## 6. Verdict")
     L.append("")
@@ -259,7 +279,7 @@ def _verdict(sims: list[float], pw: list[float], n_cov: int, n_seg: int) -> list
         f"- Coverage YouTube {n_cov}/{n_seg} nên gần như mọi segment có 1 text reference tốt hơn "
         "để đối chiếu; nên **thay text PhoWhisper bằng text YouTube** ở các segment sim thấp "
         "(bảng mục 4) khi cần transcript sạch cho annotation/hiển thị.",
-        "- Các đoạn loop/lặp của PhoWhisper (vd \"hả hả hả\") được YouTube cứu rõ (mục 5) — đây là "
+        '- Các đoạn loop/lặp của PhoWhisper (vd "hả hả hả") được YouTube cứu rõ (mục 5) — đây là '
         "lý do chính nên giữ YouTube như nguồn text đối chiếu.",
         "- **Chưa cần chạy PhoWhisper-medium** cho pilot: text-base đủ tốt cho tín hiệu SER "
         "(nhãn cảm xúc không nhạy lỗi chính tả nhỏ), và ta đã có YouTube để vá các chỗ tệ nhất. "
@@ -291,13 +311,16 @@ def main() -> None:
     n_cov = sum(1 for r in rows if r["n_yt_blocks"] >= 1)
     sims = [r["sim"] for r in rows if r["sim"] is not None]
     pw = proxy_wer(rows)
-    print(f"blocks={len(blocks)} speech={n_speech} non_speech={len(blocks)-n_speech}")
-    print(f"coverage={n_cov}/{len(rows)} ({100*n_cov/len(rows):.1f}%)")
+    print(f"blocks={len(blocks)} speech={n_speech} non_speech={len(blocks) - n_speech}")
+    print(f"coverage={n_cov}/{len(rows)} ({100 * n_cov / len(rows):.1f}%)")
     print(f"sim: n={len(sims)} mean={mean(sims):.1f} median={median(sims):.1f}")
-    print(f"proxy_wer: n={len(pw)} mean={mean(pw):.3f} median={median(pw):.3f}"
-          if pw else "proxy_wer: empty")
-    print(f"wrote {pilot_dir/'transcripts_yt.csv'}")
-    print(f"wrote {pilot_dir/'m4b_wer_report.md'}")
+    print(
+        f"proxy_wer: n={len(pw)} mean={mean(pw):.3f} median={median(pw):.3f}"
+        if pw
+        else "proxy_wer: empty"
+    )
+    print(f"wrote {pilot_dir / 'transcripts_yt.csv'}")
+    print(f"wrote {pilot_dir / 'm4b_wer_report.md'}")
 
 
 if __name__ == "__main__":
