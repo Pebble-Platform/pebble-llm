@@ -2,7 +2,7 @@
 IEEE Bài 1 — DRAFT (Markdown; convert IEEEtran sau).
 Tracking: docs/tasks/ieee-paper-text-message.md · Plan: PAPER-PLAN-text-ordinal-suicide.md
 Provenance mọi số: docs/tasks/r2-method-improvements-for-contribution.md (slug@version → log).
-[TODO κ] và [TODO baseline] = chưa có số, KHÔNG bịa.
+[TODO κ] = chưa có số, KHÔNG bịa (baseline rows đã điền từ log 2026-07-03).
 -->
 
 # Weakly-Supervised Augmentation for Ordinal Suicide-Risk Classification on Social Media: An Honest Gold-Holdout Study
@@ -50,7 +50,10 @@ increasingly disclose ideation on social media before any clinical contact.
 Automated screening of such text could route users to help earlier. The
 clinically meaningful target is not a binary "risk/no-risk" flag but an
 **ordinal severity** on the C-SSRS: *Indicator* < *Ideation* < *Behavior* <
-*Attempt*. Two properties make this hard. First, the labels are ordinal:
+*Attempt*. Treating mental-health risk as a graded severity continuum rather than
+a binary flag is consistent with dimensional models of psychopathology (RDoC/HiTOP)
+and with how automated mental-health screening is surveyed across modalities [J25].
+Two properties make this hard. First, the labels are ordinal:
 mistaking *Behavior* for *Ideation* (adjacent) is less wrong than mistaking it
 for *Indicator* (distant), so flat classification losses that ignore rank are
 mis-specified. Second, **clinician-labeled gold data are scarce** — the public
@@ -252,7 +255,9 @@ MentalRoBERTa-derived encoder; 5-fold subject-level CV; effective batch 16;
 GPU stack for reproducibility. Metrics: macro-F1, quadratic-weighted κ (QWK),
 MAE, and per-class F1 (I6: ordinal metrics reported alongside F1). Every number
 traces to a Kaggle kernel `slug@version` + log (provenance table in the tracking
-doc). We report mean ± std over folds.
+doc). We report mean ± std over folds. Single-run rankings on such tasks are
+unstable and "progress" claims are comparison-set-dependent [T25]; our multi-fold,
+fixed subject-level split with reported std guards against both.
 
 ### B. Three evaluation protocols (exposing circularity)
 
@@ -321,16 +326,16 @@ target.
 
 | Model | Macro-F1 | Behavior-F1 | QWK |
 |---|:--:|:--:|:--:|
-| plain-RoBERTa-CE (mean-pool, no ordinal) | `[TODO baseline]` | `[TODO]` | `[TODO]` |
-| BiLSTM-MTL (paper baseline, our split) | `[TODO baseline]` | `[TODO]` | `[TODO]` |
+| plain-RoBERTa-CE (mean-pool, no ordinal) | 0.346 | 0.169 | 0.292 |
+| BiLSTM-MTL (paper baseline, our split) | 0.378 | 0.181 | 0.396 |
 | Dual-head CORAL+Focal | 0.385 | 0.183 | 0.398 |
 | flat-CE | 0.422 | 0.285 | 0.388 |
 | **CORN+GCE (ours)** | 0.402 | 0.260 | 0.361 |
 
-Both baselines are running on an identical split/seed via the same env-gated
-codebase (`R2_SEQ_MODEL = mean | bilstm`); numbers to be filled on completion.
-The reference reports BiLSTM-MTL macro-F1 0.419 *within-distribution* — not
-comparable to our gold-holdout column.
+Both baselines were trained on an identical split/seed via the same env-gated
+codebase (`R2_SEQ_MODEL = mean | bilstm`); values are 5-fold gold-holdout means
+(RoBERTa macro-F1 std 0.026, BiLSTM 0.014). The reference reports BiLSTM-MTL
+macro-F1 0.419 *within-distribution* — not comparable to our gold-holdout column.
 
 ---
 
@@ -400,9 +405,32 @@ a real gated encoder.
   supervision," *VLDB*, 2017.
 - [H15] G. Hinton, O. Vinyals, J. Dean, "Distilling the knowledge in a neural
   network," *NeurIPS DL Workshop*, 2015.
-- [refs 12, 14–17, 04, 13] MentalBERT/RoBERTa and C-SSRS systems — see
-  `docs/papers/finetuning-message/` notes 12, 14–17, 04, 13. `[TODO: expand to
-  full IEEE citations]`
+- [T25] A. Triantafyllopoulos, A. Batliner, B. W. Schuller, "Charting 15 Years of
+  Progress in Deep Learning for Speech Emotion Recognition: A Replication Study,"
+  arXiv:2508.02448, 2025.
+- [J25] E. Jordan, R. Terrisse, V. Lucarini, M. Alrahabi, M.-O. Krebs, J. Desclés,
+  C. Lemey, "Speech Emotion Recognition in Mental Health: A Systematic Review of
+  Voice-Based Applications," *JMIR Mental Health*, vol. 12, e74260, 2025.
+- [Ji22] S. Ji, T. Zhang, L. Ansari, J. Fu, P. Tiwari, E. Cambria, "MentalBERT:
+  Publicly Available Pretrained Language Models for Mental Healthcare," *LREC*,
+  2022. (arXiv:2110.15621)
+- [Sq24] M. Squires, X. Tao, S. Elangovan, U. R. Acharya, R. Gururajan, H. Xie,
+  X. Zhou, "Enhancing Suicide Risk Detection on Social Media through
+  Semi-Supervised Deep Label Smoothing," arXiv:2405.05795, 2024.
+- [YL25] Z. Yang, R. Leonard, H. Tran, R. Driscoll, C. Davis, "Detection of
+  Suicidal Risk on Social Media: A Hybrid Model," arXiv:2505.23797, 2025.
+- [Pa25] A. Patil, S. Tao, A. Gedhu, "Evaluating Reasoning LLMs for Suicide
+  Screening with the Columbia-Suicide Severity Rating Scale," arXiv:2505.13480,
+  2025. (r/SuicideWatch C-SSRS; code av9ash/llm_cssrs_code)
+- [Zh25] S. Zheng, Y. Tao, T. Zhou, "RSD-15K: A Large-Scale User-Level Annotated
+  Dataset for Suicide Risk Detection on Social Media," *IEEE ICME*, 2025.
+  (DOI 10.1109/ICME52785.2025.11108158; arXiv:2507.11559)
+- [Sh25] A. Shvets, "Emo Pillars: Knowledge Distillation to Support Fine-Grained
+  Context-Aware and Context-Less Emotion Classification," *Findings of ACL*,
+  2025. (arXiv:2504.16856)
+- [DP24] F. Di Palo, P. Singhi, B. Fadlallah, "Performance-Guided LLM Knowledge
+  Distillation for Efficient Text Classification at Scale," *EMNLP (Industry
+  Track)*, 2024. (arXiv:2411.05045)
 - CORN/GCE/CORAL/Focal/Snorkel/Confident-Learning/Class-Balanced per-paper
   analyses: notes 45–51 in `docs/papers/finetuning-message/`.
 

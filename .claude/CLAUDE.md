@@ -1,16 +1,18 @@
-# Pebble-LLM — Ordinal Suicide-Risk research
+# Pebble-LLM — ViEmoSpeech (Vietnamese SER corpus & bimodal tone×emotion)
 
-A **research repo** (Python · `uv` · `ruff`/`mypy`/`pytest`), not a product build.
-It asks whether LLM weak labels *honestly* augment a scarce clinical gold set for
-**ordinal** suicide-risk classification, and produces an IEEE paper plus the
-experiment infrastructure behind it. The single most important constraint:
-**gold-holdout — never report a metric trained and evaluated on the same label
-source** (within-LLM 0.67 ≠ honest gold 0.385).
+A **research repo** (Python · `uv` · `ruff`), not a product build. It builds
+**ViEmoSpeech** — the first Vietnamese speech-emotion corpus that is
+free-content, multi-class (+V/A, +distress), syllable-tone-annotated, and
+clearly licensed (CC-BY) — extracted from VN TV drama by a measured pipeline,
+plus the tone×emotion bimodal SER method paper on top. The single most
+important constraint: **copyrighted episode media, clips, and full transcripts
+never enter git and never get released** — releases are features + timestamps +
+labels + speaker ids only.
 
 > This file is a loader. Full rules: [`WORKFLOW.md`](../WORKFLOW.md).
-> It previously described a TypeScript/pnpm/Biome/`AGENTS.md` stack — a
-> wrong-project artifact flagged in `README.md`; removed at IDD init. The
-> correct Python tooling lives in `WORKFLOW.md` → Tooling.
+> **Pivot 2026-07-04:** the prior programs (ordinal suicide-risk text, crisis
+> voice affect, product classifier v1–v3) are frozen in `archive/` — see
+> `archive/README.md`. Never edit or lint archive content; read it as history.
 
 ## How this repo is organized (three-layer intent-driven workflow)
 
@@ -21,7 +23,7 @@ The change discipline for a file is determined by its directory:
 | Intent | `docs/intent/` | Rarely; explicit human decision only. Never edit as a side effect of a code/spec change. |
 | Spec — state | `docs/spec/capabilities/` | Current truth per capability; a behavior/result change updates it in the same PR. |
 | Spec — change | `docs/spec/changes/NNN-*/` | One folder per unit of work / experiment round; immutable once shipped. `docs/spec/decisions/` holds ADRs. |
-| Execution | `src/pebble_llm/`, `kaggle/`, `scripts/`, `tests/` | Derived; must satisfy the layers above or it doesn't land. |
+| Execution | `scripts/vietnamese-ser/`, `kaggle/vietnamese-ser/` | Derived; must satisfy the layers above or it doesn't land. |
 
 **Ambiguity escalates up, never gets improvised downward.** If the spec doesn't
 answer a question, fix the spec before coding. If it can't answer without knowing
@@ -30,22 +32,26 @@ than no number.
 
 ## Hard constraints (always binding — full list in `docs/intent/`)
 
-- **Gold-holdout always:** train on weak/LLM labels, evaluate on held-out clinical gold; the pools are disjoint by example.
-- **Subject-level integrity:** splits/folds by user, never by post (same user ⇒ same split).
-- **Reproducible by construction:** pinned Kaggle stack + fixed seed + multi-fold with std; every headline number traces to a kernel + log.
-- **Clinical-data ethics:** suicide-risk corpora are de-identified and **never committed** (`data/**` stays gitignored); provenance documented.
-- The invariants in `docs/intent/invariants.md` (I1–I6) are mirrored by the permanent `tests/invariants/` suite; a PR that breaks one is wrong by definition.
+- **Media legality:** episode files/clips/full transcripts never committed, never released (`data/**` gitignored); releasable artifact = features + timestamps + labels + speaker ids, CC-BY.
+- **Single-speaker by construction:** clips cut at (VAD ∩ speaker-turn); dual-teacher text OR-flag drops merged-voice suspects.
+- **Speaker-disjoint splits:** by speaker, never by clip; gold speakers ∩ weak pool = ∅.
+- **Honest weak supervision:** ≥2 independent teachers with recorded disagreement; teacher-agreement κ is never reported as accuracy; headline claims need held-out human gold.
+- **Provenance:** every label row carries its model ID; the prompt is pinned at `scripts/vietnamese-ser/m4_prompt.md`; every number traces to a generated report.
+- The invariants in `docs/intent/invariants.md` (I1–I6) get a permanent test suite (first change under `docs/spec/changes/`); a PR that breaks one is wrong by definition.
 
 ## Before working
 
 1. Read `docs/intent/constraints.md` (short) — the constraints that bound any valid result.
-2. Read the change folder you're working in under `docs/spec/changes/` — its exit criteria + Verification table are the success criteria.
-3. Check the touched files in `docs/spec/capabilities/`; a behavior/result change updates them in the same PR.
+2. Read `docs/tasks/vn-tv-ser-pilot.md` — the living tracking doc with all measured numbers, and `docs/spec/capabilities/extraction-pipeline.md` — current pipeline truth.
+3. A behavior/result change updates the capability file in the same PR.
 
 ## Tooling
 
-`make check` = `ruff` + `mypy` + `pytest` (Python ≥ 3.11, `uv`). GPU runs use the
-pinned Kaggle stack — see `WORKFLOW.md` → Tooling. **Never pnpm/npm/Biome.**
+`make check` = `ruff` lint + format-check (archive/ excluded). Pipeline deps live
+in the dedicated `.venv-vnser` (+ `sitecustomize.py` torchaudio→soundfile shim,
+`PYTHONPATH=scripts/vietnamese-ser`); GPU batch = pinned Kaggle stack
+(torch 2.5.1+cu121, pyannote **3.x** with `use_auth_token=` — local uses 4.x
+`token=`). Windows console: always `PYTHONIOENCODING=utf-8`. **Never pnpm/npm/Biome.**
 
 ## Skills
 

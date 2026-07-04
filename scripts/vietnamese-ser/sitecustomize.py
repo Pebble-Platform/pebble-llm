@@ -36,21 +36,43 @@ def _install() -> None:
     import soundfile as sf
     import torch
 
-    _subtype = {(16, "PCM_S"): "PCM_16", (24, "PCM_S"): "PCM_24",
-                (32, "PCM_S"): "PCM_32", (32, "PCM_F"): "FLOAT"}
+    _subtype = {
+        (16, "PCM_S"): "PCM_16",
+        (24, "PCM_S"): "PCM_24",
+        (32, "PCM_S"): "PCM_32",
+        (32, "PCM_F"): "FLOAT",
+    }
 
-    def load(uri, frame_offset=0, num_frames=-1, normalize=True,
-             channels_first=True, format=None, buffer_size=4096, backend=None):
-        data, sr = sf.read(str(uri), start=frame_offset,
-                           frames=num_frames, dtype="float32", always_2d=True)
+    def load(
+        uri,
+        frame_offset=0,
+        num_frames=-1,
+        normalize=True,
+        channels_first=True,
+        format=None,
+        buffer_size=4096,
+        backend=None,
+    ):
+        data, sr = sf.read(
+            str(uri), start=frame_offset, frames=num_frames, dtype="float32", always_2d=True
+        )
         wav = torch.from_numpy(data.T.copy())  # (channels, frames)
         if not channels_first:
             wav = wav.t()
         return wav, sr
 
-    def save(uri, src, sample_rate, channels_first=True, format=None,
-             encoding=None, bits_per_sample=None, buffer_size=4096, backend=None,
-             compression=None):
+    def save(
+        uri,
+        src,
+        sample_rate,
+        channels_first=True,
+        format=None,
+        encoding=None,
+        bits_per_sample=None,
+        buffer_size=4096,
+        backend=None,
+        compression=None,
+    ):
         wav = src.detach().cpu()
         if channels_first:
             wav = wav.t()  # soundfile wants (frames, channels)
