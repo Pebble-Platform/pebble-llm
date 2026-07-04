@@ -134,7 +134,29 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   gần giữ nguyên ước tính 23.8h của 05-scale-plan. Output verify:
   `ep01-turnsplit2/` (v1 giữ ở `ep01-turnsplit/` làm chứng cứ so sánh).
 
+- 2026-07-04 — Tải dữ liệu scale (Về nhà đi con):
+  `scripts/vietnamese-ser/download_youtube.py` (yt-dlp, cài trong `.venv-vnser`).
+  Map số tập từ TITLE (`Tập N`), KHÔNG theo playlist-index — playlist này **đảo
+  ngược** (index 1 = Tập 85 … index 85 = Tập 01), `--playlist-items 2-10` sẽ sai.
+  Đã tải **Tập 02–10** → `data/vietnamese-ser/raw/ve-nha-di-con/epNN.mp3` (+ VN
+  caption `epNN.vi.srt` — series NÀY CÓ phụ đề vi thật, nguồn text tốt hơn
+  PhoWhisper, khớp quyết định M4b) + `.download-archive.txt` (resume). exit 0,
+  9/9 mp3 + 9/9 srt. Lưu ý: Tập 01 = `ep01.mp3` đã xử lý = video `8U5jz8uE2bA`.
+
+- [x] **M4c XONG (2026-07-04) — weak-label vòng 2 + text-filter điểm mù diarization
+  (báo cáo: `ep01-turnsplit2/m4c_report.md`):** prompt v2 thêm
+  `multi_speaker_suspect` (LLM đọc ngữ nghĩa lượt lời, có anti-pattern "mày/tao
+  một người quát"); ASR 175 clip (fix torchcodec sync từ kernel về
+  `pilot_extract.py`) + align YouTube (bỏ hardcode 158). Kết quả:
+  **κ vòng 2 = 0.697 (từ 0.584)** — xác nhận định lượng turn-split cải thiện chất
+  lượng đơn vị dữ liệu; **điểm mù diarization đo được: 20/175 = 11.4%** (OR 2
+  teacher; Opus nhạy hơn 19 vs 7); **weak-pool ep01 sạch cuối: 155 utt / 8.6
+  phút** (đơn-giọng audio + text-verified + nhãn 2 teacher). Distress đồng thuận:
+  4 đoạn. Chiếu P1: **~18.6k utt train-ready / ~17h** sau mọi tầng lọc.
+
 ## Remaining Action Items
+- [ ] Chạy pipeline cho Tập 02–10 (`ve-nha-di-con/epNN.mp3`) — cân nhắc dùng
+  `--turn-split --hf-token` + nạp `epNN.vi.srt` làm nguồn text thay ASR.
 - [x] ~~User đặt tập vào `data/vietnamese-ser/raw/`~~ → `ep01.mp3` đã có, chạy xong.
 - [x] ~~Chạy `pilot_extract.py` → report.md~~ → yield 33%, GO.
 - [x] ~~Đọc mẫu ~20 đoạn~~ → transcript mạch lạc, ghi vào M3 / Open Questions.

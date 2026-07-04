@@ -53,6 +53,7 @@ class SegLabel(BaseModel):
     arousal: Literal[1, 2, 3, 4, 5]
     distress: bool
     confidence: float
+    multi_speaker_suspect: bool
 
 
 class ChunkLabels(BaseModel):
@@ -108,12 +109,12 @@ def main() -> None:
         results[name] = labels
         with (outdir / f"labels_{name}.csv").open("w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["id", "model", "emotion", "valence", "arousal", "distress", "confidence"])
+            w.writerow(["id", "model", "emotion", "valence", "arousal", "distress", "confidence", "multi_speaker_suspect"])
             for r in rows:
                 lab = labels.get(r["id"])
                 if lab:
                     w.writerow([lab.id, model_id, lab.emotion, lab.valence, lab.arousal,
-                                lab.distress, f"{lab.confidence:.2f}"])
+                                lab.distress, f"{lab.confidence:.2f}", lab.multi_speaker_suspect])
 
     # report
     lines = [f"# M4 weak-label report — {args.transcripts}", ""]

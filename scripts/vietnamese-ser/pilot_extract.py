@@ -216,14 +216,25 @@ def stage_asr(clip_dir: Path, segs: list[dict], outdir: Path, model_id: str) -> 
     out = outdir / "transcripts.csv"
     if out.exists():
         return out
+    import soundfile as sf
     import torch
     from transformers import pipeline
+
+    # transformers' ASR preprocess does an unconditional `import torchcodec` when the
+    # package is merely installed; its DLLs don't load on this box, which crashes ASR.
+    # We only ever pass raw arrays, so disable the branch when torchcodec can't load.
+    try:
+        import torchcodec  # noqa: F401
+    except Exception:
+        import transformers.pipelines.automatic_speech_recognition as _asr_mod
+        _asr_mod.is_torchcodec_available = lambda: False
 
     device = 0 if torch.cuda.is_available() else -1
     asr = pipeline("automatic-speech-recognition", model=model_id, device=device)
     rows = []
     for i, s in enumerate(segs):
-        text = asr(str(clip_dir / f"{s['id']}.wav"))["text"].strip()
+        wav, sr = sf.read(str(clip_dir / f"{s['id']}.wav"), dtype="float32")
+        text = asr({"raw": wav, "sampling_rate": sr})["text"].strip()
         rows.append([s["id"], s["start"], s["end"], text])
         if (i + 1) % 25 == 0:
             print(f"  asr {i + 1}/{len(segs)}")
