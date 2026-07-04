@@ -138,20 +138,25 @@ def main() -> None:
             print(f">> {ep}: extract ({'turn-split' if hf_token else 'fallback VAD'})")
             subprocess.run(cmd, check=True, env=env)
             if caption.exists() and not args.skip_asr:
-                subprocess.run(
-                    [
-                        "uv",
-                        "run",
-                        "--with",
-                        "rapidfuzz",
-                        "python",
-                        str(ROOT / "scripts" / "vietnamese-ser" / "align_youtube.py"),
-                        "--pilot-dir",
-                        str(outdir),
-                    ],
-                    check=True,
-                    env=env,
-                )
+                # align failing must not kill the batch — extract (the expensive
+                # part) is already done and cached; align can be re-run cheaply.
+                try:
+                    subprocess.run(
+                        [
+                            "uv",
+                            "run",
+                            "--with",
+                            "rapidfuzz",
+                            "python",
+                            str(ROOT / "scripts" / "vietnamese-ser" / "align_youtube.py"),
+                            "--pilot-dir",
+                            str(outdir),
+                        ],
+                        check=True,
+                        env=env,
+                    )
+                except subprocess.CalledProcessError as e:
+                    print(f"!! {ep}: align lỗi (exit {e.returncode}) — extract vẫn OK, đi tiếp")
 
         segf = outdir / "segments.csv"
         if segf.exists():

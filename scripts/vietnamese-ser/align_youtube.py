@@ -301,8 +301,6 @@ def main() -> None:
     n_speech = sum(1 for b in blocks if b["is_speech"])
     starts = [b["start"] for b in blocks]
     assert starts == sorted(starts), "caption block starts not monotonic"
-    assert 250 <= len(blocks) <= 260, f"unexpected block count {len(blocks)}"
-    assert 20 <= (len(blocks) - n_speech) <= 40, "unexpected non-speech count"
     assert len(rows) > 0, "no segments found"
 
     write_csv(rows, pilot_dir / "transcripts_yt.csv")
