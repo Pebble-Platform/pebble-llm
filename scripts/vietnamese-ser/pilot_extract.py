@@ -46,7 +46,11 @@ def sh(cmd: list[str]) -> None:
 def stage_audio(inp: Path, outdir: Path) -> Path:
     wav = outdir / "audio_full.wav"
     if not wav.exists():
-        sh(["ffmpeg", "-y", "-i", str(inp), "-vn", "-ac", "1", "-ar", str(SR), str(wav)])
+        # atomic: write tmp then rename — "exists" must always mean "complete"
+        # (a killed ffmpeg once left a truncated wav that poisoned every later stage)
+        tmp = outdir / "audio_full.tmp.wav"
+        sh(["ffmpeg", "-y", "-i", str(inp), "-vn", "-ac", "1", "-ar", str(SR), str(tmp)])
+        tmp.replace(wav)
     return wav
 
 
@@ -70,7 +74,9 @@ def stage_demucs(wav: Path, outdir: Path) -> Path:
         ]
     )
     raw_voc = outdir / "demucs" / "htdemucs" / wav.stem / "vocals.wav"
-    sh(["ffmpeg", "-y", "-i", str(raw_voc), "-ac", "1", "-ar", str(SR), str(voc16)])
+    tmp = outdir / "vocals_16k.tmp.wav"
+    sh(["ffmpeg", "-y", "-i", str(raw_voc), "-ac", "1", "-ar", str(SR), str(tmp)])
+    tmp.replace(voc16)
     return voc16
 
 
