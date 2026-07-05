@@ -216,3 +216,16 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
 - **Open question mới — recap giữa các tập:** ep02 mở đầu bằng recap cảnh ep01
   (trùng nguyên văn thoại). Khi gộp corpus cần cơ chế khử trùng lặp xuyên tập
   (text-match giữa các ep liền kề, hoặc bỏ ~90s đầu mỗi tập) — quyết ở batch 1.
+
+## Labeling ep02–05 + Kaggle dataset pilot (2026-07-05)
+- **8 subagent (Opus+Sonnet × ep02–05) gán nhãn xong**, 877 utt tổng (cùng ep01):
+  κ theo tập = 0.697 / 0.554 / 0.485 / 0.513 / 0.650 (mean ~0.58 — dao động theo
+  nội dung tập; so sánh cùng-tập ep01 0.584→0.697 vẫn là bằng chứng turn-split);
+  OR-flag đa-giọng 55/877 (6.3%) → **clean 822 (94%)**; consensus emotion 627 (72%);
+  distress OR 24. Pattern lặp: Opus flag nhạy hơn Sonnet (vd ep05: 9 vs 0).
+- **Kaggle dataset PRIVATE đã push:** `phatneurondai/viemospeech-pilot`
+  (877 clips 16kHz + manifest.csv hợp nhất [2 teacher + consensus + is_clean]
+  + README; script: `scripts/vietnamese-ser/build_kaggle_dataset.py`).
+  Media là derivative có bản quyền → intent I1: KHÔNG BAO GIỜ chuyển public.
+- Còn lại: ep06–08 đã extract chưa label; ep09–10 đang extract (detached batch);
+  bước kế: kernel training pilot (WavLM probe trên is_clean + emotion_consensus).
