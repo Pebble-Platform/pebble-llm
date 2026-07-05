@@ -154,9 +154,17 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   phút** (đơn-giọng audio + text-verified + nhãn 2 teacher). Distress đồng thuận:
   4 đoạn. Chiếu P1: **~18.6k utt train-ready / ~17h** sau mọi tầng lọc.
 
+- 2026-07-05 — Tải bộ 2 (Chạy Trốn Thanh Xuân): tổng quát
+  `download_youtube.py` sang **numbering `Tập X.Y`** (key = tuple `(tập, phần)`,
+  chọn range bằng so sánh tuple → `1.1-3.2` phủ đúng 8 video kể cả 1.3/2.3; range
+  int `2-10` cũ vẫn chạy). Tải **Tập 1.1–3.2** → `chay-tron-thanh-xuan/epNN_P.mp3`
+  (8/8 mp3 + 8/8 srt vi, exit 0). Playlist cũng đảo ngược (1.1 ở cuối) — map theo
+  title xử lý tự động. Phần ngắn (~13–22 phút/video).
+
 ## Remaining Action Items
 - [ ] Chạy pipeline cho Tập 02–10 (`ve-nha-di-con/epNN.mp3`) — cân nhắc dùng
   `--turn-split --hf-token` + nạp `epNN.vi.srt` làm nguồn text thay ASR.
+- [ ] Chạy pipeline cho `chay-tron-thanh-xuan/epNN_P.mp3` (8 phần, 1.1–3.2).
 - [x] ~~User đặt tập vào `data/vietnamese-ser/raw/`~~ → `ep01.mp3` đã có, chạy xong.
 - [x] ~~Chạy `pilot_extract.py` → report.md~~ → yield 33%, GO.
 - [x] ~~Đọc mẫu ~20 đoạn~~ → transcript mạch lạc, ghi vào M3 / Open Questions.
@@ -242,3 +250,10 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   ep08 = tập giàu distress nhất (cha bạo hành: Opus 16 vs Sonnet 17 — hội tụ độc lập).
 - **Kaggle dataset v2 đã push:** `phatneurondai/viemospeech-pilot` (PRIVATE) —
   1,638 clips + manifest hợp nhất. Sẵn sàng cho kernel training pilot.
+
+## Định nghĩa "tập hoàn thành" (user chốt, 2026-07-05)
+Một tập/phần chỉ được tính HOÀN THÀNH khi đủ CẢ BA: (1) extract (segments +
+clips + transcripts), (2) align caption (`transcripts_yt.csv`), (3) **label
+2-teacher validate xong** (`labels_opus.csv` + `labels_sonnet.csv` đủ dòng,
+đúng enum). Extract-xong-chưa-label = "đang làm dở". Vận hành: label rolling —
+phần nào extract xong thì spawn 2 teacher ngay, không đợi trọn batch.

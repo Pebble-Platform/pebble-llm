@@ -37,6 +37,11 @@
 | Similarity PhoWhisper↔YouTube | mean 87.2 / median 90.5 (base đủ, không cần -medium) |
 | Chiếu scale P1 (3 bộ/120 tập) | ~18.6k utt train-ready / ~17h |
 
+## Tiêu chí hoàn thành một tập (định nghĩa vận hành)
+
+Extract + align + **label 2-teacher validated** — thiếu label là chưa xong
+(quyết định user 2026-07-05). Label chạy rolling theo từng tập/phần.
+
 ## Biên đã biết (không phải bug)
 
 - Diarization mù với 2 giọng rất giống nhau (nữ-nữ) → tầng text-flag tồn tại vì
