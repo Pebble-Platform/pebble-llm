@@ -229,3 +229,16 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   Media là derivative có bản quyền → intent I1: KHÔNG BAO GIỜ chuyển public.
 - Còn lại: ep06–08 đã extract chưa label; ep09–10 đang extract (detached batch);
   bước kế: kernel training pilot (WavLM probe trên is_clean + emotion_consensus).
+
+## Corpus 10 tập hoàn chỉnh + Kaggle dataset v2 (2026-07-05)
+- **Extract batch 10/10 xong** (detached run): 1,638 utt / 92.9 phút đơn-giọng,
+  trung bình 164 utt / 9.3 phút/tập (range 123–212). Chiếu P1-120 tập:
+  ~19.7k utt / 18.6h → ~18.5k clean — khớp dự phóng ep01.
+- **Label 2-teacher đủ 10/10 tập** (18 subagent tổng): 1,638 utt →
+  **clean 1,555 (95%)** · consensus 1,198 (73%) · distress-OR 71.
+  κ per-tập 0.485–0.697, **mean 0.610**. Phân bố consensus-clean:
+  neutral 581 · anger 239 · joy 135 · sadness 98 · fear 68 · disgust 6 · surprise 4
+  (2 lớp hiếm — sẽ là thách thức train, đúng kỳ vọng phim gia đình).
+  ep08 = tập giàu distress nhất (cha bạo hành: Opus 16 vs Sonnet 17 — hội tụ độc lập).
+- **Kaggle dataset v2 đã push:** `phatneurondai/viemospeech-pilot` (PRIVATE) —
+  1,638 clips + manifest hợp nhất. Sẵn sàng cho kernel training pilot.
