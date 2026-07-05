@@ -157,14 +157,21 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
 - 2026-07-05 — Tải bộ 2 (Chạy Trốn Thanh Xuân): tổng quát
   `download_youtube.py` sang **numbering `Tập X.Y`** (key = tuple `(tập, phần)`,
   chọn range bằng so sánh tuple → `1.1-3.2` phủ đúng 8 video kể cả 1.3/2.3; range
-  int `2-10` cũ vẫn chạy). Tải **Tập 1.1–3.2** → `chay-tron-thanh-xuan/epNN_P.mp3`
-  (8/8 mp3 + 8/8 srt vi, exit 0). Playlist cũng đảo ngược (1.1 ở cuối) — map theo
-  title xử lý tự động. Phần ngắn (~13–22 phút/video).
+  int `2-10` cũ vẫn chạy). Tải **Tập 1.1–10.2** → `chay-tron-thanh-xuan/epNN_P.mp3`
+  (22/22 mp3 + 22/22 srt vi). Playlist cũng đảo ngược (1.1 ở cuối) — map theo
+  title xử lý tự động. Phần ngắn (~13–22 phút/video). Từ Tập 3 mỗi tập có 2 phần.
+- 2026-07-05 — Fix YouTube **HTTP 403** + làm `download_youtube.py` chịu lỗi:
+  giữa batch 4.1–10.2, video ep08_2 bị `403 Forbidden` ở luồng audio (yt-dlp báo
+  "extractor specified to use impersonation, but no target available" vì thiếu JS
+  runtime). Cài **`curl_cffi`** vào `.venv-vnser` → yt-dlp có target giả lập
+  trình duyệt, retry qua ngay. Đồng thời: vòng lặp tải giờ **bắt lỗi từng video,
+  bỏ qua + báo cuối** (một video hỏng không giết cả batch — quan trọng cho scale
+  120 tập) + `--retries 10`. Chạy lại (archive skip 9 video đã xong) → đủ 22/22.
 
 ## Remaining Action Items
 - [ ] Chạy pipeline cho Tập 02–10 (`ve-nha-di-con/epNN.mp3`) — cân nhắc dùng
   `--turn-split --hf-token` + nạp `epNN.vi.srt` làm nguồn text thay ASR.
-- [ ] Chạy pipeline cho `chay-tron-thanh-xuan/epNN_P.mp3` (8 phần, 1.1–3.2).
+- [ ] Chạy pipeline cho `chay-tron-thanh-xuan/epNN_P.mp3` (22 phần, 1.1–10.2).
 - [x] ~~User đặt tập vào `data/vietnamese-ser/raw/`~~ → `ep01.mp3` đã có, chạy xong.
 - [x] ~~Chạy `pilot_extract.py` → report.md~~ → yield 33%, GO.
 - [x] ~~Đọc mẫu ~20 đoạn~~ → transcript mạch lạc, ghi vào M3 / Open Questions.
@@ -257,3 +264,15 @@ clips + transcripts), (2) align caption (`transcripts_yt.csv`), (3) **label
 2-teacher validate xong** (`labels_opus.csv` + `labels_sonnet.csv` đủ dòng,
 đúng enum). Extract-xong-chưa-label = "đang làm dở". Vận hành: label rolling —
 phần nào extract xong thì spawn 2 teacher ngay, không đợi trọn batch.
+
+## Series 2 "Chạy trốn thanh xuân" — rolling progress (2026-07-05)
+- Raw đủ 22 phần (ep01_1→ep10_2, mỗi tập 2–3 phần). `run_batch --episodes all`
+  (discovery mode mới). Sự cố ep01_1 (ffmpeg mồ côi từ dry-run → wav cụt →
+  cache trap) đã dọn + vá atomic-write (`d2fa456`).
+- **5 phần đầu HOÀN THÀNH theo tiêu chí mới** (extract+align+label validated):
+  380 utt · clean 341 (90%) · consensus 295 (**78%** vs 73% series 1) ·
+  **κ mean 0.675** (0.642–0.720 — CAO hơn series 1: 0.610) · distress-OR 10.
+  Mật độ thoại cao hơn (~5.5 vs ~4.6 utt/phút); phổ cảm xúc "nóng" hơn
+  (anger/joy nhiều hơn, neutral ít hơn) — đúng giá trị đa dạng hóa của series 2.
+- Đang chạy: extract ep03_1/03_2 (batch detached) → sau đó relaunch vét
+  ep01_1 + ep04_1→ep10_2; label rolling theo watcher.
