@@ -85,8 +85,12 @@ def main() -> None:
     ap.add_argument("--skip-asr", action="store_true")
     args = ap.parse_args()
 
-    lo, _, hi = args.episodes.partition("-")
-    eps = range(int(lo), int(hi or lo) + 1)
+    eps: list[int] | None
+    if args.episodes.strip().lower() == "all":
+        eps = None  # discover every media file in rawdir (multi-part series: ep01_1, ...)
+    else:
+        lo, _, hi = args.episodes.partition("-")
+        eps = list(range(int(lo), int(hi or lo) + 1))
     rawdir = ROOT / "data" / "vietnamese-ser" / "raw" / args.series
     epsdir = ROOT / "data" / "vietnamese-ser" / "episodes" / args.series
     # secrets from repo-root .env (gitignored) unless already set in the environment
@@ -103,19 +107,27 @@ def main() -> None:
         "PYTHONIOENCODING": "utf-8",
     }
 
+    if eps is None:
+        units = [(m.stem, m) for m in sorted(rawdir.glob("*.mp*")) + sorted(rawdir.glob("*.m4a"))
+                 if m.suffix.lower() in (".mp3", ".mp4", ".m4a")]
+    else:
+        units = []
+        for n in eps:
+            ep = f"ep{n:02d}"
+            media = next(iter(sorted(rawdir.glob(f"{ep}.mp*"))), None) or next(
+                iter(sorted(rawdir.glob(f"{ep}.m4a"))), None
+            )
+            if media is None:
+                print(f"!! {ep}: không thấy media trong {rawdir} — bỏ qua")
+                continue
+            units.append((ep, media))
+
     rows = []
-    for n in eps:
-        ep = f"ep{n:02d}"
-        media = next(iter(sorted(rawdir.glob(f"{ep}.mp*"))), None) or next(
-            iter(sorted(rawdir.glob(f"{ep}.m4a"))), None
-        )
-        if media is None:
-            print(f"!! {ep}: không thấy media trong {rawdir} — bỏ qua")
-            continue
+    for ep, media in units:
         outdir = epsdir / ep
         outdir.mkdir(parents=True, exist_ok=True)
 
-        srt = next(iter(sorted(rawdir.glob(f"{ep}*.srt"))), None)
+        srt = next(iter(sorted(rawdir.glob(f"{ep}*.srt"))), None)  # stem-prefixed caption
         caption = outdir / "youtube_transcripts.txt"
         if srt and not caption.exists():
             print(f">> {ep}: SRT → caption ({srt_to_caption_txt(srt, caption)} block)")
