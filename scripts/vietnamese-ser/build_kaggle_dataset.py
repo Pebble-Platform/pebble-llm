@@ -41,47 +41,49 @@ def load(p: Path) -> dict[str, dict]:
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--series", default="ve-nha-di-con")
+    ap.add_argument("--series", default="ve-nha-di-con", help="comma-separated for multi-series")
     ap.add_argument("--owner", default="phatneurondai")
     ap.add_argument("--push", action="store_true")
     args = ap.parse_args()
 
-    epsdir = ROOT / "data" / "vietnamese-ser" / "episodes" / args.series
+    series_list = [s.strip() for s in args.series.split(",")]
     stage = ROOT / "data" / "vietnamese-ser" / "kaggle-upload" / SLUG
     clips_out = stage / "clips"
     clips_out.mkdir(parents=True, exist_ok=True)
 
     rows_out: list[list] = []
     eps_used: list[str] = []
-    for epdir in sorted(epsdir.glob("ep*")):
-        lo, ls = epdir / "labels_opus.csv", epdir / "labels_sonnet.csv"
-        seg_f, yt_f = epdir / "segments.csv", epdir / "transcripts_yt.csv"
-        if not (lo.exists() and ls.exists() and seg_f.exists() and yt_f.exists()):
-            continue
-        ep = epdir.name
-        eps_used.append(ep)
-        op, so, yt = load(lo), load(ls), load(yt_f)
-        for s in csv.DictReader(seg_f.open(encoding="utf-8")):
-            i = s["id"]
-            o, n, y = op.get(i), so.get(i), yt.get(i, {})
-            if not (o and n):
-                continue
-            clip_src = epdir / "clips" / f"{i}.wav"
-            clip_name = f"{ep}_{i}.wav"
-            if clip_src.exists() and not (clips_out / clip_name).exists():
-                shutil.copy2(clip_src, clips_out / clip_name)
-            dis_or = "True" in (o["distress"], n["distress"])
-            mss_or = "True" in (o["multi_speaker_suspect"], n["multi_speaker_suspect"])
-            consensus = o["emotion"] if o["emotion"] == n["emotion"] else ""
-            clean = bool(s.get("speaker", "").strip()) and not mss_or
-            rows_out.append([
-                ep, i, f"clips/{clip_name}", s["start"], s["end"], s["dur"],
-                s.get("speaker", ""), y.get("text_phowhisper", ""), y.get("text_youtube", ""),
-                o["emotion"], n["emotion"], consensus,
-                (int(o["valence"]) + int(n["valence"])) / 2,
-                (int(o["arousal"]) + int(n["arousal"])) / 2,
-                dis_or, mss_or,
-                min(float(o["confidence"]), float(n["confidence"])), clean,
+    for series in series_list:
+      epsdir = ROOT / "data" / "vietnamese-ser" / "episodes" / series
+      for epdir in sorted(epsdir.glob("ep*")):
+          lo, ls = epdir / "labels_opus.csv", epdir / "labels_sonnet.csv"
+          seg_f, yt_f = epdir / "segments.csv", epdir / "transcripts_yt.csv"
+          if not (lo.exists() and ls.exists() and seg_f.exists() and yt_f.exists()):
+              continue
+          ep = epdir.name
+          eps_used.append(f"{series}/{ep}")
+          op, so, yt = load(lo), load(ls), load(yt_f)
+          for s in csv.DictReader(seg_f.open(encoding="utf-8")):
+              i = s["id"]
+              o, n, y = op.get(i), so.get(i), yt.get(i, {})
+              if not (o and n):
+                  continue
+              clip_src = epdir / "clips" / f"{i}.wav"
+              clip_name = f"{series}_{ep}_{i}.wav"
+              if clip_src.exists() and not (clips_out / clip_name).exists():
+                  shutil.copy2(clip_src, clips_out / clip_name)
+              dis_or = "True" in (o["distress"], n["distress"])
+              mss_or = "True" in (o["multi_speaker_suspect"], n["multi_speaker_suspect"])
+              consensus = o["emotion"] if o["emotion"] == n["emotion"] else ""
+              clean = bool(s.get("speaker", "").strip()) and not mss_or
+              rows_out.append([
+                  f"{series}/{ep}", i, f"clips/{clip_name}", s["start"], s["end"], s["dur"],
+                  s.get("speaker", ""), y.get("text_phowhisper", ""), y.get("text_youtube", ""),
+                  o["emotion"], n["emotion"], consensus,
+                  (int(o["valence"]) + int(n["valence"])) / 2,
+                  (int(o["arousal"]) + int(n["arousal"])) / 2,
+                  dis_or, mss_or,
+                  min(float(o["confidence"]), float(n["confidence"])), clean,
             ])
 
     with (stage / "manifest.csv").open("w", newline="", encoding="utf-8") as f:

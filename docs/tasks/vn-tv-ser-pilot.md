@@ -276,3 +276,19 @@ phần nào extract xong thì spawn 2 teacher ngay, không đợi trọn batch.
   (anger/joy nhiều hơn, neutral ít hơn) — đúng giá trị đa dạng hóa của series 2.
 - Đang chạy: extract ep03_1/03_2 (batch detached) → sau đó relaunch vét
   ep01_1 + ep04_1→ep10_2; label rolling theo watcher.
+
+## TRỌN 2 SERIES — Kaggle dataset v3 (2026-07-06)
+- **Series 2 "Chạy trốn thanh xuân" HOÀN THÀNH 22/22 phần** (extract+align+label
+  validated): 1,973 utt · clean 1,785 (90%) · consensus 73% · distress-OR 71 ·
+  κ mean **0.608** (0.348–0.783). Outlier κ<0.45: ep03_2 (0.348, thoại điện thoại
+  nhiễu), ep09_2 (0.440, hài nhẹ — Opus over-neutral). Phát hiện: điểm mù
+  diarization dao động 0–31% theo cảnh (ep08_1 banter nam nhanh = 31%) → tầng
+  text-filter 2-teacher là cần thiết. ep08_2 lời bài hát intro lọt vào (cần lọc
+  intro-song khi làm sạch). Cảnh trầm cảm đầu tiên của corpus: ctx ep06_1 seg003.
+- **TỔNG CORPUS 2 series: 3,611 utt · 3,338 clean (92%) · 2,630 consensus (73%)**,
+  ~10 giờ đơn-giọng, 2 thể loại (gia đình + thanh xuân) — đa dạng giọng/cảm xúc.
+- **Kaggle dataset v3 PRIVATE đã push:** `phatneurondai/viemospeech-pilot`
+  (3,611 clips + manifest hợp nhất, cột `ep`=series/ep phân biệt nguồn).
+  Packager `build_kaggle_dataset.py` giờ nhận `--series a,b` gộp nhiều series.
+- Bước kế: kernel training pilot (WavLM probe trên is_clean + emotion_consensus,
+  split theo speaker, ablation có/không outlier-parts).
