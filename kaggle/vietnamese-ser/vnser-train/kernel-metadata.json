@@ -1,0 +1,16 @@
+{
+  "id": "phatneurondai/vnser-train",
+  "title": "vnser-train",
+  "code_file": "vnser-train.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": ["gpu"],
+  "dataset_sources": ["phatneurondai/viemospeech-pilot"],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": []
+}
