@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViEmoSpeech — gold labeling theo tập</title>
+<style>
+  :root{--bg:#14161a;--panel:#1c1f26;--panel2:#232732;--line:#2e333f;
+    --txt:#e6e8ec;--muted:#9aa0aa;--accent:#4a90e2;--ok:#39a561;--warn:#e0a83a;--danger:#d64545}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;height:100vh;display:flex;flex-direction:column}
+  header{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0;font-weight:600}
+  .sp{flex:1}
+  .muted{color:var(--muted)}
+  a{color:var(--accent)}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)} button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  input,select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px}
+  .body{flex:1;display:flex;min-height:0}
+  aside{width:250px;border-right:1px solid var(--line);overflow:auto;padding:8px}
+  .series{font-size:11px;text-transform:uppercase;color:var(--muted);margin:10px 6px 4px}
+  .epitem{padding:7px 9px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .epitem:hover{background:var(--panel)} .epitem.active{background:var(--panel2);outline:1px solid var(--accent)}
+  .badge{font-size:11px;color:var(--muted);white-space:nowrap}
+  .badge.done{color:var(--ok)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+  .detail{padding:12px 16px;border-bottom:1px solid var(--line)}
+  .detail.hidden{display:none}
+  canvas{width:100%;height:80px;display:block;background:#0f1114;border-radius:6px}
+  .texts{display:grid;grid-template-columns:60px 1fr;gap:2px 10px;margin:8px 0;font-size:13px}
+  .texts b{color:var(--muted);font-weight:500}
+  .teachers{display:flex;gap:18px;margin:6px 0;font-size:13px;flex-wrap:wrap}
+  .teachers .t{padding:4px 9px;border:1px solid var(--line);border-radius:6px}
+  .disagree{color:var(--warn);font-weight:600}
+  .emorow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .emobtn{padding:6px 10px;border-radius:6px;border:1px solid var(--line);cursor:pointer;font-size:13px;display:flex;gap:6px;align-items:center}
+  .emobtn.sel{outline:2px solid #fff}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .kbd{font-size:10px;color:var(--muted)}
+  .ctlrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .fld{display:flex;flex-direction:column;gap:2px} .fld span{font-size:10px;color:var(--muted);text-transform:uppercase}
+  .tablewrap{flex:1;overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+  th{position:sticky;top:0;background:var(--bg);color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;z-index:1}
+  tr.clip{cursor:pointer} tr.clip:hover td{background:var(--panel)}
+  tr.clip.active td{background:var(--panel2)}
+  td.txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
+  .st-done{color:var(--ok)} .st-todo{color:var(--muted)}
+  .flag{color:var(--warn)}
+  .empty{padding:40px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>ViEmoSpeech · gold theo tập</h1>
+  <button id="reload" class="muted">↻ tải lại tập</button>
+  <span id="loaded" class="muted">đang tải…</span>
+  <span id="prog" class="muted"></span>
+  <span class="sp"></span>
+  <label class="muted">annotator <input id="annotator" type="text" value="human" style="width:90px"></label>
+  <button id="expcsv">gold.csv</button>
+  <button id="expzip" class="primary">ZIP (csv+wav)</button>
+</header>
+
+<div class="body">
+  <aside id="sidebar"><div class="empty">Chọn thư mục <code>episodes/</code> để bắt đầu</div></aside>
+  <main>
+    <div id="detail" class="detail hidden">
+      <canvas id="wave"></canvas>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:6px">
+        <button id="play">▶ Play <span class="kbd">Space</span></button>
+        <span id="clipid" class="muted"></span>
+        <span id="cliptime" class="muted"></span>
+        <span class="sp" style="flex:1"></span>
+        <button id="prev">◀ prev <span class="kbd">P</span></button>
+        <button id="next">next ▶ <span class="kbd">N</span></button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
+        <button id="cutbtn">✂ cắt</button>
+        <button id="cutsave">✔ lưu cắt</button>
+        <button id="cutundo" title="khôi phục clip gốc">↩ gốc</button>
+        <button id="splitbtn" title="chia clip thành 2">⁄ chia</button>
+        <button id="splitdo">✔ chia đôi</button>
+        <span id="cutinfo" class="muted"></span>
+      </div>
+      <div class="texts">
+        <b>ASR</b><span id="tx-asr"></span>
+        <b>YouTube</b><span id="tx-yt"></span>
+      </div>
+      <div style="margin:6px 0"><input id="g-text" type="text" placeholder="text của record (sửa nếu audio đổi sau recut)" style="width:100%"></div>
+      <div class="teachers">
+        <div class="t">Opus: <span id="th-opus">—</span></div>
+        <div class="t">Sonnet: <span id="th-sonnet">—</span></div>
+        <div id="th-flag"></div>
+      </div>
+      <div class="emorow" id="emorow"></div>
+      <div class="ctlrow">
+        <div class="fld"><span>valence</span><select id="g-val"><option value="" selected disabled>—</option><option value="1">1 · rất tiêu cực</option><option value="2">2 · tiêu cực</option><option value="3">3 · trung tính</option><option value="4">4 · tích cực</option><option value="5">5 · rất tích cực</option></select></div>
+        <div class="fld"><span>arousal</span><select id="g-aro"><option value="" selected disabled>—</option><option value="1">1 · rất bình thản</option><option value="2">2 · bình thản</option><option value="3">3 · trung bình</option><option value="4">4 · kích động</option><option value="5">5 · rất kích động</option></select></div>
+        <div class="fld"><span>distress</span><select id="g-dis"><option value="" selected disabled>—</option><option value="true">có</option><option value="false">không</option></select></div>
+        <div class="fld"><span>speaker</span><select id="g-spk"></select></div>
+        <div class="fld" style="flex:1;min-width:150px"><span>note</span><input id="g-note" type="text" style="width:100%"></div>
+        <button id="confirm" class="primary">Xác nhận gold <span class="kbd">Enter</span></button>
+        <div class="fld"><span>reject</span><select id="rej-reason"><option value="multi_speaker">multi_speaker</option><option value="noise">noise</option><option value="bad_cut">bad_cut</option><option value="other">other</option></select></div>
+        <button id="rejbtn">⚑ loại</button>
+        <span id="g-status" class="muted"></span>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table id="cliptable"><tbody><tr><td class="empty">Chọn một tập ở cột trái</td></tr></tbody></table>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

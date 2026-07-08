@@ -1,8 +1,12 @@
-# Capability — Extraction pipeline (video tập phim → weak pool sạch)
+# Capability — Extraction pipeline (video tập phim → clip sạch cho human-label)
 
 > Spec layer / **state**: mô tả ĐÚNG những gì pipeline làm HÔM NAY, với số đo.
 > Thay đổi hành vi/kết quả ⇒ cập nhật file này trong cùng PR (WORKFLOW rule 5).
-> Cập nhật lần cuối: 2026-07-04 (sau pilot ep01 hoàn chỉnh, PR #6).
+> Cập nhật lần cuối: 2026-07-07 (pivot ADR-003).
+>
+> **Pivot 2026-07-07 (ADR-003):** nhãn 2-teacher KHÔNG còn là nhãn của corpus —
+> nhãn do **người** gán (`tools/labeler/`) là nguồn sự thật; teacher chỉ còn là
+> **gợi ý**. Số đo "weak pool / κ 2-teacher" bên dưới là **lịch sử tiền-pivot**.
 
 ## Hành vi hiện tại
 
@@ -20,10 +24,14 @@
 5. **PhoWhisper-base** ASR trên raw array (né torchcodec) → `transcripts.csv`.
 6. **align_youtube.py**: caption YouTube ↔ segment theo overlap ±1s →
    `transcripts_yt.csv` (2 nguồn text + sim).
-7. **Weak-label 2 teacher** (Opus + Sonnet; prompt pin tại
+7. **Teacher SUGGESTION 2 model** (Opus + Sonnet; prompt pin tại
    `scripts/vietnamese-ser/m4_prompt.md`): emotion 7 lớp + valence/arousal 1–5 +
-   distress + confidence + `multi_speaker_suspect` → `labels_*.csv`.
-8. **Weak pool** = segment có speaker ≠ rỗng VÀ không bị OR-flag đa-giọng-text.
+   distress + confidence + `multi_speaker_suspect` → `labels_*.csv`. **Chỉ là
+   gợi ý** hiển thị trong labeler (ADR-003), KHÔNG phải nhãn corpus.
+8. **Human labeling** (`tools/labeler/`): người gán nhãn của record cho từng
+   clip (emotion/V/A/distress/multi + text), single-pass; nguồn sự thật =
+   `state.jsonl` → export. Clip đơn-giọng (I3): `speaker` ≠ rỗng VÀ không bị
+   người flag đa-giọng/reject.
 
 ## Số đo hiện hành (ep01, tập 35.6′ — nguồn: `docs/tasks/vn-tv-ser-pilot.md`)
 
@@ -39,8 +47,9 @@
 
 ## Tiêu chí hoàn thành một tập (định nghĩa vận hành)
 
-Extract + align + **label 2-teacher validated** — thiếu label là chưa xong
-(quyết định user 2026-07-05). Label chạy rolling theo từng tập/phần.
+Extract + align + **human-label xong** (`tools/labeler/`, teacher chỉ gợi ý) —
+thiếu nhãn người là chưa xong (ADR-003; quyết định gốc 2026-07-05). Label chạy
+rolling theo từng tập/phần.
 
 ## Biên đã biết (không phải bug)
 
