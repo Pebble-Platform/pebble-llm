@@ -29,6 +29,17 @@ export async function confirmGold() {
   else { renderTable(); $("g-status").textContent = "✓ đã lưu"; $("g-status").className = "st-done"; }
 }
 
+/* ---------- context preview: play ±10s around the clip from full episode audio ---------- */
+export function playContext() {
+  if (S.curIdx < 0) return;
+  if (!S.preview.paused) { S.preview.pause(); return; } // toggle off
+  S.audio.pause();
+  const c = S.clips[S.curIdx];
+  const pad = +$("ctxpad").value || 10;
+  S.preview.src = api.contextUrl(S.curEp, c.id) + `?pad=${pad}&v=` + encodeURIComponent(`${c.start}_${c.end}`);
+  S.preview.play().catch(() => {});
+}
+
 /* ---------- reject (F3) ---------- */
 export async function toggleReject() {
   if (S.curIdx < 0) return;
@@ -87,48 +98,6 @@ export async function saveSplit() {
   const firstChild = res.children && res.children[0] && res.children[0].id;
   await loadEpisodes();
   await reopenClip(firstChild);
-}
-
-/* ---------- detect + bulk-mark duplicate recap (change 006) ---------- */
-export async function detectRecap() {
-  if (!S.curEp) return;
-  const info = $("recap-info");
-  $("recap-panel").classList.remove("hidden");
-  $("recap-mark").style.display = "none";
-  info.textContent = "đang dò recap so với tập trước…";
-  let r;
-  try { r = await api.detectRecap(S.curEp); }
-  catch { info.textContent = "⚠ lỗi dò recap"; return; }
-  if (r.detail) { info.textContent = "⚠ " + r.detail; return; } // 404/err body {detail}
-  S.recap = r; S.recapIds = new Set(r.clip_ids || []);
-  renderTable();
-  if (!S.recapIds.size) {
-    info.textContent = `không thấy clip trùng (điểm ${r.score}, ${r.run_s}s)`;
-    return;
-  }
-  const cs = r.cur_span, ps = r.prev_span, tag = r.matched ? "TRÙNG" : "nghi ngờ (điểm thấp)";
-  info.textContent = `${tag}: ${S.recapIds.size} clip [${cs[0]}–${cs[1]}s] ≈ ${r.prev_epKey} [${ps[0]}–${ps[1]}s] · điểm ${r.score}, ${r.run_s}s`;
-  $("recap-mark").style.display = "";
-  $("recap-mark").textContent = `✓ đánh dấu trùng (${S.recapIds.size})`;
-  const i = S.clips.findIndex((c) => S.recapIds.has(c.id)); // jump so user can listen first
-  if (i >= 0) selectClip(i);
-}
-
-export async function markRecap() {
-  const r = S.recap;
-  if (!r || !S.recapIds.size) return;
-  const dup = { epKey: r.prev_epKey, t0: r.prev_span[0], t1: r.prev_span[1] };
-  try { await api.rejectBulk(S.curEp, [...S.recapIds], "duplicate", dup); }
-  catch { $("recap-info").textContent = "⚠ lỗi đánh dấu"; return; }
-  dismissRecap();
-  await loadEpisodes();
-  await reopenClip();
-}
-
-export function dismissRecap() {
-  S.recap = null; S.recapIds = new Set();
-  $("recap-panel").classList.add("hidden");
-  renderTable();
 }
 
 /* ---------- export (raw state dump; Kaggle export = phase 4) ---------- */

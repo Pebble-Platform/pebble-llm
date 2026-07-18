@@ -17,11 +17,10 @@ from pathlib import Path
 
 import audio
 import episodes
-import recap
 import store
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -54,13 +53,7 @@ class ExciseIn(BaseModel):
 
 
 class RejectIn(BaseModel):
-    reason: str = "other"  # multi_speaker | noise | bad_cut | split | duplicate | other
-
-
-class RejectBulkIn(BaseModel):
-    ids: list[str]  # clip ids to flag in one transaction (e.g. a recap run)
-    reason: str = "duplicate"
-    dup_source: dict | None = None  # {epKey, t0, t1}: what these duplicate (provenance)
+    reason: str = "other"  # multi_speaker | noise | bad_cut | split | other
 
 
 class SplitIn(BaseModel):
@@ -87,26 +80,27 @@ def get_clip(ep_key: str, clip_id: str) -> FileResponse:
     )
 
 
+@app.get("/context/{ep_key:path}/{clip_id}.wav")
+def get_context(ep_key: str, clip_id: str, pad: float = 10.0) -> Response:
+    """Serve [start-pad, end+pad] of the full episode audio (context preview, read-only)."""
+    ep = store.episode_dir(ep_key, clip_id)
+    rec = store.STATE.get(store.skey(ep_key, clip_id))
+    if rec:
+        start, end = rec["start"], rec["end"]
+    else:
+        seg = store.by_id(store.read_csv(ep / "segments.csv")).get(clip_id, {})
+        start, end = store.fnum(seg.get("start")), store.fnum(seg.get("end"))
+    return Response(
+        audio.read_context(ep, start, end, pad),
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 @app.get("/gold")
 def all_gold() -> list[dict]:
     """Every human label record (source of truth = state.jsonl)."""
     return list(store.STATE.values())
-
-
-@app.get("/detect-recap/{ep_key:path}")
-def get_detect_recap(ep_key: str) -> dict:
-    """Propose the span this episode replays from its predecessor (a recap).
-
-    Read-only — returns the matched spans + the cur-episode clip ids in the span
-    for the UI to confirm; marking is the separate POST /reject-bulk.
-    """
-    ep = store.episode_dir(ep_key)
-    prev_key, prev_ep = recap.previous_episode(ep_key)
-    res = recap.detect(prev_ep, ep)
-    res["prev_epKey"] = prev_key
-    # clips for the best span even on a sub-threshold near-miss (UI: "confirm anyway")
-    res["clip_ids"] = recap.clips_in_span(ep_key, ep, res["cur_span"]) if res["run_s"] > 0 else []
-    return res
 
 
 # ---------- label / recut / reject / split ----------
@@ -205,28 +199,6 @@ def put_reject(ep_key: str, clip_id: str, rj: RejectIn) -> dict:
     rec = store.seed_record(ep_key, clip_id, ep)
     rec.update({"rejected": True, "reject_reason": rj.reason, "ts": store.now()})
     return store.put(ep_key, clip_id, rec)
-
-
-@app.post("/reject-bulk/{ep_key:path}")
-def put_reject_bulk(ep_key: str, rj: RejectBulkIn) -> list[dict]:
-    """Flag many clips at once (a contiguous recap run) — one atomic save.
-
-    For duplicate recaps, ``dup_source`` records the episode+span these clips
-    duplicate (provenance), so the canonical copy stays labeled once elsewhere.
-    """
-    ep = store.episode_dir(ep_key)
-    for cid in rj.ids:
-        if not store.CLIP_RE.match(cid):
-            raise HTTPException(400, f"bad clip id: {cid}")
-    with store.LOCK:
-        for cid in rj.ids:
-            rec = store.seed_record(ep_key, cid, ep)
-            rec.update({"rejected": True, "reject_reason": rj.reason, "ts": store.now()})
-            if rj.dup_source is not None:
-                rec["dup_source"] = rj.dup_source
-            store.STATE[store.skey(ep_key, cid)] = rec
-        store.save()
-        return [store.STATE[store.skey(ep_key, cid)] for cid in rj.ids]
 
 
 @app.post("/split/{ep_key:path}/{clip_id}/undo")

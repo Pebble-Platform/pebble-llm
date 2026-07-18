@@ -2,7 +2,7 @@
 
 > Công cụ **con người gán nhãn** cho ViEmoSpeech. Tầng **execution** — phải thỏa
 > `docs/intent/` + `docs/spec/capabilities/extraction-pipeline.md`.
-> Cập nhật: 2026-07-18 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + recap 006).
+> Cập nhật: 2026-07-18 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008).
 > Chi tiết tính năng: [`SPEC-features.md`](SPEC-features.md). Lịch sử build:
 > [change 003](../../docs/spec/changes/003-human-labeling-tool/README.md) (phase
 > 0–5) + [change 004](../../docs/spec/changes/004-labeler-refactor/README.md) (refactor)
@@ -23,8 +23,8 @@ và I6 (accuracy nêu test-split speaker-disjoint; tin cậy nhãn = κ **human�
 **Backend** (FastAPI, `.venv-vnser`, bind `127.0.0.1`):
 `server.py` (routes + models + main, mỏng) · `store.py` (config `ROOT/STATE` +
 `state.jsonl` load/save + records + paths) · `episodes.py` (đọc CSV + dựng
-`/episodes`, `/episode`) · `audio.py` (`soundfile` recut/split/excise + backup
-`_orig/`) · `recap.py` (dò recap trùng: log-mel feature cross-correlation, chỉ đọc).
+`/episodes`, `/episode`) · `audio.py` (`soundfile` recut/split/excise + context
+slice + backup `_orig/`).
 
 **Frontend** (ES modules, nạp qua `<script type="module" src="main.js">`):
 `state.js` (kernel `S` + consts) · `api.js` (mọi call server) · `view.js`
@@ -54,8 +54,7 @@ Mỗi dòng JSON = 1 clip, khoá `(epKey, id)`. Ghi atomic (tmp→rename) sau m�
 | biên | `start, end` | recut-aware (cộng dồn qua nhiều lần recut) |
 | recut (F1) | `recut`, `gold_text` | `gold_text` = text người sửa sau recut |
 | excise (F7) | `excised` | list `[[a,b]…]` (giây clip-local) đoạn GIỮA đã bỏ + nối; `recut=true`; undo qua `/recut/undo`. `start/end` **giữ nguyên** biên bao (provenance) |
-| reject (F3) | `rejected`, `reject_reason` | reason `multi_speaker/noise/bad_cut/duplicate/split/other` |
-| duplicate (F8) | `dup_source` | `{epKey,t0,t1}` = đoạn recap ở tập trước mà clip này trùng; đi kèm `reject_reason="duplicate"` (loại như F3) |
+| reject (F3) | `rejected`, `reject_reason` | reason `split` cho cha bị chia |
 | split (F5) | `split_from` (con) / `split_children` (cha) | liên kết cha↔con |
 | gợi ý | `opus, sonnet` | emotion 2 teacher — **chỉ tham chiếu**, không phải nhãn |
 | provenance | `annotator, ts` | ai + khi nào (I2) |
@@ -70,13 +69,12 @@ export Kaggle đầy đủ — strip text public, loại rejected/test-series �
 | `GET /episodes` | list tập + `total/done/rejected` |
 | `GET /episode/{epKey}` | clips (join CSV + gợi ý teacher + record) + `speakers` |
 | `GET /clip/{epKey}/{id}.wav` | serve clip (range) |
+| `GET /context/{epKey}/{id}.wav` `?pad=10` | phát ngữ cảnh `[start−pad, end+pad]` cắt từ audio gốc của tập (chỉ đọc) |
 | `GET /gold` | toàn bộ record (cho export) |
 | `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,speaker?,annotator}` (distress/note: server default) |
 | `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
 | `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
 | `POST /reject/{epKey}/{id}` `{reason}` · `/undo` | flag rejected (giữ file) · gỡ |
-| `POST /reject-bulk/{epKey}` `{ids,reason,dup_source}` | loại nhiều clip trong 1 giao dịch (recap) + provenance `dup_source` |
-| `GET /detect-recap/{epKey}` | dò đoạn recap trùng tập trước (chỉ đọc); trả `{matched,score,run_s,cur_span,prev_span,prev_epKey,clip_ids}` |
 | `POST /split/{epKey}/{id}` `{ts:[t1…tk]}` · `/undo` | chia k+1 con `seg<max+1…>`, cha giữ+reject · gỡ |
 
 Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id` khớp `^seg\d+$`.
@@ -97,15 +95,14 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   audio pristine + xoá `excised`. Đoạn bỏ phải nằm GIỮA (mép → dùng `✔ lưu cắt`).
 - **Nghe từ vị trí chọn (seek):** click trên sóng (chế độ thường, không cut/split)
   → dời con trỏ phát tới đó; `Space` phát tiếp từ vị trí đó thay vì từ đầu.
+- **Nghe ±N (ngữ cảnh):** nút `▶ nghe ±` + dropdown chọn **N giây** (10/20/30/60)
+  phát đoạn `[start−N, end+N]` cắt từ audio gốc của tập (`audio_full.wav`, fallback
+  `vocals_16k`) ở **player riêng** — nghe trước/sau clip để soát cắt/đa giọng;
+  không đổi sóng/clip chính; bấm lại để dừng (tự tắt khi phát clip hoặc chuyển
+  clip). Read-only (`GET /context?pad=N`).
 - **F2 progress:** sidebar `done/eff ⚑rej` mỗi tập; header `Σ done/eff (%)`.
-- **F3 reject:** `⚑ loại` + reason (`multi_speaker/noise/bad_cut/duplicate/other`)
-  — **giữ file**, loại khỏi `done`/export; `↺ bỏ loại`.
-- **F8 recap trùng (dò + đánh dấu bulk):** `⧉ dò recap` (header) → server so log-mel
-  audio (`recap.py`) đuôi tập trước × đầu tập này, đề xuất đoạn recap + danh sách
-  clip trùng → panel xác nhận (nhảy tới clip đầu để nghe) → `✓ đánh dấu trùng` →
-  `POST /reject-bulk` loại cả dải với `reject_reason="duplicate"` + `dup_source`
-  (bản gốc ở tập trước vẫn label 1 lần). Con người **luôn xác nhận** trước khi
-  đánh dấu; near-miss (điểm thấp) vẫn hiện để "đánh dấu tay nếu đúng".
+- **F3 reject:** `⚑ loại` + reason (`multi_speaker/noise/bad_cut/other`) — **giữ
+  file**, loại khỏi `done`/export; `↺ bỏ loại`.
 - **F5 multi-split:** `⁄ chia` → click nhiều điểm chia (vạch cam; click lại để
   bỏ) → `✔ chia (k+1)` → k+1 clip mới (id `seg` kế tiếp), mỗi con kế thừa
   asr/yt/opus/sonnet của cha; cha giữ nguyên nhưng status→reject(`split`); mỗi

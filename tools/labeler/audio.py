@@ -5,6 +5,7 @@ Pure filesystem/audio — no STATE. Routes orchestrate the state.jsonl updates.
 
 from __future__ import annotations
 
+import io
 import re
 import shutil
 from pathlib import Path
@@ -47,6 +48,27 @@ def restore_orig(ep: Path, clip_id: str) -> bool:
         return False
     shutil.copy2(orig, store.clip_wav(ep, clip_id))
     return True
+
+
+def read_context(ep: Path, start: float, end: float, pad: float) -> bytes:
+    """[start-pad, end+pad] of the episode's full audio as WAV bytes (context preview).
+
+    Reads the full-mix audio (fallback vocals) at the clip's absolute episode-time
+    bounds so the labeler can hear pad seconds before/after the cut. Read-only.
+    """
+    path = next((ep / n for n in ("audio_full.wav", "vocals_16k.wav") if (ep / n).is_file()), None)
+    if path is None:
+        raise HTTPException(404, "no episode audio (audio_full/vocals_16k)")
+    info = sf.info(str(path))
+    sr = info.samplerate
+    i0 = max(0, int((start - pad) * sr))
+    i1 = min(info.frames, int((end + pad) * sr))
+    if i1 <= i0:
+        raise HTTPException(400, "context range out of bounds")
+    data, _ = sf.read(str(path), start=i0, stop=i1, dtype="float32")
+    buf = io.BytesIO()
+    sf.write(buf, data, sr, subtype=info.subtype, format="WAV")
+    return buf.getvalue()
 
 
 def trim(ep: Path, clip_id: str, a: float, b: float) -> None:

@@ -54,7 +54,7 @@ export function xToTime(e) {
   return x * (S.audioBuf ? S.audioBuf.duration : 0);
 }
 
-S.audio.onplay = () => loop();
+S.audio.onplay = () => { S.preview.pause(); loop(); }; // clip audio + context preview never overlap
 S.audio.onpause = () => { cancelAnimationFrame(S.rafId); drawWave(); };
 
 /* ---------- sidebar / progress ---------- */
@@ -100,7 +100,7 @@ export function renderTable() {
   const rows = S.clips.map((c, i) => {
     const g = S.gold[gk(S.curEp, c.id)];
     const txt = (g && g.gold_text) || c.asr || "";
-    return `<tr class="clip${i === S.curIdx ? " active" : ""}${S.recapIds.has(c.id) ? " recap" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
+    return `<tr class="clip${i === S.curIdx ? " active" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
       <td>${i === S.curIdx ? "▶" : ""}</td>
       <td>${c.id}</td><td>${(c.end - c.start).toFixed(1)}s</td>
       <td class="txt" title="${esc(txt)}">${esc(txt) || "<i class=muted>—</i>"}</td>
@@ -146,7 +146,6 @@ export async function loadEpisodes() {
 
 export async function openEpisode(epKey) {
   S.curEp = epKey;
-  S.recap = null; S.recapIds = new Set(); $("recap-panel").classList.add("hidden"); // clear stale recap
   let data = { clips: [], speakers: [] };
   try { data = await getEpisode(epKey); } catch {}
   S.clips = data.clips || []; S.epSpeakers = (data.speakers || []).slice();
@@ -158,6 +157,7 @@ export async function openEpisode(epKey) {
 
 export async function selectClip(i) {
   if (i < 0 || i >= S.clips.length) return;
+  S.preview.pause(); // stop any context preview when moving to another clip
   S.curIdx = i; const c = S.clips[i];
   $("detail").classList.remove("hidden");
   $("clipid").textContent = c.id;

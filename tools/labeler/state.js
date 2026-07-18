@@ -22,8 +22,8 @@ export const S = {
   cutMode: false, cutSel: null, cutDrag: false, // recut (F1)
   splitMode: false, splitPoints: [], // split (F5) — multiple cut points, kept ascending
   epSpeakers: [], // speaker dropdown (F6)
-  recap: null, recapIds: new Set(), // detect-recap (change 006): last result + clip ids to mark
   audio: new Audio(),
   audioBuf: null,
   rafId: null,
+  preview: new Audio(), // context preview (±pad s from full episode audio) — separate from clip audio
 };

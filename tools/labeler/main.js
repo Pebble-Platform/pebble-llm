@@ -2,13 +2,10 @@
 
 import { $, EMOKEYS, S } from "./state.js";
 import { drawWave, fillSpk, loadEpisodes, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
-import { confirmGold, detectRecap, dismissRecap, exportCsv, exportZip, markRecap, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
+import { confirmGold, exportCsv, exportZip, playContext, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
 
 /* ---------- buttons ---------- */
 $("reload").onclick = loadEpisodes;
-$("recapbtn").onclick = detectRecap;
-$("recap-mark").onclick = markRecap;
-$("recap-dismiss").onclick = dismissRecap;
 $("confirm").onclick = confirmGold;
 $("rejbtn").onclick = toggleReject;
 $("cutsave").onclick = saveCut;
@@ -20,6 +17,9 @@ $("expzip").onclick = exportZip;
 $("next").onclick = () => selectClip(Math.min(S.clips.length - 1, S.curIdx + 1));
 $("prev").onclick = () => selectClip(Math.max(0, S.curIdx - 1));
 $("play").onclick = () => (S.audio.paused ? S.audio.play() : S.audio.pause());
+$("ctxplay").onclick = playContext;
+S.preview.onplay = () => ($("ctxplay").textContent = "⏸ dừng");
+S.preview.onpause = S.preview.onended = () => ($("ctxplay").textContent = "▶ nghe ±");
 
 /* ---------- cut / split mode toggles ---------- */
 $("cutbtn").onclick = () => {
