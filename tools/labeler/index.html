@@ -52,6 +52,8 @@
   .st-done{color:var(--ok)} .st-todo{color:var(--muted)}
   .flag{color:var(--warn)}
   .empty{padding:40px;text-align:center;color:var(--muted)}
+  .sel-bar{display:flex;gap:10px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
+  tr.clip.sel td{background:rgba(74,144,226,.16)}
 </style>
 </head>
 <body>
@@ -110,6 +112,13 @@
         <button id="rejbtn">⚑ loại</button>
         <span id="g-status" class="muted"></span>
       </div>
+    </div>
+    <div id="sel-bar" class="sel-bar">
+      <span id="sel-info" class="muted">tick ô ☑ để chọn nhiều clip rồi loại một lần</span>
+      <span class="sp" style="flex:1"></span>
+      <label class="muted">lý do <select id="sel-reason"><option value="other">other</option><option value="multi_speaker">multi_speaker</option><option value="noise">noise</option><option value="bad_cut">bad_cut</option></select></label>
+      <button id="sel-remove" disabled>⚑ loại đã chọn</button>
+      <button id="sel-clear" disabled>bỏ chọn</button>
     </div>
     <div class="tablewrap">
       <table id="cliptable"><tbody><tr><td class="empty">Chọn một tập ở cột trái</td></tr></tbody></table>

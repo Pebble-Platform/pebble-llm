@@ -91,16 +91,27 @@ function tLbl(x) {
     : "—";
 }
 
+/* selection toolbar state (multi-select bulk-remove) */
+export function updateSelBar() {
+  const n = S.selIds.size;
+  $("sel-info").textContent = n ? `${n} clip đã chọn` : "tick ô ☑ để chọn nhiều clip rồi loại một lần";
+  $("sel-remove").disabled = !n; $("sel-remove").textContent = n ? `⚑ loại đã chọn (${n})` : "⚑ loại đã chọn";
+  $("sel-clear").disabled = !n;
+}
+
 export function renderTable() {
   const tb = $("cliptable");
   if (!S.clips.length) {
     tb.innerHTML = '<tbody><tr><td class="empty">Tập này không có clip</td></tr></tbody>';
+    updateSelBar();
     return;
   }
   const rows = S.clips.map((c, i) => {
     const g = S.gold[gk(S.curEp, c.id)];
     const txt = (g && g.gold_text) || c.asr || "";
-    return `<tr class="clip${i === S.curIdx ? " active" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
+    const sel = S.selIds.has(c.id);
+    return `<tr class="clip${i === S.curIdx ? " active" : ""}${sel ? " sel" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
+      <td><input type="checkbox" class="selbox" data-id="${c.id}"${sel ? " checked" : ""}></td>
       <td>${i === S.curIdx ? "▶" : ""}</td>
       <td>${c.id}</td><td>${(c.end - c.start).toFixed(1)}s</td>
       <td class="txt" title="${esc(txt)}">${esc(txt) || "<i class=muted>—</i>"}</td>
@@ -110,8 +121,23 @@ export function renderTable() {
       <td>${g && g.arousal != null ? g.arousal : "—"}</td>
     </tr>`;
   }).join("");
-  tb.innerHTML = `<thead><tr><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th></tr></thead><tbody>${rows}</tbody>`;
+  tb.innerHTML = `<thead><tr><th><input type="checkbox" id="sel-all" title="chọn tất cả"></th><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th></tr></thead><tbody>${rows}</tbody>`;
   tb.querySelectorAll("tr.clip").forEach((tr) => (tr.onclick = () => selectClip(+tr.dataset.i)));
+  tb.querySelectorAll(".selbox").forEach((cb) => {
+    cb.onclick = (e) => e.stopPropagation(); // don't open the clip when ticking
+    cb.onchange = () => {
+      cb.checked ? S.selIds.add(cb.dataset.id) : S.selIds.delete(cb.dataset.id);
+      cb.closest("tr").classList.toggle("sel", cb.checked);
+      $("sel-all").checked = S.clips.every((c) => S.selIds.has(c.id));
+      updateSelBar();
+    };
+  });
+  $("sel-all").checked = S.clips.every((c) => S.selIds.has(c.id));
+  $("sel-all").onchange = (e) => {
+    for (const c of S.clips) e.target.checked ? S.selIds.add(c.id) : S.selIds.delete(c.id);
+    renderTable();
+  };
+  updateSelBar();
 }
 
 export function renderEmoRow() {
@@ -146,6 +172,7 @@ export async function loadEpisodes() {
 
 export async function openEpisode(epKey) {
   S.curEp = epKey;
+  S.selIds = new Set(); // selection is per-episode; clear when switching
   let data = { clips: [], speakers: [] };
   try { data = await getEpisode(epKey); } catch {}
   S.clips = data.clips || []; S.epSpeakers = (data.speakers || []).slice();

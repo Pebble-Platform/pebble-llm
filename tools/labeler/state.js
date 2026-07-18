@@ -22,6 +22,7 @@ export const S = {
   cutMode: false, cutSel: null, cutDrag: false, // recut (F1)
   splitMode: false, splitPoints: [], // split (F5) — multiple cut points, kept ascending
   epSpeakers: [], // speaker dropdown (F6)
+  selIds: new Set(), // multi-select for bulk-remove (loại nhiều clip) — clip ids checked in the table
   audio: new Audio(),
   audioBuf: null,
   rafId: null,

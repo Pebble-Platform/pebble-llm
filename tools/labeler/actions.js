@@ -55,6 +55,22 @@ export async function toggleReject() {
   } else selectClip(S.curIdx);
 }
 
+/* ---------- multi-select bulk remove (loại nhiều clip đã chọn cùng lúc) ---------- */
+export async function removeSelected() {
+  if (!S.selIds.size) return;
+  const ids = [...S.selIds];
+  try { await api.rejectBulk(S.curEp, ids, $("sel-reason").value); }
+  catch { $("sel-info").textContent = "⚠ lỗi loại"; return; }
+  S.selIds = new Set();
+  await loadEpisodes(); // refresh done/rejected counts
+  await reopenClip(); // re-render: selected clips now show ⚑ loại, boxes cleared
+}
+
+export function clearSel() {
+  S.selIds = new Set();
+  renderTable();
+}
+
 /* ---------- recut (F1) ---------- */
 export async function saveCut() {
   if (!S.cutMode || !S.cutSel || !S.audioBuf) { $("cutinfo").textContent = "bấm ✂ cắt rồi kéo chọn"; return; }

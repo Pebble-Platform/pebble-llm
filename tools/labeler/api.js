@@ -25,4 +25,5 @@ export const excise = (k, id, body) => post("/excise/" + path(k) + "/" + id, bod
 export const recutUndo = (k, id) => post("/recut/" + path(k) + "/" + id + "/undo");
 export const reject = (k, id, reason) => post("/reject/" + path(k) + "/" + id, { reason });
 export const rejectUndo = (k, id) => post("/reject/" + path(k) + "/" + id + "/undo");
+export const rejectBulk = (k, ids, reason) => post("/reject-bulk/" + path(k), { ids, reason });
 export const split = (k, id, ts) => post("/split/" + path(k) + "/" + id, { ts });

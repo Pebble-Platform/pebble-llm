@@ -56,6 +56,11 @@ class RejectIn(BaseModel):
     reason: str = "other"  # multi_speaker | noise | bad_cut | split | other
 
 
+class RejectBulkIn(BaseModel):
+    ids: list[str]  # clip ids the user multi-selected to reject in one go
+    reason: str = "other"
+
+
 class SplitIn(BaseModel):
     ts: list[float]  # split points, clip-local seconds, strictly increasing, k >= 1
 
@@ -199,6 +204,22 @@ def put_reject(ep_key: str, clip_id: str, rj: RejectIn) -> dict:
     rec = store.seed_record(ep_key, clip_id, ep)
     rec.update({"rejected": True, "reject_reason": rj.reason, "ts": store.now()})
     return store.put(ep_key, clip_id, rec)
+
+
+@app.post("/reject-bulk/{ep_key:path}")
+def put_reject_bulk(ep_key: str, rj: RejectBulkIn) -> list[dict]:
+    """Reject many clips in one atomic save — user multi-selects rows, removes at once."""
+    ep = store.episode_dir(ep_key)
+    for cid in rj.ids:
+        if not store.CLIP_RE.match(cid):
+            raise HTTPException(400, f"bad clip id: {cid}")
+    with store.LOCK:
+        for cid in rj.ids:
+            rec = store.seed_record(ep_key, cid, ep)
+            rec.update({"rejected": True, "reject_reason": rj.reason, "ts": store.now()})
+            store.STATE[store.skey(ep_key, cid)] = rec
+        store.save()
+        return [store.STATE[store.skey(ep_key, cid)] for cid in rj.ids]
 
 
 @app.post("/split/{ep_key:path}/{clip_id}/undo")

@@ -2,10 +2,12 @@
 
 import { $, EMOKEYS, S } from "./state.js";
 import { drawWave, fillSpk, loadEpisodes, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
-import { confirmGold, exportCsv, exportZip, playContext, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
+import { clearSel, confirmGold, exportCsv, exportZip, playContext, removeSelected, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
 
 /* ---------- buttons ---------- */
 $("reload").onclick = loadEpisodes;
+$("sel-remove").onclick = removeSelected;
+$("sel-clear").onclick = clearSel;
 $("confirm").onclick = confirmGold;
 $("rejbtn").onclick = toggleReject;
 $("cutsave").onclick = saveCut;

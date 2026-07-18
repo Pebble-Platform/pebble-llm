@@ -2,7 +2,7 @@
 
 > Công cụ **con người gán nhãn** cho ViEmoSpeech. Tầng **execution** — phải thỏa
 > `docs/intent/` + `docs/spec/capabilities/extraction-pipeline.md`.
-> Cập nhật: 2026-07-18 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008).
+> Cập nhật: 2026-07-18 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008 + loại-nhiều 009).
 > Chi tiết tính năng: [`SPEC-features.md`](SPEC-features.md). Lịch sử build:
 > [change 003](../../docs/spec/changes/003-human-labeling-tool/README.md) (phase
 > 0–5) + [change 004](../../docs/spec/changes/004-labeler-refactor/README.md) (refactor)
@@ -75,6 +75,7 @@ export Kaggle đầy đủ — strip text public, loại rejected/test-series �
 | `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
 | `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
 | `POST /reject/{epKey}/{id}` `{reason}` · `/undo` | flag rejected (giữ file) · gỡ |
+| `POST /reject-bulk/{epKey}` `{ids,reason}` | loại (reject) nhiều clip đã chọn trong 1 giao dịch |
 | `POST /split/{epKey}/{id}` `{ts:[t1…tk]}` · `/undo` | chia k+1 con `seg<max+1…>`, cha giữ+reject · gỡ |
 
 Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id` khớp `^seg\d+$`.
@@ -103,6 +104,10 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 - **F2 progress:** sidebar `done/eff ⚑rej` mỗi tập; header `Σ done/eff (%)`.
 - **F3 reject:** `⚑ loại` + reason (`multi_speaker/noise/bad_cut/other`) — **giữ
   file**, loại khỏi `done`/export; `↺ bỏ loại`.
+- **F9 loại nhiều clip (multi-select):** tick ô ☑ mỗi dòng (ô ở header = chọn/bỏ
+  tất cả) → thanh trên bảng `⚑ loại đã chọn (N)` + chọn lý do → reject cả loạt 1
+  lần (`POST /reject-bulk`, giữ file, loại khỏi export như F3). `bỏ chọn` xoá lựa
+  chọn; un-reject từng clip qua `↺`. Lựa chọn theo từng tập (đổi tập là xoá).
 - **F5 multi-split:** `⁄ chia` → click nhiều điểm chia (vạch cam; click lại để
   bỏ) → `✔ chia (k+1)` → k+1 clip mới (id `seg` kế tiếp), mỗi con kế thừa
   asr/yt/opus/sonnet của cha; cha giữ nguyên nhưng status→reject(`split`); mỗi
