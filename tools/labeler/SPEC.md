@@ -2,10 +2,11 @@
 
 > Công cụ **con người gán nhãn** cho ViEmoSpeech. Tầng **execution** — phải thỏa
 > `docs/intent/` + `docs/spec/capabilities/extraction-pipeline.md`.
-> Cập nhật: 2026-07-08 (khớp code đã build: phase 0–5 + refactor change 004).
+> Cập nhật: 2026-07-18 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + recap 006).
 > Chi tiết tính năng: [`SPEC-features.md`](SPEC-features.md). Lịch sử build:
 > [change 003](../../docs/spec/changes/003-human-labeling-tool/README.md) (phase
-> 0–5) + [change 004](../../docs/spec/changes/004-labeler-refactor/README.md) (refactor).
+> 0–5) + [change 004](../../docs/spec/changes/004-labeler-refactor/README.md) (refactor)
+> + [change 005](../../docs/spec/changes/005-labeler-excise-seek/README.md) (excise + seek).
 
 ## Vị trí trong pipeline
 
@@ -22,7 +23,8 @@ và I6 (accuracy nêu test-split speaker-disjoint; tin cậy nhãn = κ **human�
 **Backend** (FastAPI, `.venv-vnser`, bind `127.0.0.1`):
 `server.py` (routes + models + main, mỏng) · `store.py` (config `ROOT/STATE` +
 `state.jsonl` load/save + records + paths) · `episodes.py` (đọc CSV + dựng
-`/episodes`, `/episode`) · `audio.py` (`soundfile` recut/split + backup `_orig/`).
+`/episodes`, `/episode`) · `audio.py` (`soundfile` recut/split/excise + backup
+`_orig/`) · `recap.py` (dò recap trùng: log-mel feature cross-correlation, chỉ đọc).
 
 **Frontend** (ES modules, nạp qua `<script type="module" src="main.js">`):
 `state.js` (kernel `S` + consts) · `api.js` (mọi call server) · `view.js`
@@ -45,13 +47,15 @@ Mỗi dòng JSON = 1 clip, khoá `(epKey, id)`. Ghi atomic (tmp→rename) sau m�
 | id | `epKey, id, series, episode` | |
 | nhãn (F1) | `emotion` | 1/7: `joy sadness anger fear_anxiety surprise disgust neutral` (khớp `m4_prompt.md`) |
 | | `valence, arousal` | int 1–5 (`null` khi chưa gán) |
-| | `distress` | bool — proxy phim diễn, **không** lâm sàng (intent §7) |
+| | `distress` | bool — **bỏ khỏi form 2026-07-10**; server default `false` (record cũ giữ giá trị đã gán) |
 | | `multi` | bool — tai người nghi ≥2 giọng |
-| | `note` | text tự do |
+| | `note` | text — **bỏ khỏi form 2026-07-10**; server default `""` |
 | speaker (F6) | `speaker` | **người sửa được** (dropdown); mặc định = id diarization |
 | biên | `start, end` | recut-aware (cộng dồn qua nhiều lần recut) |
 | recut (F1) | `recut`, `gold_text` | `gold_text` = text người sửa sau recut |
-| reject (F3) | `rejected`, `reject_reason` | reason `split` cho cha bị chia |
+| excise (F7) | `excised` | list `[[a,b]…]` (giây clip-local) đoạn GIỮA đã bỏ + nối; `recut=true`; undo qua `/recut/undo`. `start/end` **giữ nguyên** biên bao (provenance) |
+| reject (F3) | `rejected`, `reject_reason` | reason `multi_speaker/noise/bad_cut/duplicate/split/other` |
+| duplicate (F8) | `dup_source` | `{epKey,t0,t1}` = đoạn recap ở tập trước mà clip này trùng; đi kèm `reject_reason="duplicate"` (loại như F3) |
 | split (F5) | `split_from` (con) / `split_children` (cha) | liên kết cha↔con |
 | gợi ý | `opus, sonnet` | emotion 2 teacher — **chỉ tham chiếu**, không phải nhãn |
 | provenance | `annotator, ts` | ai + khi nào (I2) |
@@ -67,31 +71,49 @@ export Kaggle đầy đủ — strip text public, loại rejected/test-series �
 | `GET /episode/{epKey}` | clips (join CSV + gợi ý teacher + record) + `speakers` |
 | `GET /clip/{epKey}/{id}.wav` | serve clip (range) |
 | `GET /gold` | toàn bộ record (cho export) |
-| `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,distress,multi,note,speaker?,annotator}` |
-| `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim + backup `_orig/` · khôi phục |
+| `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,speaker?,annotator}` (distress/note: server default) |
+| `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
+| `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
 | `POST /reject/{epKey}/{id}` `{reason}` · `/undo` | flag rejected (giữ file) · gỡ |
-| `POST /split/{epKey}/{id}` `{t}` · `/undo` | chia 2 con `seg<max+1/+2>`, cha giữ+reject · gỡ |
+| `POST /reject-bulk/{epKey}` `{ids,reason,dup_source}` | loại nhiều clip trong 1 giao dịch (recap) + provenance `dup_source` |
+| `GET /detect-recap/{epKey}` | dò đoạn recap trùng tập trước (chỉ đọc); trả `{matched,score,run_s,cur_span,prev_span,prev_epKey,clip_ids}` |
+| `POST /split/{epKey}/{id}` `{ts:[t1…tk]}` · `/undo` | chia k+1 con `seg<max+1…>`, cha giữ+reject · gỡ |
 
 Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id` khớp `^seg\d+$`.
 
 ## Chức năng
 
 - **Label:** chọn emotion (phím `1`–`7` hoặc click), valence/arousal (**không
-  default**, `—` tới khi chọn), distress/multi, note, speaker. Teacher hiển thị
+  default**, `—` tới khi chọn), speaker (distress/note bỏ khỏi form 2026-07-10,
+  quyết định user). Teacher hiển thị
   **read-only bên cạnh, KHÔNG pre-fill** (ADR-003). `Enter`/`Xác nhận` → lưu +
   tự nhảy clip chưa-nhãn kế.
 - **F1 recut + text:** `✂ cắt` → kéo chọn đoạn GIỮ trên sóng → `✔ lưu cắt`
   (`soundfile` trim, backup `_orig/`); `↩ gốc` = undo. Ô text (`gold_text`) sửa được.
+- **F7 excise (bỏ giữa):** trong chế độ `✂ cắt`, kéo chọn đoạn GIỮA bị nhiễu →
+  `⌦ bỏ giữa` → server xoá `[a,b]` khỏi audio, **nối `[0,a]+[b,dur]` thành 1
+  clip** (không chia đôi). `start/end` giữ nguyên biên bao; đoạn bỏ ghi vào
+  `excised` (giây clip-local, provenance — không mất im lặng). `↩ gốc` khôi phục
+  audio pristine + xoá `excised`. Đoạn bỏ phải nằm GIỮA (mép → dùng `✔ lưu cắt`).
+- **Nghe từ vị trí chọn (seek):** click trên sóng (chế độ thường, không cut/split)
+  → dời con trỏ phát tới đó; `Space` phát tiếp từ vị trí đó thay vì từ đầu.
 - **F2 progress:** sidebar `done/eff ⚑rej` mỗi tập; header `Σ done/eff (%)`.
-- **F3 reject:** `⚑ loại` + reason (`multi_speaker/noise/bad_cut/other`) — **giữ
-  file**, loại khỏi `done`/export; `↺ bỏ loại`.
-- **F5 split:** `⁄ chia` → click điểm chia (vạch cam) → `✔ chia đôi` → 2 clip mới
-  (id `seg` kế tiếp), cha giữ nguyên nhưng status→reject(`split`); mỗi con label
-  riêng (speaker + text + emotion); undo xoá con + un-reject cha.
+- **F3 reject:** `⚑ loại` + reason (`multi_speaker/noise/bad_cut/duplicate/other`)
+  — **giữ file**, loại khỏi `done`/export; `↺ bỏ loại`.
+- **F8 recap trùng (dò + đánh dấu bulk):** `⧉ dò recap` (header) → server so log-mel
+  audio (`recap.py`) đuôi tập trước × đầu tập này, đề xuất đoạn recap + danh sách
+  clip trùng → panel xác nhận (nhảy tới clip đầu để nghe) → `✓ đánh dấu trùng` →
+  `POST /reject-bulk` loại cả dải với `reject_reason="duplicate"` + `dup_source`
+  (bản gốc ở tập trước vẫn label 1 lần). Con người **luôn xác nhận** trước khi
+  đánh dấu; near-miss (điểm thấp) vẫn hiện để "đánh dấu tay nếu đúng".
+- **F5 multi-split:** `⁄ chia` → click nhiều điểm chia (vạch cam; click lại để
+  bỏ) → `✔ chia (k+1)` → k+1 clip mới (id `seg` kế tiếp), mỗi con kế thừa
+  asr/yt/opus/sonnet của cha; cha giữ nguyên nhưng status→reject(`split`); mỗi
+  con label riêng (speaker + text + emotion); undo xoá con + un-reject cha.
 - **F6 speaker sửa được:** dropdown speaker của tập + `＋ mới`.
 - **Export:** `gold.csv` / ZIP (dump state; media wav = local-only).
 - **Phím tắt:** `Space` play · `1`–`7` emotion · `Enter` xác nhận · `N`/`P`
-  next/prev · `D` distress · `M` multi.
+  next/prev.
 
 ## Ràng buộc & invariants
 
@@ -99,7 +121,8 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   **media/local-only**, không commit/release. `data/**` gitignored. Artifact
   releasable = features + timestamps + labels + speaker id.
 - **I3 single-speaker:** clip đơn-giọng theo diarization; tai người bắt điểm mù
-  bằng cờ `multi` / reject / split.
+  bằng cờ `multi` / reject / split. **F7 excise** bỏ nhiễu GIỮA một giọng — giữ
+  đơn-giọng (không gộp/không đổi speaker), `_orig/` + `excised` bảo toàn provenance.
 - **I4 speaker-disjoint:** `state.jsonl.speaker` (người sửa được) → khoá
   `(series, episode, speaker)`; hold-out **whole-series** (ADR-002);
   `tests/invariants/test_speaker_disjoint.py` thuộc change 001 (chưa dựng).

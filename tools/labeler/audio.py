@@ -9,6 +9,7 @@ import re
 import shutil
 from pathlib import Path
 
+import numpy as np
 import soundfile as sf
 import store
 from fastapi import HTTPException
@@ -62,16 +63,41 @@ def trim(ep: Path, clip_id: str, a: float, b: float) -> None:
     _write(wav, data[i0:i1], sr, info.subtype)
 
 
-def split(ep: Path, clip_id: str, t: float) -> tuple[str, str]:
-    """Write 2 NEW child clips (next seg numbers) from the parent; return their ids."""
+def excise(ep: Path, clip_id: str, a: float, b: float) -> None:
+    """Back up once, then remove [a,b] (clip-local seconds) and concatenate the rest.
+
+    The clip stays ONE file — [0,a] and [b,dur] are joined (unlike split, which
+    makes separate children). start/end are untouched by the caller; the removed
+    region is recorded in the record's ``excised`` list (provenance).
+    """
+    if b - a <= 0.01:
+        raise HTTPException(400, "empty selection")
+    wav = store.clip_wav(ep, clip_id)
+    backup_orig(ep, clip_id)
+    info = sf.info(str(wav))
+    data, sr = sf.read(str(wav), dtype="float32")
+    i0, i1 = max(0, int(a * sr)), min(len(data), int(b * sr))
+    if i1 <= i0 or i0 <= 0 or i1 >= len(data):
+        raise HTTPException(400, "excise region must be strictly inside the clip")
+    _write(wav, np.concatenate([data[:i0], data[i1:]]), sr, info.subtype)
+
+
+def split(ep: Path, clip_id: str, ts: list[float]) -> list[str]:
+    """Write len(ts)+1 NEW child clips (next seg numbers) from the parent; return their ids.
+
+    ts must be strictly increasing and each point strictly inside (0, duration).
+    """
     wav = store.clip_wav(ep, clip_id)
     info = sf.info(str(wav))
     data, sr = sf.read(str(wav), dtype="float32")
-    i = int(t * sr)
-    if i <= 0 or i >= len(data):
+    idxs = [int(t * sr) for t in ts]
+    if any(idxs[i] >= idxs[i + 1] for i in range(len(idxs) - 1)):
+        raise HTTPException(400, "split points must be strictly increasing")
+    if idxs[0] <= 0 or idxs[-1] >= len(data):
         raise HTTPException(400, "split point out of range")
     n = next_seg_num(ep)
-    id_a, id_b = f"seg{n:05d}", f"seg{n + 1:05d}"
-    _write(ep / "clips" / f"{id_a}.wav", data[:i], sr, info.subtype)
-    _write(ep / "clips" / f"{id_b}.wav", data[i:], sr, info.subtype)
-    return id_a, id_b
+    ids = [f"seg{n + i:05d}" for i in range(len(idxs) + 1)]
+    bounds = [0, *idxs, len(data)]
+    for cid, i0, i1 in zip(ids, bounds[:-1], bounds[1:]):
+        _write(ep / "clips" / f"{cid}.wav", data[i0:i1], sr, info.subtype)
+    return ids

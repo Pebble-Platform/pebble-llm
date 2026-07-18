@@ -17,6 +17,7 @@ from pathlib import Path
 
 import audio
 import episodes
+import recap
 import store
 import uvicorn
 from fastapi import FastAPI, HTTPException
@@ -46,12 +47,24 @@ class RecutIn(BaseModel):
     text: str = ""  # human-corrected text (audio changed)
 
 
+class ExciseIn(BaseModel):
+    a: float  # remove-region start, clip-local seconds
+    b: float  # remove-region end
+    text: str = ""  # human-corrected text (audio changed)
+
+
 class RejectIn(BaseModel):
-    reason: str = "other"  # multi_speaker | noise | bad_cut | split | other
+    reason: str = "other"  # multi_speaker | noise | bad_cut | split | duplicate | other
+
+
+class RejectBulkIn(BaseModel):
+    ids: list[str]  # clip ids to flag in one transaction (e.g. a recap run)
+    reason: str = "duplicate"
+    dup_source: dict | None = None  # {epKey, t0, t1}: what these duplicate (provenance)
 
 
 class SplitIn(BaseModel):
-    t: float  # split point, clip-local seconds
+    ts: list[float]  # split points, clip-local seconds, strictly increasing, k >= 1
 
 
 # ---------- reads ----------
@@ -68,13 +81,32 @@ def get_episode(ep_key: str) -> dict:
 @app.get("/clip/{ep_key:path}/{clip_id}.wav")
 def get_clip(ep_key: str, clip_id: str) -> FileResponse:
     ep = store.episode_dir(ep_key, clip_id)
-    return FileResponse(store.clip_wav(ep, clip_id), media_type="audio/wav")
+    # no-store: file bị ghi đè khi recut/split → browser phải lấy bản mới, không cache
+    return FileResponse(
+        store.clip_wav(ep, clip_id), media_type="audio/wav", headers={"Cache-Control": "no-store"}
+    )
 
 
 @app.get("/gold")
 def all_gold() -> list[dict]:
     """Every human label record (source of truth = state.jsonl)."""
     return list(store.STATE.values())
+
+
+@app.get("/detect-recap/{ep_key:path}")
+def get_detect_recap(ep_key: str) -> dict:
+    """Propose the span this episode replays from its predecessor (a recap).
+
+    Read-only — returns the matched spans + the cur-episode clip ids in the span
+    for the UI to confirm; marking is the separate POST /reject-bulk.
+    """
+    ep = store.episode_dir(ep_key)
+    prev_key, prev_ep = recap.previous_episode(ep_key)
+    res = recap.detect(prev_ep, ep)
+    res["prev_epKey"] = prev_key
+    # clips for the best span even on a sub-threshold near-miss (UI: "confirm anyway")
+    res["clip_ids"] = recap.clips_in_span(ep_key, ep, res["cur_span"]) if res["run_s"] > 0 else []
+    return res
 
 
 # ---------- label / recut / reject / split ----------
@@ -114,6 +146,7 @@ def undo_recut(ep_key: str, clip_id: str) -> dict:
             "start": store.fnum(seg.get("start")),
             "end": store.fnum(seg.get("end")),
             "recut": False,
+            "excised": [],
             "gold_text": "",
             "ts": store.now(),
         }
@@ -140,6 +173,22 @@ def put_recut(ep_key: str, clip_id: str, rc: RecutIn) -> dict:
     return store.put(ep_key, clip_id, rec)
 
 
+@app.post("/excise/{ep_key:path}/{clip_id}")
+def put_excise(ep_key: str, clip_id: str, ex: ExciseIn) -> dict:
+    """Remove [a,b] from the clip's middle; concatenate the rest (stays one clip).
+
+    start/end keep the original bounding span; the removed region is appended to
+    ``excised`` (clip-local seconds) so nothing is silently lost (provenance).
+    Undo via /recut/undo (restores clips/_orig/ + clears excised).
+    """
+    ep = store.episode_dir(ep_key, clip_id)
+    audio.excise(ep, clip_id, ex.a, ex.b)  # validates + backup + atomic concat
+    rec = store.seed_record(ep_key, clip_id, ep)
+    rec["excised"] = [*rec.get("excised", []), [ex.a, ex.b]]
+    rec.update({"recut": True, "gold_text": ex.text, "ts": store.now()})
+    return store.put(ep_key, clip_id, rec)
+
+
 @app.post("/reject/{ep_key:path}/{clip_id}/undo")
 def unreject(ep_key: str, clip_id: str) -> dict:
     """Clear the reject flag (clip returns to the labelable pool)."""
@@ -158,9 +207,31 @@ def put_reject(ep_key: str, clip_id: str, rj: RejectIn) -> dict:
     return store.put(ep_key, clip_id, rec)
 
 
+@app.post("/reject-bulk/{ep_key:path}")
+def put_reject_bulk(ep_key: str, rj: RejectBulkIn) -> list[dict]:
+    """Flag many clips at once (a contiguous recap run) — one atomic save.
+
+    For duplicate recaps, ``dup_source`` records the episode+span these clips
+    duplicate (provenance), so the canonical copy stays labeled once elsewhere.
+    """
+    ep = store.episode_dir(ep_key)
+    for cid in rj.ids:
+        if not store.CLIP_RE.match(cid):
+            raise HTTPException(400, f"bad clip id: {cid}")
+    with store.LOCK:
+        for cid in rj.ids:
+            rec = store.seed_record(ep_key, cid, ep)
+            rec.update({"rejected": True, "reject_reason": rj.reason, "ts": store.now()})
+            if rj.dup_source is not None:
+                rec["dup_source"] = rj.dup_source
+            store.STATE[store.skey(ep_key, cid)] = rec
+        store.save()
+        return [store.STATE[store.skey(ep_key, cid)] for cid in rj.ids]
+
+
 @app.post("/split/{ep_key:path}/{clip_id}/undo")
 def undo_split(ep_key: str, clip_id: str) -> dict:
-    """Undo a split: delete the 2 child clips (files + records), un-reject parent."""
+    """Undo a split: delete all child clips (files + records), un-reject parent."""
     ep = store.episode_dir(ep_key, clip_id)
     parent = store.STATE.get(store.skey(ep_key, clip_id))
     if not parent or not parent.get("split_children"):
@@ -181,31 +252,46 @@ def undo_split(ep_key: str, clip_id: str) -> dict:
 
 @app.post("/split/{ep_key:path}/{clip_id}")
 def put_split(ep_key: str, clip_id: str, sp: SplitIn) -> dict:
-    """Split clip at t into 2 NEW clips (next seg numbers); parent kept + rejected."""
+    """Split clip at ts[] into len(ts)+1 NEW clips (next seg numbers); parent kept + rejected."""
+    if not sp.ts:
+        raise HTTPException(400, "ts must have at least 1 cut point")
     ep = store.episode_dir(ep_key, clip_id)
     parent = store.seed_record(ep_key, clip_id, ep)
     with store.LOCK:
-        id_a, id_b = audio.split(ep, clip_id, sp.t)
+        ids = audio.split(ep, clip_id, sp.ts)  # validates increasing/in-range + atomic slice
+        prov = store.inherited_provenance(ep, parent)
         p_start, p_end = parent["start"], parent["end"]
-        rec_a = store.child_record(ep_key, id_a, parent, p_start, p_start + sp.t)
-        rec_b = store.child_record(ep_key, id_b, parent, p_start + sp.t, p_end)
+        bounds = [p_start, *(p_start + t for t in sp.ts), p_end]
+        children = [
+            store.child_record(ep_key, cid, parent, prov, s, e)
+            for cid, s, e in zip(ids, bounds[:-1], bounds[1:])
+        ]
+        for rec in children:
+            store.STATE[store.skey(ep_key, rec["id"])] = rec
         parent.update(
             {
                 "rejected": True,
                 "reject_reason": "split",
-                "split_children": [id_a, id_b],
+                "split_children": [c["id"] for c in children],
                 "ts": store.now(),
             }
         )
         store.STATE[store.skey(ep_key, clip_id)] = parent
-        store.STATE[store.skey(ep_key, id_a)] = rec_a
-        store.STATE[store.skey(ep_key, id_b)] = rec_b
         store.save()
-    return {"parent": parent, "children": [rec_a, rec_b]}
+    return {"parent": parent, "children": children}
 
 
 # Static UI (index.html) — mounted last so API routes win.
-app.mount("/", StaticFiles(directory=str(HERE), html=True), name="ui")
+# no-cache: browser phải revalidate mỗi lần — tránh chạy JS cũ (cache) với HTML
+# mới sau khi sửa UI (ES-module lệch phiên bản → TypeError giữa selectClip).
+class _NoCacheStatic(StaticFiles):
+    def file_response(self, *args, **kwargs):
+        resp = super().file_response(*args, **kwargs)
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
+
+
+app.mount("/", _NoCacheStatic(directory=str(HERE), html=True), name="ui")
 
 
 def main() -> None:

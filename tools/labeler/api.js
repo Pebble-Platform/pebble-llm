@@ -17,10 +17,13 @@ async function post(url, body) {
 export const getEpisodes = () => fetch("/episodes").then((r) => r.json());
 export const getEpisode = (k) => fetch("/episode/" + path(k)).then((r) => r.json());
 export const getGold = () => fetch("/gold").then((r) => r.json());
+export const detectRecap = (k) => fetch("/detect-recap/" + path(k)).then((r) => r.json());
 
 export const saveGold = (k, id, body) => post("/gold/" + path(k) + "/" + id, body);
 export const recut = (k, id, body) => post("/recut/" + path(k) + "/" + id, body);
+export const excise = (k, id, body) => post("/excise/" + path(k) + "/" + id, body);
 export const recutUndo = (k, id) => post("/recut/" + path(k) + "/" + id + "/undo");
 export const reject = (k, id, reason) => post("/reject/" + path(k) + "/" + id, { reason });
 export const rejectUndo = (k, id) => post("/reject/" + path(k) + "/" + id + "/undo");
-export const split = (k, id, t) => post("/split/" + path(k) + "/" + id, { t });
+export const rejectBulk = (k, ids, reason, dup_source) => post("/reject-bulk/" + path(k), { ids, reason, dup_source });
+export const split = (k, id, ts) => post("/split/" + path(k) + "/" + id, { ts });

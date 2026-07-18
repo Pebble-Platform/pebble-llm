@@ -9,11 +9,10 @@ import { loadEpisodes, renderSidebar, renderTable, reopenClip, selectClip } from
 export async function confirmGold() {
   if (S.curIdx < 0) return;
   if (!S.curEmotion) { $("g-status").textContent = "⚠ chọn emotion trước (phím 1–7)"; $("g-status").className = "flag"; return; }
-  if (!$("g-val").value || !$("g-aro").value || !$("g-dis").value) { $("g-status").textContent = "⚠ chọn valence + arousal + distress"; $("g-status").className = "flag"; return; }
+  if (!$("g-val").value || !$("g-aro").value) { $("g-status").textContent = "⚠ chọn valence + arousal"; $("g-status").className = "flag"; return; }
   const c = S.clips[S.curIdx];
   const body = {
     emotion: S.curEmotion, valence: +$("g-val").value, arousal: +$("g-aro").value,
-    distress: $("g-dis").value === "true", note: $("g-note").value.trim(),
     gold_text: $("g-text").value.trim(),
     speaker: $("g-spk").value === "__new__" ? "" : $("g-spk").value,
     annotator: ($("annotator").value || "human").trim() || "human",
@@ -63,18 +62,73 @@ export async function undoCut() {
   await reopenClip();
 }
 
+/* ---------- excise middle chunk (removes selection, keeps ONE clip) ---------- */
+export async function saveExcise() {
+  if (!S.cutMode || !S.cutSel || !S.audioBuf) { $("cutinfo").textContent = "bấm ✂ cắt rồi kéo chọn đoạn cần bỏ"; return; }
+  const a = Math.min(S.cutSel.a, S.cutSel.b), b = Math.max(S.cutSel.a, S.cutSel.b);
+  if (b - a < 0.05) { $("cutinfo").textContent = "đoạn quá ngắn"; return; }
+  if (a < 0.05 || b > S.audioBuf.duration - 0.05) { $("cutinfo").textContent = "đoạn bỏ phải nằm GIỮA (dùng ✔ lưu cắt cho mép)"; return; }
+  const c = S.clips[S.curIdx];
+  try { await api.excise(S.curEp, c.id, { a, b, text: $("g-text").value.trim() }); }
+  catch { $("cutinfo").textContent = "⚠ bỏ giữa lỗi"; return; }
+  await reopenClip();
+}
+
 /* ---------- split (F5) ---------- */
 export async function saveSplit() {
-  if (!S.splitMode || S.splitAt == null || !S.audioBuf) { $("cutinfo").textContent = "bấm ⁄ chia rồi click điểm"; return; }
-  if (S.splitAt < 0.05 || S.splitAt > S.audioBuf.duration - 0.05) { $("cutinfo").textContent = "điểm chia quá sát mép"; return; }
+  if (!S.splitMode || !S.splitPoints.length || !S.audioBuf) { $("cutinfo").textContent = "bấm ⁄ chia rồi click điểm"; return; }
+  const ts = [...S.splitPoints].sort((a, b) => a - b);
+  if (ts[0] < 0.05 || ts[ts.length - 1] > S.audioBuf.duration - 0.05) { $("cutinfo").textContent = "điểm chia quá sát mép"; return; }
   const c = S.clips[S.curIdx];
   let res;
-  try { res = await api.split(S.curEp, c.id, S.splitAt); }
+  try { res = await api.split(S.curEp, c.id, ts); }
   catch { $("cutinfo").textContent = "⚠ chia lỗi"; return; }
-  S.splitMode = false; S.splitAt = null; $("splitbtn").classList.remove("primary");
+  S.splitMode = false; S.splitPoints = []; $("splitbtn").classList.remove("primary");
   const firstChild = res.children && res.children[0] && res.children[0].id;
   await loadEpisodes();
   await reopenClip(firstChild);
+}
+
+/* ---------- detect + bulk-mark duplicate recap (change 006) ---------- */
+export async function detectRecap() {
+  if (!S.curEp) return;
+  const info = $("recap-info");
+  $("recap-panel").classList.remove("hidden");
+  $("recap-mark").style.display = "none";
+  info.textContent = "đang dò recap so với tập trước…";
+  let r;
+  try { r = await api.detectRecap(S.curEp); }
+  catch { info.textContent = "⚠ lỗi dò recap"; return; }
+  if (r.detail) { info.textContent = "⚠ " + r.detail; return; } // 404/err body {detail}
+  S.recap = r; S.recapIds = new Set(r.clip_ids || []);
+  renderTable();
+  if (!S.recapIds.size) {
+    info.textContent = `không thấy clip trùng (điểm ${r.score}, ${r.run_s}s)`;
+    return;
+  }
+  const cs = r.cur_span, ps = r.prev_span, tag = r.matched ? "TRÙNG" : "nghi ngờ (điểm thấp)";
+  info.textContent = `${tag}: ${S.recapIds.size} clip [${cs[0]}–${cs[1]}s] ≈ ${r.prev_epKey} [${ps[0]}–${ps[1]}s] · điểm ${r.score}, ${r.run_s}s`;
+  $("recap-mark").style.display = "";
+  $("recap-mark").textContent = `✓ đánh dấu trùng (${S.recapIds.size})`;
+  const i = S.clips.findIndex((c) => S.recapIds.has(c.id)); // jump so user can listen first
+  if (i >= 0) selectClip(i);
+}
+
+export async function markRecap() {
+  const r = S.recap;
+  if (!r || !S.recapIds.size) return;
+  const dup = { epKey: r.prev_epKey, t0: r.prev_span[0], t1: r.prev_span[1] };
+  try { await api.rejectBulk(S.curEp, [...S.recapIds], "duplicate", dup); }
+  catch { $("recap-info").textContent = "⚠ lỗi đánh dấu"; return; }
+  dismissRecap();
+  await loadEpisodes();
+  await reopenClip();
+}
+
+export function dismissRecap() {
+  S.recap = null; S.recapIds = new Set();
+  $("recap-panel").classList.add("hidden");
+  renderTable();
 }
 
 /* ---------- export (raw state dump; Kaggle export = phase 4) ---------- */

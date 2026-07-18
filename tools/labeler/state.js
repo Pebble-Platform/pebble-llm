@@ -20,8 +20,9 @@ export const S = {
   curIdx: -1,
   curEmotion: null,
   cutMode: false, cutSel: null, cutDrag: false, // recut (F1)
-  splitMode: false, splitAt: null, // split (F5)
+  splitMode: false, splitPoints: [], // split (F5) — multiple cut points, kept ascending
   epSpeakers: [], // speaker dropdown (F6)
+  recap: null, recapIds: new Set(), // detect-recap (change 006): last result + clip ids to mark
   audio: new Audio(),
   audioBuf: null,
   rafId: null,

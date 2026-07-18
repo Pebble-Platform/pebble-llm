@@ -27,10 +27,13 @@ export function drawWave() {
     const x1 = Math.max(S.cutSel.a, S.cutSel.b) / S.audioBuf.duration * W;
     ctx.fillStyle = "rgba(74,144,226,0.28)"; ctx.fillRect(x0, 0, Math.max(1, x1 - x0), H);
   }
-  if (S.splitMode && S.splitAt != null && S.audioBuf.duration) {
-    const px = S.splitAt / S.audioBuf.duration * W;
+  if (S.splitMode && S.splitPoints.length && S.audioBuf.duration) {
     ctx.strokeStyle = "#e0a83a"; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke(); ctx.lineWidth = 1;
+    for (const t of S.splitPoints) {
+      const px = t / S.audioBuf.duration * W;
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+    }
+    ctx.lineWidth = 1;
   }
   if (S.audioBuf.duration) {
     const px = S.audio.currentTime / S.audioBuf.duration * W;
@@ -39,6 +42,11 @@ export function drawWave() {
 }
 
 export function loop() { drawWave(); S.rafId = requestAnimationFrame(loop); }
+
+/* split (F5) button label: "chia (k+1)" while in split mode, static otherwise */
+export function updateSplitBtnLabel() {
+  $("splitdo").textContent = S.splitMode ? `✔ chia (${S.splitPoints.length + 1})` : "✔ chia";
+}
 
 export function xToTime(e) {
   const r = $("wave").getBoundingClientRect();
@@ -91,16 +99,18 @@ export function renderTable() {
   }
   const rows = S.clips.map((c, i) => {
     const g = S.gold[gk(S.curEp, c.id)];
-    return `<tr class="clip${i === S.curIdx ? " active" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
+    const txt = (g && g.gold_text) || c.asr || "";
+    return `<tr class="clip${i === S.curIdx ? " active" : ""}${S.recapIds.has(c.id) ? " recap" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
       <td>${i === S.curIdx ? "▶" : ""}</td>
       <td>${c.id}</td><td>${(c.end - c.start).toFixed(1)}s</td>
-      <td class="txt" title="${esc(c.asr)}">${esc(c.asr) || "<i class=muted>—</i>"}</td>
-      <td>${c.opus ? c.opus.emotion : "—"}</td><td>${c.sonnet ? c.sonnet.emotion : "—"}</td>
+      <td class="txt" title="${esc(txt)}">${esc(txt) || "<i class=muted>—</i>"}</td>
       <td>${c.disagree ? "<span class=flag>☠ khác</span>" : ""}</td>
       <td>${g && g.rejected ? "<span class=flag>⚑ loại</span>" : g && g.emotion ? `<span class="st-done">✓ ${g.emotion}</span>` : '<span class="st-todo">chưa</span>'}${g && g.recut ? " <span class=flag>✂</span>" : ""}</td>
+      <td>${g && g.valence != null ? g.valence : "—"}</td>
+      <td>${g && g.arousal != null ? g.arousal : "—"}</td>
     </tr>`;
   }).join("");
-  tb.innerHTML = `<thead><tr><th></th><th>id</th><th>dur</th><th>ASR text</th><th>opus</th><th>sonnet</th><th></th><th>gold</th></tr></thead><tbody>${rows}</tbody>`;
+  tb.innerHTML = `<thead><tr><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th></tr></thead><tbody>${rows}</tbody>`;
   tb.querySelectorAll("tr.clip").forEach((tr) => (tr.onclick = () => selectClip(+tr.dataset.i)));
 }
 
@@ -136,6 +146,7 @@ export async function loadEpisodes() {
 
 export async function openEpisode(epKey) {
   S.curEp = epKey;
+  S.recap = null; S.recapIds = new Set(); $("recap-panel").classList.add("hidden"); // clear stale recap
   let data = { clips: [], speakers: [] };
   try { data = await getEpisode(epKey); } catch {}
   S.clips = data.clips || []; S.epSpeakers = (data.speakers || []).slice();
@@ -159,13 +170,11 @@ export async function selectClip(i) {
   const g = S.gold[gk(S.curEp, c.id)]; const labeled = !!(g && g.emotion);
   S.curEmotion = labeled ? g.emotion : null;
   $("g-val").value = labeled ? g.valence : ""; $("g-aro").value = labeled ? g.arousal : "";
-  $("g-dis").value = labeled ? (g.distress ? "true" : "false") : "";
-  $("g-note").value = g ? g.note || "" : "";
   $("g-text").value = g && g.gold_text ? g.gold_text : c.asr || "";
   $("g-status").textContent = labeled ? "✓ đã lưu" : "chưa gán";
   $("g-status").className = labeled ? "st-done" : "muted";
   S.cutMode = false; S.cutSel = null; $("cutbtn").classList.remove("primary");
-  S.splitMode = false; S.splitAt = null; $("splitbtn").classList.remove("primary");
+  S.splitMode = false; S.splitPoints = []; $("splitbtn").classList.remove("primary"); updateSplitBtnLabel();
   $("cutinfo").textContent = g && g.recut ? "✂ đã recut" : "";
   fillSpk(g && g.speaker != null ? g.speaker : c.speaker || "");
   const rj = !!(g && g.rejected);
@@ -173,8 +182,11 @@ export async function selectClip(i) {
   $("rejbtn").textContent = rj ? "↺ bỏ loại" : "⚑ loại";
   if (rj) { $("g-status").textContent = "⚑ đã loại: " + (g.reject_reason || ""); $("g-status").className = "flag"; }
   renderEmoRow(); renderTable();
-  // audio + waveform
-  const url = clipUrl(S.curEp, c.id); S.audio.src = url;
+  // audio + waveform — cache-bust ?v= (đổi theo ts/biên) để <audio> nạp lại bản
+  // trimmed sau recut/split (gán src=URL-y-hệt sẽ KHÔNG reload dù server no-store)
+  const v = (g && g.ts) || `${c.start}_${c.end}`;
+  const url = clipUrl(S.curEp, c.id) + "?v=" + encodeURIComponent(v);
+  S.audio.src = url;
   try {
     const ac = new (window.AudioContext || window.webkitAudioContext)();
     S.audioBuf = await ac.decodeAudioData(await (await fetch(url)).arrayBuffer());

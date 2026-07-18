@@ -102,49 +102,61 @@ tính từ nó — không cần file progress riêng.
 
 ---
 
-## F5 — Chia 1 clip thành 2 (split)  [planned, chưa build]
+## F5 — Chia 1 clip thành nhiều đoạn (multi-split)  [built 2026-07-09, verified end-to-end]
 
-**Vấn đề.** Một clip pipeline đôi khi chứa **2 lượt thoại** dính nhau (diarization
+**Vấn đề.** Một clip pipeline đôi khi chứa **≥2 lượt thoại** dính nhau (diarization
 gộp/bỏ sót ranh giới). F1 recut chỉ **co** một đoạn — không tách được. Cần: chọn
-1 **điểm cắt** `t` trong clip → sinh **2 clip con** độc lập, mỗi cái label riêng.
+**k điểm cắt** `t1 < … < tk` (k ≥ 1) trong clip → sinh **k+1 clip con** độc lập,
+mỗi cái label riêng.
 
-**Quyết định đã chốt (2026-07-07):**
+**Quyết định đã chốt (2026-07-07; cập nhật 2026-07-09: chia đôi → chia multi,
+con kế thừa ASR/YouTube/Opus/Sonnet từ cha):**
 - **ID con = số seg tiếp theo của tập** (KHÔNG hậu tố `_N`, KHÔNG đổi `CLIP_RE`):
-  `next = max(số seg trong clips/) + 1`; con A = `seg<next>`, con B = `seg<next+1>`
-  (5-chữ-số). Split lần sau lấy max mới. ⇒ con **nằm cuối** danh sách clip (đánh số
-  tiếp), không cạnh cha — chấp nhận.
+  `next = max(số seg trong clips/) + 1`; k+1 con = `seg<next>` … `seg<next+k>`
+  (5-chữ-số, theo thứ tự thời gian). Split lần sau lấy max mới. ⇒ con **nằm cuối**
+  danh sách clip (đánh số tiếp), không cạnh cha — chấp nhận.
 - **Cha GIỮ NGUYÊN** (file + id không đụng) nhưng **trạng thái → rejected**
-  (`reject_reason="split"`, lưu `split_children=[idA,idB]`) ⇒ **loại khỏi
-  `done`/export** đúng cơ chế F3, mờ + `⚑` trong bảng. **Không** dùng `_orig/` cho
-  split (cha không bị cắt).
-- **Con:** 2 clip **MỚI** — `soundfile` cắt 2 nửa từ cha (atomic), ghi
-  `clips/seg<next>.wav` + `seg<next+1>.wav`. Record con seed: `series/episode` từ
-  tập, **`speaker` mặc định = speaker cha**, `start/end` chia từ biên cha,
-  `split_from=<parentId>`, **nhãn trống** (2 nửa có thể khác emotion → không kế
-  thừa nhãn cha).
+  (`reject_reason="split"`, lưu `split_children=[id các con, theo thứ tự]`) ⇒
+  **loại khỏi `done`/export** đúng cơ chế F3, mờ + `⚑` trong bảng. **Không** dùng
+  `_orig/` cho split (cha không bị cắt).
+- **Con:** k+1 clip **MỚI** — `soundfile` cắt k+1 đoạn từ cha theo các điểm cắt
+  (atomic), ghi `clips/seg<next>.wav` … `seg<next+k>.wav`. Record con seed:
+  `series/episode` từ tập, **`speaker` mặc định = speaker cha**, `start/end` chia
+  từ biên cha theo điểm cắt, `split_from=<parentId>`, **nhãn gold trống** (các
+  đoạn có thể khác emotion → không kế thừa nhãn gold của cha).
+- **Con kế thừa provenance/gợi ý của cha:** `asr` (`text_phowhisper`), `yt`
+  (`text_youtube`), `opus`, `sonnet` **copy nguyên từ cha vào record con lúc
+  tạo** — id con không có trong `transcripts*.csv`/`labels_*.csv` nên không tra
+  CSV được; `/episode` ưu tiên field trong record cho con. Đây là **tham chiếu**:
+  text/gợi ý là của cả clip cha (không cắt theo đoạn), người label sửa
+  `gold_text` + emotion riêng cho từng con.
 - **Con label riêng (PA3):** mỗi con đi qua **luồng label thường** — nhập
-  **speaker** (dropdown, con B có thể chọn người khác — [F6](#f6--speaker-sửa-được-label-of-record--planned-chưa-build)),
-  **script** (`gold_text`), **emotion/V/A**. Split chỉ tạo 2 con trống.
-- **Undo split** (`POST /split/.../undo`): **un-reject cha** + xoá 2 wav con +
-  2 record con (đọc `split_children`). Đảo ngược hoàn toàn.
-- **UI:** cụm cut thêm nút `⁄ chia` → click 1 điểm trên sóng (marker dọc) →
-  `chia đôi` → `POST /split/{ep}/{id}` `{t}`; re-fetch tập, nhảy tới con A.
+  **speaker** (dropdown, mỗi con có thể chọn người khác — [F6](#f6--speaker-sửa-được-label-of-record--planned-chưa-build)),
+  **script** (`gold_text`), **emotion/V/A**. Split chỉ tạo các con chưa label
+  (gold trống, gợi ý kế thừa).
+- **Undo split** (`POST /split/.../undo`): **un-reject cha** + xoá toàn bộ wav
+  con + record con (đọc `split_children`). Đảo ngược hoàn toàn.
+- **UI:** cụm cut thêm nút `⁄ chia` → click **nhiều điểm** trên sóng (mỗi click
+  thêm 1 marker dọc; click lại marker để bỏ) → nút `chia (k+1)` →
+  `POST /split/{ep}/{id}` `{ts:[t1…tk]}`; re-fetch tập, nhảy tới con đầu tiên.
 
-**REST:** `POST /split/{epKey}/{id}` `{t}` → `{parent, children:[recA,recB]}`;
+**REST:** `POST /split/{epKey}/{id}` `{ts:[t1…tk]}` (tăng dần,
+`0 < t1 < … < tk < dur`) → `{parent, children:[k+1 rec]}`;
 `POST /split/{epKey}/{id}/undo`. (`/undo` route khai báo TRƯỚC route chung —
 cùng bẫy path-converter như `/recut`.)
 
-**Điểm nối downstream:** con là **id seg mới, không có trong `segments.csv`** →
-`speaker` con được **ghi vào record lúc tạo** (default cha, người sửa qua F6),
-KHÔNG tra segments.csv. `build_kaggle_dataset.py` loại cha (`rejected`/`split`) +
-đọc nhãn con từ `state.jsonl` như mọi clip.
+**Điểm nối downstream:** con là **id seg mới, không có trong CSV nào**
+(`segments/transcripts*/labels_*`) → `speaker` **và** `asr/yt/opus/sonnet` được
+**ghi vào record lúc tạo** (speaker default = cha, người sửa qua F6;
+asr/yt/opus/sonnet copy cha), KHÔNG tra CSV. `build_kaggle_dataset.py` loại cha
+(`rejected`/`split`) + đọc nhãn con từ `state.jsonl` như mọi clip.
 
 ---
 
 ## F6 — Speaker sửa được (label-of-record)  [planned, chưa build]
 
 **Vấn đề.** `speaker` hiện là provenance **read-only** từ diarization. Với split
-(F5, con `_2` là người khác) và ADR-003 (người là nguồn sự thật), speaker cần
+(F5, các con có thể là người khác nhau) và ADR-003 (người là nguồn sự thật), speaker cần
 **người sửa được** → thành nhãn-của-record, ghi đè id diarization khi cần.
 
 **Quyết định đề nghị:**
@@ -163,11 +175,35 @@ KHÔNG tra segments.csv. `build_kaggle_dataset.py` loại cha (`rejected`/`split
 
 ---
 
+## F7 — Excise: bỏ đoạn GIỮA bị nhiễu (giữ 1 clip)  [built 2026-07-18, change 005]
+
+**Vấn đề.** F1 recut chỉ **co** hai đầu; F5 split **chia** thành nhiều con. Cần bỏ
+một đoạn nhiễu **ở giữa** mà clip **không bị chia đôi** — nối `[0,a]+[b,dur]` lại.
+
+**Quyết định (2026-07-18):**
+- Server `soundfile` đọc wav → ghi `concat([:i0],[i1:])` (atomic), giữ `sr`/subtype;
+  backup `_orig/` một lần; đoạn bỏ phải nằm GIỮA (chặn mép → dùng trim).
+- **Provenance = giữ biên bao + ghi lỗ hổng** (user chọn): `start/end` **không**
+  đổi; đoạn bỏ append vào `excised: [[a,b],…]` (giây clip-local, theo thứ tự).
+  `recut=true`. Undo dùng chung `/recut/undo` (restore `_orig` + xoá `excised`).
+- **UI:** dùng lại drag-select của `✂ cắt`; thêm nút `⌦ bỏ giữa` (song song
+  `✔ lưu cắt`). Không thêm mode riêng — nhãn nút phân biệt GIỮ vs XOÁ.
+
+**REST:** `POST /excise/{epKey}/{id}` `{a,b,text}`; undo qua `POST /recut/.../undo`.
+Chi tiết + verify: [change 005](../../docs/spec/changes/005-labeler-excise-seek/README.md).
+
+## Seek — nghe từ vị trí chọn  [built 2026-07-18, change 005]
+
+Click trên sóng ở **chế độ thường** (không cut/split) dời `S.audio.currentTime` tới
+vị trí đó; `Space` phát tiếp từ đó thay vì từ đầu. Frontend-only (`main.js`
+mousedown), không thêm UI (con trỏ trắng sẵn có báo vị trí).
+
 ## Trường trong `state.jsonl` (nguồn) → `gold.csv` (export)
 
 `state.jsonl` mỗi record: emotion/V/A/distress/multi, `gold_text`, `recut`+biên,
 `rejected`+`reject_reason` (F3; cha split = rejected reason `"split"` +
-`split_children`), `split_from` (con, F5), `annotator`, `speaker` (sửa được, F6),
+`split_children`), `split_from` + `asr/yt/opus/sonnet` kế thừa từ cha (con, F5),
+`annotator`, `speaker` (sửa được, F6),
 `series/ep/id`, timestamps. `gold.csv`/`.zip` là **view export** dựng từ đó (bỏ
 `rejected` và cha `split=true`).
 

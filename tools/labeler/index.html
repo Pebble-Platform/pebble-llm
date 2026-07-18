@@ -52,12 +52,16 @@
   .st-done{color:var(--ok)} .st-todo{color:var(--muted)}
   .flag{color:var(--warn)}
   .empty{padding:40px;text-align:center;color:var(--muted)}
+  .recap-panel{display:flex;gap:10px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .recap-panel.hidden{display:none}
+  tr.clip.recap td{background:rgba(224,168,58,.14)}
 </style>
 </head>
 <body>
 <header>
   <h1>ViEmoSpeech · gold theo tập</h1>
   <button id="reload" class="muted">↻ tải lại tập</button>
+  <button id="recapbtn" title="dò đoạn recap trùng với tập trước rồi đánh dấu">⧉ dò recap</button>
   <span id="loaded" class="muted">đang tải…</span>
   <span id="prog" class="muted"></span>
   <span class="sp"></span>
@@ -69,6 +73,12 @@
 <div class="body">
   <aside id="sidebar"><div class="empty">Chọn thư mục <code>episodes/</code> để bắt đầu</div></aside>
   <main>
+    <div id="recap-panel" class="recap-panel hidden">
+      <span id="recap-info" class="muted"></span>
+      <span class="sp" style="flex:1"></span>
+      <button id="recap-mark" class="primary">✓ đánh dấu trùng</button>
+      <button id="recap-dismiss">bỏ qua</button>
+    </div>
     <div id="detail" class="detail hidden">
       <canvas id="wave"></canvas>
       <div style="display:flex;gap:12px;align-items:center;margin-top:6px">
@@ -81,10 +91,11 @@
       </div>
       <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
         <button id="cutbtn">✂ cắt</button>
-        <button id="cutsave">✔ lưu cắt</button>
+        <button id="cutsave" title="giữ đoạn đã chọn (cắt bỏ hai đầu)">✔ lưu cắt</button>
+        <button id="excisesave" title="bỏ đoạn đã chọn ở giữa, nối phần còn lại (clip không bị chia)">⌦ bỏ giữa</button>
         <button id="cutundo" title="khôi phục clip gốc">↩ gốc</button>
-        <button id="splitbtn" title="chia clip thành 2">⁄ chia</button>
-        <button id="splitdo">✔ chia đôi</button>
+        <button id="splitbtn" title="chia clip thành nhiều đoạn">⁄ chia</button>
+        <button id="splitdo">✔ chia</button>
         <span id="cutinfo" class="muted"></span>
       </div>
       <div class="texts">
@@ -101,11 +112,9 @@
       <div class="ctlrow">
         <div class="fld"><span>valence</span><select id="g-val"><option value="" selected disabled>—</option><option value="1">1 · rất tiêu cực</option><option value="2">2 · tiêu cực</option><option value="3">3 · trung tính</option><option value="4">4 · tích cực</option><option value="5">5 · rất tích cực</option></select></div>
         <div class="fld"><span>arousal</span><select id="g-aro"><option value="" selected disabled>—</option><option value="1">1 · rất bình thản</option><option value="2">2 · bình thản</option><option value="3">3 · trung bình</option><option value="4">4 · kích động</option><option value="5">5 · rất kích động</option></select></div>
-        <div class="fld"><span>distress</span><select id="g-dis"><option value="" selected disabled>—</option><option value="true">có</option><option value="false">không</option></select></div>
         <div class="fld"><span>speaker</span><select id="g-spk"></select></div>
-        <div class="fld" style="flex:1;min-width:150px"><span>note</span><input id="g-note" type="text" style="width:100%"></div>
         <button id="confirm" class="primary">Xác nhận gold <span class="kbd">Enter</span></button>
-        <div class="fld"><span>reject</span><select id="rej-reason"><option value="multi_speaker">multi_speaker</option><option value="noise">noise</option><option value="bad_cut">bad_cut</option><option value="other">other</option></select></div>
+        <div class="fld"><span>reject</span><select id="rej-reason"><option value="multi_speaker">multi_speaker</option><option value="noise">noise</option><option value="bad_cut">bad_cut</option><option value="duplicate">duplicate</option><option value="other">other</option></select></div>
         <button id="rejbtn">⚑ loại</button>
         <span id="g-status" class="muted"></span>
       </div>

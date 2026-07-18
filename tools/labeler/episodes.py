@@ -57,8 +57,17 @@ def build(ep_key: str, ep: Path) -> dict:
     clips = []
     for cid in sorted(p.stem for p in (ep / "clips").glob("seg*.wav")):
         s, y, t = seg.get(cid, {}), tr_yt.get(cid, {}), tr.get(cid, {})
-        o, n = _label(opus.get(cid)), _label(sonnet.get(cid))
         rec = store.STATE.get(store.skey(ep_key, cid))  # label; may carry recut boundaries
+        if rec and rec.get("split_from"):
+            # split child (F5): no CSV row exists for this id — the record
+            # carries what it inherited from the parent at creation time
+            # (store.inherited_provenance), not a CSV lookup.
+            asr, yt_text = rec.get("asr", ""), rec.get("yt", "")
+            o, n = rec.get("opus_detail"), rec.get("sonnet_detail")
+        else:
+            asr = y.get("text_phowhisper") or t.get("text") or ""
+            yt_text = y.get("text_youtube", "")
+            o, n = _label(opus.get(cid)), _label(sonnet.get(cid))
         clips.append(
             {
                 "id": cid,
@@ -68,8 +77,8 @@ def build(ep_key: str, ep: Path) -> dict:
                 else store.fnum(s.get("start"), y.get("start"), t.get("start")),
                 "end": rec["end"] if rec else store.fnum(s.get("end"), y.get("end"), t.get("end")),
                 "speaker": rec["speaker"] if rec else s.get("speaker", ""),  # rec (F6) wins
-                "asr": y.get("text_phowhisper") or t.get("text") or "",
-                "yt": y.get("text_youtube", ""),
+                "asr": asr,
+                "yt": yt_text,
                 "opus": o,
                 "sonnet": n,
                 "disagree": bool(o and n and o["emotion"] != n["emotion"]),

@@ -141,6 +141,7 @@ def seed_record(ep_key: str, clip_id: str, ep: Path) -> dict:
         "distress": False,
         "note": "",
         "recut": False,
+        "excised": [],
         "gold_text": "",
         "rejected": False,
         "reject_reason": "",
@@ -149,8 +150,65 @@ def seed_record(ep_key: str, clip_id: str, ep: Path) -> dict:
     }
 
 
-def child_record(ep_key: str, cid: str, parent: dict, start: float, end: float) -> dict:
-    """A fresh, unlabeled record for a split child (id not in segments.csv)."""
+def _teacher_label(row: dict) -> dict | None:
+    """Full opus/sonnet suggestion shape (mirrors episodes.py's ``_label``).
+
+    Needed so a split child can carry the parent's teacher suggestion in the
+    same dict shape ``/episode`` returns for a normal clip — a child id has no
+    row of its own in labels_opus.csv/labels_sonnet.csv to build that from.
+    """
+    if not row:
+        return None
+    return {
+        "emotion": row.get("emotion", ""),
+        "valence": row.get("valence", ""),
+        "arousal": row.get("arousal", ""),
+        "distress": row.get("distress", ""),
+        "multi_speaker_suspect": row.get("multi_speaker_suspect", ""),
+    }
+
+
+def inherited_provenance(ep: Path, parent: dict) -> dict:
+    """asr/yt text + opus/sonnet suggestions to copy into a split's children (F5).
+
+    Looked up by the PARENT's own id in the episode CSVs (children get no CSV
+    row of their own). If the parent is itself a split child (no CSV row
+    either), reuse what it already inherited at its own creation.
+    """
+    if parent.get("split_from"):
+        return {
+            "asr": parent.get("asr", ""),
+            "yt": parent.get("yt", ""),
+            "opus": parent.get("opus", ""),
+            "sonnet": parent.get("sonnet", ""),
+            "opus_detail": parent.get("opus_detail"),
+            "sonnet_detail": parent.get("sonnet_detail"),
+        }
+    pid = parent["id"]
+    tr_yt = by_id(read_csv(ep / "transcripts_yt.csv")).get(pid, {})
+    tr = by_id(read_csv(ep / "transcripts.csv")).get(pid, {})
+    op = by_id(read_csv(ep / "labels_opus.csv")).get(pid, {})
+    so = by_id(read_csv(ep / "labels_sonnet.csv")).get(pid, {})
+    return {
+        "asr": tr_yt.get("text_phowhisper") or tr.get("text") or "",
+        "yt": tr_yt.get("text_youtube", ""),
+        "opus": op.get("emotion", ""),
+        "sonnet": so.get("emotion", ""),
+        "opus_detail": _teacher_label(op),
+        "sonnet_detail": _teacher_label(so),
+    }
+
+
+def child_record(ep_key: str, cid: str, parent: dict, prov: dict, start: float, end: float) -> dict:
+    """A fresh, unlabeled record for a split child (id not in segments.csv).
+
+    Record-shape choice (F5, 2026-07-09): ``opus``/``sonnet`` stay plain
+    emotion strings, same as ``seed_record`` — that's what actions.js's
+    gold.csv export compares/writes as strings. ``opus_detail``/``sonnet_detail``
+    carry the full {emotion,valence,arousal,distress,multi_speaker_suspect}
+    dict that episodes.build() needs to render the child exactly like a normal
+    clip's /episode response (see episodes.py's split-child branch).
+    """
     return {
         "epKey": ep_key,
         "id": cid,
@@ -159,8 +217,12 @@ def child_record(ep_key: str, cid: str, parent: dict, start: float, end: float) 
         "speaker": parent["speaker"],  # default = parent; human edits via F6
         "start": start,
         "end": end,
-        "opus": "",
-        "sonnet": "",
+        "asr": prov["asr"],
+        "yt": prov["yt"],
+        "opus": prov["opus"],
+        "sonnet": prov["sonnet"],
+        "opus_detail": prov["opus_detail"],
+        "sonnet_detail": prov["sonnet_detail"],
         "emotion": "",
         "valence": None,
         "arousal": None,
