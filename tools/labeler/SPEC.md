@@ -96,7 +96,7 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   audio pristine + xoá `excised`. Đoạn bỏ phải nằm GIỮA (mép → dùng `✔ lưu cắt`).
 - **Nghe từ vị trí chọn (seek):** click trên sóng (chế độ thường, không cut/split)
   → dời con trỏ phát tới đó; `Space` phát tiếp từ vị trí đó thay vì từ đầu.
-- **Nghe ±N (ngữ cảnh):** nút `▶ nghe ±` + dropdown chọn **N giây** (10/20/30/60)
+- **Nghe ±N (ngữ cảnh):** nút `▶ nghe ±` + dropdown chọn **N giây** (1/3/5)
   phát đoạn `[start−N, end+N]` cắt từ audio gốc của tập (`audio_full.wav`, fallback
   `vocals_16k`) ở **player riêng** — nghe trước/sau clip để soát cắt/đa giọng;
   không đổi sóng/clip chính; bấm lại để dừng (tự tắt khi phát clip hoặc chuyển

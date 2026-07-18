@@ -9,7 +9,7 @@ full audio at the clip's absolute position.
 
 ## Feature — `▶ nghe ±10s`
 
-A button next to `▶ Play` + a seconds dropdown (**N = 10/20/30/60**). Plays
+A button next to `▶ Play` + a seconds dropdown (**N = 1/3/5**). Plays
 `[start−N, end+N]` of the episode's full audio in a **separate** audio player, so
 the main clip audio + waveform are untouched. Toggle to stop; auto-stops when the
 clip audio plays or you move to another clip. `N` selectable in the UI (user
@@ -51,7 +51,7 @@ the clip) — the endpoint's `pad` already supported it, so this was UI-only.
 | `state.js` | `preview: new Audio()` |
 | `actions.js` | `playContext` (toggle) — reads `#ctxpad` → `?pad=N` |
 | `view.js` | pause preview on clip audio play + on clip switch |
-| `index.html` | `▶ nghe ±` button + `#ctxpad` seconds dropdown (10/20/30/60) |
+| `index.html` | `▶ nghe ±` button + `#ctxpad` seconds dropdown (1/3/5) |
 | `main.js` | wire `ctxplay` + preview label on play/pause/ended |
 | `SPEC.md` | Chức năng bullet + REST row + arch date |
 
