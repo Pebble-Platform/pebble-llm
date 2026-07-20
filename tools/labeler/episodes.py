@@ -8,6 +8,29 @@ from pathlib import Path
 import store
 
 EP_RE = re.compile(r"^ep\d+(_\d+)?$", re.IGNORECASE)
+TS_LINE = re.compile(r"^\s*(\d+):(\d\d)\s+(.+\S)\s*$")
+
+
+def youtube_script(ep: Path) -> list[dict]:
+    """De-rolled YouTube transcript (M:SS text per line) -> [{start, end, text}].
+
+    Uses the pipeline's cleaned ``youtube_transcripts.txt`` — the raw .srt is
+    rolling captions (duplicated, zero-duration cues) and unusable directly. Each
+    line's ``end`` = the next line's start. Empty list if the file is missing.
+    """
+    f = ep / "youtube_transcripts.txt"
+    if not f.is_file():
+        return []
+    rows = [
+        (int(m.group(1)) * 60 + int(m.group(2)), m.group(3).strip())
+        for ln in f.read_text(encoding="utf-8", errors="replace").splitlines()
+        if (m := TS_LINE.match(ln))
+    ]
+    out = []
+    for i, (t, txt) in enumerate(rows):
+        end = rows[i + 1][0] if i + 1 < len(rows) else t + 4
+        out.append({"start": float(t), "end": float(max(end, t + 0.5)), "text": txt})
+    return out
 
 
 def _label(d: dict | None) -> dict | None:
@@ -58,10 +81,9 @@ def build(ep_key: str, ep: Path) -> dict:
     for cid in sorted(p.stem for p in (ep / "clips").glob("seg*.wav")):
         s, y, t = seg.get(cid, {}), tr_yt.get(cid, {}), tr.get(cid, {})
         rec = store.STATE.get(store.skey(ep_key, cid))  # label; may carry recut boundaries
-        if rec and rec.get("split_from"):
-            # split child (F5): no CSV row exists for this id — the record
-            # carries what it inherited from the parent at creation time
-            # (store.inherited_provenance), not a CSV lookup.
+        if rec and (rec.get("split_from") or rec.get("manual_segment")):
+            # split child (F5) or manual segment: no CSV row for this id — the
+            # record carries its own asr/yt/teacher (set at creation), not a CSV lookup.
             asr, yt_text = rec.get("asr", ""), rec.get("yt", "")
             o, n = rec.get("opus_detail"), rec.get("sonnet_detail")
         else:
@@ -91,4 +113,11 @@ def build(ep_key: str, ep: Path) -> dict:
         for k, r in store.STATE.items()
         if k.startswith(ep_key + "\t") and r.get("speaker")
     }
-    return {"epKey": ep_key, "clips": clips, "speakers": sorted(seg_spk | st_spk)}
+    series = ep.parent.relative_to(store.ROOT).as_posix() or "(root)"
+    return {
+        "epKey": ep_key,
+        "series": series,
+        "clips": clips,
+        "speakers": sorted(seg_spk | st_spk),  # diarization ids (hint/fallback; per-episode)
+        "cast": store.cast_for(series),  # film characters -> speaker dropdown options
+    }

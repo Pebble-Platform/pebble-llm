@@ -1,8 +1,9 @@
 /* Composition root: wire DOM events to actions/view, keyboard, and boot. */
 
 import { $, EMOKEYS, S } from "./state.js";
-import { drawWave, fillSpk, loadEpisodes, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
+import { drawWave, fillSpk, loadEpisodes, renderConfig, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
 import { clearSel, confirmGold, exportCsv, exportZip, playContext, removeSelected, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
+import { closeSegment, createSeg, nudge, openSegment, playSel } from "./segment.js";
 
 /* ---------- buttons ---------- */
 $("reload").onclick = loadEpisodes;
@@ -72,9 +73,27 @@ window.addEventListener("resize", drawWave);
 /* ---------- speaker "＋ mới" (F6) ---------- */
 $("g-spk").onchange = () => {
   if ($("g-spk").value !== "__new__") return;
-  const s = (prompt("speaker id mới:") || "").trim();
-  if (s) { if (!S.epSpeakers.includes(s)) S.epSpeakers.push(s); fillSpk(s); } else fillSpk("");
+  const s = (prompt("tên nhân vật mới (không có trong cast):") || "").trim();
+  fillSpk(s);
 };
+
+/* ---------- config screen: per-film cast ---------- */
+$("cfgbtn").onclick = () => { $("config").classList.remove("hidden"); renderConfig(); };
+$("cfg-close").onclick = () => $("config").classList.add("hidden");
+$("config").onclick = (e) => { if (e.target.id === "config") $("config").classList.add("hidden"); };
+
+/* ---------- manual segmentation (cắt thủ công) ---------- */
+$("segbtn").onclick = openSegment;
+$("seg-close").onclick = closeSegment;
+$("segment").onclick = (e) => { if (e.target.id === "segment") closeSegment(); };
+$("seg-play").onclick = playSel;
+$("seg-create").onclick = createSeg;
+$("seg-a-minus").onclick = () => nudge("a", -0.2);
+$("seg-a-plus").onclick = () => nudge("a", 0.2);
+$("seg-b-minus").onclick = () => nudge("b", -0.2);
+$("seg-b-plus").onclick = () => nudge("b", 0.2);
+S.segAudio.onplay = () => ($("seg-play").textContent = "⏸ dừng");
+S.segAudio.onpause = S.segAudio.onended = () => ($("seg-play").textContent = "▶ nghe");
 
 /* ---------- keyboard ---------- */
 window.addEventListener("keydown", (e) => {

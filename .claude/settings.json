@@ -38,16 +38,7 @@
       "Read(**/credentials*)",
       "Read(~/.ssh/**)",
       "Read(~/.aws/**)",
-      "Read(~/.config/gcloud/**)",
-      "Write(**/.git/**)",
-      "Write(.git/**)",
-      "Write(**/secrets/**)",
-      "Write(**/credentials*)",
-      "Write(**/generated/**)",
-      "Write(**/obj/**)",
-      "Write(**/bin/**)",
-      "Write(**/dist/**)",
-      "Write(**/node_modules/**)"
+      "Read(~/.config/gcloud/**)"
     ],
     "allow": [
       "mcp__codegraph__codegraph_search",

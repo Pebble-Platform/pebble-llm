@@ -7,6 +7,13 @@ export const EMO = {
 };
 export const EMOKEYS = Object.keys(EMO); // index -> emotion, key 1..7
 
+// stored code -> Vietnamese label (mirrors the <select> options in index.html)
+export const GENDER_VI = { female: "nữ", male: "nam" };
+export const AGE_VI = {
+  child: "trẻ em", teen: "thiếu niên", young_adult: "thanh niên",
+  middle_aged: "trung niên", senior: "cao tuổi",
+};
+
 export const $ = (id) => document.getElementById(id);
 export const gk = (ep, id) => ep + "\t" + id;
 export const esc = (s) =>
@@ -21,10 +28,18 @@ export const S = {
   curEmotion: null,
   cutMode: false, cutSel: null, cutDrag: false, // recut (F1)
   splitMode: false, splitPoints: [], // split (F5) — multiple cut points, kept ascending
-  epSpeakers: [], // speaker dropdown (F6)
+  epSpeakers: [], // diarization ids of current episode (hint/fallback in speaker dropdown)
+  curSeries: null, // series of the open episode
+  cast: [], // current film's characters [{name,gender,age_group}] — speaker options + demographics
   selIds: new Set(), // multi-select for bulk-remove (loại nhiều clip) — clip ids checked in the table
   audio: new Audio(),
   audioBuf: null,
   rafId: null,
   preview: new Audio(), // context preview (±pad s from full episode audio) — separate from clip audio
+  // manual segmentation (cắt thủ công): pick spans on full de-musiced audio via YT script
+  script: [], // YouTube srt blocks [{start,end,text}]
+  segDur: 0, // full-audio duration
+  segSel: null, // current span {i0,i1,a,b,text} (i0..i1 = selected script blocks)
+  segBuf: null, // selection waveform buffer
+  segAudio: new Audio(), // selection preview player (separate from clip/context)
 };

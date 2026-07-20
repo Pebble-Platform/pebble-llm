@@ -54,16 +54,44 @@
   .empty{padding:40px;text-align:center;color:var(--muted)}
   .sel-bar{display:flex;gap:10px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
   tr.clip.sel td{background:rgba(74,144,226,.16)}
+  .config{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:flex-start;z-index:10;overflow:auto;padding:30px 16px}
+  .config.hidden{display:none}
+  .config-inner{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(760px,100%);padding:16px 18px}
+  .config-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .config-head h2{font-size:15px;margin:0;flex:1}
+  .cast-series{margin:14px 0}
+  .cast-series h3{font-size:13px;margin:0 0 6px;color:var(--accent)}
+  table.cast{width:100%;border-collapse:collapse;font-size:13px}
+  table.cast th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;text-align:left;padding:4px 6px}
+  table.cast td{padding:3px 6px;border-bottom:1px solid var(--line)}
+  table.cast input{width:100%}
+  table.cast tr.unset input{border-color:var(--warn)}
+  .seg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:flex-start;z-index:10;overflow:auto;padding:24px 16px}
+  .seg.hidden{display:none}
+  .seg-inner{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(900px,100%);padding:14px 16px}
+  .seg-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .seg-head h2{font-size:15px;margin:0;flex:1}
+  .seg-script{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px}
+  .seg-blk{padding:4px 8px;border-radius:5px;cursor:pointer;font-size:13px}
+  .seg-blk:hover{background:var(--panel2)}
+  .seg-blk.sel{background:rgba(74,144,226,.22)}
+  .seg-blk .t{color:var(--muted);font-size:11px;font-family:ui-monospace,monospace;margin-right:8px}
+  .seg-sel{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  canvas#seg-wave{width:100%;height:64px;display:block;background:#0f1114;border-radius:6px}
+  .seg-selrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+  #seg-text{width:100%;margin:4px 0 8px}
 </style>
 </head>
 <body>
 <header>
   <h1>ViEmoSpeech · gold theo tập</h1>
   <button id="reload" class="muted">↻ tải lại tập</button>
+  <button id="segbtn" title="cắt thủ công từ audio gốc (đã tách nhạc) theo script YouTube">✂ cắt thủ công</button>
   <span id="loaded" class="muted">đang tải…</span>
   <span id="prog" class="muted"></span>
   <span class="sp"></span>
   <label class="muted">annotator <input id="annotator" type="text" value="human" style="width:90px"></label>
+  <button id="cfgbtn" title="cấu hình nhân vật (tên · giới tính · tuổi) theo phim">⚙ nhân vật</button>
   <button id="expcsv">gold.csv</button>
   <button id="expzip" class="primary">ZIP (csv+wav)</button>
 </header>
@@ -124,6 +152,43 @@
       <table id="cliptable"><tbody><tr><td class="empty">Chọn một tập ở cột trái</td></tr></tbody></table>
     </div>
   </main>
+</div>
+
+<div id="segment" class="seg hidden">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <h2 id="seg-title">Cắt thủ công</h2>
+      <span class="muted" id="seg-status"></span>
+      <button id="seg-close">✕ đóng</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin-bottom:6px">Audio đã tách nhạc + script YouTube. Click 1 block để chọn vùng · shift-click block khác để gộp · chỉnh mép rồi ＋ tạo clip. Clip mới vào bảng để label.</div>
+    <div id="seg-script" class="seg-script"></div>
+    <div class="seg-sel">
+      <canvas id="seg-wave"></canvas>
+      <div class="seg-selrow">
+        <button id="seg-play">▶ nghe</button>
+        <label class="muted">ngữ cảnh ±<select id="seg-pad"><option value="0">0</option><option value="1">1s</option><option value="2" selected>2s</option><option value="3">3s</option></select></label>
+        <span id="seg-info" class="muted">chưa chọn vùng</span>
+        <span class="sp" style="flex:1"></span>
+        <button id="seg-a-minus" title="đầu −0.2s">đầu −</button><button id="seg-a-plus" title="đầu +0.2s">đầu +</button>
+        <button id="seg-b-minus" title="cuối −0.2s">cuối −</button><button id="seg-b-plus" title="cuối +0.2s">cuối +</button>
+      </div>
+      <input id="seg-text" type="text" placeholder="text (từ script YouTube, sửa được)">
+      <button id="seg-create" class="primary">＋ tạo clip để label</button>
+    </div>
+  </div>
+</div>
+
+<div id="config" class="config hidden">
+  <div class="config-inner">
+    <div class="config-head">
+      <h2>Cấu hình nhân vật theo phim</h2>
+      <span class="muted" id="cfg-status"></span>
+      <button id="cfg-close">✕ đóng</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin-bottom:6px">Tên nhân vật hiện ở dropdown speaker khi gán clip. Giới tính + tuổi khai báo 1 lần ở đây, mọi clip của nhân vật đó kế thừa.</div>
+    <div id="cfg-body"></div>
+  </div>
 </div>
 
 <script type="module" src="main.js"></script>

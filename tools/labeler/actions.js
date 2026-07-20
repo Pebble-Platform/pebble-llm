@@ -117,9 +117,9 @@ export async function saveSplit() {
 }
 
 /* ---------- export (raw state dump; Kaggle export = phase 4) ---------- */
-const COLS = ["id", "series", "episode", "speaker", "start", "end", "gold_emotion", "gold_valence",
-  "gold_arousal", "gold_distress", "gold_text", "opus_emotion", "sonnet_emotion",
-  "teacher_agree", "note", "annotator"];
+const COLS = ["id", "series", "episode", "speaker", "gender", "age_group", "start", "end",
+  "gold_emotion", "gold_valence", "gold_arousal", "gold_distress", "gold_text",
+  "opus_emotion", "sonnet_emotion", "teacher_agree", "note", "annotator"];
 
 async function goldRows() {
   let recs = []; try { recs = await api.getGold(); } catch {}
@@ -130,11 +130,15 @@ function csvCell(v) { v = String(v); return /[",\r\n]/.test(v) ? '"' + v.replace
 
 async function buildCSV() {
   const out = await goldRows();
+  let cast = {}; try { cast = await api.getCast(); } catch {}
+  const demoOf = (series, name) => (cast[series] || []).find((c) => c.name === name) || {};
   const rows = [COLS];
   for (const { ep, id, g } of out) {
     const agree = g.opus && g.sonnet ? g.opus === g.sonnet : "";
-    rows.push([id, ep.series, ep.epName, g.speaker ?? "", g.start ?? "", g.end ?? "", g.emotion,
-      g.valence, g.arousal, g.distress, g.gold_text || "", g.opus || "", g.sonnet || "", agree, g.note || "", g.annotator || ""]);
+    const dem = demoOf(ep.series, g.speaker);
+    rows.push([id, ep.series, ep.epName, g.speaker ?? "", dem.gender || "", dem.age_group || "",
+      g.start ?? "", g.end ?? "", g.emotion, g.valence, g.arousal, g.distress, g.gold_text || "",
+      g.opus || "", g.sonnet || "", agree, g.note || "", g.annotator || ""]);
   }
   return { csv: rows.map((r) => r.map(csvCell).join(",")).join("\r\n"), n: out.length };
 }

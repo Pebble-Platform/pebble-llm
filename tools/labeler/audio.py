@@ -71,6 +71,58 @@ def read_context(ep: Path, start: float, end: float, pad: float) -> bytes:
     return buf.getvalue()
 
 
+def full_duration(ep: Path) -> float:
+    """Total seconds of the episode's de-musiced vocals (0 if missing)."""
+    src = ep / "vocals_16k.wav"
+    if not src.is_file():
+        return 0.0
+    info = sf.info(str(src))
+    return round(info.frames / info.samplerate, 3)
+
+
+def read_full_slice(ep: Path, a: float, b: float, pad: float = 0.0) -> bytes:
+    """[a-pad, b+pad] of the episode's de-musiced vocals as WAV bytes (segment view).
+
+    Reads vocals_16k.wav (music removed) so the human hears clean speech + context
+    while choosing a region on the full episode timeline. Read-only.
+    """
+    src = ep / "vocals_16k.wav"
+    if not src.is_file():
+        raise HTTPException(404, "no vocals_16k.wav for this episode")
+    info = sf.info(str(src))
+    sr = info.samplerate
+    i0 = max(0, int((a - pad) * sr))
+    i1 = min(info.frames, int((b + pad) * sr))
+    if i1 <= i0:
+        raise HTTPException(400, "slice range out of bounds")
+    data, _ = sf.read(str(src), start=i0, stop=i1, dtype="float32")
+    buf = io.BytesIO()
+    sf.write(buf, data, sr, subtype=info.subtype, format="WAV")
+    return buf.getvalue()
+
+
+def cut_from_full(ep: Path, a: float, b: float) -> tuple[str, float, float]:
+    """Cut vocals_16k.wav[a,b] (episode seconds) into a NEW clip; return (id, a, b).
+
+    Human-driven segmentation: unlike the auto VAD∩turn cut, the human picks the
+    span (guided by the YouTube script). Music-removed vocals is the cut source.
+    """
+    if b - a <= 0.05:
+        raise HTTPException(400, "selection too short")
+    src = ep / "vocals_16k.wav"
+    if not src.is_file():
+        raise HTTPException(404, "no vocals_16k.wav for this episode")
+    info = sf.info(str(src))
+    sr = info.samplerate
+    i0, i1 = max(0, int(a * sr)), min(info.frames, int(b * sr))
+    if i1 <= i0:
+        raise HTTPException(400, "selection out of range")
+    data, _ = sf.read(str(src), start=i0, stop=i1, dtype="float32")
+    cid = f"seg{next_seg_num(ep):05d}"
+    _write(ep / "clips" / f"{cid}.wav", data, sr, info.subtype)
+    return cid, a, b
+
+
 def trim(ep: Path, clip_id: str, a: float, b: float) -> None:
     """Back up once, then overwrite the clip with [a,b] (clip-local seconds)."""
     if b - a <= 0.01:

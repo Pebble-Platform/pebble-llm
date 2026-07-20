@@ -21,15 +21,16 @@ và I6 (accuracy nêu test-split speaker-disjoint; tin cậy nhãn = κ **human�
 ## Kiến trúc
 
 **Backend** (FastAPI, `.venv-vnser`, bind `127.0.0.1`):
-`server.py` (routes + models + main, mỏng) · `store.py` (config `ROOT/STATE` +
-`state.jsonl` load/save + records + paths) · `episodes.py` (đọc CSV + dựng
+`server.py` (routes + models + main, mỏng) · `store.py` (config `ROOT/STATE/CAST`
++ `state.jsonl` + `cast.json` load/save + records + paths) · `episodes.py` (đọc CSV + dựng
 `/episodes`, `/episode`) · `audio.py` (`soundfile` recut/split/excise + context
 slice + backup `_orig/`).
 
 **Frontend** (ES modules, nạp qua `<script type="module" src="main.js">`):
 `state.js` (kernel `S` + consts) · `api.js` (mọi call server) · `view.js`
-(waveform + render + select) · `actions.js` (confirm/recut/split/reject + export)
-· `main.js` (DOM wiring + keyboard + init). `index.html` = markup thuần.
+(waveform + render + select + config cast) · `actions.js` (confirm/recut/split/reject
++ export) · `segment.js` (cắt thủ công: script YT + chọn vùng + tạo clip) ·
+`main.js` (DOM wiring + keyboard + init). `index.html` = markup thuần.
 
 **Chạy** (từ repo root):
 ```
@@ -50,17 +51,31 @@ Mỗi dòng JSON = 1 clip, khoá `(epKey, id)`. Ghi atomic (tmp→rename) sau m�
 | | `distress` | bool — **bỏ khỏi form 2026-07-10**; server default `false` (record cũ giữ giá trị đã gán) |
 | | `multi` | bool — tai người nghi ≥2 giọng |
 | | `note` | text — **bỏ khỏi form 2026-07-10**; server default `""` |
-| speaker (F6) | `speaker` | **người sửa được** (dropdown); mặc định = id diarization |
+| speaker (F6) | `speaker` | **tên nhân vật** (dropdown từ `cast.json`); mặc định = id diarization (sai — người gán lại) |
 | biên | `start, end` | recut-aware (cộng dồn qua nhiều lần recut) |
 | recut (F1) | `recut`, `gold_text` | `gold_text` = text người sửa sau recut |
 | excise (F7) | `excised` | list `[[a,b]…]` (giây clip-local) đoạn GIỮA đã bỏ + nối; `recut=true`; undo qua `/recut/undo`. `start/end` **giữ nguyên** biên bao (provenance) |
 | reject (F3) | `rejected`, `reject_reason` | reason `split` cho cha bị chia |
 | split (F5) | `split_from` (con) / `split_children` (cha) | liên kết cha↔con |
+| segment | `manual_segment` | `true` = clip người tự cắt từ vocals theo script YT (không có row segments.csv; mang `yt`/`gold_text` riêng) |
 | gợi ý | `opus, sonnet` | emotion 2 teacher — **chỉ tham chiếu**, không phải nhãn |
 | provenance | `annotator, ts` | ai + khi nào (I2) |
 
-`gold.csv` / `gold_bundle.zip` = **view export** dựng từ `state.jsonl` (dump thô;
-export Kaggle đầy đủ — strip text public, loại rejected/test-series — là phase 4).
+### Cast nhân vật theo phim — `cast.json` (nguồn sự thật cho identity + demographics)
+
+Diarization `SPEAKER_xx` **không đáng tin** (per-tập, gán sai, cùng id ở 2 tập ≠
+cùng người). Nên identity của clip = **tên nhân vật thật** của phim, người gán lại
+qua dropdown speaker. Danh sách nhân vật + giới tính + nhóm tuổi khai báo **1
+lần/phim** trong `cast.json`: `{ "<series>": [ {name, gender, age_group}, … ] }`.
+`gender` = `"" | female | male`; `age_group` = `"" | child | teen | young_adult |
+middle_aged | senior` (**nhóm tuổi, không phải số** — không suy được từ giọng).
+Clip lưu `speaker` = tên nhân vật (`state.jsonl`); giới tính/tuổi **resolve theo
+`(series, speaker)` từ `cast.json`** (bảng + export), không lưu lại per-clip. Seed
+ban đầu = web-research cast 2 phim (Về nhà đi con, Chạy trốn thanh xuân), sửa được.
+
+`gold.csv` / `gold_bundle.zip` = **view export** dựng từ `state.jsonl` **join
+`cast.json` theo `(series, speaker)`** (dump thô; export Kaggle đầy đủ — strip text
+public, loại rejected/test-series — là phase 4).
 
 ## REST API
 
@@ -71,6 +86,11 @@ export Kaggle đầy đủ — strip text public, loại rejected/test-series �
 | `GET /clip/{epKey}/{id}.wav` | serve clip (range) |
 | `GET /context/{epKey}/{id}.wav` `?pad=10` | phát ngữ cảnh `[start−pad, end+pad]` cắt từ audio gốc của tập (chỉ đọc) |
 | `GET /gold` | toàn bộ record (cho export) |
+| `GET /script/{epKey}` | `{duration, blocks:[{start,end,text}]}` — script YouTube de-rolled (segment mode) |
+| `GET /segment-audio/{epKey}.wav` `?a&b&pad` | slice vocals đã tách nhạc `[a−pad, b+pad]` (preview vùng, chỉ đọc) |
+| `POST /segment/{epKey}` `{a,b,text}` | cắt clip MỚI từ vocals cho vùng `[a,b]` + seed record (`manual_segment`, gold_text=text YT) |
+| `GET /cast` | toàn bộ cast: `series` → `[{name,gender,age_group}]` (dropdown + export join) |
+| `POST /cast/{series}` `{cast:[…]}` | thay toàn bộ cast 1 phim (màn config); tên nhân vật thành speaker của clip |
 | `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,speaker?,annotator}` (distress/note: server default) |
 | `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
 | `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
@@ -82,9 +102,28 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 
 ## Chức năng
 
+- **Cắt thủ công (✂ cắt thủ công, per tập):** cho tập **chưa label** mà auto-cut
+  (VAD∩turn) đang cắt mất context. Overlay: **script YouTube** de-rolled
+  (`youtube_transcripts.txt`, `GET /script`) làm view chính; click 1 block chọn
+  vùng, shift-click block khác **gộp** vùng; waveform của vùng (`GET
+  /segment-audio` từ **vocals đã tách nhạc**), `▶ nghe` kèm **± ngữ cảnh** (0/1/2/3s
+  cắt từ audio đầy đủ — nghe lại phần bị mất), nút chỉnh mép `đầu/cuối ±0.2s`, ô
+  text seed từ script (sửa được). `＋ tạo clip` → `POST /segment` cắt vocals
+  `[a,b]` thành clip mới (seg kế tiếp, `manual_segment`), vào bảng để label như
+  thường. **Auto clip giữ nguyên** (thêm vào, không xoá). ⚠️ Người tự chọn vùng →
+  **người chịu trách nhiệm single-speaker (I3)** thay cho auto; dùng `>>` trong
+  caption + split/multi để giữ đơn-giọng.
+- **Config nhân vật (⚙ nhân vật, per phim):** overlay liệt kê từng phim + bảng
+  cast (tên · giới tính · tuổi · xoá) + `＋ thêm nhân vật`; sửa/thêm/xoá → auto
+  `POST /cast/{series}` lưu `cast.json`. Nhân vật chưa đủ giới tính/tuổi = viền
+  vàng. Đây là nơi khai báo **1 lần/phim** — mọi clip của nhân vật kế thừa
+  demographics (2 cột cuối bảng), export join theo `(series, speaker)`.
 - **Label:** chọn emotion (phím `1`–`7` hoặc click), valence/arousal (**không
-  default**, `—` tới khi chọn), speaker (distress/note bỏ khỏi form 2026-07-10,
-  quyết định user). Teacher hiển thị
+  default**, `—` tới khi chọn), **speaker = tên nhân vật** (dropdown từ cast của
+  phim; sửa diarization sai bằng cách chọn đúng nhân vật — `SPEAKER_xx` chưa gán
+  lại vẫn hiện làm option tới khi sửa; `＋ mới` cho vai phụ ngoài cast).
+  distress/note bỏ khỏi form 2026-07-10,
+  quyết định user. Teacher hiển thị
   **read-only bên cạnh, KHÔNG pre-fill** (ADR-003). `Enter`/`Xác nhận` → lưu +
   tự nhảy clip chưa-nhãn kế.
 - **F1 recut + text:** `✂ cắt` → kéo chọn đoạn GIỮ trên sóng → `✔ lưu cắt`
@@ -112,7 +151,8 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   bỏ) → `✔ chia (k+1)` → k+1 clip mới (id `seg` kế tiếp), mỗi con kế thừa
   asr/yt/opus/sonnet của cha; cha giữ nguyên nhưng status→reject(`split`); mỗi
   con label riêng (speaker + text + emotion); undo xoá con + un-reject cha.
-- **F6 speaker sửa được:** dropdown speaker của tập + `＋ mới`.
+- **F6 speaker = nhân vật:** dropdown lấy từ cast của phim (`cast.json`) + `＋ mới`
+  cho vai phụ; sửa diarization sai bằng cách chọn đúng nhân vật.
 - **Export:** `gold.csv` / ZIP (dump state; media wav = local-only).
 - **Phím tắt:** `Space` play · `1`–`7` emotion · `Enter` xác nhận · `N`/`P`
   next/prev.
@@ -125,6 +165,9 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 - **I3 single-speaker:** clip đơn-giọng theo diarization; tai người bắt điểm mù
   bằng cờ `multi` / reject / split. **F7 excise** bỏ nhiễu GIỮA một giọng — giữ
   đơn-giọng (không gộp/không đổi speaker), `_orig/` + `excised` bảo toàn provenance.
+  **Cắt thủ công** chuyển I3 sang **người bảo đảm** (auto VAD∩turn không còn ép):
+  vùng người chọn có thể trúng ≥2 giọng → phải giữ đơn-giọng bằng `>>` caption +
+  split/multi; đây là đánh đổi để không mất context (auto cắt quá sát).
 - **I4 speaker-disjoint:** `state.jsonl.speaker` (người sửa được) → khoá
   `(series, episode, speaker)`; hold-out **whole-series** (ADR-002);
   `tests/invariants/test_speaker_disjoint.py` thuộc change 001 (chưa dựng).
@@ -138,8 +181,14 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   200. Tương tác thật (kéo chọn, chia, dropdown) cần người click-test.
 - **Single-pass** (1 annotator/clip) ⇒ **chưa có κ human–human** để báo (ADR-003
   known gap); double-annotate subset là further work.
-- **Speaker-id consistency (F6):** gõ id lệch → cùng giọng thành 2 id → rò I4;
-  dropdown + review danh sách id trước khi dựng test-set.
+- **Speaker = nhân vật (F6):** dropdown cast cố định (chọn, không gõ tự do) giảm
+  mạnh lệch id → **I4 chính xác hơn** (identity = nhân vật thật, không phải cụm
+  diarization per-tập). Còn nợ: clip đã gán `SPEAKER_xx` cũ cần review + gán lại
+  nhân vật đúng (diarization gán sai — không auto sửa được); `＋ mới` vẫn cho gõ tự do.
+- **Cắt thủ công — nợ:** dùng script YT làm view (chưa render waveform full-track
+  14′), timestamp M:SS (giây) nên mép ~±0.5s → phải nudge + nghe; chưa overlay
+  speaker-turn (`diar_turns.csv`) để cảnh báo đa giọng. 1/33 tập thiếu
+  `youtube_transcripts.txt` → script rỗng cho tập đó.
 - **Export Kaggle đầy đủ = phase 4** (chưa build): nhãn human + loại rejected +
   loại test-series + strip text ở bản public.
 - **Series test = quyết định người** (ADR-002), chưa chốt.

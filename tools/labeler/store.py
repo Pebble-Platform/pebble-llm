@@ -20,14 +20,17 @@ CLIP_RE = re.compile(r"^seg\d+$")
 
 ROOT: Path | None = None
 STATE_PATH: Path | None = None
-STATE: dict[str, dict] = {}  # "epKey\tid" -> label record (source of truth)
+CAST_PATH: Path | None = None
+STATE: dict[str, dict] = {}  # "epKey\tid" -> label record (source of truth for labels)
+CAST: dict[str, list[dict]] = {}  # series -> [{name, gender, age_group}] (per-film cast)
 LOCK = threading.Lock()
 
 
 def set_root(root: Path) -> None:
-    global ROOT, STATE_PATH
+    global ROOT, STATE_PATH, CAST_PATH
     ROOT = root
     STATE_PATH = root / "state.jsonl"
+    CAST_PATH = root / "cast.json"
 
 
 def now() -> str:
@@ -56,6 +59,7 @@ def load() -> None:
             if line.strip():
                 r = json.loads(line)
                 STATE[skey(r["epKey"], r["id"])] = r
+    load_cast()
 
 
 def save() -> None:
@@ -65,6 +69,79 @@ def save() -> None:
         for r in STATE.values():
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     tmp.replace(STATE_PATH)
+
+
+# ---------- per-film cast (character roster: name + gender + age_group) ----------
+def load_cast() -> None:
+    CAST.clear()
+    if CAST_PATH and CAST_PATH.exists():
+        CAST.update(json.loads(CAST_PATH.read_text(encoding="utf-8")))
+
+
+def save_cast() -> None:
+    tmp = CAST_PATH.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(CAST, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(CAST_PATH)
+
+
+def set_cast(series: str, entries: list[dict]) -> list[dict]:
+    """Replace one film's whole cast (config screen saves the full list)."""
+    clean = [
+        {
+            "name": (e.get("name") or "").strip(),
+            "gender": e.get("gender", ""),
+            "age_group": e.get("age_group", ""),
+        }
+        for e in entries
+        if (e.get("name") or "").strip()
+    ]
+    with LOCK:
+        CAST[series] = clean
+        save_cast()
+    return clean
+
+
+def cast_for(series: str) -> list[dict]:
+    return CAST.get(series, [])
+
+
+def manual_record(
+    ep_key: str, cid: str, series: str, episode: str, start: float, end: float, text: str
+) -> dict:
+    """A fresh record for a clip the human cut from full audio (no segments.csv row).
+
+    ``manual_segment`` marks provenance (human-picked span, not auto VAD∩turn).
+    Carries its own asr/yt/opus_detail like a split child so episodes.build()
+    renders it without a CSV lookup. Text seeds ``gold_text`` from the YT script.
+    """
+    return {
+        "epKey": ep_key,
+        "id": cid,
+        "series": series,
+        "episode": episode,
+        "speaker": "",  # human assigns the character
+        "start": start,
+        "end": end,
+        "asr": "",
+        "yt": text,
+        "opus": "",
+        "sonnet": "",
+        "opus_detail": None,
+        "sonnet_detail": None,
+        "emotion": "",
+        "valence": None,
+        "arousal": None,
+        "distress": False,
+        "note": "",
+        "recut": False,
+        "excised": [],
+        "gold_text": text,
+        "rejected": False,
+        "reject_reason": "",
+        "manual_segment": True,
+        "annotator": "",
+        "ts": now(),
+    }
 
 
 def put(ep_key: str, clip_id: str, rec: dict) -> dict:

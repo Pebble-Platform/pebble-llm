@@ -40,6 +40,16 @@ class GoldIn(BaseModel):
     annotator: str = "human"
 
 
+class CastEntry(BaseModel):
+    name: str
+    gender: str = ""  # "" | female | male
+    age_group: str = ""  # "" | child | teen | young_adult | middle_aged | senior
+
+
+class CastIn(BaseModel):
+    cast: list[CastEntry]  # the film's whole character roster (replaces existing)
+
+
 class RecutIn(BaseModel):
     a: float  # keep-region start, clip-local seconds
     b: float  # keep-region end
@@ -63,6 +73,12 @@ class RejectBulkIn(BaseModel):
 
 class SplitIn(BaseModel):
     ts: list[float]  # split points, clip-local seconds, strictly increasing, k >= 1
+
+
+class SegmentIn(BaseModel):
+    a: float  # region start, episode seconds (on the full de-musiced audio)
+    b: float  # region end
+    text: str = ""  # YouTube-script text of the span (seeds gold_text)
 
 
 # ---------- reads ----------
@@ -108,6 +124,39 @@ def all_gold() -> list[dict]:
     return list(store.STATE.values())
 
 
+@app.get("/script/{ep_key:path}")
+def get_script(ep_key: str) -> dict:
+    """YouTube subtitle timeline + full-audio duration for manual segmentation."""
+    ep = store.episode_dir(ep_key)
+    return {"duration": audio.full_duration(ep), "blocks": episodes.youtube_script(ep)}
+
+
+@app.get("/segment-audio/{ep_key:path}.wav")
+def get_segment_audio(ep_key: str, a: float, b: float, pad: float = 0.0) -> Response:
+    """[a-pad, b+pad] of the de-musiced vocals (preview a candidate region, read-only)."""
+    ep = store.episode_dir(ep_key)
+    return Response(
+        audio.read_full_slice(ep, a, b, pad),
+        media_type="audio/wav",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/cast")
+def all_cast() -> dict[str, list[dict]]:
+    """Every film's character roster: series -> [{name, gender, age_group}]."""
+    return store.CAST
+
+
+@app.post("/cast/{series:path}")
+def put_cast(series: str, c: CastIn) -> list[dict]:
+    """Replace one film's cast (config screen). Character names become clip speakers."""
+    p = store.safe(series)
+    if not p.is_dir():
+        raise HTTPException(404, "no such series")
+    return store.set_cast(series, [e.model_dump() for e in c.cast])
+
+
 # ---------- label / recut / reject / split ----------
 @app.post("/gold/{ep_key:path}/{clip_id}")
 def put_gold(ep_key: str, clip_id: str, g: GoldIn) -> dict:
@@ -130,6 +179,24 @@ def put_gold(ep_key: str, clip_id: str, g: GoldIn) -> dict:
     if g.gold_text is not None:  # save edited text on confirm (not only on recut)
         rec["gold_text"] = g.gold_text
     return store.put(ep_key, clip_id, rec)
+
+
+@app.post("/segment/{ep_key:path}")
+def put_segment(ep_key: str, s: SegmentIn) -> dict:
+    """Cut a NEW clip from the full vocals for span [a,b]; seed a labelable record.
+
+    Human-driven segmentation (episodes not yet labeled): the human picks the span
+    on the full de-musiced audio guided by the YouTube script, instead of the auto
+    VAD∩turn cut that was losing context. Appends (auto clips kept).
+    """
+    ep = store.episode_dir(ep_key)
+    series = ep.parent.relative_to(store.ROOT).as_posix() or "(root)"
+    with store.LOCK:
+        cid, a, b = audio.cut_from_full(ep, s.a, s.b)
+        rec = store.manual_record(ep_key, cid, series, ep.name, a, b, s.text)
+        store.STATE[store.skey(ep_key, cid)] = rec
+        store.save()
+    return rec
 
 
 @app.post("/recut/{ep_key:path}/{clip_id}/undo")

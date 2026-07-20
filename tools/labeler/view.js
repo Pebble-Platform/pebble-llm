@@ -1,8 +1,8 @@
 /* View layer: waveform/audio drawing + sidebar/table/emo/speaker rendering +
    episode load / clip select. Reads & writes S; calls the api layer. */
 
-import { $, EMO, EMOKEYS, esc, gk, S } from "./state.js";
-import { clipUrl, getEpisode, getEpisodes } from "./api.js";
+import { $, AGE_VI, EMO, EMOKEYS, GENDER_VI, esc, gk, S } from "./state.js";
+import { clipUrl, getCast, getEpisode, getEpisodes, setCast } from "./api.js";
 
 /* ---------- waveform + audio ---------- */
 export function drawWave() {
@@ -106,10 +106,12 @@ export function renderTable() {
     updateSelBar();
     return;
   }
+  const demoMap = Object.fromEntries(S.cast.map((c) => [c.name, c])); // character -> {gender,age_group}
   const rows = S.clips.map((c, i) => {
     const g = S.gold[gk(S.curEp, c.id)];
     const txt = (g && g.gold_text) || c.asr || "";
     const sel = S.selIds.has(c.id);
+    const dem = demoMap[c.speaker] || {};
     return `<tr class="clip${i === S.curIdx ? " active" : ""}${sel ? " sel" : ""}" ${g && g.rejected ? 'style="opacity:.45"' : ""} data-i="${i}">
       <td><input type="checkbox" class="selbox" data-id="${c.id}"${sel ? " checked" : ""}></td>
       <td>${i === S.curIdx ? "▶" : ""}</td>
@@ -119,9 +121,11 @@ export function renderTable() {
       <td>${g && g.rejected ? "<span class=flag>⚑ loại</span>" : g && g.emotion ? `<span class="st-done">✓ ${g.emotion}</span>` : '<span class="st-todo">chưa</span>'}${g && g.recut ? " <span class=flag>✂</span>" : ""}</td>
       <td>${g && g.valence != null ? g.valence : "—"}</td>
       <td>${g && g.arousal != null ? g.arousal : "—"}</td>
+      <td>${dem.gender ? GENDER_VI[dem.gender] || dem.gender : "—"}</td>
+      <td>${dem.age_group ? AGE_VI[dem.age_group] || dem.age_group : "—"}</td>
     </tr>`;
   }).join("");
-  tb.innerHTML = `<thead><tr><th><input type="checkbox" id="sel-all" title="chọn tất cả"></th><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th></tr></thead><tbody>${rows}</tbody>`;
+  tb.innerHTML = `<thead><tr><th><input type="checkbox" id="sel-all" title="chọn tất cả"></th><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th><th>giới tính</th><th>tuổi</th></tr></thead><tbody>${rows}</tbody>`;
   tb.querySelectorAll("tr.clip").forEach((tr) => (tr.onclick = () => selectClip(+tr.dataset.i)));
   tb.querySelectorAll(".selbox").forEach((cb) => {
     cb.onclick = (e) => e.stopPropagation(); // don't open the clip when ticking
@@ -147,15 +151,80 @@ export function renderEmoRow() {
   $("emorow").querySelectorAll(".emobtn").forEach((b) => (b.onclick = () => { S.curEmotion = b.dataset.e; renderEmoRow(); }));
 }
 
-/* ---------- speaker dropdown (F6) ---------- */
+/* ---------- speaker dropdown (F6): the film's characters ----------
+   Diarization ids are unreliable (per-episode, mislabelled) → the human reassigns
+   each clip to a real CHARACTER from the film's cast. A not-yet-reassigned value
+   (a raw SPEAKER_xx) is kept as its own option so it stays visible until fixed. */
 export function fillSpk(cur) {
   cur = cur || "";
-  if (cur && !S.epSpeakers.includes(cur)) S.epSpeakers.push(cur);
-  $("g-spk").innerHTML = ['<option value="">—</option>']
-    .concat(S.epSpeakers.map((s) => `<option${s === cur ? " selected" : ""}>${esc(s)}</option>`))
-    .concat('<option value="__new__">＋ mới…</option>')
-    .join("");
+  const names = S.cast.map((c) => c.name);
+  const opts = ['<option value="">—</option>'];
+  for (const n of names) opts.push(`<option${n === cur ? " selected" : ""}>${esc(n)}</option>`);
+  if (cur && !names.includes(cur)) opts.push(`<option selected>${esc(cur)}</option>`);
+  opts.push('<option value="__new__">＋ mới…</option>');
+  $("g-spk").innerHTML = opts.join("");
   $("g-spk").value = cur;
+}
+
+/* ---------- config screen: per-film cast (name · gender · age_group) ---------- */
+const demoOpts = (map, cur) =>
+  ['<option value="">—</option>']
+    .concat(Object.entries(map).map(([c, vi]) => `<option value="${c}"${c === cur ? " selected" : ""}>${vi}</option>`))
+    .join("");
+
+const castRowHtml = (c) =>
+  `<tr class="cast-row${c.gender && c.age_group ? "" : " unset"}">
+    <td><input class="c-name" value="${esc(c.name || "")}" placeholder="tên nhân vật"></td>
+    <td><select class="c-gender">${demoOpts(GENDER_VI, c.gender || "")}</select></td>
+    <td><select class="c-age">${demoOpts(AGE_VI, c.age_group || "")}</select></td>
+    <td><button class="c-del" title="xoá">✕</button></td></tr>`;
+
+const collectCast = (sec) =>
+  [...sec.querySelectorAll("tr.cast-row")]
+    .map((tr) => ({
+      name: tr.querySelector(".c-name").value.trim(),
+      gender: tr.querySelector(".c-gender").value,
+      age_group: tr.querySelector(".c-age").value,
+    }))
+    .filter((c) => c.name);
+
+async function saveCastSection(sec) {
+  const series = sec.dataset.series;
+  try {
+    const saved = await setCast(series, collectCast(sec));
+    if (series === S.curSeries) { S.cast = saved; renderTable(); fillSpk($("g-spk").value); }
+    $("cfg-status").textContent = "✓ đã lưu " + series;
+  } catch { $("cfg-status").textContent = "⚠ lưu lỗi"; }
+}
+
+function wireCastRow(tr, sec) {
+  const save = () => saveCastSection(sec);
+  tr.querySelectorAll(".c-name, .c-gender, .c-age").forEach((el) => (el.onchange = save));
+  tr.querySelector(".c-del").onclick = () => { tr.remove(); save(); };
+}
+
+export async function renderConfig() {
+  let cast = {}; try { cast = await getCast(); } catch {}
+  const set = new Set(Object.keys(cast));
+  for (const ep of Object.values(S.episodes)) set.add(ep.series);
+  const series = [...set].sort();
+  const body = $("cfg-body");
+  body.innerHTML = series.length
+    ? series.map((s) => `<div class="cast-series" data-series="${esc(s)}"><h3>${esc(s)}</h3>
+        <table class="cast"><thead><tr><th>nhân vật</th><th>giới tính</th><th>tuổi</th><th></th></tr></thead>
+        <tbody>${(cast[s] || []).map(castRowHtml).join("")}</tbody></table>
+        <button class="cast-add">＋ thêm nhân vật</button></div>`).join("")
+    : '<div class="muted">Chưa có phim nào (mở một tập trước).</div>';
+  body.querySelectorAll(".cast-series").forEach((sec) => {
+    sec.querySelectorAll("tr.cast-row").forEach((tr) => wireCastRow(tr, sec));
+    sec.querySelector(".cast-add").onclick = () => {
+      const tb = sec.querySelector("tbody");
+      tb.insertAdjacentHTML("beforeend", castRowHtml({}));
+      const tr = tb.lastElementChild;
+      wireCastRow(tr, sec);
+      tr.querySelector(".c-name").focus();
+    };
+  });
 }
 
 /* ---------- load / open / select ---------- */
@@ -173,9 +242,10 @@ export async function loadEpisodes() {
 export async function openEpisode(epKey) {
   S.curEp = epKey;
   S.selIds = new Set(); // selection is per-episode; clear when switching
-  let data = { clips: [], speakers: [] };
+  let data = { clips: [], speakers: [], cast: [], series: null };
   try { data = await getEpisode(epKey); } catch {}
   S.clips = data.clips || []; S.epSpeakers = (data.speakers || []).slice();
+  S.curSeries = data.series || null; S.cast = data.cast || [];
   for (const c of S.clips) if (c.gold) S.gold[gk(epKey, c.id)] = c.gold;
   renderSidebar(); renderTable(); S.curIdx = -1;
   const firstTodo = S.clips.findIndex((c) => !S.gold[gk(epKey, c.id)]);
@@ -226,6 +296,7 @@ export async function reopenClip(targetId) {
   try {
     const data = await getEpisode(S.curEp);
     S.clips = data.clips || []; S.epSpeakers = (data.speakers || []).slice();
+    S.curSeries = data.series || null; S.cast = data.cast || [];
     for (const c of S.clips) if (c.gold) S.gold[gk(S.curEp, c.id)] = c.gold;
   } catch {}
   const ni = S.clips.findIndex((c) => c.id === id);
