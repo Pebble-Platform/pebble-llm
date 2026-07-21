@@ -38,16 +38,7 @@
       "Read(**/credentials*)",
       "Read(~/.ssh/**)",
       "Read(~/.aws/**)",
-      "Read(~/.config/gcloud/**)",
-      "Write(**/.git/**)",
-      "Write(.git/**)",
-      "Write(**/secrets/**)",
-      "Write(**/credentials*)",
-      "Write(**/generated/**)",
-      "Write(**/obj/**)",
-      "Write(**/bin/**)",
-      "Write(**/dist/**)",
-      "Write(**/node_modules/**)"
+      "Read(~/.config/gcloud/**)"
     ],
     "allow": [
       "mcp__codegraph__codegraph_search",
@@ -65,18 +56,6 @@
     "padding": 0
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/plan-before-code.js\"",
-            "description": "Require a plan/spec .md exists before writing code"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit",

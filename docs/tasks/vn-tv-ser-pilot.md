@@ -154,9 +154,24 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
   phút** (đơn-giọng audio + text-verified + nhãn 2 teacher). Distress đồng thuận:
   4 đoạn. Chiếu P1: **~18.6k utt train-ready / ~17h** sau mọi tầng lọc.
 
+- 2026-07-05 — Tải bộ 2 (Chạy Trốn Thanh Xuân): tổng quát
+  `download_youtube.py` sang **numbering `Tập X.Y`** (key = tuple `(tập, phần)`,
+  chọn range bằng so sánh tuple → `1.1-3.2` phủ đúng 8 video kể cả 1.3/2.3; range
+  int `2-10` cũ vẫn chạy). Tải **Tập 1.1–10.2** → `chay-tron-thanh-xuan/epNN_P.mp3`
+  (22/22 mp3 + 22/22 srt vi). Playlist cũng đảo ngược (1.1 ở cuối) — map theo
+  title xử lý tự động. Phần ngắn (~13–22 phút/video). Từ Tập 3 mỗi tập có 2 phần.
+- 2026-07-05 — Fix YouTube **HTTP 403** + làm `download_youtube.py` chịu lỗi:
+  giữa batch 4.1–10.2, video ep08_2 bị `403 Forbidden` ở luồng audio (yt-dlp báo
+  "extractor specified to use impersonation, but no target available" vì thiếu JS
+  runtime). Cài **`curl_cffi`** vào `.venv-vnser` → yt-dlp có target giả lập
+  trình duyệt, retry qua ngay. Đồng thời: vòng lặp tải giờ **bắt lỗi từng video,
+  bỏ qua + báo cuối** (một video hỏng không giết cả batch — quan trọng cho scale
+  120 tập) + `--retries 10`. Chạy lại (archive skip 9 video đã xong) → đủ 22/22.
+
 ## Remaining Action Items
 - [ ] Chạy pipeline cho Tập 02–10 (`ve-nha-di-con/epNN.mp3`) — cân nhắc dùng
   `--turn-split --hf-token` + nạp `epNN.vi.srt` làm nguồn text thay ASR.
+- [ ] Chạy pipeline cho `chay-tron-thanh-xuan/epNN_P.mp3` (22 phần, 1.1–10.2).
 - [x] ~~User đặt tập vào `data/vietnamese-ser/raw/`~~ → `ep01.mp3` đã có, chạy xong.
 - [x] ~~Chạy `pilot_extract.py` → report.md~~ → yield 33%, GO.
 - [x] ~~Đọc mẫu ~20 đoạn~~ → transcript mạch lạc, ghi vào M3 / Open Questions.
@@ -216,3 +231,64 @@ phim dài tập (thay số ước lượng "30–50 phút/100 phút" trong
 - **Open question mới — recap giữa các tập:** ep02 mở đầu bằng recap cảnh ep01
   (trùng nguyên văn thoại). Khi gộp corpus cần cơ chế khử trùng lặp xuyên tập
   (text-match giữa các ep liền kề, hoặc bỏ ~90s đầu mỗi tập) — quyết ở batch 1.
+
+## Labeling ep02–05 + Kaggle dataset pilot (2026-07-05)
+- **8 subagent (Opus+Sonnet × ep02–05) gán nhãn xong**, 877 utt tổng (cùng ep01):
+  κ theo tập = 0.697 / 0.554 / 0.485 / 0.513 / 0.650 (mean ~0.58 — dao động theo
+  nội dung tập; so sánh cùng-tập ep01 0.584→0.697 vẫn là bằng chứng turn-split);
+  OR-flag đa-giọng 55/877 (6.3%) → **clean 822 (94%)**; consensus emotion 627 (72%);
+  distress OR 24. Pattern lặp: Opus flag nhạy hơn Sonnet (vd ep05: 9 vs 0).
+- **Kaggle dataset PRIVATE đã push:** `phatneurondai/viemospeech-pilot`
+  (877 clips 16kHz + manifest.csv hợp nhất [2 teacher + consensus + is_clean]
+  + README; script: `scripts/vietnamese-ser/build_kaggle_dataset.py`).
+  Media là derivative có bản quyền → intent I1: KHÔNG BAO GIỜ chuyển public.
+- Còn lại: ep06–08 đã extract chưa label; ep09–10 đang extract (detached batch);
+  bước kế: kernel training pilot (WavLM probe trên is_clean + emotion_consensus).
+
+## Corpus 10 tập hoàn chỉnh + Kaggle dataset v2 (2026-07-05)
+- **Extract batch 10/10 xong** (detached run): 1,638 utt / 92.9 phút đơn-giọng,
+  trung bình 164 utt / 9.3 phút/tập (range 123–212). Chiếu P1-120 tập:
+  ~19.7k utt / 18.6h → ~18.5k clean — khớp dự phóng ep01.
+- **Label 2-teacher đủ 10/10 tập** (18 subagent tổng): 1,638 utt →
+  **clean 1,555 (95%)** · consensus 1,198 (73%) · distress-OR 71.
+  κ per-tập 0.485–0.697, **mean 0.610**. Phân bố consensus-clean:
+  neutral 581 · anger 239 · joy 135 · sadness 98 · fear 68 · disgust 6 · surprise 4
+  (2 lớp hiếm — sẽ là thách thức train, đúng kỳ vọng phim gia đình).
+  ep08 = tập giàu distress nhất (cha bạo hành: Opus 16 vs Sonnet 17 — hội tụ độc lập).
+- **Kaggle dataset v2 đã push:** `phatneurondai/viemospeech-pilot` (PRIVATE) —
+  1,638 clips + manifest hợp nhất. Sẵn sàng cho kernel training pilot.
+
+## Định nghĩa "tập hoàn thành" (user chốt, 2026-07-05)
+Một tập/phần chỉ được tính HOÀN THÀNH khi đủ CẢ BA: (1) extract (segments +
+clips + transcripts), (2) align caption (`transcripts_yt.csv`), (3) **label
+2-teacher validate xong** (`labels_opus.csv` + `labels_sonnet.csv` đủ dòng,
+đúng enum). Extract-xong-chưa-label = "đang làm dở". Vận hành: label rolling —
+phần nào extract xong thì spawn 2 teacher ngay, không đợi trọn batch.
+
+## Series 2 "Chạy trốn thanh xuân" — rolling progress (2026-07-05)
+- Raw đủ 22 phần (ep01_1→ep10_2, mỗi tập 2–3 phần). `run_batch --episodes all`
+  (discovery mode mới). Sự cố ep01_1 (ffmpeg mồ côi từ dry-run → wav cụt →
+  cache trap) đã dọn + vá atomic-write (`d2fa456`).
+- **5 phần đầu HOÀN THÀNH theo tiêu chí mới** (extract+align+label validated):
+  380 utt · clean 341 (90%) · consensus 295 (**78%** vs 73% series 1) ·
+  **κ mean 0.675** (0.642–0.720 — CAO hơn series 1: 0.610) · distress-OR 10.
+  Mật độ thoại cao hơn (~5.5 vs ~4.6 utt/phút); phổ cảm xúc "nóng" hơn
+  (anger/joy nhiều hơn, neutral ít hơn) — đúng giá trị đa dạng hóa của series 2.
+- Đang chạy: extract ep03_1/03_2 (batch detached) → sau đó relaunch vét
+  ep01_1 + ep04_1→ep10_2; label rolling theo watcher.
+
+## TRỌN 2 SERIES — Kaggle dataset v3 (2026-07-06)
+- **Series 2 "Chạy trốn thanh xuân" HOÀN THÀNH 22/22 phần** (extract+align+label
+  validated): 1,973 utt · clean 1,785 (90%) · consensus 73% · distress-OR 71 ·
+  κ mean **0.608** (0.348–0.783). Outlier κ<0.45: ep03_2 (0.348, thoại điện thoại
+  nhiễu), ep09_2 (0.440, hài nhẹ — Opus over-neutral). Phát hiện: điểm mù
+  diarization dao động 0–31% theo cảnh (ep08_1 banter nam nhanh = 31%) → tầng
+  text-filter 2-teacher là cần thiết. ep08_2 lời bài hát intro lọt vào (cần lọc
+  intro-song khi làm sạch). Cảnh trầm cảm đầu tiên của corpus: ctx ep06_1 seg003.
+- **TỔNG CORPUS 2 series: 3,611 utt · 3,338 clean (92%) · 2,630 consensus (73%)**,
+  ~10 giờ đơn-giọng, 2 thể loại (gia đình + thanh xuân) — đa dạng giọng/cảm xúc.
+- **Kaggle dataset v3 PRIVATE đã push:** `phatneurondai/viemospeech-pilot`
+  (3,611 clips + manifest hợp nhất, cột `ep`=series/ep phân biệt nguồn).
+  Packager `build_kaggle_dataset.py` giờ nhận `--series a,b` gộp nhiều series.
+- Bước kế: kernel training pilot (WavLM probe trên is_clean + emotion_consensus,
+  split theo speaker, ablation có/không outlier-parts).

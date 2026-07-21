@@ -58,6 +58,7 @@ in the dedicated `.venv-vnser` (+ `sitecustomize.py` torchaudio→soundfile shim
 | Skill | When to Use |
 |-------|-------------|
 | `/research-paper` | Find papers related to a topic, ranked by closeness to Pebble (agent: `research-paper`) |
+| `/read-paper` | Three-pass read of one paper (triage → evidence check → deep) with stop-gates; writes verdict note to `docs/papers/reads/<slug>.md` |
 | `/analysis-paper` | Score a paper's % overlap with Pebble + pick the best transferable point (agent: `analysis-paper`) |
 | `/find-dataset` | Find a paper's dataset, check license/gate, download open ones to `data/<stream>/external/` (agent: `find-dataset`) |
 | `/long-task` | Run a long/multi-session task against a living doc at `docs/tasks/<slug>.md`; auto-spawns research on blocking uncertainties (agent: `task-researcher`) |

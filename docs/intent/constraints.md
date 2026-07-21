@@ -9,25 +9,25 @@
 > suicide-risk text classification and crisis-sensitive voice affect (the two
 > IEEE thesis streams) plus the v1–v3 product classifier — are **archived in
 > `archive/`** (fully recoverable; git history intact). Their methodology
-> (weak-label teachers + small professional gold + honest gold-holdout
-> evaluation + provenance discipline) is carried forward as the foundation of
-> this program.
+> (honest gold-holdout evaluation + provenance discipline) is carried forward as
+> the foundation of this program. *(The weak-label-teacher part was also
+> inherited but later dropped — see §4 and ADR-003, pivot 2026-07-07.)*
 
 This repo is a **research program**, not a product build. It builds
 **ViEmoSpeech**: the first Vietnamese speech-emotion corpus that is
 free-content, multi-class, distress-flagged, syllable-tone-annotated, and
 clearly licensed — extracted from Vietnamese TV drama by a measured pipeline
-(music removal → VAD → speaker-turn cutting → dual-teacher weak labels →
-text-verified single-speaker filter), plus the **tone×emotion bimodal SER
-method paper** built on it (hook: Vietnamese tones are phonation-heavy — Shen,
-NAACL 2024 — so the semantic branch must carry more load than in non-tonal
-SER). "Done right" means every released label traces to a versioned prompt +
-model ID, every reported number traces to a run report, and nothing legally or
-ethically unreleasable ever leaves the machine.
+(music removal → VAD → speaker-turn cutting → **human annotation** with LLM-
+teacher suggestions → single-speaker filter), plus the **tone×emotion bimodal
+SER method paper** built on it (hook: Vietnamese tones are phonation-heavy —
+Shen, NAACL 2024 — so the semantic branch must carry more load than in non-tonal
+SER). "Done right" means every released label traces to its **annotator id**,
+every reported number traces to a run report, and nothing legally or ethically
+unreleasable ever leaves the machine.
 
 | | |
 |---|---|
-| **Scope (in)** | Corpus construction (extraction pipeline, weak labels, gold protocol); dataset paper; tone×emotion bimodal SER method paper; recall-floored distress head. |
+| **Scope (in)** | Corpus construction (extraction pipeline, human annotation protocol); dataset paper; tone×emotion bimodal SER method paper; recall-floored distress head. |
 | **Scope (out)** | Production deployment; the archived text/voice thesis streams (revive = explicit human decision); full C-SSRS-style suicide labels on speech (ethically out of reach — distress proxy only). |
 | **Hard constraint** | **Copyrighted media never leaves the machine:** episode files, clips, and full transcripts are never committed and never released. |
 | **Non-negotiable** | **Legal/ethical releasability outranks corpus size.** A bigger corpus obtained by releasing copyrighted audio or unconsented content is worth nothing. |
@@ -41,27 +41,34 @@ ethically unreleasable ever leaves the machine.
    committing or publishing episode media in any form.
 
 2. **Single-speaker by construction.** A training clip carries one voice:
-   utterances are cut at (VAD ∩ speaker-turn) boundaries, and clips that text
-   analysis flags as containing multiple turns (OR of two independent teachers)
-   are dropped from the weak pool. Measured on ep01: κ between teachers rose
-   0.584 → 0.697 after this discipline — it is load-bearing, not cosmetic.
+   utterances are cut at (VAD ∩ speaker-turn) boundaries, and clips flagged as
+   containing multiple voices — by the **human annotator** (labeler `multi` flag
+   / reject) — are dropped from the corpus. (Historically the flag was an OR of
+   two LLM teachers; measured on ep01 that discipline raised teacher κ 0.584 →
+   0.697 — kept as history.) It is load-bearing, not cosmetic.
 
 3. **Speaker-disjoint splits.** Splits and folds are assigned by **speaker**,
-   never by clip; gold-set speakers are disjoint from the weak pool. Same
-   voice ⇒ same split. This **forbids** random clip-level splitting.
+   never by clip; **test-split speakers are disjoint from train** (ADR-002:
+   held-out whole-series). Same voice ⇒ same split. This **forbids** random
+   clip-level splitting.
 
-4. **Honest weak-supervision protocol (inherited from the archived thesis).**
-   Weak labels come from ≥2 independent LLM teachers with recorded
-   disagreement; evaluation of any headline claim uses held-out
-   human-annotated gold. This **forbids** reporting teacher-agreement numbers
-   as accuracy, and **forbids** training and evaluating on the same label
-   source.
+4. **Human-annotated labels (pivot 2026-07-07, ADR-003).** Corpus labels are
+   assigned by **humans** and are the **sole source of truth**; LLM-teacher
+   output is retained only as an on-screen suggestion in the labeler, never as a
+   training label or evaluation reference. This **forbids** treating teacher
+   output as a corpus label. *(Superseded: the prior ≥2-LLM-teacher weak-
+   supervision protocol — teacher disagreement, teacher-κ, "no train+eval on the
+   same label source" — no longer applies; historical numbers stay in reports as
+   history.)* Label reliability, when measured, is **inter-annotator κ/α (human–
+   human)**; single-pass labeling is the current stage and carries no such number
+   yet (known gap, ADR-003).
 
-5. **Provenance by construction.** Every label row carries its model ID; the
-   labeling prompt is versioned in git (`scripts/vietnamese-ser/m4_prompt.md`);
-   every reported number traces to a report file generated by a committed
-   script. This **forbids** hand-edited numbers and ad-hoc chat labeling for
-   corpus data.
+5. **Provenance by construction.** Every corpus label row carries its **author
+   id** — annotator id + timestamp for the human label of record; model id for
+   any retained teacher-suggestion column. The teacher-suggestion prompt stays
+   versioned in git (`scripts/vietnamese-ser/m4_prompt.md`); every reported
+   number traces to a report file generated by a committed script. This
+   **forbids** hand-edited numbers and unattributed labeling for corpus data.
 
 6. **Tone-aware by design.** Every utterance carries auto-generated
    syllable-level tone annotations and dialect metadata (Bắc/Trung/Nam —
