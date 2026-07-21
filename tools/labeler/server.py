@@ -5,7 +5,7 @@ Run (from repo root):
       --root data/vietnamese-ser/episodes
   # then open http://127.0.0.1:8000/index.html
 
-Layers: store.py (config/state.jsonl/records/paths) · episodes.py (read/join) ·
+Layers: store.py (config/state.db/records/paths) · episodes.py (read/join) ·
 audio.py (soundfile recut/split). Binds 127.0.0.1 only; data/** is copyrighted
 media, local-only (intent §1). Human labels are the source of truth (ADR-003).
 """
@@ -36,18 +36,9 @@ class GoldIn(BaseModel):
     distress: bool = False
     note: str = ""
     gold_text: str | None = None  # human text of record; None = keep existing
-    speaker: str | None = None  # F6: human speaker; None = keep seeded/existing
-    annotator: str = "human"
-
-
-class CastEntry(BaseModel):
-    name: str
-    gender: str = ""  # "" | female | male
+    gender: str = ""  # per-clip human demographic: "" | female | male
     age_group: str = ""  # "" | child | teen | young_adult | middle_aged | senior
-
-
-class CastIn(BaseModel):
-    cast: list[CastEntry]  # the film's whole character roster (replaces existing)
+    annotator: str = "human"
 
 
 class RecutIn(BaseModel):
@@ -120,7 +111,7 @@ def get_context(ep_key: str, clip_id: str, pad: float = 10.0) -> Response:
 
 @app.get("/gold")
 def all_gold() -> list[dict]:
-    """Every human label record (source of truth = state.jsonl)."""
+    """Every human label record (source of truth = state.db)."""
     return list(store.STATE.values())
 
 
@@ -142,21 +133,6 @@ def get_segment_audio(ep_key: str, a: float, b: float, pad: float = 0.0) -> Resp
     )
 
 
-@app.get("/cast")
-def all_cast() -> dict[str, list[dict]]:
-    """Every film's character roster: series -> [{name, gender, age_group}]."""
-    return store.CAST
-
-
-@app.post("/cast/{series:path}")
-def put_cast(series: str, c: CastIn) -> list[dict]:
-    """Replace one film's cast (config screen). Character names become clip speakers."""
-    p = store.safe(series)
-    if not p.is_dir():
-        raise HTTPException(404, "no such series")
-    return store.set_cast(series, [e.model_dump() for e in c.cast])
-
-
 # ---------- label / recut / reject / split ----------
 @app.post("/gold/{ep_key:path}/{clip_id}")
 def put_gold(ep_key: str, clip_id: str, g: GoldIn) -> dict:
@@ -170,12 +146,12 @@ def put_gold(ep_key: str, clip_id: str, g: GoldIn) -> dict:
             "arousal": g.arousal,
             "distress": g.distress,
             "note": g.note,
+            "gender": g.gender,  # per-clip human demographic (replaces cast lookup)
+            "age_group": g.age_group,
             "annotator": g.annotator or "human",
             "ts": store.now(),
         }
     )
-    if g.speaker is not None:  # F6: human speaker overrides diarization
-        rec["speaker"] = g.speaker
     if g.gold_text is not None:  # save edited text on confirm (not only on recut)
         rec["gold_text"] = g.gold_text
     return store.put(ep_key, clip_id, rec)

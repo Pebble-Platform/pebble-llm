@@ -71,12 +71,16 @@ nếu cần nới phải dùng `audio_full.wav`, ngoài scope lần này).
 
 ---
 
-## F2 — Danh sách folder + % labeling (nguồn: `state.jsonl`)
+## F2 — Danh sách folder + % labeling (nguồn: store nhãn)
 
-**Decision: 1 file trạng thái duy nhất `state.jsonl`** (nguồn sự thật), progress
-tính từ nó — không cần file progress riêng.
+**Decision: 1 store trạng thái duy nhất** (nguồn sự thật), progress tính từ nó —
+không cần file progress riêng. **Cập nhật 2026-07-21 ([ADR-004](../../docs/spec/decisions/ADR-004-labeler-state-durability.md)):**
+store nay là **SQLite `state.db`** (WAL, 1 dòng/record, JSON blob) thay `state.jsonl`
+full-rewrite; các nhắc "state.jsonl" bên dưới là *store nhãn* (nay = `state.db`).
+Record shape không đổi. `SPEC.md` là current-truth.
 
-- **`state.jsonl`** tại root `--root` (backend, ghi atomic tmp→rename), mỗi dòng
+- **Store** tại root `--root` (backend, SQLite/WAL — `put()` upsert 1 dòng /
+  `save()` reconcile trong 1 transaction), mỗi dòng
   1 clip `(epKey, id)` chứa **toàn bộ**: gold emotion/V/A/distress/multi,
   `gold_text`, `recut`+biên mới, `rejected`+reason, `annotator`, timestamps.
 - **Sidebar:** mỗi tập `done/total` + **%**; header `Σ done / Σ total · %` —
@@ -121,7 +125,8 @@ con kế thừa ASR/YouTube/Opus/Sonnet từ cha):**
   `_orig/` cho split (cha không bị cắt).
 - **Con:** k+1 clip **MỚI** — `soundfile` cắt k+1 đoạn từ cha theo các điểm cắt
   (atomic), ghi `clips/seg<next>.wav` … `seg<next+k>.wav`. Record con seed:
-  `series/episode` từ tập, **`speaker` mặc định = speaker cha**, `start/end` chia
+  `series/episode` từ tập, **`gender`/`age_group` kế thừa từ cha** (cùng người —
+  sửa được per-con), `start/end` chia
   từ biên cha theo điểm cắt, `split_from=<parentId>`, **nhãn gold trống** (các
   đoạn có thể khác emotion → không kế thừa nhãn gold của cha).
 - **Con kế thừa provenance/gợi ý của cha:** `asr` (`text_phowhisper`), `yt`
@@ -130,8 +135,8 @@ con kế thừa ASR/YouTube/Opus/Sonnet từ cha):**
   CSV được; `/episode` ưu tiên field trong record cho con. Đây là **tham chiếu**:
   text/gợi ý là của cả clip cha (không cắt theo đoạn), người label sửa
   `gold_text` + emotion riêng cho từng con.
-- **Con label riêng (PA3):** mỗi con đi qua **luồng label thường** — nhập
-  **speaker** (dropdown, mỗi con có thể chọn người khác — [F6](#f6--speaker-sửa-được-label-of-record--planned-chưa-build)),
+- **Con label riêng (PA3):** mỗi con đi qua **luồng label thường** — chọn
+  **giới tính/tuổi** (kế thừa cha, sửa được per-con),
   **script** (`gold_text`), **emotion/V/A**. Split chỉ tạo các con chưa label
   (gold trống, gợi ý kế thừa).
 - **Undo split** (`POST /split/.../undo`): **un-reject cha** + xoá toàn bộ wav
@@ -146,32 +151,25 @@ con kế thừa ASR/YouTube/Opus/Sonnet từ cha):**
 cùng bẫy path-converter như `/recut`.)
 
 **Điểm nối downstream:** con là **id seg mới, không có trong CSV nào**
-(`segments/transcripts*/labels_*`) → `speaker` **và** `asr/yt/opus/sonnet` được
-**ghi vào record lúc tạo** (speaker default = cha, người sửa qua F6;
+(`segments/transcripts*/labels_*`) → `gender/age_group` **và** `asr/yt/opus/sonnet` được
+**ghi vào record lúc tạo** (demographics kế thừa cha, người sửa per-con;
 asr/yt/opus/sonnet copy cha), KHÔNG tra CSV. `build_kaggle_dataset.py` loại cha
 (`rejected`/`split`) + đọc nhãn con từ `state.jsonl` như mọi clip.
 
 ---
 
-## F6 — Speaker sửa được (label-of-record)  [planned, chưa build]
+## F6 — Speaker/cast  [built rồi BỎ 2026-07-20]
 
-**Vấn đề.** `speaker` hiện là provenance **read-only** từ diarization. Với split
-(F5, các con có thể là người khác nhau) và ADR-003 (người là nguồn sự thật), speaker cần
-**người sửa được** → thành nhãn-của-record, ghi đè id diarization khi cần.
-
-**Quyết định đề nghị:**
-- Form label thêm ô **speaker**: **dropdown các speaker đã biết của tập** (hợp
-  `segments.csv` + id đã nhập trong `state`) + **`＋ mới`** để thêm id. Dropdown
-  thay free-text để **giữ id ổn định** cho I4 (cùng người → cùng id; tránh gõ lệch).
-- Backend: `GoldIn` thêm `speaker` (tuỳ chọn); `POST /gold` lưu speaker người
-  chọn. `_seed_record` mặc định = speaker diarization. `/episode` trả thêm
-  `speakers` (danh sách id để dựng dropdown).
-- **Provenance:** `state.jsonl.speaker` = speaker-của-record (người nếu đã sửa,
-  else diarization); id diarization gốc vẫn ở `segments.csv` (không mất).
-- **I4** dùng `state.jsonl.speaker` (nhãn người) làm authoritative.
-
-**⚠ Rủi ro (không chặn):** gõ id lệch → cùng giọng thành 2 id → rò I4. Mitigation
-= dropdown + `＋ mới` (kiểm trùng); review danh sách id trước khi dựng test-set.
+Từng có: speaker sửa được (dropdown nhân vật từ `cast.json`) + màn `⚙ nhân vật`
+khai báo giới tính/tuổi 1 lần/phim, clip resolve demographics theo `(series,
+speaker)`. **Đã bỏ hẳn** (quyết định user): diarization chưa bao giờ gán lại về
+nhân vật nên demographics ship sai; nay **gán `gender`/`age_group` trực tiếp
+per-clip** khi label (nghe giọng). I4 vẫn giữ vì split **whole-series** (2 phim
+khác đoàn → cast rời) đảm bảo disjoint ở tầng series, không cần speaker-id
+per-clip. Xoá `cast.json`-flow + `/cast` + dropdown speaker + màn config; `GoldIn`
+thêm `gender`/`age_group`. Migrate 2026-07-21 backfill 232 clip cũ từ `cast.json`
+(`scripts/vietnamese-ser/migrate_labeler_demographics.py`). Xem [SPEC.md](SPEC.md)
+§"Nhân khẩu per-clip".
 
 ---
 
@@ -203,7 +201,7 @@ mousedown), không thêm UI (con trỏ trắng sẵn có báo vị trí).
 `state.jsonl` mỗi record: emotion/V/A/distress/multi, `gold_text`, `recut`+biên,
 `rejected`+`reject_reason` (F3; cha split = rejected reason `"split"` +
 `split_children`), `split_from` + `asr/yt/opus/sonnet` kế thừa từ cha (con, F5),
-`annotator`, `speaker` (sửa được, F6),
+`annotator`, `gender`/`age_group` (gán trực tiếp per-clip khi label),
 `series/ep/id`, timestamps. `gold.csv`/`.zip` là **view export** dựng từ đó (bỏ
 `rejected` và cha `split=true`).
 

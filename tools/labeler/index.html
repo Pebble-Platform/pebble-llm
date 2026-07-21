@@ -54,18 +54,6 @@
   .empty{padding:40px;text-align:center;color:var(--muted)}
   .sel-bar{display:flex;gap:10px;align-items:center;padding:6px 12px;border-bottom:1px solid var(--line);background:var(--panel)}
   tr.clip.sel td{background:rgba(74,144,226,.16)}
-  .config{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:flex-start;z-index:10;overflow:auto;padding:30px 16px}
-  .config.hidden{display:none}
-  .config-inner{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(760px,100%);padding:16px 18px}
-  .config-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-  .config-head h2{font-size:15px;margin:0;flex:1}
-  .cast-series{margin:14px 0}
-  .cast-series h3{font-size:13px;margin:0 0 6px;color:var(--accent)}
-  table.cast{width:100%;border-collapse:collapse;font-size:13px}
-  table.cast th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;text-align:left;padding:4px 6px}
-  table.cast td{padding:3px 6px;border-bottom:1px solid var(--line)}
-  table.cast input{width:100%}
-  table.cast tr.unset input{border-color:var(--warn)}
   .seg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:flex-start;z-index:10;overflow:auto;padding:24px 16px}
   .seg.hidden{display:none}
   .seg-inner{background:var(--panel);border:1px solid var(--line);border-radius:10px;width:min(900px,100%);padding:14px 16px}
@@ -91,7 +79,6 @@
   <span id="prog" class="muted"></span>
   <span class="sp"></span>
   <label class="muted">annotator <input id="annotator" type="text" value="human" style="width:90px"></label>
-  <button id="cfgbtn" title="cấu hình nhân vật (tên · giới tính · tuổi) theo phim">⚙ nhân vật</button>
   <button id="expcsv">gold.csv</button>
   <button id="expzip" class="primary">ZIP (csv+wav)</button>
 </header>
@@ -134,7 +121,8 @@
       <div class="ctlrow">
         <div class="fld"><span>valence</span><select id="g-val"><option value="" selected disabled>—</option><option value="1">1 · rất tiêu cực</option><option value="2">2 · tiêu cực</option><option value="3">3 · trung tính</option><option value="4">4 · tích cực</option><option value="5">5 · rất tích cực</option></select></div>
         <div class="fld"><span>arousal</span><select id="g-aro"><option value="" selected disabled>—</option><option value="1">1 · rất bình thản</option><option value="2">2 · bình thản</option><option value="3">3 · trung bình</option><option value="4">4 · kích động</option><option value="5">5 · rất kích động</option></select></div>
-        <div class="fld"><span>speaker</span><select id="g-spk"></select></div>
+        <div class="fld"><span>giới tính</span><select id="g-gender"><option value="">—</option><option value="female">nữ</option><option value="male">nam</option></select></div>
+        <div class="fld"><span>tuổi</span><select id="g-age"><option value="">—</option><option value="child">trẻ em</option><option value="teen">thiếu niên</option><option value="young_adult">thanh niên</option><option value="middle_aged">trung niên</option><option value="senior">cao tuổi</option></select></div>
         <button id="confirm" class="primary">Xác nhận gold <span class="kbd">Enter</span></button>
         <div class="fld"><span>reject</span><select id="rej-reason"><option value="multi_speaker">multi_speaker</option><option value="noise">noise</option><option value="bad_cut">bad_cut</option><option value="other">other</option></select></div>
         <button id="rejbtn">⚑ loại</button>
@@ -176,18 +164,6 @@
       <input id="seg-text" type="text" placeholder="text (từ script YouTube, sửa được)">
       <button id="seg-create" class="primary">＋ tạo clip để label</button>
     </div>
-  </div>
-</div>
-
-<div id="config" class="config hidden">
-  <div class="config-inner">
-    <div class="config-head">
-      <h2>Cấu hình nhân vật theo phim</h2>
-      <span class="muted" id="cfg-status"></span>
-      <button id="cfg-close">✕ đóng</button>
-    </div>
-    <div class="muted" style="font-size:12px;margin-bottom:6px">Tên nhân vật hiện ở dropdown speaker khi gán clip. Giới tính + tuổi khai báo 1 lần ở đây, mọi clip của nhân vật đó kế thừa.</div>
-    <div id="cfg-body"></div>
   </div>
 </div>
 

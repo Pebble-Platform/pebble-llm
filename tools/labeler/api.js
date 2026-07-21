@@ -18,9 +18,6 @@ async function post(url, body) {
 export const getEpisodes = () => fetch("/episodes").then((r) => r.json());
 export const getEpisode = (k) => fetch("/episode/" + path(k)).then((r) => r.json());
 export const getGold = () => fetch("/gold").then((r) => r.json());
-export const getCast = () => fetch("/cast").then((r) => r.json());
-
-export const setCast = (series, cast) => post("/cast/" + path(series), { cast });
 
 export const getScript = (k) => fetch("/script/" + path(k)).then((r) => r.json());
 export const segmentAudioUrl = (k, a, b, pad) =>

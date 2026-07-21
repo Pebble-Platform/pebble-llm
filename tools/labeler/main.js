@@ -1,7 +1,7 @@
 /* Composition root: wire DOM events to actions/view, keyboard, and boot. */
 
 import { $, EMOKEYS, S } from "./state.js";
-import { drawWave, fillSpk, loadEpisodes, renderConfig, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
+import { drawWave, loadEpisodes, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
 import { clearSel, confirmGold, exportCsv, exportZip, playContext, removeSelected, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
 import { closeSegment, createSeg, nudge, openSegment, playSel } from "./segment.js";
 
@@ -69,18 +69,6 @@ $("wave").addEventListener("mousemove", (e) => {
 });
 window.addEventListener("mouseup", () => { S.cutDrag = false; });
 window.addEventListener("resize", drawWave);
-
-/* ---------- speaker "＋ mới" (F6) ---------- */
-$("g-spk").onchange = () => {
-  if ($("g-spk").value !== "__new__") return;
-  const s = (prompt("tên nhân vật mới (không có trong cast):") || "").trim();
-  fillSpk(s);
-};
-
-/* ---------- config screen: per-film cast ---------- */
-$("cfgbtn").onclick = () => { $("config").classList.remove("hidden"); renderConfig(); };
-$("cfg-close").onclick = () => $("config").classList.add("hidden");
-$("config").onclick = (e) => { if (e.target.id === "config") $("config").classList.add("hidden"); };
 
 /* ---------- manual segmentation (cắt thủ công) ---------- */
 $("segbtn").onclick = openSegment;

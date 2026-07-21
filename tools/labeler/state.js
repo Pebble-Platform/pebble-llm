@@ -21,16 +21,13 @@ export const esc = (s) =>
 
 export const S = {
   episodes: {}, // epKey -> {series,epName,total,done,rejected}
-  gold: {}, // "epKey\tid" -> saved record (cache of state.jsonl)
+  gold: {}, // "epKey\tid" -> saved record (cache of state.db)
   curEp: null,
   clips: [],
   curIdx: -1,
   curEmotion: null,
   cutMode: false, cutSel: null, cutDrag: false, // recut (F1)
   splitMode: false, splitPoints: [], // split (F5) — multiple cut points, kept ascending
-  epSpeakers: [], // diarization ids of current episode (hint/fallback in speaker dropdown)
-  curSeries: null, // series of the open episode
-  cast: [], // current film's characters [{name,gender,age_group}] — speaker options + demographics
   selIds: new Set(), // multi-select for bulk-remove (loại nhiều clip) — clip ids checked in the table
   audio: new Audio(),
   audioBuf: null,

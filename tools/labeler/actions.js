@@ -14,7 +14,7 @@ export async function confirmGold() {
   const body = {
     emotion: S.curEmotion, valence: +$("g-val").value, arousal: +$("g-aro").value,
     gold_text: $("g-text").value.trim(),
-    speaker: $("g-spk").value === "__new__" ? "" : $("g-spk").value,
+    gender: $("g-gender").value, age_group: $("g-age").value,
     annotator: ($("annotator").value || "human").trim() || "human",
   };
   let rec;
@@ -117,7 +117,7 @@ export async function saveSplit() {
 }
 
 /* ---------- export (raw state dump; Kaggle export = phase 4) ---------- */
-const COLS = ["id", "series", "episode", "speaker", "gender", "age_group", "start", "end",
+const COLS = ["id", "series", "episode", "gender", "age_group", "start", "end",
   "gold_emotion", "gold_valence", "gold_arousal", "gold_distress", "gold_text",
   "opus_emotion", "sonnet_emotion", "teacher_agree", "note", "annotator"];
 
@@ -130,13 +130,10 @@ function csvCell(v) { v = String(v); return /[",\r\n]/.test(v) ? '"' + v.replace
 
 async function buildCSV() {
   const out = await goldRows();
-  let cast = {}; try { cast = await api.getCast(); } catch {}
-  const demoOf = (series, name) => (cast[series] || []).find((c) => c.name === name) || {};
   const rows = [COLS];
   for (const { ep, id, g } of out) {
     const agree = g.opus && g.sonnet ? g.opus === g.sonnet : "";
-    const dem = demoOf(ep.series, g.speaker);
-    rows.push([id, ep.series, ep.epName, g.speaker ?? "", dem.gender || "", dem.age_group || "",
+    rows.push([id, ep.series, ep.epName, g.gender || "", g.age_group || "",
       g.start ?? "", g.end ?? "", g.emotion, g.valence, g.arousal, g.distress, g.gold_text || "",
       g.opus || "", g.sonnet || "", agree, g.note || "", g.annotator || ""]);
   }

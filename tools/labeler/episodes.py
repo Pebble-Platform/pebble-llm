@@ -98,7 +98,6 @@ def build(ep_key: str, ep: Path) -> dict:
                 if rec
                 else store.fnum(s.get("start"), y.get("start"), t.get("start")),
                 "end": rec["end"] if rec else store.fnum(s.get("end"), y.get("end"), t.get("end")),
-                "speaker": rec["speaker"] if rec else s.get("speaker", ""),  # rec (F6) wins
                 "asr": asr,
                 "yt": yt_text,
                 "opus": o,
@@ -107,17 +106,9 @@ def build(ep_key: str, ep: Path) -> dict:
                 "gold": rec,
             }
         )
-    seg_spk = {r.get("speaker") for r in seg.values() if r.get("speaker")}
-    st_spk = {
-        r.get("speaker")
-        for k, r in store.STATE.items()
-        if k.startswith(ep_key + "\t") and r.get("speaker")
-    }
     series = ep.parent.relative_to(store.ROOT).as_posix() or "(root)"
     return {
         "epKey": ep_key,
         "series": series,
         "clips": clips,
-        "speakers": sorted(seg_spk | st_spk),  # diarization ids (hint/fallback; per-episode)
-        "cast": store.cast_for(series),  # film characters -> speaker dropdown options
     }

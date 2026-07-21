@@ -71,7 +71,7 @@ export function nudge(edge, d) {
 async function refreshSel() {
   const s = S.segSel;
   if (!s) { $("seg-info").textContent = "chưa chọn vùng"; S.segBuf = null; drawSegWave(); return; }
-  $("seg-info").textContent = `${fmt(s.a)}–${fmt(s.b)}  (${(s.b - s.a).toFixed(2)}s)`;
+  $("seg-info").textContent = `${fmt(s.a)}–${fmt(s.b)} (${s.a.toFixed(1)}–${s.b.toFixed(1)}s · ${(s.b - s.a).toFixed(2)}s)`;
   try {
     const ac = new (window.AudioContext || window.webkitAudioContext)();
     S.segBuf = await ac.decodeAudioData(await (await fetch(segmentAudioUrl(S.curEp, s.a, s.b, 0))).arrayBuffer());
@@ -112,7 +112,7 @@ export async function createSeg() {
   if (!s) { $("seg-status").textContent = "chọn vùng trước"; return; }
   try { await createSegment(S.curEp, { a: s.a, b: s.b, text: $("seg-text").value.trim() }); }
   catch { $("seg-status").textContent = "⚠ tạo clip lỗi"; return; }
-  $("seg-status").textContent = `✓ đã tạo clip ${fmt(s.a)}–${fmt(s.b)}`;
+  $("seg-status").textContent = `✓ đã tạo clip ${s.a.toFixed(1)}–${s.b.toFixed(1)}s`;
   clearSel();
   await reopenClip(); // refresh the table behind the overlay — new clip appears
 }

@@ -1,8 +1,14 @@
-"""Foundation for the labeler backend: config, the state.jsonl store, records, paths.
+"""Foundation for the labeler backend: config, the SQLite record store, records, paths.
 
 ROOT / STATE are module globals set once via set_root(); the other modules read
 them as ``store.ROOT`` / ``store.STATE`` (never ``from store import ROOT``, which
 would bind the pre-set None).
+
+Persistence = SQLite ``state.db`` (WAL, one row per record, whole record as a JSON
+blob keyed on ``(epkey, id)``). ``STATE`` stays an in-RAM mirror rebuilt from the DB
+at load() so every read path (episodes.py, server.py) is unchanged; only writes go
+to the DB — ``put()`` upserts one row, ``save()`` reconciles the whole mirror in one
+transaction. ADR-004: SQLite gives ACID + integrity_check + hot backup (VACUUM INTO).
 """
 
 from __future__ import annotations
@@ -10,6 +16,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+import sqlite3
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
@@ -19,18 +26,16 @@ from fastapi import HTTPException
 CLIP_RE = re.compile(r"^seg\d+$")
 
 ROOT: Path | None = None
-STATE_PATH: Path | None = None
-CAST_PATH: Path | None = None
-STATE: dict[str, dict] = {}  # "epKey\tid" -> label record (source of truth for labels)
-CAST: dict[str, list[dict]] = {}  # series -> [{name, gender, age_group}] (per-film cast)
+DB_PATH: Path | None = None
+STATE: dict[str, dict] = {}  # "epKey\tid" -> label record (in-RAM mirror of state.db)
 LOCK = threading.Lock()
+_CONN: sqlite3.Connection | None = None  # single writer conn, guarded by LOCK
 
 
 def set_root(root: Path) -> None:
-    global ROOT, STATE_PATH, CAST_PATH
+    global ROOT, DB_PATH
     ROOT = root
-    STATE_PATH = root / "state.jsonl"
-    CAST_PATH = root / "cast.json"
+    DB_PATH = root / "state.db"
 
 
 def now() -> str:
@@ -51,58 +56,65 @@ def fnum(*vals) -> float:
     return 0.0
 
 
-# ---------- persistence ----------
+# ---------- persistence (SQLite state.db, WAL) ----------
+def connect(db_path: Path) -> sqlite3.Connection:
+    """Open state.db with the labeler's durability pragmas + ensure the schema.
+
+    WAL + synchronous=NORMAL: crash-safe for a single writer (can only lose the
+    last transaction on power loss, never corrupt the DB — ADR-004). Shared by
+    the server (via load) and the migration script.
+    """
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS records ("
+        "epkey TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL, ts TEXT, "
+        "PRIMARY KEY (epkey, id))"
+    )
+    conn.commit()
+    return conn
+
+
 def load() -> None:
+    """Open the DB and rebuild the in-RAM STATE mirror from it."""
+    global _CONN
     STATE.clear()
-    if STATE_PATH and STATE_PATH.exists():
-        for line in STATE_PATH.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                r = json.loads(line)
-                STATE[skey(r["epKey"], r["id"])] = r
-    load_cast()
+    _CONN = connect(DB_PATH)
+    for epkey, cid, data in _CONN.execute("SELECT epkey, id, data FROM records"):
+        STATE[skey(epkey, cid)] = json.loads(data)
+
+
+def _upsert(rec: dict) -> None:
+    """Write one record (caller holds LOCK). Single-row transaction."""
+    with _CONN:
+        _CONN.execute(
+            "INSERT OR REPLACE INTO records (epkey, id, data, ts) VALUES (?, ?, ?, ?)",
+            (rec["epKey"], rec["id"], json.dumps(rec, ensure_ascii=False), rec.get("ts", "")),
+        )
 
 
 def save() -> None:
-    """Atomic full rewrite (jsonl small at this scale): tmp -> rename."""
-    tmp = STATE_PATH.with_suffix(".jsonl.tmp")
-    with tmp.open("w", encoding="utf-8") as f:
-        for r in STATE.values():
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    tmp.replace(STATE_PATH)
+    """Reconcile the whole in-RAM STATE into the DB in ONE transaction (caller holds LOCK).
 
-
-# ---------- per-film cast (character roster: name + gender + age_group) ----------
-def load_cast() -> None:
-    CAST.clear()
-    if CAST_PATH and CAST_PATH.exists():
-        CAST.update(json.loads(CAST_PATH.read_text(encoding="utf-8")))
-
-
-def save_cast() -> None:
-    tmp = CAST_PATH.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(CAST, ensure_ascii=False, indent=2), encoding="utf-8")
-    tmp.replace(CAST_PATH)
-
-
-def set_cast(series: str, entries: list[dict]) -> list[dict]:
-    """Replace one film's whole cast (config screen saves the full list)."""
-    clean = [
-        {
-            "name": (e.get("name") or "").strip(),
-            "gender": e.get("gender", ""),
-            "age_group": e.get("age_group", ""),
-        }
-        for e in entries
-        if (e.get("name") or "").strip()
-    ]
-    with LOCK:
-        CAST[series] = clean
-        save_cast()
-    return clean
-
-
-def cast_for(series: str) -> list[dict]:
-    return CAST.get(series, [])
+    Used by the multi-record routes (segment/reject-bulk/split/undo-split): upsert
+    every current record and drop DB rows no longer in STATE (e.g. undo-split
+    deletes children). Atomic — a mid-write failure rolls back, never a partial DB.
+    """
+    with _CONN:
+        _CONN.executemany(
+            "INSERT OR REPLACE INTO records (epkey, id, data, ts) VALUES (?, ?, ?, ?)",
+            [
+                (r["epKey"], r["id"], json.dumps(r, ensure_ascii=False), r.get("ts", ""))
+                for r in STATE.values()
+            ],
+        )
+        live = {(r["epKey"], r["id"]) for r in STATE.values()}
+        stale = [
+            row for row in _CONN.execute("SELECT epkey, id FROM records") if tuple(row) not in live
+        ]
+        if stale:
+            _CONN.executemany("DELETE FROM records WHERE epkey = ? AND id = ?", stale)
 
 
 def manual_record(
@@ -119,7 +131,8 @@ def manual_record(
         "id": cid,
         "series": series,
         "episode": episode,
-        "speaker": "",  # human assigns the character
+        "gender": "",  # per-clip human demographic (set on label)
+        "age_group": "",
         "start": start,
         "end": end,
         "asr": "",
@@ -148,7 +161,7 @@ def put(ep_key: str, clip_id: str, rec: dict) -> dict:
     """Store one record and persist — the single-write path used by most routes."""
     with LOCK:
         STATE[skey(ep_key, clip_id)] = rec
-        save()
+        _upsert(rec)
     return rec
 
 
@@ -207,7 +220,8 @@ def seed_record(ep_key: str, clip_id: str, ep: Path) -> dict:
         "id": clip_id,
         "series": ep.parent.relative_to(ROOT).as_posix() or "(root)",
         "episode": ep.name,
-        "speaker": seg.get("speaker", ""),
+        "gender": "",  # per-clip human demographic (set on label)
+        "age_group": "",
         "start": fnum(seg.get("start")),
         "end": fnum(seg.get("end")),
         "opus": op.get("emotion", ""),  # teacher suggestion, not a label of record
@@ -291,7 +305,8 @@ def child_record(ep_key: str, cid: str, parent: dict, prov: dict, start: float, 
         "id": cid,
         "series": parent["series"],
         "episode": parent["episode"],
-        "speaker": parent["speaker"],  # default = parent; human edits via F6
+        "gender": parent.get("gender", ""),  # inherit parent's demographic; human edits per child
+        "age_group": parent.get("age_group", ""),
         "start": start,
         "end": end,
         "asr": prov["asr"],
