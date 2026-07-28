@@ -1,23 +1,30 @@
 """vnser-train — pilot SER baseline (speech-only, frozen WavLM-Large) on ViEmoSpeech.
 
-Change 004-vnser-training. Reads the private Kaggle dataset
-`phatneurondai/viemospeech-pilot` (manifest.csv + clips/*.wav 16kHz), extracts a
-frozen WavLM-Large embedding per clip (masked-mean pool, cached), and trains three
-linear probe heads, evaluated TWO ways:
-  * emotion  — 5-class (neutral/anger/joy/fear_anxiety/sadness), weighted-CE,
-               per-sample weight = conf_min. surprise/disgust (sparse) dropped.
-  * affect   — valence_mean / arousal_mean regression, CCC loss.
-  * distress — BCE, MECHANICS-ONLY (few positives; not a real precision@recall claim).
+HUMAN-LABEL era (ADR-003): the corpus label of record is the human `emotion` /
+`valence` / `arousal` from tools/labeler (state.db), NOT the 2-teacher consensus the
+earlier version of this kernel trained on. Reads the private Kaggle dataset
+`phatneurondai/viemospeech-pilot` (manifest.csv built by
+scripts/vietnamese-ser/build_kaggle_gold.py + clips/*.wav 16kHz), extracts a frozen
+WavLM-Large embedding per clip (masked-mean pool, cached), trains two linear-probe
+heads:
+  * emotion  — 7-class (neutral/anger/joy/fear_anxiety/sadness/disgust/surprise),
+               weighted-CE by class frequency. Reported with macro-F1 AND UAR
+               (unweighted average recall — the imbalanced-SER standard) + per-class
+               support. No sample weighting (human labels carry no teacher confidence).
+  * affect   — valence / arousal (1-5) regression, CCC loss.
+(distress head dropped: the 750 human-clean clips have ZERO distress positives —
+ distress was removed from the labeler form 2026-07-10.)
 
 --- TWO EVALS (do not strip from the report) -----------------------------------
-The corpus now has TWO shows with disjoint casts (ve-nha-di-con, chay-tron-thanh-xuan).
-  A) GroupKFold(ep, speaker): pools both series. `speaker` is a pyannote label LOCAL
-     to each episode and the cast recurs within a series, so identity leaks
-     within-series → this number is OPTIMISTIC.
+Two shows with disjoint casts (ve-nha-di-con, chay-tron-thanh-xuan).
+  A) GroupKFold(ep): fold by EPISODE, pools both series. Cast recurs across episodes
+     WITHIN a series, so identity leaks within-series → this number is OPTIMISTIC.
   B) Leave-one-series-out: train on one show, test the other. Different shows share
-     no actors → cross-cast, TRUE speaker-disjoint — the honest generalization number.
-Both are SILVER (weak 2-teacher labels); a headline claim additionally needs human
-gold. The A→B gap shows how much within-series identity leak inflates A.
+     no actors → cross-cast, TRUE speaker-disjoint (I4 / ADR-002 whole-series held-out)
+     — the honest generalization number.
+Labels are a SINGLE human annotator (no inter-annotator κ yet — ADR-003 gap): report
+the numbers as pilot baselines, never as a settled accuracy claim (I6). The A→B gap
+shows how much within-series identity leak inflates A.
 
 --- Kaggle P100 gotchas (do not "fix") -----------------------------------------
 P100 = sm_60: the default image torch won't run on it, so the kernel first pins
@@ -25,9 +32,9 @@ torch==2.5.1+cu121. torchaudio 2.5.1 keeps an internal I/O backend, so the local
 soundfile shim is not needed here.
 
 --- Smoke mode (local CPU test before pushing) ---------------------------------
-  VNSER_SMOKE=1 -> first 48 clips only, 40 epochs, skip pip install. Run e.g.:
+  VNSER_SMOKE=1 -> a slice from each series, few epochs, skip pip install. Run e.g.:
     VNSER_SMOKE=1 VNSER_INPUT=<dir with manifest.csv + clips/> \
-      VNSER_OUTPUT=/tmp/vnser_train_smoke .venv-voice/bin/python \
+      VNSER_OUTPUT=/tmp/vnser_train_smoke .venv-vnser/Scripts/python.exe \
       kaggle/vietnamese-ser/vnser-train/vnser-train.py
 
 Media + outputs live under data/** locally (gitignored) — never commit them.
@@ -41,22 +48,21 @@ import subprocess
 import sys
 from pathlib import Path
 
-EMOTIONS = ["neutral", "anger", "joy", "fear_anxiety", "sadness"]  # surprise/disgust dropped
+EMOTIONS = ["neutral", "anger", "joy", "fear_anxiety", "sadness", "disgust", "surprise"]
 BACKBONE = "microsoft/wavlm-large"
 N_SPLITS = 5
 SEED = 0
-GROUP_COLS = ("ep", "speaker")
+GROUP_COL = "ep"  # fold by episode (speaker diarization ids are unreliable, not remapped)
 
 SMOKE = os.environ.get("VNSER_SMOKE") == "1"
 ON_KAGGLE = os.path.exists("/kaggle/input")
-# torchvision MUST be pinned to the torch-2.5.1 partner (0.20.1): transformers'
-# feature-extractor import pulls in torchvision, and Kaggle's preinstalled
-# torchvision (built for torch 2.10) then fails with "torchvision::nms does not
-# exist", cascading to a WavLMModel import error.
-# transformers pinned to 4.46.3: newer transformers refuse torch.load on
-# torch<2.6 (CVE-2025-32434) unless the checkpoint is safetensors, but
-# microsoft/wavlm-large ships a .bin — and we cannot bump torch (2.6 is unsafe
-# on the P100/sm_60). 4.46.3 predates that guard and is compatible with 2.5.1.
+# torchvision pinned to the torch-2.5.1 partner (0.20.1): transformers' feature-
+# extractor import pulls in torchvision, and Kaggle's preinstalled torchvision (built
+# for torch 2.10) then fails with "torchvision::nms does not exist", cascading to a
+# WavLMModel import error. transformers pinned to 4.46.3: newer transformers refuse
+# torch.load on torch<2.6 (CVE-2025-32434) unless the checkpoint is safetensors, but
+# microsoft/wavlm-large ships a .bin — and we cannot bump torch (2.6 is unsafe on the
+# P100/sm_60). 4.46.3 predates that guard and is compatible with 2.5.1.
 PIP_PINS = [
     "torch==2.5.1", "torchvision==0.20.1", "torchaudio==2.5.1",
     "transformers==4.46.3", "soundfile", "pandas", "numpy",
@@ -72,7 +78,7 @@ def _pip_install() -> None:
     )
 
 
-# ── c3 · features ───────────────────────────────────────────────────────────
+# ── features ─────────────────────────────────────────────────────────────────
 def extract_features(manifest, input_root: Path, cache: Path):
     """Frozen WavLM-Large masked-mean embedding per clip -> {clip: np.ndarray[1024]}.
 
@@ -95,13 +101,13 @@ def extract_features(manifest, input_root: Path, cache: Path):
 
     clips, embs = [], []
     for i, clip in enumerate(manifest["clip"].tolist()):
-        wav, sr = sf.read(input_root / clip, dtype="float32")
+        wav, _ = sf.read(input_root / clip, dtype="float32")
         if wav.ndim > 1:
             wav = wav.mean(axis=1)
         inp = fe(wav, sampling_rate=16000, return_tensors="pt").input_values.to(device)
         with torch.no_grad():
             hidden = model(inp).last_hidden_state  # [1, T, 1024]
-        embs.append(hidden.mean(dim=1).squeeze(0).cpu().numpy())
+        embs.append(hidden.mean(dim=1).squeeze(0).cpu().numpy())  # masked-mean (no pad here)
         clips.append(clip)
         if (i + 1) % 100 == 0:
             print(f"[features] {i + 1}/{len(manifest)}")
@@ -111,55 +117,42 @@ def extract_features(manifest, input_root: Path, cache: Path):
     return dict(zip(clips, emb))
 
 
-# ── c4 · splits (port of scripts/vietnamese-ser/make_splits.py) ──────────────
+# ── splits ───────────────────────────────────────────────────────────────────
 def assign_folds(manifest, n_splits: int = N_SPLITS):
-    """Deterministic greedy GroupKFold over (ep, speaker); heaviest group first."""
-    sizes = manifest.groupby(list(GROUP_COLS)).size()
+    """Deterministic greedy GroupKFold over episode (`ep`); heaviest group first."""
+    sizes = manifest.groupby(GROUP_COL).size()
     order = sorted(sizes.index, key=lambda g: (-int(sizes[g]), g))
     load = [0] * n_splits
-    gf: dict[tuple, int] = {}
+    gf: dict = {}
     for g in order:
         f = min(range(n_splits), key=lambda i: (load[i], i))
         gf[g] = f
         load[f] += int(sizes[g])
-    keys = list(zip(manifest["ep"], manifest["speaker"]))
-    return [gf[k] for k in keys]
+    return [gf[k] for k in manifest[GROUP_COL]]
 
 
-# ── c5 · heads + metrics ─────────────────────────────────────────────────────
-def _train_linear(X, y, task: str, n_classes: int, sample_w=None, class_w=None, epochs=200):
+# ── heads + metrics ──────────────────────────────────────────────────────────
+def _train_linear(X, y, task: str, n_classes: int, class_w=None, epochs=200):
     import torch
 
     torch.manual_seed(SEED)
-    Xt = torch.tensor(X, dtype=torch.float32)
     dev = "cuda" if torch.cuda.is_available() else "cpu"
-    Xt = Xt.to(dev)
-    out_dim = n_classes if task == "cls" else (2 if task == "reg2" else 1)
+    Xt = torch.tensor(X, dtype=torch.float32).to(dev)
+    out_dim = n_classes if task == "cls" else 2
     head = torch.nn.Linear(X.shape[1], out_dim).to(dev)
     opt = torch.optim.Adam(head.parameters(), lr=1e-3, weight_decay=1e-4)
 
     if task == "cls":
         yt = torch.tensor(y, dtype=torch.long).to(dev)
         cw = torch.tensor(class_w, dtype=torch.float32).to(dev) if class_w is not None else None
-        lossf = torch.nn.CrossEntropyLoss(weight=cw, reduction="none")
-        sw = torch.tensor(sample_w, dtype=torch.float32).to(dev) if sample_w is not None else None
-    elif task == "reg2":
+        lossf = torch.nn.CrossEntropyLoss(weight=cw)
+    else:  # reg2
         yt = torch.tensor(y, dtype=torch.float32).to(dev)
-    else:  # bin
-        yt = torch.tensor(y, dtype=torch.float32).to(dev)
-        pos_w = torch.tensor([(len(y) - y.sum()) / max(y.sum(), 1)], dtype=torch.float32).to(dev)
-        lossf = torch.nn.BCEWithLogitsLoss(pos_weight=pos_w)
 
     for _ in range(epochs):
         opt.zero_grad()
         z = head(Xt)
-        if task == "cls":
-            loss = lossf(z, yt)
-            loss = (loss * sw).mean() if sw is not None else loss.mean()
-        elif task == "reg2":
-            loss = _ccc_loss(z, yt)
-        else:
-            loss = lossf(z.squeeze(1), yt)
+        loss = lossf(z, yt) if task == "cls" else _ccc_loss(z, yt)
         loss.backward()
         opt.step()
     head.eval()
@@ -191,23 +184,30 @@ def macro_f1(y_true, y_pred, n_classes):
     return float(np.mean(f1s))
 
 
+def uar(y_true, y_pred, n_classes):
+    """Unweighted average recall (balanced accuracy) — the imbalanced-SER standard.
+
+    Averages per-class recall over classes PRESENT in y_true (a class with no test
+    support is excluded rather than counted as recall 0).
+    """
+    import numpy as np
+
+    recs = []
+    for c in range(n_classes):
+        support = int((y_true == c).sum())
+        if support == 0:
+            continue
+        tp = int(((y_pred == c) & (y_true == c)).sum())
+        recs.append(tp / support)
+    return float(np.mean(recs)) if recs else float("nan")
+
+
 def ccc(y_true, y_pred):
     import numpy as np
 
     x, y = np.asarray(y_pred, float), np.asarray(y_true, float)
     cov = ((x - x.mean()) * (y - y.mean())).mean()
     return float(2 * cov / (x.var() + y.var() + (x.mean() - y.mean()) ** 2 + 1e-8))
-
-
-def auc(y_true, score):
-    import numpy as np
-
-    y = np.asarray(y_true, int)
-    pos, neg = score[y == 1], score[y == 0]
-    if len(pos) == 0 or len(neg) == 0:
-        return float("nan")
-    ranks = np.argsort(np.argsort(np.concatenate([pos, neg]))) + 1
-    return float((ranks[: len(pos)].sum() - len(pos) * (len(pos) + 1) / 2) / (len(pos) * len(neg)))
 
 
 def bootstrap_ci(fn, *arrays, n=1000, seed=SEED):
@@ -225,13 +225,12 @@ def bootstrap_ci(fn, *arrays, n=1000, seed=SEED):
     return float(lo), float(hi)
 
 
-# ── c6 · orchestration ───────────────────────────────────────────────────────
+# ── orchestration ────────────────────────────────────────────────────────────
 def cv_metrics(manifest, X, folds):
     """Out-of-fold CV over an arbitrary integer `folds` array; returns metrics.
 
-    Called twice: with GroupKFold(ep,speaker) folds (within-pool, identity leaks
-    within a series) and with leave-one-series-out folds (cross-cast → true
-    speaker-disjoint, since the two shows share no actors).
+    Called twice: GroupKFold(ep) (within-pool, identity leaks within a series) and
+    leave-one-series-out (cross-cast → true speaker-disjoint).
     """
     import numpy as np
     import torch
@@ -240,21 +239,18 @@ def cv_metrics(manifest, X, folds):
     oof_emo = np.full(len(manifest), -1)
     oof_val = np.full(len(manifest), np.nan)
     oof_aro = np.full(len(manifest), np.nan)
-    oof_dis = np.full(len(manifest), np.nan)
 
     emo_idx = {e: i for i, e in enumerate(EMOTIONS)}
-    emo_label = np.array([emo_idx.get(e, -1) for e in manifest["emotion_consensus"]])
-    val = manifest["valence_mean"].to_numpy(float)
-    aro = manifest["arousal_mean"].to_numpy(float)
-    dis = (manifest["distress_or"].astype(str).str.lower() == "true").to_numpy(int)
-    conf = manifest["conf_min"].to_numpy(float)
+    emo_label = np.array([emo_idx.get(e, -1) for e in manifest["emotion"]])
+    val = manifest["valence"].to_numpy(float)
+    aro = manifest["arousal"].to_numpy(float)
 
     for f in fold_ids:
         tr, va = folds != f, folds == f
         mu, sd = X[tr].mean(0), X[tr].std(0) + 1e-6
         Xtr, Xva = (X[tr] - mu) / sd, (X[va] - mu) / sd
 
-        # emotion (5-class subset)
+        # emotion (7-class), weighted-CE by train class frequency
         etr = tr & (emo_label >= 0)
         eva = va & (emo_label >= 0)
         if etr.sum() and eva.sum():
@@ -262,7 +258,7 @@ def cv_metrics(manifest, X, folds):
             cw = len(emo_label[etr]) / (len(EMOTIONS) * np.maximum(counts, 1))
             head = _train_linear(
                 (X[etr] - mu) / sd, emo_label[etr], "cls", len(EMOTIONS),
-                sample_w=conf[etr], class_w=cw, epochs=40 if SMOKE else 200,
+                class_w=cw, epochs=40 if SMOKE else 200,
             )
             with torch.no_grad():
                 p = head(torch.tensor((X[eva] - mu) / sd, dtype=torch.float32,
@@ -276,27 +272,22 @@ def cv_metrics(manifest, X, folds):
             p = head(torch.tensor(Xva, dtype=torch.float32,
                                   device=next(head.parameters()).device)).cpu().numpy()
         oof_val[va], oof_aro[va] = p[:, 0], p[:, 1]
-
-        # distress (all rows, mechanics-only)
-        head = _train_linear(Xtr, dis[tr], "bin", 1, epochs=40 if SMOKE else 200)
-        with torch.no_grad():
-            s = head(torch.tensor(Xva, dtype=torch.float32,
-                                  device=next(head.parameters()).device)).squeeze(1)
-            oof_dis[va] = torch.sigmoid(s).cpu().numpy()
         print(f"[cv] fold {f} done")
 
-    # metrics on out-of-fold predictions
     em = emo_label >= 0
     f1 = macro_f1(emo_label[em], oof_emo[em], len(EMOTIONS))
     f1_ci = bootstrap_ci(lambda a, b: macro_f1(a, b, len(EMOTIONS)), emo_label[em], oof_emo[em])
+    ua = uar(emo_label[em], oof_emo[em], len(EMOTIONS))
+    ua_ci = bootstrap_ci(lambda a, b: uar(a, b, len(EMOTIONS)), emo_label[em], oof_emo[em])
     cv, cv_ci = ccc(val, oof_val), bootstrap_ci(ccc, val, oof_val)
     ca, ca_ci = ccc(aro, oof_aro), bootstrap_ci(ccc, aro, oof_aro)
-    da = auc(dis, oof_dis)
+    per_class = {EMOTIONS[c]: int((emo_label[em] == c).sum()) for c in range(len(EMOTIONS))}
     return {
-        "emotion_macro_f1": f1, "emotion_macro_f1_ci95": f1_ci, "emotion_n": int(em.sum()),
+        "emotion_macro_f1": f1, "emotion_macro_f1_ci95": f1_ci,
+        "emotion_uar": ua, "emotion_uar_ci95": ua_ci,
+        "emotion_n": int(em.sum()), "emotion_support": per_class,
         "ccc_valence": cv, "ccc_valence_ci95": cv_ci,
         "ccc_arousal": ca, "ccc_arousal_ci95": ca_ci,
-        "distress_auc": da, "distress_pos": int(dis.sum()),
     }
 
 
@@ -304,35 +295,35 @@ def _metric_rows(m: dict) -> list[str]:
     return [
         "| Head | Metric | Value | 95% CI |",
         "|---|---|---|---|",
-        f"| emotion (5-class) | macro-F1 | {m['emotion_macro_f1']:.3f} | "
+        f"| emotion (7-class) | macro-F1 | {m['emotion_macro_f1']:.3f} | "
         f"[{m['emotion_macro_f1_ci95'][0]:.3f}, {m['emotion_macro_f1_ci95'][1]:.3f}] |",
+        f"| emotion (7-class) | UAR | {m['emotion_uar']:.3f} | "
+        f"[{m['emotion_uar_ci95'][0]:.3f}, {m['emotion_uar_ci95'][1]:.3f}] |",
         f"| affect | CCC valence | {m['ccc_valence']:.3f} | "
         f"[{m['ccc_valence_ci95'][0]:.3f}, {m['ccc_valence_ci95'][1]:.3f}] |",
         f"| affect | CCC arousal | {m['ccc_arousal']:.3f} | "
         f"[{m['ccc_arousal_ci95'][0]:.3f}, {m['ccc_arousal_ci95'][1]:.3f}] |",
-        f"| distress (mechanics) | AUC | {m['distress_auc']:.3f} | "
-        f"n_pos={m['distress_pos']} — too few for a real claim |",
     ]
 
 
 def write_report(m_gkf, m_loso, series_names, manifest, out_dir: Path, split_hash: str):
-    cnt = {e: int((manifest["emotion_consensus"] == e).sum()) for e in EMOTIONS}
+    cnt = {e: int((manifest["emotion"] == e).sum()) for e in EMOTIONS}
     lines = [
         "# vnser-train — pilot SER baseline (speech-only, frozen WavLM-Large)",
         "",
-        "> ⚠ **PILOT SILVER (weak 2-teacher labels), NOT human gold.** Two evals below:",
-        "> **GroupKFold(ep,speaker)** pools both series → identity leaks WITHIN a series",
-        "> (cast recurs) → optimistic. **Leave-one-series-out** trains on one show and",
-        "> tests the other → cross-cast, TRUE speaker-disjoint — the honest generalization",
-        "> number (still silver; a headline also needs human gold).",
+        "> ⚠ **PILOT, HUMAN single-annotator labels (no inter-annotator κ yet — ADR-003).**",
+        "> Report as pilot baselines, NOT a settled accuracy claim (I6). Two evals below:",
+        "> **GroupKFold(ep)** pools both series → identity leaks WITHIN a series (cast",
+        "> recurs) → optimistic. **Leave-one-series-out** trains on one show and tests the",
+        "> other → cross-cast, TRUE speaker-disjoint (I4 / ADR-002) — the honest number.",
         "",
-        f"- backbone: `{BACKBONE}` (frozen, masked-mean pool)",
+        f"- backbone: `{BACKBONE}` (frozen, masked-mean pool) + linear probe",
         f"- series: {series_names}",
-        f"- clips: {len(manifest)} clean · emotion 5-class: {m_gkf['emotion_n']}",
+        f"- clips: {len(manifest)} human-clean · emotion 7-class",
         f"- split_hash (gkf): `{split_hash}` · seed {SEED}",
-        f"- emotion class counts: {cnt}",
+        f"- emotion class counts (full set): {cnt}",
         "",
-        "## Eval A — GroupKFold(ep,speaker), within-pool (optimistic)",
+        "## Eval A — GroupKFold(ep), within-pool (optimistic)",
         "",
         *_metric_rows(m_gkf),
         "",
@@ -347,6 +338,10 @@ def write_report(m_gkf, m_loso, series_names, manifest, out_dir: Path, split_has
             "",
         ]
     lines += [
+        "UAR (unweighted average recall = balanced accuracy) is the imbalanced-SER",
+        "standard; macro-F1 shown alongside. Thin classes (surprise/disgust) have small",
+        "test support — read their contribution with the CI, not point values.",
+        "",
         "Anchor (NOT apples-to-apples): WavLM-Large ~34/33 macro-F1 on MSP-Podcast",
         "8-class [bimodal-ser paper 02] — different language, labels, class count.",
     ]
@@ -380,6 +375,7 @@ def main() -> None:
     if ON_KAGGLE and not SMOKE:
         _pip_install()
 
+    import numpy as np
     import pandas as pd
 
     input_root = _resolve_input_root()
@@ -387,25 +383,24 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     manifest = pd.read_csv(input_root / "manifest.csv")
-    manifest = manifest[manifest["is_clean"].astype(str).str.lower().isin({"true", "1"})]
-    manifest = manifest.reset_index(drop=True)
+    # human-clean manifest (build_kaggle_gold.py): every row has a human emotion, not
+    # rejected, not multi. Keep rows with a valid emotion + valence/arousal present.
+    manifest = manifest[manifest["emotion"].isin(EMOTIONS)]
+    manifest = manifest.dropna(subset=["valence", "arousal"]).reset_index(drop=True)
+    manifest["series"] = manifest["ep"].str.split("/").str[0]
     if SMOKE:
         # keep a slice from EACH series so the leave-one-series-out path also runs
-        ser = manifest["ep"].str.split("/").str[0]
-        manifest = manifest.groupby(ser, group_keys=False).head(30).reset_index(drop=True)
+        manifest = manifest.groupby("series", group_keys=False).head(30).reset_index(drop=True)
     print(f"[data] {len(manifest)} clean clips from {input_root}")
 
-    import numpy as np
-
-    manifest["series"] = manifest["ep"].str.split("/").str[0]
     gkf = np.array(assign_folds(manifest))
     manifest["fold"] = gkf
     feats = extract_features(manifest, input_root, out_dir / "features_wavlm-large.npz")
     X = np.stack([feats[c] for c in manifest["clip"]])
 
-    # eval 1: GroupKFold(ep,speaker) — within-pool (identity leaks within a series)
+    # eval A: GroupKFold(ep) — within-pool (identity leaks within a series)
     m_gkf = cv_metrics(manifest, X, gkf)
-    # eval 2: leave-one-series-out — cross-cast, TRUE speaker-disjoint (2 shows, no shared actors)
+    # eval B: leave-one-series-out — cross-cast, TRUE speaker-disjoint
     series_names = sorted(manifest["series"].unique())
     m_loso = None
     if len(series_names) >= 2:
@@ -413,18 +408,17 @@ def main() -> None:
         sfolds = manifest["series"].map(smap).to_numpy()
         m_loso = cv_metrics(manifest, X, sfolds)
 
-    # provenance
-    pairs = sorted(f"{c},{f}" for c, f in zip(manifest["clip"], gkf))
     import hashlib
+    pairs = sorted(f"{c},{f}" for c, f in zip(manifest["clip"], gkf))
     split_hash = hashlib.md5("\n".join(pairs).encode()).hexdigest()
     art = out_dir / "artifact_wavlm-large"
     art.mkdir(exist_ok=True)
     (art / "config.json").write_text(json.dumps({
         "backbone": BACKBONE, "emotions": EMOTIONS, "n_splits": N_SPLITS, "seed": SEED,
         "split_hash": split_hash, "pip_pins": PIP_PINS, "n_clips": len(manifest),
-        "series": series_names,
-        "eval_groupkfold": "GroupKFold(ep,speaker) — within-pool, identity leaks within series",
-        "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (silver labels)",
+        "series": series_names, "label_source": "human single-annotator (ADR-003)",
+        "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
+        "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
         "metrics_groupkfold": m_gkf, "metrics_leave_one_series_out": m_loso,
     }, indent=2, ensure_ascii=False), encoding="utf-8")
     (out_dir / "metrics.json").write_text(json.dumps(

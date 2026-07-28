@@ -71,7 +71,8 @@ def main() -> None:
 
     rows, skipped_no_wav = [], 0
     for r in recs:
-        if not r.get("emotion") or r.get("rejected"):
+        # corpus-clean (I3): human emotion, not rejected, not human-flagged multi-voice
+        if not r.get("emotion") or r.get("rejected") or r.get("multi"):
             continue
         src = EPISODES / r["epKey"] / "clips" / f"{r['id']}.wav"
         if not src.is_file():
@@ -146,36 +147,17 @@ def main() -> None:
             text=True,
         )
         exists = st.returncode == 0 and "not found" not in (st.stdout + st.stderr).lower()
-        cmd = (
-            [
-                "uvx",
-                "--from",
-                "kaggle",
-                "kaggle",
-                "datasets",
-                "version",
-                "-p",
-                str(stage),
-                "--dir-mode",
-                "zip",
-                "-m",
-                f"human labels: {len(rows)} utt",
-            ]
-            if exists
-            else [
-                "uvx",
-                "--from",
-                "kaggle",
-                "kaggle",
-                "datasets",
-                "create",
-                "-p",
-                str(stage),
-                "--dir-mode",
-                "zip",
-            ]  # create = private by default
-        )
-        subprocess.run(cmd, check=True)
+        # Run from the staging PARENT with a single-segment -p (SLUG). The kaggle CLI
+        # on Windows builds a temp upload path from the -p value; a multi-segment path
+        # (data/.../viemospeech-pilot) yields uploads\data/.../<slug>_manifest.csv.json
+        # whose intermediate dirs don't exist -> manifest.csv fails with ENOENT while
+        # clips.zip still uploads. A one-level -p keeps the temp name flat.
+        action = "version" if exists else "create"  # create = private by default
+        cmd = ["uvx", "--from", "kaggle", "kaggle", "datasets", action,
+               "-p", SLUG, "--dir-mode", "zip"]
+        if exists:
+            cmd += ["-m", f"human labels: {len(rows)} utt"]
+        subprocess.run(cmd, check=True, cwd=stage.parent)
         print("pushed (private).")
 
 
