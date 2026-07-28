@@ -24,6 +24,22 @@ $("ctxplay").onclick = playContext;
 S.preview.onplay = () => ($("ctxplay").textContent = "⏸ dừng");
 S.preview.onpause = S.preview.onended = () => ($("ctxplay").textContent = "▶ nghe ±");
 
+/* ---------- volume boost (>1×) — routes all three players through one GainNode.
+   Built lazily on first slider drag (a user gesture, so resume() is allowed);
+   until then playback stays native. */
+let actx, gain;
+$("gain").oninput = () => {
+  const v = +$("gain").value;
+  $("gainval").textContent = v.toFixed(1) + "×";
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    gain = actx.createGain(); gain.connect(actx.destination);
+    for (const a of [S.audio, S.preview, S.segAudio]) actx.createMediaElementSource(a).connect(gain);
+  }
+  actx.resume();
+  gain.gain.value = v;
+};
+
 /* ---------- cut / split mode toggles ---------- */
 $("cutbtn").onclick = () => {
   if (!S.audioBuf) return;

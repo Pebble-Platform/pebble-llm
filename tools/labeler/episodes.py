@@ -69,6 +69,53 @@ def listing() -> list[dict]:
     return out
 
 
+def stats() -> dict:
+    """Labeling progress: per-series videos/labels/duration + emotion/gender/age breakdown.
+
+    Live counterpart of scripts/vietnamese-ser/labeler_stats.py — reads the same
+    source of truth (store.STATE), so a page reload always reflects current labels.
+    videos = epNN[_K] dirs with cut clips; labels/duration count records that have
+    an emotion and are not rejected.
+    """
+    series: dict[str, list] = {}  # series -> [videos, labels, duration]
+    for ep_dir in sorted(p for p in store.ROOT.rglob("*") if p.is_dir() and EP_RE.match(p.name)):
+        if not any((ep_dir / "clips").glob("seg*.wav")):
+            continue
+        s = ep_dir.parent.relative_to(store.ROOT).as_posix() or "(root)"
+        series.setdefault(s, [0, 0, 0.0])[0] += 1
+
+    emotion: dict[str, list] = {}  # key -> [audios, duration]
+    gender: dict[str, list] = {}
+    age: dict[str, list] = {}
+    for r in store.STATE.values():
+        if not r.get("emotion") or r.get("rejected"):
+            continue
+        s = Path(r["epKey"]).parent.as_posix()
+        s = "(root)" if s == "." else s
+        dur = r["end"] - r["start"]
+        row = series.setdefault(s, [0, 0, 0.0])
+        row[1] += 1
+        row[2] += dur
+        for d, key in (
+            (emotion, r["emotion"]),
+            (gender, r.get("gender") or "(chưa gán)"),
+            (age, r.get("age_group") or "(chưa gán)"),
+        ):
+            cell = d.setdefault(key, [0, 0.0])
+            cell[0] += 1
+            cell[1] += dur
+
+    def rows(d: dict[str, list]) -> list[list]:  # most-frequent first: [[key, audios, dur], …]
+        return [[k, n, dur] for k, (n, dur) in sorted(d.items(), key=lambda kv: -kv[1][0])]
+
+    return {
+        "series": [[s, v, n, dur] for s, (v, n, dur) in sorted(series.items())],
+        "emotion": rows(emotion),
+        "gender": rows(gender),
+        "age": rows(age),
+    }
+
+
 def build(ep_key: str, ep: Path) -> dict:
     """Join segments + transcripts + teacher suggestions + saved labels for one episode."""
     seg = store.by_id(store.read_csv(ep / "segments.csv"))

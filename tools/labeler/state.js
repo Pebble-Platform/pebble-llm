@@ -13,6 +13,7 @@ export const AGE_VI = {
   child: "trẻ em", teen: "thiếu niên", young_adult: "thanh niên",
   middle_aged: "trung niên", senior: "cao tuổi",
 };
+export const DIALECT_VI = { north: "Bắc", central: "Trung", south: "Nam" };
 
 export const $ = (id) => document.getElementById(id);
 export const gk = (ep, id) => ep + "\t" + id;

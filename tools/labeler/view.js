@@ -1,7 +1,7 @@
 /* View layer: waveform/audio drawing + sidebar/table/emo rendering +
    episode load / clip select. Reads & writes S; calls the api layer. */
 
-import { $, AGE_VI, EMO, EMOKEYS, GENDER_VI, esc, gk, S } from "./state.js";
+import { $, AGE_VI, DIALECT_VI, EMO, EMOKEYS, GENDER_VI, esc, gk, S } from "./state.js";
 import { clipUrl, getEpisode, getEpisodes } from "./api.js";
 
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
@@ -123,9 +123,10 @@ export function renderTable() {
       <td>${g && g.arousal != null ? g.arousal : "—"}</td>
       <td>${g && g.gender ? GENDER_VI[g.gender] || g.gender : "—"}</td>
       <td>${g && g.age_group ? AGE_VI[g.age_group] || g.age_group : "—"}</td>
+      <td>${g && g.dialect ? DIALECT_VI[g.dialect] || g.dialect : "—"}</td>
     </tr>`;
   }).join("");
-  tb.innerHTML = `<thead><tr><th><input type="checkbox" id="sel-all" title="chọn tất cả"></th><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th><th>giới tính</th><th>tuổi</th></tr></thead><tbody>${rows}</tbody>`;
+  tb.innerHTML = `<thead><tr><th><input type="checkbox" id="sel-all" title="chọn tất cả"></th><th></th><th>id</th><th>dur</th><th>gold text</th><th></th><th>gold</th><th>V</th><th>A</th><th>giới tính</th><th>tuổi</th><th>vùng</th></tr></thead><tbody>${rows}</tbody>`;
   tb.querySelectorAll("tr.clip").forEach((tr) => (tr.onclick = () => selectClip(+tr.dataset.i)));
   tb.querySelectorAll(".selbox").forEach((cb) => {
     cb.onclick = (e) => e.stopPropagation(); // don't open the clip when ticking
@@ -197,6 +198,7 @@ export async function selectClip(i) {
   S.splitMode = false; S.splitPoints = []; $("splitbtn").classList.remove("primary"); updateSplitBtnLabel();
   $("cutinfo").textContent = g && g.recut ? "✂ đã recut" : "";
   $("g-gender").value = (g && g.gender) || ""; $("g-age").value = (g && g.age_group) || "";
+  $("g-dialect").value = (g && g.dialect) || "";
   const rj = !!(g && g.rejected);
   $("rej-reason").value = (g && g.reject_reason) || "multi_speaker";
   $("rejbtn").textContent = rj ? "↺ bỏ loại" : "⚑ loại";
