@@ -14,6 +14,14 @@ Change đã tạo:
   Eval cross-cast (leave-one-series-out) = **macro-F1 0.333** speaker-disjoint thật
   (silver). Capability: `capabilities/training-baseline.md`. Bậc thang #1 trước bimodal.
 
+- [`011-online-multi-annotator/`](011-online-multi-annotator/README.md) —
+  **in-progress (2026-07-28)**: tool label online đa annotator để lấy **κ/α
+  human–human** (nợ đã biết của [ADR-003](../decisions/ADR-003-human-labels-drop-weak-supervision.md)).
+  Cho phép bởi [ADR-005](../decisions/ADR-005-annotation-streaming-not-release.md)
+  (stream cho annotator mời đích danh ≠ release, 7 safeguard). M1 xong: hướng dẫn
+  annotator + consent + **QC protocol pre-registered**. Annotator chỉ label clip đã
+  cắt — không cắt/chia.
+
 Ứng viên change còn lại (theo thứ tự):
 - `001-invariant-suite/` — dựng `tests/invariants/` mirror I1–I6 mới
   (`docs/intent/invariants.md`) + gắn vào CI.

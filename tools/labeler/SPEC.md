@@ -57,7 +57,7 @@ hot-backup `VACUUM INTO`). Bootstrap 1 lần từ `state.jsonl` cũ qua
 | | `distress` | bool — **bỏ khỏi form 2026-07-10**; server default `false` (record cũ giữ giá trị đã gán) |
 | | `multi` | bool — tai người nghi ≥2 giọng |
 | | `note` | text — **bỏ khỏi form 2026-07-10**; server default `""` |
-| nhân khẩu | `gender, age_group` | **gán trực tiếp per-clip khi label** (nghe giọng). `gender` = `"" \| female \| male`; `age_group` = `"" \| child \| teen \| young_adult \| middle_aged \| senior` (nhóm tuổi, không phải số). Không bắt buộc — `""` tới khi chọn. Record cũ giữ thêm `speaker` (không dùng, không migrate) |
+| nhân khẩu | `gender, age_group, dialect` | **gán trực tiếp per-clip khi label** (nghe giọng). `gender` = `"" \| female \| male`; `age_group` = `"" \| child \| teen \| young_adult \| middle_aged \| senior` (nhóm tuổi, không phải số); `dialect` = `"" \| north \| central \| south` (Bắc/Trung/Nam — hệ thanh điệu khác nhau, intent §6; metadata KHÔNG phải target train). Không bắt buộc — `""` tới khi chọn. Record cũ giữ thêm `speaker` (không dùng, không migrate) |
 | biên | `start, end` | recut-aware (cộng dồn qua nhiều lần recut) |
 | recut (F1) | `recut`, `gold_text` | `gold_text` = text người sửa sau recut |
 | excise (F7) | `excised` | list `[[a,b]…]` (giây clip-local) đoạn GIỮA đã bỏ + nối; `recut=true`; undo qua `/recut/undo`. `start/end` **giữ nguyên** biên bao (provenance) |
@@ -85,6 +85,48 @@ theo `speaker` (idempotent, chỉ điền field rỗng, backup trước khi ghi)
 label lại. `cast.json` giữ lại làm nguồn migrate; trường `speaker` cũ trong record
 để nguyên (thừa, vô hại).
 
+### Bảng `assignments` — hàng đợi + nhãn vòng 2 của annotator online (change 011)
+
+Bảng **thứ hai** trong `state.db`, khoá **`(annotator, seq)`**, cột phẳng:
+`epkey · id · kind · emotion · valence · arousal · skip_reason · listen_ms · ts`.
+Một dòng = **một lần TRÌNH BÀY một clip cho một annotator**; hàng đợi và câu trả
+lời ở chung (cột nhãn rỗng/NULL tới khi chấm, `ts IS NULL` = chưa chấm).
+
+Khoá theo `seq` chứ không theo `(epkey, id)` vì QC protocol seed ~10% **clip lặp**
+để đo tự nhất quán — cùng một clip trình bày cho cùng một người **hai lần**, phải
+ra hai dòng độc lập. `kind` ∈ `normal | gold | dup | trap` để báo cáo κ loại
+gold/dup ra (qc-protocol §5.1).
+
+`records` **không đụng tới** — nhãn của owner ở nguyên đó (`annotator='human'`,
+813 dòng), nên **không có migrate nào** và mọi đường code cũ chạy y như trước.
+Tách bảng vì `records.data` trộn **trạng thái clip** (recut/excised/rejected/split/
+gold_text/gợi ý teacher — owner sở hữu, **không phải per-annotator**) với **phán
+đoán nhãn**; nhét annotator vào khoá `records` sẽ nhân bản trạng thái clip và sinh
+dòng annotator mang cờ `rejected` mà họ không có quyền đặt.
+
+API (`store.py`): `assign()` cài hàng đợi (**từ chối ghi đè** hàng đợi đã có câu
+trả lời) · `next_seq()` · `assignment_clip()` · `save_rating()` · `progress()` ·
+`all_ratings()`. Skip = dòng có `skip_reason`, `emotion` rỗng.
+
+**Auth + role** (`auth.py`, change 011): `tokens.json` trong data root (gitignored)
+map token → `{id, role}`; role `admin` (owner) vs `annotator`. Biên bảo mật = **một
+middleware `guard`** trong `server.py`, deny-by-default: chỉ `/rate.html` +
+`/rate.js` là public, mọi route **không** thuộc `/rate/*` là **owner-only** (route
+thêm sau này mặc định được bảo vệ). Loopback được coi là admin **chỉ khi** không có
+header `x-forwarded-*` — tunnel nối qua localhost nên nếu tin socket thôi sẽ trao
+admin cho cả internet; `--no-local-admin` là lớp thứ hai, **bắt buộc khi tunnel mở**.
+`access.log` ghi ai nghe clip nào lúc nào (ADR-005 safeguard #6), không công bố.
+
+**Route annotator:** `GET /rate/next` (chỉ `{seq, done, total}`) · `GET
+/rate/clip/{seq}.wav` (địa chỉ hoá **theo vị trí hàng đợi** — annotator không bao
+giờ biết `epKey`/`clip_id`, không liệt kê được corpus) · `POST /rate/{seq}` ·
+`GET /rate/whoami`. UI `rate.html`/`rate.js` **mù**: không transcript, không gợi ý
+teacher, không nhãn owner.
+
+Script: `build_assignments.py` (phân tầng + gold + dup + xáo trộn per-annotator) ·
+`iaa_report.py` (Fleiss κ + Krippendorff α, nhãn-của-record). Giao thức + runbook:
+[change 011](../../docs/spec/changes/011-online-multi-annotator/README.md).
+
 `gold.csv` / `gold_bundle.zip` = **view export** dựng thẳng từ `state.db`
 (gồm cột `gender`/`age_group` per-clip; dump thô; export Kaggle đầy đủ — strip text
 public, loại rejected/test-series — là phase 4).
@@ -101,7 +143,7 @@ public, loại rejected/test-series — là phase 4).
 | `GET /script/{epKey}` | `{duration, blocks:[{start,end,text}]}` — script YouTube de-rolled (segment mode) |
 | `GET /segment-audio/{epKey}.wav` `?a&b&pad` | slice vocals đã tách nhạc `[a−pad, b+pad]` (preview vùng, chỉ đọc) |
 | `POST /segment/{epKey}` `{a,b,text}` | cắt clip MỚI từ vocals cho vùng `[a,b]` + seed record (`manual_segment`, gold_text=text YT) |
-| `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,gender,age_group,annotator}` (distress/note: server default) |
+| `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,gender,age_group,dialect,annotator}` (distress/note: server default) |
 | `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
 | `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
 | `POST /reject/{epKey}/{id}` `{reason}` · `/undo` | flag rejected (giữ file) · gỡ |
@@ -184,7 +226,9 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 - **Frontend chưa browser-drive:** verify = API e2e + DOM-stub load-test + served
   200. Tương tác thật (kéo chọn, chia, dropdown) cần người click-test.
 - **Single-pass** (1 annotator/clip) ⇒ **chưa có κ human–human** để báo (ADR-003
-  known gap); double-annotate subset là further work.
+  known gap). Đang xử lý: [change 011](../../docs/spec/changes/011-online-multi-annotator/README.md)
+  (tool label online đa annotator, cho phép bởi [ADR-005](../../docs/spec/decisions/ADR-005-annotation-streaming-not-release.md)).
+  Đã xong M2 (bảng `ratings`); còn auth/role, UI `/rate`, tunnel, và 2 vòng label.
 - **Nhân khẩu per-clip (bỏ speaker/cast 2026-07-20, migrate 2026-07-21):** record
   (nay trong `state.db`) còn giữ trường `speaker` (không migrate — vô hại, không ai
   đọc); 232 clip đã gán nhân vật được backfill `gender`/`age_group` từ `cast.json`

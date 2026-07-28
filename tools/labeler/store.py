@@ -72,6 +72,26 @@ def connect(db_path: Path) -> sqlite3.Connection:
         "epkey TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL, ts TEXT, "
         "PRIMARY KEY (epkey, id))"
     )
+    # Online second-pass queue + ratings (change 011). One row = one PRESENTATION of a
+    # clip to one annotator: the assignment (annotator, seq -> clip) and that
+    # annotator's answer live together, answer columns NULL/'' until rated.
+    #
+    # Keyed (annotator, seq), NOT (epkey, id, annotator): the pre-registered QC protocol
+    # seeds ~10% duplicate clips to measure self-consistency, so the SAME clip is shown
+    # to the SAME annotator twice and must yield two independent rows.
+    #
+    # `records` is untouched — the owner's label of record stays there, so an invited
+    # annotator cannot overwrite it by construction.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS assignments ("
+        "annotator TEXT NOT NULL, seq INTEGER NOT NULL, "
+        "epkey TEXT NOT NULL, id TEXT NOT NULL, "
+        "kind TEXT NOT NULL DEFAULT 'normal', "  # normal | gold | dup | trap
+        "emotion TEXT NOT NULL DEFAULT '', valence INTEGER, arousal INTEGER, "
+        "skip_reason TEXT NOT NULL DEFAULT '', listen_ms INTEGER NOT NULL DEFAULT 0, "
+        "ts TEXT, "  # NULL = not answered yet
+        "PRIMARY KEY (annotator, seq))"
+    )
     conn.commit()
     return conn
 
@@ -133,6 +153,7 @@ def manual_record(
         "episode": episode,
         "gender": "",  # per-clip human demographic (set on label)
         "age_group": "",
+        "dialect": "",
         "start": start,
         "end": end,
         "asr": "",
@@ -163,6 +184,102 @@ def put(ep_key: str, clip_id: str, rec: dict) -> dict:
         STATE[skey(ep_key, clip_id)] = rec
         _upsert(rec)
     return rec
+
+
+# ---------- online second-pass queue + ratings (change 011) ----------
+def assign(annotator: str, items: list[tuple[str, str, str]]) -> int:
+    """Install an annotator's fixed, pre-shuffled queue: [(epkey, clip_id, kind), ...].
+
+    Idempotent per annotator: refuses to overwrite a queue that already has answers,
+    so a re-run can never wipe work already done.
+    """
+    with LOCK, _CONN:
+        answered = _CONN.execute(
+            "SELECT COUNT(*) FROM assignments WHERE annotator = ? AND ts IS NOT NULL", (annotator,)
+        ).fetchone()[0]
+        if answered:
+            raise ValueError(
+                f"{annotator} already answered {answered} items — refusing to reassign"
+            )
+        _CONN.execute("DELETE FROM assignments WHERE annotator = ?", (annotator,))
+        _CONN.executemany(
+            "INSERT INTO assignments (annotator, seq, epkey, id, kind) VALUES (?, ?, ?, ?, ?)",
+            [(annotator, i, ep, cid, kind) for i, (ep, cid, kind) in enumerate(items)],
+        )
+    return len(items)
+
+
+def next_seq(annotator: str) -> dict | None:
+    """The annotator's first unanswered queue item, or None when the queue is done."""
+    row = _CONN.execute(
+        "SELECT seq, epkey, id FROM assignments "
+        "WHERE annotator = ? AND ts IS NULL ORDER BY seq LIMIT 1",
+        (annotator,),
+    ).fetchone()
+    return None if row is None else {"seq": row[0], "epkey": row[1], "id": row[2]}
+
+
+def assignment_clip(annotator: str, seq: int) -> tuple[str, str]:
+    """Resolve (epkey, clip_id) for one of THIS annotator's queue slots.
+
+    The only way an annotator reaches audio: they address clips by queue position, so
+    they never learn an episode/clip id and cannot enumerate or reassemble a scene
+    (ADR-005 safeguards #2/#4).
+    """
+    row = _CONN.execute(
+        "SELECT epkey, id FROM assignments WHERE annotator = ? AND seq = ?", (annotator, seq)
+    ).fetchone()
+    if row is None:
+        raise HTTPException(404, "not in your queue")
+    return row[0], row[1]
+
+
+def save_rating(
+    annotator: str,
+    seq: int,
+    emotion: str = "",
+    valence: int | None = None,
+    arousal: int | None = None,
+    skip_reason: str = "",
+    listen_ms: int = 0,
+) -> None:
+    """Record one answer. Touches only this annotator's own queue slot."""
+    with LOCK, _CONN:
+        cur = _CONN.execute(
+            "UPDATE assignments SET emotion = ?, valence = ?, arousal = ?, "
+            "skip_reason = ?, listen_ms = ?, ts = ? WHERE annotator = ? AND seq = ?",
+            (emotion, valence, arousal, skip_reason, listen_ms, now(), annotator, seq),
+        )
+        if not cur.rowcount:
+            raise HTTPException(404, "not in your queue")
+
+
+def progress(annotator: str) -> dict:
+    row = _CONN.execute(
+        "SELECT COUNT(*), COUNT(ts) FROM assignments WHERE annotator = ?", (annotator,)
+    ).fetchone()
+    return {"total": row[0], "done": row[1]}
+
+
+def all_ratings() -> list[dict]:
+    """Every answered row across annotators — the input to the κ/α report (M7)."""
+    cols = (
+        "annotator",
+        "seq",
+        "epkey",
+        "id",
+        "kind",
+        "emotion",
+        "valence",
+        "arousal",
+        "skip_reason",
+        "listen_ms",
+        "ts",
+    )
+    rows = _CONN.execute(
+        f"SELECT {', '.join(cols)} FROM assignments WHERE ts IS NOT NULL ORDER BY annotator, seq"
+    )
+    return [dict(zip(cols, r, strict=True)) for r in rows]
 
 
 # ---------- csv ----------
@@ -222,6 +339,7 @@ def seed_record(ep_key: str, clip_id: str, ep: Path) -> dict:
         "episode": ep.name,
         "gender": "",  # per-clip human demographic (set on label)
         "age_group": "",
+        "dialect": "",
         "start": fnum(seg.get("start")),
         "end": fnum(seg.get("end")),
         "opus": op.get("emotion", ""),  # teacher suggestion, not a label of record
@@ -307,6 +425,7 @@ def child_record(ep_key: str, cid: str, parent: dict, prov: dict, start: float, 
         "episode": parent["episode"],
         "gender": parent.get("gender", ""),  # inherit parent's demographic; human edits per child
         "age_group": parent.get("age_group", ""),
+        "dialect": parent.get("dialect", ""),
         "start": start,
         "end": end,
         "asr": prov["asr"],

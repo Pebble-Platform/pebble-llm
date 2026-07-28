@@ -16,16 +16,42 @@ import argparse
 from pathlib import Path
 
 import audio
+import auth
 import episodes
 import store
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, Response
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 HERE = Path(__file__).resolve().parent
 app = FastAPI(title="ViEmoSpeech labeler")
+
+# Shell files an unauthenticated browser may load — markup/JS only, no corpus data.
+# Everything else goes through the guard below.
+PUBLIC = {"/rate.html", "/rate.js"}
+
+
+@app.middleware("http")
+async def guard(request: Request, call_next):
+    """The single security boundary (ADR-005 safeguard #2) — deny by default.
+
+    One middleware rather than a dependency on each of ~20 routes: a boundary you can
+    audit in one place cannot be defeated by forgetting to decorate a new route. Any
+    route added later is owner-only until someone deliberately puts it under /rate.
+    """
+    path = request.url.path
+    if path in PUBLIC:
+        return await call_next(request)
+    try:
+        p = auth.principal(request)
+        if not (path.startswith("/rate/") or p.is_admin):
+            raise HTTPException(403, "admin only")
+    except HTTPException as e:
+        return JSONResponse({"detail": e.detail}, status_code=e.status_code)
+    request.state.principal = p
+    return await call_next(request)
 
 
 # ---------- request models ----------
@@ -38,6 +64,7 @@ class GoldIn(BaseModel):
     gold_text: str | None = None  # human text of record; None = keep existing
     gender: str = ""  # per-clip human demographic: "" | female | male
     age_group: str = ""  # "" | child | teen | young_adult | middle_aged | senior
+    dialect: str = ""  # "" | north | central | south (Bắc/Trung/Nam — hệ thanh điệu khác nhau)
     annotator: str = "human"
 
 
@@ -109,6 +136,12 @@ def get_context(ep_key: str, clip_id: str, pad: float = 10.0) -> Response:
     )
 
 
+@app.get("/stats")
+def get_stats() -> dict:
+    """Live labeling-progress dashboard data (see stats.html); recomputed per call."""
+    return episodes.stats()
+
+
 @app.get("/gold")
 def all_gold() -> list[dict]:
     """Every human label record (source of truth = state.db)."""
@@ -133,6 +166,59 @@ def get_segment_audio(ep_key: str, a: float, b: float, pad: float = 0.0) -> Resp
     )
 
 
+# ---------- online second-pass rating (change 011) ----------
+class RateIn(BaseModel):
+    emotion: str = ""  # "" only when skipping
+    valence: int | None = None
+    arousal: int | None = None
+    skip_reason: str = ""  # unclear | multi_speaker | bad_cut | no_speech
+    listen_ms: int = 0  # audio actually played (QC §2.3 min-time gate)
+
+
+@app.get("/rate/next")
+def rate_next(request: Request) -> dict:
+    """The annotator's next queue slot — position + progress only, never clip identity."""
+    who = request.state.principal
+    item = store.next_seq(who.id)
+    prog = store.progress(who.id)
+    return {"seq": None if item is None else item["seq"], **prog}
+
+
+@app.get("/rate/clip/{seq}.wav")
+def rate_clip(request: Request, seq: int) -> FileResponse:
+    """Serve one clip BY QUEUE POSITION — the annotator's only path to audio.
+
+    Addressing by position (not epKey/clip_id) means an annotator cannot enumerate the
+    corpus or reassemble a contiguous scene: they can only fetch slots assigned to them,
+    in an order that was shuffled once at assignment (ADR-005 safeguards #2/#4).
+    """
+    who = request.state.principal
+    ep_key, clip_id = store.assignment_clip(who.id, seq)
+    auth.log_access(who.id, "clip", f"{ep_key}/{clip_id}")
+    ep = store.episode_dir(ep_key, clip_id)
+    return FileResponse(
+        store.clip_wav(ep, clip_id), media_type="audio/wav", headers={"Cache-Control": "no-store"}
+    )
+
+
+@app.post("/rate/{seq}")
+def rate_save(request: Request, seq: int, r: RateIn) -> dict:
+    """Save one judgment. Writes only this annotator's own slot; `records` untouched."""
+    who = request.state.principal
+    if not r.emotion and not r.skip_reason:
+        raise HTTPException(400, "need an emotion or a skip reason")
+    store.save_rating(
+        who.id, seq, r.emotion, r.valence, r.arousal, r.skip_reason, max(0, r.listen_ms)
+    )
+    auth.log_access(who.id, "rate", f"seq={seq} {r.emotion or r.skip_reason}")
+    return store.progress(who.id)
+
+
+@app.get("/rate/whoami")
+def rate_whoami(request: Request) -> dict:
+    return {"id": request.state.principal.id, **store.progress(request.state.principal.id)}
+
+
 # ---------- label / recut / reject / split ----------
 @app.post("/gold/{ep_key:path}/{clip_id}")
 def put_gold(ep_key: str, clip_id: str, g: GoldIn) -> dict:
@@ -148,6 +234,7 @@ def put_gold(ep_key: str, clip_id: str, g: GoldIn) -> dict:
             "note": g.note,
             "gender": g.gender,  # per-clip human demographic (replaces cast lookup)
             "age_group": g.age_group,
+            "dialect": g.dialect,
             "annotator": g.annotator or "human",
             "ts": store.now(),
         }
@@ -339,15 +426,34 @@ def main() -> None:
     )
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument(
+        "--tokens",
+        default=None,
+        help="tokens.json (annotator access; default <root>/tokens.json if present)",
+    )
+    ap.add_argument(
+        "--no-local-admin",
+        action="store_true",
+        help="require a token even from localhost (use when a tunnel is open)",
+    )
     a = ap.parse_args()
     root = Path(a.root).resolve()
     if not root.is_dir():
         raise SystemExit(f"--root is not a directory: {root}")
     store.set_root(root)
     store.load()
+    tokens_path = Path(a.tokens) if a.tokens else root / "tokens.json"
+    n_tok = auth.configure(tokens_path, not a.no_local_admin, root / "access.log")
     print(
-        f"labeler: root={root}  ({len(store.STATE)} labels)  ->  http://{a.host}:{a.port}/index.html"
+        f"labeler: root={root}  ({len(store.STATE)} labels, {n_tok} tokens)"
+        f"  ->  http://{a.host}:{a.port}/index.html"
     )
+    if n_tok and not a.no_local_admin:
+        print(
+            "  note: loopback still gets admin without a token. A tunnel is proxied "
+            "(x-forwarded-*) so it does NOT — but pass --no-local-admin for a "
+            "belt-and-braces labeling round."
+        )
     uvicorn.run(app, host=a.host, port=a.port, log_level="info")
 
 

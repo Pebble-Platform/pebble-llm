@@ -40,6 +40,18 @@ unreleasable ever leaves the machine.
    first commit** — never raw audio, never full transcripts. This **forbids**
    committing or publishing episode media in any form.
 
+   **Clarification (human decision 2026-07-28, ADR-005).** "Never leaves the
+   machine" means **never committed and never released** — it does *not* forbid
+   **streaming** a clip, over an authenticated tunnel to the machine's own local
+   server, to a **named, invited annotator** for the sole purpose of labeling.
+   That is private research use, not publication, and it is what I1 has always
+   measured (`git ls-files data/` + release-manifest lint). The media stays on
+   this one machine: no copy is created on third-party infrastructure, nothing
+   is downloadable, and no annotator retains a copy. Everything else in this
+   constraint stands unchanged — publishing, committing, bulk or contiguous
+   access, open/crowd annotation, and any persistent off-machine copy remain
+   **forbidden**.
+
 2. **Single-speaker by construction.** A training clip carries one voice:
    utterances are cut at (VAD ∩ speaker-turn) boundaries, and clips flagged as
    containing multiple voices — by the **human annotator** (labeler `multi` flag
