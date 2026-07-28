@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViEmoSpeech — Tổng quan dự án</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --line:#d8dee4;
+    --accent:#2563eb; --ok:#1a7f37; --run:#9a6700; --todo:#8250df; --warn:#bc4c00;
+    --code:#eef1f4;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0d1117;--panel:#161b22;--ink:#e6edf3;--muted:#9aa4af;--line:#2d333b;
+      --accent:#589bff;--ok:#3fb950;--run:#d29922;--todo:#bc8cff;--warn:#f0883e;--code:#1c2128;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px}
+  h2{font-size:21px;margin:34px 0 12px;padding-top:10px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--accent)}
+  p,li{margin:8px 0}
+  .sub{color:var(--muted);font-size:13.5px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;
+    font-family:"SF Mono",Consolas,monospace}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.02em;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .pdf{white-space:nowrap;font-weight:600}
+  .badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1px solid transparent}
+  .b-ok{color:var(--ok);border-color:var(--ok)}
+  .b-run{color:var(--run);border-color:var(--run)}
+  .b-todo{color:var(--todo);border-color:var(--todo)}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+    margin:18px 0;font-size:14px}
+  .toc a{margin-right:16px;white-space:nowrap}
+  .tag{font-size:12px;color:var(--muted)}
+  ul{padding-left:22px}
+  .lead{font-size:15.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>ViEmoSpeech — Báo cáo tổng quan dự án</h1>
+  <p class="lead">Corpus SER tiếng Việt (free-content, đa lớp +V/A +distress,
+  tone-annotated, CC-BY) trích từ phim TV VN + phương pháp bimodal <b>tone×emotion</b>.</p>
+  <p class="sub">Cập nhật 2026-07-08 · nguồn: <code>docs/intent/</code>,
+  <code>docs/papers/</code>, <code>docs/tasks/</code>, <code>docs/spec/</code> ·
+  bản Markdown: <a href="project-overview.md">project-overview.md</a></p>
+</header>
+
+<div class="toc">
+  <b>Mục lục:</b>
+  <a href="#p1">1 · Cơ sở lý luận + tham khảo</a>
+  <a href="#p2">2 · Công việc + tiến độ</a>
+</div>
+
+<!-- ================= PHẦN 1 ================= -->
+<h2 id="p1">Phần 1 — Cơ sở lý luận + bài báo tham khảo</h2>
+
+<h3>1.1 Bài toán &amp; khoảng trống</h3>
+<p><b>ViEmoSpeech</b> = corpus speech-emotion tiếng Việt đầu tiên đồng thời:
+free-content · đa lớp (emotion 7 lớp + valence/arousal + distress) · gán thanh điệu ·
+<b>license rõ (CC-BY)</b> — trích từ phim TV VN, cộng bài báo phương pháp tone×emotion.</p>
+<table>
+  <thead><tr><th>Gap</th><th>Hiện trạng văn liệu</th><th>ViEmoSpeech</th></tr></thead>
+  <tbody>
+  <tr><td><b>Corpus</b></td><td>Không corpus VN SER nào vừa <i>lấy được</i> + <i>nói tự do</i> + <i>license rõ</i> (ViSEC thiếu license; VLSP 56h nhãn binary + gated)</td><td>Cắt từ phim TV → free-content + CC-BY từ commit đầu</td></tr>
+  <tr><td><b>Method (tone×emotion)</b></td><td>Chưa ai model tone-aware SER cho <i>bất kỳ</i> ngôn ngữ thanh điệu nào</td><td>Nhánh ngữ nghĩa gánh nặng hơn khi F0 bận chở thanh điệu</td></tr>
+  <tr><td><b>Crisis recall-floor</b></td><td><b>21/21</b> bài bimodal sweep không có recall-floor-as-objective</td><td>Distress head sàn-recall (proxy phim, không lâm sàng)</td></tr>
+  </tbody>
+</table>
+<p class="sub">Nguồn: <a href="papers/vietnamese-ser/00-GO-NO-GO-SUMMARY.md">GO-NO-GO summary</a> ·
+<a href="papers/bimodal-ser/00-INDEX.md">bimodal index</a>.</p>
+
+<h3>1.2 Cơ sở lý luận — hook tone×emotion</h3>
+<div class="callout">
+<b>Luận điểm trung tâm (đo được, chưa ai claim):</b> tiếng Việt là ngôn ngữ thanh điệu
+<b>thiên về phonation/chất giọng</b> (không chỉ đường F0) — Shen et&nbsp;al., <b>NAACL 2024</b> —
+đúng kênh mà <b>cảm xúc cũng dùng</b>. ⇒ xung đột <i>tone × emotion</i> <b>giàu hơn Mandarin</b>,
+và <b>nhánh text/ngữ nghĩa phải gánh nhiều hơn</b> so với SER phi-thanh-điệu.
+</div>
+<p><b>Bằng chứng sớm từ pilot</b> (<a href="tasks/vn-tv-ser-pilot.md">vn-tv-ser-pilot.md</a> M3):
+ASR sai <b>thanh điệu</b> ở đoạn high-arousal (<code>seg00113/114</code>: "mày→máy, tao→tháo"
+khi quát) — vừa là rủi ro nhiễu nhánh text, vừa là bằng chứng thực nghiệm cho giả thuyết.</p>
+<p><b>Mô hình cảm xúc:</b> categorical (7 lớp) <b>+ dimensional</b> (valence/arousal 1–5,
+Russell) <b>+ distress flag</b> — tương thích cross-corpus với IEMOCAP/MSP-Podcast (V-A-D).</p>
+
+<h3>1.3 Prior work phải cite-and-distinguish</h3>
+<ul>
+  <li><b>arXiv:2601.04564</b> <i>"When Tone and Words Disagree"</i> (01/2026) — "tone" = tone-of-voice (paralinguistic), <b>không</b> lexical tone → phân biệt tường minh.</li>
+  <li><b>arXiv:2604.01711</b> (04/2026, VN SER + LLM) — <i>nêu tên</i> tone-confound mà không giải → gap có thật + niche mở nhanh (áp lực thời gian).</li>
+  <li><b>arXiv:2412.09829</b> (VNU Hà Nội) — PhoWhisper+PhoBERT fusion rule-based, 250 clip → <b>baseline trực tiếp để vượt</b>.</li>
+</ul>
+
+<h3>1.4 Phương pháp luận (kế thừa + pivot)</h3>
+<ul>
+  <li><b>Honest evaluation:</b> speaker-disjoint splits + held-out human gold + provenance mọi nhãn.</li>
+  <li><b>PIVOT 2026-07-07</b> (<a href="spec/decisions/ADR-003-human-labels-drop-weak-supervision.md">ADR-003</a>):
+  bỏ weak-supervision LLM-teacher → <b>nhãn người là nguồn sự thật</b>; teacher chỉ còn gợi ý.</li>
+</ul>
+
+<h3>1.5 Bài báo tham khảo — 21 PDF (mở trực tiếp)</h3>
+<p class="sub">Sweep 2026-07-02. Sát Pebble nhất: <b>#12 MSP-Podcast (46%)</b>,
+#10 JMIR (42%), #05 AudioLLM reasoning (38%), #01 C²SER (35%).</p>
+
+<h4 class="tag">Audio + Text (trục chính)</h4>
+<table><thead><tr><th>#</th><th>Paper</th><th>Venue/Year</th><th>PDF</th></tr></thead><tbody>
+<tr><td>01</td><td>C²SER — audio-LLM + emotion2vec-S + CoT</td><td>IEEE TASLP 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/01-c2ser.pdf">📄 pdf</a></td></tr>
+<tr><td>02</td><td>ABHINAYA — SSL+LLM fusion, imbalance-aware</td><td>Interspeech 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/02-abhinaya-ser-challenge.pdf">📄 pdf</a></td></tr>
+<tr><td>03</td><td>EAA — dual cross-attn audio-LLM, mental-health</td><td>Interspeech 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/03-eaa-emotion-aware-audio-llm.pdf">📄 pdf</a></td></tr>
+<tr><td>04</td><td>MDAT — cross-language low-resource SER</td><td>preprint 2024</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/04-mdat-cross-language-ser.pdf">📄 pdf</a></td></tr>
+<tr><td>05</td><td>Speech Emotion Reasoning — multitask AudioLLM</td><td>arXiv 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/05-speech-emotion-reasoning-audiollm.pdf">📄 pdf</a></td></tr>
+<tr><td>06</td><td>WavFusion — gated cross-modal attention</td><td>MMM 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/06-wavfusion.pdf">📄 pdf</a></td></tr>
+<tr><td>07</td><td>Bimodal Connection Attention Fusion</td><td>arXiv 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/07-bimodal-connection-attention.pdf">📄 pdf</a></td></tr>
+<tr><td>08</td><td>Graph Fusion + Prosodic Features</td><td>Interspeech 2025 Challenge</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/08-graph-fusion-prosodic-ser.pdf">📄 pdf</a></td></tr>
+<tr><td>09</td><td>BLSP-Emo — empathetic speech-language model</td><td>arXiv 2024</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/09-blsp-emo.pdf">📄 pdf</a></td></tr>
+</tbody></table>
+
+<h4 class="tag">Survey / Benchmark / Reproducibility</h4>
+<table><thead><tr><th>#</th><th>Paper</th><th>Venue/Year</th><th>PDF</th></tr></thead><tbody>
+<tr><td>10</td><td>SER in Mental Health — systematic review</td><td>JMIR Mental Health 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/10-jmir-ser-mental-health-review.pdf">📄 pdf</a></td></tr>
+<tr><td>11</td><td>Bridging Text &amp; Speech — RoBERTa+WavLM fusion</td><td>J. Intelligence 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/11-bridging-text-speech-fusion.pdf">📄 pdf</a></td></tr>
+<tr><td>12</td><td><b>MSP-Podcast Corpus</b> — categorical + continuous VAD</td><td>arXiv 2025→IEEE TAC</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/12-msp-podcast-corpus.pdf">📄 pdf</a></td></tr>
+<tr><td>13</td><td>Multimodal ERC Survey</td><td>EMNLP 2025 Findings</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/13-mmerc-survey-emnlp25.pdf">📄 pdf</a></td></tr>
+<tr><td>14</td><td>Multi-modal Conversational ER Survey</td><td>ACM TOIS</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/14-mcer-survey-acm-tois.pdf">📄 pdf</a></td></tr>
+<tr><td>15</td><td>15 Years of SER Progress — replication</td><td>arXiv 2025 (Schuller)</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/15-ser-15years-replication.pdf">📄 pdf</a></td></tr>
+<tr><td>16</td><td>Databases for SER — 50+ corpora review</td><td>Data (MDPI) 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/16-ser-databases-review.pdf">📄 pdf</a></td></tr>
+</tbody></table>
+
+<h4 class="tag">Audio-Visual (đối chứng — fusion transferable)</h4>
+<table><thead><tr><th>#</th><th>Paper</th><th>Venue/Year</th><th>PDF</th></tr></thead><tbody>
+<tr><td>17</td><td>RJCMA — recursive cross-modal attn, CCC</td><td>CVPRW 2024 (ABAW6)</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/17-rjcma.pdf">📄 pdf</a></td></tr>
+<tr><td>18</td><td>Joint Multimodal Transformer</td><td>CVPRW 2024</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/18-joint-multimodal-transformer.pdf">📄 pdf</a></td></tr>
+<tr><td>19</td><td>HiCMAE — SSL contrastive masked AE</td><td>Information Fusion 2024</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/19-hicmae.pdf">📄 pdf</a></td></tr>
+<tr><td>20</td><td>AVT-CA — audio-video transformer cross-attn</td><td>arXiv 2024</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/20-avt-ca.pdf">📄 pdf</a></td></tr>
+<tr><td>21</td><td>Hybrid Multi-Attention AV-ER</td><td>Mathematics (MDPI) 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/21-hybrid-multi-attention-avser.pdf">📄 pdf</a></td></tr>
+</tbody></table>
+
+<p class="sub"><b>Phân tích nội bộ (không PDF):</b>
+<a href="papers/vietnamese-ser/01-vn-ser-corpora-benchmarks.md">01 VN-SER corpora</a> ·
+<a href="papers/vietnamese-ser/02-tonal-language-ser-prior-art.md">02 tonal-language SER</a> ·
+<a href="papers/vietnamese-ser/03-vn-text-asr-building-blocks.md">03 VN text/ASR</a> ·
+<a href="papers/vietnamese-ser/04-pioneer-corpus-design.md">04 corpus design</a> ·
+<a href="papers/vietnamese-ser/05-scale-plan.md">05 scale plan</a>.</p>
+
+<!-- ================= PHẦN 2 ================= -->
+<h2 id="p2">Phần 2 — Danh sách công việc + tiến độ</h2>
+
+<h3>2.1 Tổng quan trạng thái</h3>
+<table><thead><tr><th>Khối</th><th>Nội dung</th><th>Trạng thái</th></tr></thead><tbody>
+<tr><td>A</td><td>Pipeline trích xuất (video→clip sạch)</td><td><span class="badge b-ok">✓ Xong</span></td></tr>
+<tr><td>B</td><td>Corpus 2 series</td><td><span class="badge b-ok">✓ 3611 utt</span></td></tr>
+<tr><td>C</td><td>Pivot phương pháp (human labels)</td><td><span class="badge b-ok">✓ Chốt (ADR-003)</span></td></tr>
+<tr><td>D</td><td>Công cụ human-labeling</td><td><span class="badge b-ok">✓ Phase 0–5</span></td></tr>
+<tr><td>E</td><td>Related-work / scoping</td><td><span class="badge b-ok">✓ Xong</span></td></tr>
+<tr><td>F</td><td>Label human thật (dựng gold/train)</td><td><span class="badge b-run">🔄 Đang chạy</span></td></tr>
+<tr><td>G</td><td>Train + eval bimodal</td><td><span class="badge b-todo">⬜ Chưa</span></td></tr>
+<tr><td>H</td><td>Viết paper (dataset + method)</td><td><span class="badge b-todo">⬜ Chưa</span></td></tr>
+</tbody></table>
+
+<h3>2.2 Chi tiết</h3>
+<p><b>A — Pipeline</b> (<a href="spec/capabilities/extraction-pipeline.md">capability</a>):
+ffmpeg → Demucs → silero VAD → <b>turn-split v2</b> (pyannote) → PhoWhisper-base ASR →
+align YouTube → gợi ý 2-teacher.</p>
+<ul>
+  <li>Yield thoại sạch: <b>33%</b> (ep01); sau turn-split v2: <b>175 utt/10.3′</b>, 100% đơn-giọng.</li>
+  <li>Similarity PhoWhisper↔YouTube: mean 87.2 (base đủ).</li>
+  <li>κ 2-teacher (lịch sử, tiền-pivot): ~0.68–0.70.</li>
+</ul>
+<p><b>B — Corpus:</b> 2 series (<b>3611 utt</b>) + Kaggle packager đa-series (v2).
+Scale plan <b>P1 = 3 bộ/120 tập → ~18k utt / 23.8h</b> (~36 GPU-h).</p>
+<p><b>C — Pivot ADR-003:</b> nhãn người = nguồn sự thật; intent sửa (constraints §2–5,
+invariants I2–I4/I6, capability). Kèm
+<a href="spec/decisions/ADR-002-whole-series-speaker-disjoint-gold.md">ADR-002</a> (whole-series test-split).</p>
+<p><b>D — Công cụ label</b> <code>tools/labeler/</code>
+(<a href="spec/changes/003-human-labeling-tool/README.md">change 003</a> +
+<a href="spec/changes/004-labeler-refactor/README.md">004</a>): FastAPI + ES-module;
+<code>state.jsonl</code> nguồn sự thật; label · recut+text (F1) · progress (F2) ·
+reject (F3) · split (F5) · editable speaker (F6) · export.</p>
+
+<h3>2.3 Đang chờ / blockers</h3>
+<ul>
+  <li>🧑 <b>Chốt series test</b> (ADR-002) — chặn phase 4 + I4.</li>
+  <li>🧑 <b>Corpus-size mục tiêu</b> — hand-label ~15–30h/annotator cho ~3.6k utt.</li>
+  <li>🔄 <b>Label human</b> đủ sàn ≥50 clip/lớp hiếm.</li>
+  <li>⬜ <b>Phase 4</b> — export Kaggle (nhãn human, loại rejected/test-series, strip text public) + test I4.</li>
+  <li>⬜ <b>κ human–human</b> — single-pass chưa có (further work: double-annotate subset).</li>
+  <li>⬜ <code>tests/invariants/test_speaker_disjoint.py</code> (change 001).</li>
+  <li>📧 License ViSEC / VLSP (nếu dùng đối chứng).</li>
+</ul>
+
+<h3>2.4 Rủi ro</h3>
+<div class="callout warn">
+<b>Media legality:</b> clip/media/<code>state.jsonl</code> không release
+(<code>data/**</code> gitignored); artifact = features+timestamps+labels+speaker id, CC-BY.
+</div>
+<ul>
+  <li><b>Tone-confound ở high-arousal</b> nhiễu nhánh text (cũng là điểm nghiên cứu).</li>
+  <li><b>Timing:</b> framing tone×emotion "in the air" (arXiv 2604.01711) → niche mở không lâu.</li>
+  <li><b>Không có crisis gold tiếng Việt</b> → distress chỉ proxy phim, nói rõ trong paper.</li>
+  <li><b>Frontend labeler chưa browser-drive đầy đủ</b> → cần click-test.</li>
+</ul>
+
+</div>
+</body>
+</html>

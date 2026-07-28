@@ -1,0 +1,274 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>H1 · Charting 15 Years of SER Progress — Replication</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#059669">H1 · Honest-eval, corpus & VN prior art</span>
+<h1>Charting 15 Years of SER Progress — Replication</h1><p class="venue">IEEE TAFFC 2026</p>
+<div class="role" style="--accent:#059669"><b>Vai trò trong survey:</b> Đồng minh methodolog mạnh nhất: trần honest ~0.65 UAR, mới/to hơn ≠ tốt hơn.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/15-ser-15years-replication.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/15-ser-15years-replication.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/15-ser-15years-replication.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-15-charting-15-years-of-progress-in-deep-learning-for-ser-a-replication-study">Paper 15 — Charting 15 Years of Progress in Deep Learning for SER: A Replication Study</h1>
+<ul>
+<li><strong>Authors:</strong> Andreas Triantafyllopoulos, Anton Batliner, Björn W. Schuller</li>
+<li><strong>Venue / year:</strong> arXiv 2025 (code: github.com/CHI-TUM/ser-progress-replication)</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2508.02448 · PDF <code>pdfs/15-ser-15years-replication.pdf</code></li>
+<li><strong>Group:</strong> survey / benchmark (reproducibility)</li>
+</ul>
+<p><strong>Summary:</strong> Replication study tiến bộ SER từ Interspeech 2009 Challenge, cả audio- và text-based; kết luận diminishing returns hậu-transformer và "progress" phụ thuộc cách so sánh.</p>
+<p><strong>Relevance to Pebble:</strong> Caution phương pháp luận cho mọi benchmarking claim — cùng tinh thần gold-holdout / honest-metric của repo.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<p><strong>Profile assembled at analysis time</strong> (from <code>docs/intent/constraints.md</code> + <code>docs/spec/capabilities/voice-multimodal.md</code> + <code>docs/tasks/voice-mtl-heads.md</code>):
+Pebble's primary program is <strong>ordinal suicide-risk <em>text</em> classification</strong> asking whether LLM weak labels <em>honestly</em> augment a scarce clinical gold set — bound by <strong>gold-holdout</strong> (train on weak/LLM labels, eval on disjoint held-out CSSRS gold), subject-level splits, <strong>reproducible-by-construction</strong> (pinned stack + seed + multi-fold with reported std/CIs), and ordinal-aware metrics (QWK/MAE). The adjacent <strong>voice</strong> stream is a frozen WavLM/emotion2vec backbone with 3 heterogeneous MTL heads (emotion CE + affect V/A <strong>CCC</strong> + <strong>crisis under a hard recall floor</strong>), balanced by Kendall uncertainty weighting; MSP-Podcast (A/V/D) + DAIC (crisis) are the named "real-label" swap targets.</p>
+<h3 id="analysis-15-years-of-ser-progress-replication">Analysis — 15 Years of SER Progress (replication)</h3>
+<ul>
+<li><strong>Overlap:</strong> 23% (peripheral) — D1=1, D2=0, D3=1, D4=0, D5=0, D6=0, D7=2</li>
+<li>(Σwᵢ·scoreᵢ = 3·1 + 2·0 + 1·1 + 2·0 + 2·0 + 2·0 + 1·2 = 6; 6/26 × 100 = 23%)</li>
+<li><strong>Closest on:</strong> D7 (backbone match — the study directly benchmarks <em>both</em> of Pebble's active backbones: BERT/RoBERTa/DistilBERT/Electra text encoders and wav2vec2/HuBERT SSL speech encoders) and D1 partial (it models categorical emotion <em>and</em> continuous valence/arousal/dominance, though as separate models, not joint heterogeneous heads; no safety head).</li>
+<li><strong>Best point (Framing / citation):</strong> The paper empirically shows that "progress" claims are <em>conditioned on the arbitrary set of models/hyperparameters compared</em> — bigger/newer models are not monotonically better, single-run rankings are unstable under huge hyperparameter variance, and only bootstrap 95% CIs on the progress measures keep the story honest.</li>
+<li><strong>How to apply to Pebble:</strong> Cite it in the paper's evaluation-protocol / related-work section as external precedent that a headline number without CIs and without a fixed comparison set misrepresents progress — reinforcing Pebble's "multi-fold + reported std/CI, never a single-run point estimate" rule and the gold-holdout honesty thesis (an SER-domain analogue to the within-LLM 0.67 vs honest-gold 0.385 gap).</li>
+<li><strong>Caveats:</strong> Full main body (pp. 1–11) read; not paywalled. Appendices A/B/D/E (full model list, noise-robustness detail, linguistic-content analysis) skimmed only — does not affect the scored dimensions, which come from the main body. Overlap is low by construction: no mental-health/crisis domain (D2=0), no teacher-LLM distillation (D4=0), no MTL loss balancing (D5=0), no safety/recall-floor objective (D6=0). The value is methodological (honest-eval framing) + backbone/corpus adjacency (MSP-Podcast/IEMOCAP/EmoDB are exactly the voice stream's real-label swap targets), not architectural transfer.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Read against the current ViEmoSpeech profile + Decision Register V-A…V-H
+(<code>docs/tasks/paper-deep-analysis.md</code>), NOT the archived text-stream profile above.
+This paper is ViEmoSpeech's strongest <strong>methodological ally</strong> on honest evaluation
+(V-G), with load-bearing corroboration for V-B (SSL-vs-handcrafted honesty) and V-H
+(benchmark hygiene). The "Child mental-health lens" sub-part is reframed as a
+transfer-validity/ethics lens for ViEmoSpeech (VN acted TV-drama SER, not clinical).</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>Local PDF read in full</strong> via <code>pdftotext "docs/papers/bimodal-ser/pdfs/15-ser-15years-replication.pdf" -</code>
+  (main body §§I–VII pp. 1–11 + Tables I–VIII + Figs 1–4; reference list; appendices A/B/D/E
+  are figure/list detail that does not change the numbers below). Local file is
+  <strong>arXiv:2508.02448v1 [cs.SD], 4 Aug 2025</strong>, watermarked "Under review".</li>
+<li><strong>Published/venue version:</strong> WebSearch resolved this to <strong>IEEE Transactions on Affective
+  Computing, Early Access, April 2026</strong> (MCML publication record <code>tbs+25</code>). No numeric
+  conflicts were found between the preprint and the venue metadata; the arXiv HTML mirror
+  (<code>arxiv.org/html/2508.02448</code>) reproduces every table value cited here verbatim, so the v1
+  numbers are treated as authoritative. Search query: <em>"Charting 15 years progress deep
+  learning speech emotion recognition replication study Triantafyllopoulos Batliner Schuller
+  MSP-Podcast UAR"</em> → https://mcml.ai/publications/tbs+25/ and https://arxiv.org/abs/2508.02448.</li>
+<li><strong>Web-validated numbers</strong> (query above, resolved to https://arxiv.org/html/2508.02448):
+  MSP-Podcast tuning UAR .650 [.642–.658]; OOD EmoDB .806 / IEMOCAP .617; IID↔OOD Spearman
+  .909 / .843; year/MACs/params correlations all near-zero; clean↔noisy Spearman .953 and
+  .609→.546 degradation; best text UAR (Llama-2) .564; FAU-AIBO2/5 baseline/winner/fusion
+  .677/.703/.712 and .382/.417/.440; Gini .329; FAU-AIBO = German children's speech,
+  school-disjoint (Mont test / Ohm train). All ✔ corroborated against the HTML mirror.</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Design.</strong> A large-scale replication that quantifies "15 years of SER progress" from the 2009
+INTERSPEECH Emotion Challenge to 2024, under a <strong>fixed compute budget and fixed hyperparameters</strong>
+("bitter lesson" framing, §II-A). Two datasets: <strong>FAU-AIBO</strong> (the 2009 challenge set — German
+<em>children's</em> speech, Wizard-of-Oz, 18,216 chunks, mapped to a 2-class NEG/IDL and a 5-class
+A/E/N/P/R task, heavily imbalanced toward neutral; <strong>school-disjoint</strong> train Ohm / test Mont)
+and <strong>MSP-Podcast-v1.11</strong> (naturalistic; 44,586 train / 11,947 dev / 20,845 test; official
+<strong>speaker-independent</strong> partitions; 4-class categorical task used here). §III-A.</p>
+<p><strong>Models.</strong> 43 audio models spanning the whole timeline — openSMILE IS09–IS16 + eGeMAPS
+functionals into MLP/LSTM, ImageNet CNNs (AlexNet/VGG/ResNet50/ConvNeXt/EfficientNet/Swin),
+AudioSet CNN14, CRNN, x-vector ETDNN, AST, and SSL transformers (wav2vec2-base/large + variants,
+HuBERT-base/large, Whisper-s/b/t encoders) — plus 7 text models on transcripts (BERT, RoBERTa,
+DistilBERT, Electra; Llama-2, Llama-3, Mistral via 4-bit LoRA). Exploration phase: Adam, lr 1e-4,
+30 epochs, batch 4, weighted cross-entropy; tuning phase grid-searches optimiser/lr/batch for the
+top-5 per task. §III-B. <strong>Metric: UAR (unweighted average recall = macro-recall)</strong> "the standard
+metric for SER since the 2009 challenge which accounts for class imbalance." §III-C.</p>
+<p><strong>Headline results (all ✔ corroborated).</strong>
+- <em>Do newer/bigger models win?</em> <strong>No, not monotonically.</strong> Spearman ρ between UAR and year of
+  publication is .122/.093/.050 (FAU2/FAU5/MSP), against MACs .151/.230/.095, against #params
+  −.083/.085/.026 — all with 95% bootstrap CIs spanning negative to positive (e.g. MACs on
+  FAU5 = .230 [−.087, .512]). Table II. "The large variance… does not allow for robust
+  conclusions." ✔
+- <em>Best absolutes.</em> Exploration: FAU2 CNN14 .692, FAU5 ResNet50 .428, MSP w2v2-L-12-avd .609
+  (HuBERT-L .570). Table I. Tuning lifted MSP to <strong>.650 [.642–.658]</strong> for w2v2-L-12-avd
+  (released as <code>w2v2-L-12-emo</code>). Table IV. ✔ On FAU-AIBO the best tuned models stayed <em>close to
+  or below</em> the 2009 <strong>baseline .677/.382, winners .703/.417, and fusion .712/.440</strong> (Table III)
+  — i.e. 15 years of DL did <strong>not</strong> clearly beat the 2009 challenge on its own data. ✔
+- <em>Hyperparameter variance is the dominant effect.</em> Fig. 2 shows huge UAR spread across
+  hyperparameters for the same architecture; "a different choice of hyperparameters… could have
+  resulted in… a different ranking across architectures." Conclusions about progress are
+  <strong>"pre-conditioned on the particular set of models that are evaluated"</strong> (§V). ✔
+- <em>OOD generalisation is honest and IID-predictable.</em> Models trained on MSP transfer to
+  <strong>EmoDB UAR .806</strong> and <strong>IEMOCAP .617</strong> (w2v2-L-12-avd best on both), and <strong>IID↔OOD Spearman
+  is .909 (EmoDB) / .843 (IEMOCAP)</strong> — picking the best model by IID selects the best OOD model
+  too. Table V. Year/MACs/params vs OOD remained near-zero (.112/.166/.172 EmoDB). ✔
+- <em>Robustness.</em> Clean↔noisy (0 dB additive urban noise) UAR Spearman <strong>.953</strong>, but robustness is
+  uncorrelated with year (.05)/MACs (.10)/params (.03); even the best model drops <strong>.609→.546</strong>.
+  §IV-A5. ✔
+- <em>Text branch.</em> Best text UAR: MSP Llama-2 <strong>.564</strong> (≈ Llama-3 .563 / Mistral .560; Table VIII),
+  which "would rank third in our exploration phase, trailing marginally behind HuBERT-L (.570)"
+  — text alone is competitive on naturalistic speech but below the best audio; on FAU-AIBO text
+  is weaker (limited Wizard-of-Oz linguistic content). Whisper's valence edge is attributed to
+  <em>implicit linguistic content</em>, not new paralinguistics (§IV-A1, citing ref [12]). ✔
+- <em>Complementarity.</em> Audio models agree more with each other (w2v2/CNN14 .815 on FAU2) than with
+  text (w2v2/DistilBERT .666); the <em>most complementary</em> pair is a non-transformer CNN
+  (EfficientNet) + LLM text (Llama-2), because transformer SSL "already captured linguistics
+  implicitly." §IV-B1, Fig. 4. ✔
+- <em>Probing (Table VI).</em> Better-SER models encode acoustic features more strongly, but <strong>all
+  transformers are far better at mean pitch (μ(P) up to .959) than at pitch variability
+  (σ(P) ≈ .237) and jitter</strong> — pitch <em>dynamics</em> are under-encoded. ✔
+- <em>Individual fairness (Table VII).</em> Speaker-level <strong>Gini .329</strong> on MSP (moderate inequality);
+  higher-UAR models are <em>more</em> fair on MSP (ρ = −.344) but newer/bigger models are <em>less</em> fair on
+  FAU-AIBO (ρ up to .55 vs params) — fairness does not come free with scale. ✔
+- <em>Models ≠ humans.</em> Model difficulty correlates only weakly with human annotator disagreement
+  (ρ .33/.20), and higher human-agreement did <strong>not</strong> yield higher UAR (ρ −.38/−.07). §IV-A.</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-with-decision-ids">Parts directly useful for ViEmoSpeech (tagged with Decision IDs)</h3>
+<ol>
+<li><strong>UAR = macro-recall as <em>the</em> imbalance metric, plus 95% bootstrap CIs on every headline and
+   on every "progress" correlation (Tables II–IV).</strong> <code>[V-G]</code> This is the exact instrument ADR-002
+   needs: report per-class recall averaged (UAR), never plain accuracy, and attach bootstrap CIs
+   so a single-run point can't masquerade as a ranking. <strong>Transfer risk: none</strong> — pure method,
+   register-independent.</li>
+<li><strong>Speaker-independent / group-disjoint splits as the non-negotiable baseline</strong> — FAU-AIBO is
+   <em>school-disjoint</em> (Mont/Ohm), MSP uses <em>official speaker-independent</em> partitions. <code>[V-G]</code>
+   Direct external precedent for ViEmoSpeech's speaker-disjoint + whole-series holdout; the two
+   most-cited SER corpora (IEMOCAP/EmoDB) are criticised precisely for <em>lacking</em> an established
+   speaker-independent scheme (§II). <strong>Transfer risk: none</strong> — this is exactly our regime.</li>
+<li><strong>IID→OOD selection validity: Spearman .909/.843 (Table V).</strong> <code>[V-G]</code> Justifies our two-tier
+   eval — tune/select on the speaker-disjoint dev split, then confirm on the whole-series OOD
+   holdout (ADR-002). <strong>Transfer risk: low</strong> — their OOD sets are <em>acted</em> (EmoDB/IEMOCAP) and thus
+   "easier"; our whole-series holdout is same-genre TV drama, so the ρ≈.9 IID→OOD stability is a
+   reasonable-but-unproven expectation for us, to be measured not assumed.</li>
+<li><strong>"Progress is conditioned on the model set + hyperparameters compared" + huge HP variance
+   (Fig. 2, §V).</strong> <code>[V-B]</code> <code>[V-G]</code> Every backbone leaderboard row we cite (WavLM vs emotion2vec
+   vs Whisper) must carry the hyperparameter budget and a CI, and be framed as <em>conditional</em>.
+   <strong>Transfer risk: none</strong> — the confound is architectural, not domain-specific.</li>
+<li><strong>SSL/size does NOT monotonically beat handcrafted (Table I/II): year/MACs/params ≈ 0
+   correlation with UAR; on FAU-AIBO the best tuned DL stays at/below the 2009 fusion .712/.440.</strong>
+   <code>[V-B]</code> The single winner (w2v2-L-12-avd, .650 MSP / .806 EmoDB OOD) won because it was
+   <strong>domain-adapted</strong> (pre-trained on MSP-Podcast dimensional SER first), not because it was
+   bigger — a mandate to prefer a <strong>PhoWhisper/VN-adapted encoder init</strong> (vn-06) over raw model
+   size, and to keep an openSMILE/eGeMAPS handcrafted arm honestly in the V-B ladder.
+   <strong>Transfer risk: low</strong> — WavLM/emotion2vec (our actual candidates) were <em>not</em> in their 43, so
+   the specific ranking doesn't transfer; the <em>domain-adapted-beats-bigger</em> principle does.</li>
+<li><strong>Probing gap: transformers under-encode pitch variability and jitter (Table VI: σ(P) .237
+   vs μ(P) .959).</strong> <code>[V-B]</code> <code>[V-D]</code> The F0-<em>dynamics</em> channel — exactly where Vietnamese lexical
+   tone lives (contour + phonation, vn-06/vn-13) — is the SSL blind spot. Concrete corroboration
+   for adding an explicit handcrafted phonation/pitch-dynamics vector (jitter/shimmer/HNR/H1-H2/
+   σ(F0)) alongside the SSL backbone. <strong>Transfer risk: medium-favourable</strong> — measured on German
+   EmoDB, not VN; if anything the gap should be <em>larger</em> on tone-loaded VN F0, which is itself
+   our research opening.</li>
+<li><strong>Dataset-hygiene warnings (§I–II): FAU-AIBO "quietly abandoned"; MSP-Podcast re-released
+   ~yearly with size + label changes → cross-paper numbers not comparable; they pin v1.11.</strong>
+   <code>[V-H]</code> Mandates ViEmoSpeech pin a frozen corpus version/hash per reported number
+   (provenance invariant). <strong>Transfer risk: none</strong> — the versioning failure mode is universal.</li>
+<li><strong>Speaker-level Gini fairness (Eq. 1, Table VII).</strong> <code>[V-G]</code> A ready-made per-speaker
+   utility/Gini report to add next to macro-F1 — exposes whether a few actors carry the score
+   (a real risk in a 2-series, actor-heavy drama corpus). <strong>Transfer risk: low</strong> — directly
+   applicable, and more acute for us given small actor pools.</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>Eval protocol (1,2,3,8) → ADR-002 eval spec.</strong> Adopt UAR/macro-recall + bootstrap-CI as the
+  reporting default in <code>docs/spec/capabilities/extraction-pipeline.md</code> and the method-paper eval
+  table; add a per-speaker Gini row. Concretely: our baselines table (vn-08 86.6, vn-10 0.87,
+  THAI-SER WA~60, MSP CCC) should print CIs and macro-recall, and flag the speaker-leaky VN rows
+  — this paper is the citation that makes that flagging <em>methodologically standard</em>, not partisan.</li>
+<li><strong>Two-tier holdout (3) → whole-series OOD gate.</strong> Treat the held-out whole series exactly as
+  this paper treats EmoDB/IEMOCAP: select on the speaker-disjoint dev, report the series holdout
+  as OOD, and <em>expect</em> (per ρ≈.9) the ranking to hold — a divergence is then a real red flag
+  worth reporting, not noise.</li>
+<li><strong>HP-conditioned framing (4) → V-B/V-A ablation discipline.</strong> When we claim "WavLM ≥ X" or
+  "learned fusion &gt; rule fusion", run ≥3 hyperparameter settings per arm and report the range;
+  cite this paper that architectural gains are routinely confounded by tuning.</li>
+<li><strong>Domain-adapted init (5) → audio backbone choice.</strong> Prioritise a VN-/PhoWhisper-adapted or
+  emotion-warm-started SSL checkpoint over a bigger cold one; keep an eGeMAPS-functionals-into-MLP
+  arm in the ladder as the "2009-era" honest floor — the paper shows that floor is not far below
+  SSL on imbalanced data.</li>
+<li><strong>Probing gap (6) → the tone×emotion measurement + phonation features.</strong> This is the most
+  novelty-relevant finding: run the paper's eGeMAPS linear-probe on <em>our</em> encoder layers, expect
+  σ(F0)/jitter to probe poorly, and use that as the direct argument for the handcrafted phonation
+  branch and for framing tone×emotion as an F0-<em>dynamics</em> channel competition (V-D headline).</li>
+<li><strong>Version-pinning (7) → provenance invariant.</strong> Every ViEmoSpeech release number carries the
+  corpus snapshot ID (already an I-series invariant); this paper is the external cautionary tale
+  (MSP-Podcast versioning) that makes it a <em>comparability</em> requirement, not just bookkeeping.</li>
+</ul>
+<h3 id="transfer-validity-ethics-lens-viemospeech">Transfer-validity / ethics lens (ViEmoSpeech)</h3>
+<ul>
+<li><strong>The child-speech angle is real but indirect.</strong> FAU-AIBO is <em>German children's</em> speech, so the
+  paper's child-register warnings (Wizard-of-Oz → limited linguistic content → text branch weak;
+  heavy neutral-class imbalance) are a genuine caution for any child-facing use — but ViEmoSpeech
+  is <strong>adult/actor VN TV-drama</strong>, so transfer is by analogy, not population match. The transferable
+  lesson is register-dependence of the text branch, already central to our cross-cutting synthesis.</li>
+<li><strong>Honest-eval brand transfers cleanly.</strong> Everything in V-G (macro-recall, speaker-disjoint,
+  bootstrap CIs, OOD confirmation, Gini fairness) is method, not domain — it transfers to VN acted
+  drama without caveat. This is the paper's core value to us.</li>
+<li><strong>Metric-scale caution.</strong> Their categorical UAR is not the same object as our V/A <strong>CCC</strong> or our
+  distress <strong>recall-floor</strong>; import the <em>discipline</em> (CIs, disjoint splits, ranges) but not the
+  metric — CCC needs its own bootstrap-CI treatment, and the recall-floor needs a fixed-recall/
+  float-precision report, not UAR.</li>
+<li><strong>Acted-data honesty.</strong> The paper repeatedly flags that EmoDB/IEMOCAP/RAVDESS/CREMA-D are
+  <em>acted and prototypical</em>, which is why OOD UAR (.806) is <em>higher</em> than naturalistic IID (.650) —
+  "the datasets being much easier." Direct support for our V-F acted-drama-proxy framing: acted
+  emotion inflates numbers, so a high ViEmoSpeech score must be read against that ease, and any
+  clinical/distress claim stays a proxy, never a diagnosis.</li>
+<li><strong>Fairness ethics.</strong> Gini .329 on naturalistic speech = a few speakers absorb the utility; in a
+  small-actor drama corpus this is an equity risk worth reporting per-speaker, especially before
+  any downstream affect-inference use.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech">Limitations &amp; open questions for ViEmoSpeech</h3>
+<ul>
+<li><strong>Contradiction vs bimodal-08's backbone leaderboard.</strong> bimodal-08 reports a crisp naturalistic
+  ranking <strong>Whisper-V3 &gt; XEUS &gt; WavLM &gt; HuBERT &gt; Wav2Vec2</strong>; this paper's own MSP-Podcast winner is
+  a <strong>domain-adapted wav2vec2</strong> (w2v2-L-12-avd .650) with HuBERT-L second (.624 tuned) and Whisper
+  encoders <em>below</em> both (Whisper-t .387 exploration), <strong>and</strong> it shows year/size/architecture
+  rankings are unstable under hyperparameters and model-set choice (ρ≈0, CIs crossing zero).
+  ⇒ We cannot take <em>any</em> single backbone leaderboard (bimodal-08's included) as settled; the V-B
+  arm must A/B WavLM vs emotion2vec vs Whisper-encoder vs a domain-adapted wav2vec2 <em>on our own
+  clips with CIs</em>, not inherit a ranking. This paper is the reason to distrust the leaderboard.</li>
+<li><strong>Contradiction vs the leak-inflated VN baselines.</strong> Honest speaker-independent naturalistic
+  4-class UAR tops out at <strong>.650</strong>; vn-08 (86.6%) and vn-10 (0.87 UA) sit far above it precisely
+  because they are not speaker-disjoint on naturalistic data. This paper is our cleanest external
+  anchor that ~0.6 macro-recall — not ~0.87 — is the honest naturalistic ceiling.</li>
+<li><strong>No fusion, no tonal language, no CCC.</strong> The study is single-modality-at-a-time (audio <em>or</em>
+  text, error-analysis complementarity only — never a <em>learned</em> fusion), tests <strong>no tonal
+  language</strong>, and reports categorical UAR only — <strong>no V/A CCC</strong> and <strong>no distress/clinical</strong> head.
+  So it moves V-G/V-B/V-H strongly but is silent on V-A (fusion architecture), V-C (ASR-noise
+  robustness — it uses clean human transliteration for FAU-AIBO and Whisper-large-v2 ASR for MSP
+  but never ablates ASR error), V-D's tone specifics, V-E, and V-F beyond the acted-proxy caution.</li>
+<li><strong>Gap vs our plan: they had no compute to resolve the scaling question.</strong> They explicitly could
+  not test within-architecture scaling or large audio-LMs (ALMs), and note omitting ALMs as their
+  "most important omission" (§VI). Our small-fusion-over-ALM bet (bimodal-09) is therefore <em>not</em>
+  contradicted by this paper — it is simply outside its scope, and their diminishing-returns
+  finding is mild supporting evidence for not chasing size.</li>
+<li><strong>Open question for us:</strong> run their eGeMAPS layer-wise linear probe (μ(P)/σ(P)/jitter/shimmer/
+  HNR/formants) on our VN-adapted encoder — does σ(F0)/jitter probe <em>even worse</em> on Vietnamese
+  (where tone loads F0) than the .237 they report on German EmoDB? A larger VN gap would be direct
+  measured evidence for the tone×emotion F0-channel-competition claim (V-D) that no paper has yet
+  produced.</li>
+</ul></article>
+</div></body></html>

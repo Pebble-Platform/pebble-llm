@@ -2,6 +2,17 @@
 
 Literature sweep 2026-07-02 (task: `docs/tasks/bimodal-ser-papers.md`). Ưu tiên 2023–2026 + venue uy tín (IEEE, Interspeech, ACL, ACM, CVPRW). PDF (bản arXiv/OA) trong `pdfs/`, cùng số với entry.
 
+> **Cập nhật 2026-07-10 (task `docs/tasks/paper-deep-analysis.md`):** cả 21 bài đã có
+> **phân tích sâu toàn văn PDF** — mục `## Deep research — full-PDF read (2026-07-10)`
+> trong từng `NN-*.md`, chấm lại theo profile **ViEmoSpeech** hiện hành (register
+> V-A…V-H), thay các score M5/M6 cũ (chấm theo profile text-only/voice-MTL đã archive —
+> giữ làm lịch sử). Mỗi bài kèm bản dịch tiếng Việt `NN-slug.vi.md`. Vài đính chính
+> venue/nội dung nổi lên khi deep-read: **#04 MDAT** đã publish IEEE OJCS 2024 (không
+> phải "under review TAFFC"); **#14 MCER** venue "ACM TOIS accepted" chưa kiểm chứng
+> được (arXiv không có journal ref); **#03 EAA** fusion là audio↔audio (không phải
+> audio↔text); **#21 HMATN** số headline stub nhầm validation-fold. Synthesis xuyên
+> suốt 29 bài (21 bimodal + 8 VN) nằm ở cuối tracking doc.
+
 ## Audio + Text (trục chính — khớp voice + message của Pebble)
 
 | # | Paper | Venue / Year | PDF |

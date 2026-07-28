@@ -1,0 +1,324 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M2 · C²SER — Contextual Perception + Chain-of-Thought</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#2563eb">M2 · Phương pháp được benchmark</span>
+<h1>C²SER — Contextual Perception + Chain-of-Thought</h1><p class="venue">IEEE TASLP 2025</p>
+<div class="role" style="--accent:#2563eb"><b>Vai trò trong survey:</b> Nguồn checkpoint emotion2vec-S (frozen) — một arm audio-only của benchmark.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/01-c2ser.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/01-c2ser.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/01-c2ser.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-01-c2ser-steering-language-model-to-stable-speech-emotion-recognition-via-contextual-perception-and-chain-of-thought">Paper 01 — C²SER: Steering Language Model to Stable Speech Emotion Recognition via Contextual Perception and Chain of Thought</h1>
+<ul>
+<li><strong>Authors:</strong> Zhixian Zhao, Xinfa Zhu, Xinsheng Wang, Shuiyuan Wang, Xuelong Geng, Wenjie Tian, Lei Xie</li>
+<li><strong>Venue / year:</strong> IEEE TASLP, 2025</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2502.18186 · PDF <code>pdfs/01-c2ser.pdf</code></li>
+<li><strong>Group:</strong> audio+text (trục chính)</li>
+</ul>
+<p><strong>Summary:</strong> Audio-LLM SER kết hợp Whisper (semantic) + <strong>emotion2vec-S</strong> (acoustic), dùng chain-of-thought + self-distillation để ổn định phân loại cảm xúc.</p>
+<p><strong>Relevance to Pebble:</strong> emotion2vec là audio backbone Pebble đã chọn — đây là reference kiến trúc trực tiếp cho việc nhúng nó vào pipeline có LLM teacher/distillation.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<h3 id="analysis-c2ser">Analysis — C²SER</h3>
+<ul>
+<li><strong>Profile assembled at analysis time</strong> (intent + capabilities, not the stale text-only snapshot): Pebble = primary <strong>ordinal suicide-risk text</strong> program (NeoBERT ~250M, Gemini silver labels, honest gold-holdout eval; ordinal-aware QWK/MAE; ethics + reproducibility) <strong>plus an active adjacent voice stream</strong> (<code>voice-multimodal.md</code> → <code>docs/tasks/voice-mtl-heads.md</code>): a <strong>frozen WavLM-Large / emotion2vec backbone</strong> + shared trunk carrying <strong>three heterogeneous heads</strong> — emotion (CE), affect valence+arousal (<strong>continuous, CCC loss</strong>), crisis (BCE under a <strong>hard recall floor 0.90</strong>) — balanced by <strong>Kendall uncertainty weighting</strong>, currently on proxy labels with <strong>MSP-Podcast (A/V/D)</strong> and <strong>DAIC (crisis)</strong> as the next real-label targets. Backbone fine-tune is an explicit non-goal (features stay frozen).</li>
+<li><strong>Supersedes the 2026-07-02 score of 31% computed against the stale text-only profile.</strong></li>
+<li><strong>Overlap:</strong> D1=0, D2=0, D3=1, D4=2, D5=1, D6=0, D7=2 → (Σ wᵢ·scoreᵢ = 3·0+2·0+1·1+2·2+2·1+2·0+1·2 = 9) / 26 × 100 = <strong>35% (peripheral)</strong></li>
+<li><strong>Closest on:</strong> D7 (Emotion2Vec-S is a released extension of <strong>emotion2vec — the voice stream's actual frozen backbone</strong>, and the paper also benchmarks WavLM) and D4 (dual-teacher intersection silver-labeling + explicit→implicit self-distillation).</li>
+<li><strong>Best point (Method to adopt):</strong> C²SER's <strong>Emotion2Vec-S</strong> adds a <strong>category-level contrastive loss</strong> on top of emotion2vec's utterance/frame losses and, per Table V, consistently beats plain Emotion2Vec and WavLM-base on emotion accuracy across Chinese/English/multilingual test sets — and its checkpoint is publicly released.</li>
+<li><strong>How to apply to Pebble:</strong> swap the voice stream's frozen feature extractor to the released <strong>Emotion2Vec-S</strong> checkpoint for the emotion head — a drop-in upgrade that respects the "backbone stays frozen" non-goal (no fine-tune), needs no architecture change to the 3-head MTL probe, and is testable in the pending <code>pebble-voice-mtl-heads</code> Kaggle run as an A/B against the current emotion2vec features.</li>
+<li><strong>Caveats:</strong> Single-task <strong>categorical</strong> SER via a generative ALM — <strong>no</strong> heterogeneous heads (D1=0), <strong>no</strong> continuous/ordinal or crisis-recall objective (D5 loss balancing is hand-tuned λ_utt=0.1 / λ_cate=100, explicitly <strong>not</strong> Kendall/GradNorm → D5=1 partial only; D6=0), and <strong>no</strong> mental-health/crisis domain (D2=0). D3=1 partial: it trains on real speech-emotion corpora incl. <strong>MSP-Podcast</strong> (a voice-stream target), but uses them as flat categorical SER, not continuous affect. The Emotion2Vec-S swap and the dual-teacher gate transfer to the <strong>voice</strong> stream and the <strong>text</strong> silver-label stage respectively; neither touches the NeoBERT architecture. Scored from pp. 1–8 (abstract, related work, full method, data prep, experiment setup, Table V results); ablation tables were skimmed and do not affect the dimension scores.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Read against the <strong>published IEEE TASLP</strong> version (DOI 10.1109/TASLPRO.2025.3648793; the
+arXiv:2502.18186 Comments field states "This work has been published in IEEE Transactions on
+Audio, Speech and Language Processing"). Local PDF = <code>pdfs/01-c2ser.pdf</code>, arXiv <strong>v3</strong> (29 Dec
+2025). This section supersedes the stale "Analysis (overlap with Pebble)" block above, which was
+scored against the archived voice-MTL profile (D1–D7); it uses the current <strong>ViEmoSpeech</strong>
+profile + Decision Register (<strong>V-A…V-H</strong>). Append-only; the history above is untouched.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li>Full text extracted with <code>pdftotext docs/papers/bimodal-ser/pdfs/01-c2ser.pdf</code> (1080 lines).
+  Read end-to-end: abstract, §I–VII, Tables I–IX, Figs 1–7, all 56 refs.</li>
+<li>Web-validated the load-bearing numbers against the arXiv HTML (<code>arxiv.org/html/2502.18186v1</code>)
+  and the venue/DOI against the arXiv abstract page.</li>
+<li>Query: <em>"C2SER Steering Language Model Stable Speech Emotion Recognition Contextual Perception
+    Chain of Thought Emotion2Vec-S"</em> → resolved <code>arxiv.org/abs/2502.18186</code>,
+    <code>arxiv.org/html/2502.18186v1</code>, <code>github.com/zxzhao0/C2SER</code>, <code>huggingface.co/papers/2502.18186</code>.</li>
+<li>Venue check → <code>arxiv.org/abs/2502.18186</code>: Comments = "This work has been published in IEEE
+    Transactions on Audio, Speech and Language Processing"; related DOI <code>10.1109/TASLPRO.2025.3648793</code>.</li>
+<li><strong>Provenance conflict rule:</strong> v1 HTML numbers for Table V (Emotion2Vec-S) and Table VI/VII (C2SER)
+  <strong>match the local v3 PDF exactly</strong> (CASIA 62.95, Emo-Emilia 80.66/69.00, ESD 79.84, MELD 21.31,
+  λ_utt=0.1, λ_cate=100, "Emotion2Vec-S is frozen"). No preprint/published delta on the cited numbers.
+  Code + checkpoints + Emo-Emilia test set are released (<code>github.com/zxzhao0/C2SER</code>, HF collection).</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Task/claim.</strong> An audio-language model (ALM) for <strong>7-class categorical SER</strong> (anger, happiness,
+neutral, sadness, surprise, disgust, fear) that reduces the "hallucination" failure of generative
+ALMs (fabricating ungrounded rationales, e.g. labelling a cheerful clip "sadness" because "maybe
+he is preparing for an exam", Fig 1). It is <strong>not</strong> dimensional — no valence/arousal/distress, no
+regression, no CCC/Pearson anywhere; metrics are WA / UA / Macro-F1 only.</p>
+<p><strong>Architecture (§III).</strong> Two frozen perception encoders feed a text LLM:
+- <em>Semantic</em> = <strong>Whisper-medium</strong> encoder (2 conv layers, 2× downsample, 24 Transformer layers).
+- <em>Acoustic</em> = <strong>Emotion2Vec-S</strong>, their extension of emotion2vec (data2vec2.0 backbone) that adds a
+  <strong>category-level contrastive loss</strong> <code>L_Cate</code> (CLIP-style: same-emotion utterances = positive pairs,
+  different-emotion = negatives, on the average-pooled global embedding G). Total loss
+  <strong><code>L_e2v = L_Frm + λ_utt·L_Utt + λ_cate·L_Cate</code></strong> with <strong>λ_utt=0.1, λ_cate=100</strong> (Eq 2, §V-A). The
+  motivation: emotion2vec's utterance+frame losses are both <em>instance-level</em>, so they confuse
+  acoustically similar categories (fear vs sadness); the category loss pulls categories apart.
+- A 4-layer-Transformer + linear <strong>connection module</strong> (ffn dim 2560) projects both into <strong>Qwen2-7B-
+  Instruct</strong>, fine-tuned with <strong>LoRA</strong> (rank 8, α 32, dropout 0.1). During C2SER training,
+  <strong>Emotion2Vec-S is frozen</strong> (§V-A); Whisper features are also used as-is.</p>
+<p><strong>Chain-of-Thought + self-distillation (§III-C/D).</strong>
+- <em>Explicit CoT</em>: the model first emits a rationale describing speaking-rate / pitch / energy /
+  transcript, then the emotion. Training data built by (1) extracting mean-F0 (PENN), loudness
+  (pyloudnorm), speaking-rate (phonemes/duration); (2) <strong>discretizing each to Low/Med/High via μ±σ</strong>
+  (Central-Limit-Theorem heuristic); (3) filling a template (Table I) into <strong>GLM-4-9B-Chat</strong> to
+  generate a natural-language rationale grounded in those labels + the ground-truth emotion.
+- <em>Implicit CoT</em>: self-distillation from explicit→direct output. Batch-level linear schedule — the
+  probability of sampling an explicit example <strong>decays 1.0→0.0</strong> across the phase, so by the end the
+  model outputs only the short emotion description (&lt;10 tokens vs &gt;40 for explicit), cutting latency
+  ~10× and error accumulation.</p>
+<p><strong>Data (§IV).</strong> Trained on 6 public corpora + a ~439k-utt internal set = <strong>672,668 utts / 1215.7 h</strong>
+(Table II); Chinese ≈ 2× English; <strong>neutral ≈ half the data, fear+disgust &lt; 2%</strong> (Fig 4). Silver
+labels for the internal + Emilia data via <strong>intersection of Emotion2Vec (speech) ∩ GLM-4-9B-Chat
+(text)</strong> — a two-teacher agreement gate. New test set <strong>Emo-Emilia</strong> (Table III): 1400 in-the-wild
+utts, 100/emotion × {CN,EN}, built by the same 2-teacher intersection then <strong>4 bilingual experts
+retain only unanimously-labelled samples</strong>. Eval spans CASIA, M3ED (Mandarin), MELD, EmoV-DB
+(English), ESD, ASVP-ESD, EMOVO (Italian), MESD (Mexican), Emo-Emilia (Table IV).</p>
+<p><strong>Results — Emotion2Vec-S frozen features (Table V; EmoBox 5-fold leave-one-session-out, in-domain
+linear probe on frozen features — i.e. exactly the "frozen backbone + trained head" regime).</strong> All
+✔ corroborated (v1 HTML = v3 PDF):</p>
+<table>
+<thead>
+<tr>
+<th>Dataset (lang)</th>
+<th>WavLM-base UA</th>
+<th>Emotion2Vec UA</th>
+<th><strong>Emotion2Vec-S UA</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CASIA (Mandarin, acted)</strong></td>
+<td>47.25</td>
+<td>47.58</td>
+<td><strong>62.95</strong> (F1 60.2)</td>
+</tr>
+<tr>
+<td>Emo-Emilia (mix, in-wild)</td>
+<td>67.26</td>
+<td>68.02</td>
+<td><strong>80.66</strong></td>
+</tr>
+<tr>
+<td>ESD (mix, acted)</td>
+<td>72.90</td>
+<td>70.22</td>
+<td><strong>79.84</strong></td>
+</tr>
+<tr>
+<td>MESD (Mexican)</td>
+<td>42.58</td>
+<td>50.56</td>
+<td><strong>59.57</strong></td>
+</tr>
+<tr>
+<td><strong>M3ED (Mandarin, spontaneous)</strong></td>
+<td>22.76</td>
+<td>22.04</td>
+<td>23.82 (all ≈ chance)</td>
+</tr>
+<tr>
+<td><strong>MELD (English, conversational)</strong></td>
+<td>23.44</td>
+<td>23.20</td>
+<td><strong>21.31 (NOT best;</strong> data2vec2.0 = 24.79)</td>
+</tr>
+<tr>
+<td>EmoV-DB (English, acted)</td>
+<td><strong>98.38</strong></td>
+<td>96.71</td>
+<td>97.04 (WavLM wins)</td>
+</tr>
+</tbody>
+</table>
+<p>Emotion2Vec-S is best on Chinese/multilingual/Mexican, competitive-or-worse on English
+conversational. The single biggest gain is <strong>CASIA Mandarin: +15.4 UA over WavLM, +15.4 over
+emotion2vec</strong>.</p>
+<p><strong>Results — C2SER ALM (Tables VI–VIII; zero-shot cross-dataset except MELD/ESD in-domain).</strong>
+- Emo-Emilia: <strong>C2SER-Implicit UA 69.00 / F1 61.61</strong> vs Explicit 68.29/61.28 vs <strong>Qwen2-Audio
+  39.07/31.91</strong> vs text-only cascade (Whisper-m→Qwen2-7B) <strong>63.31/60.89</strong> (Table VI/VII). ✔
+- <strong>Text-only cascade register split</strong> (Table VI): CASIA (Mandarin acted) text-only collapses to
+  <strong>13.93 UA</strong> (≈ chance for 6-class) while fused C2SER-Implicit = <strong>53.33</strong>; but on Emo-Emilia the
+  same text-only cascade reaches <strong>63.31</strong>. ✔ Content carries emotion on in-the-wild speech, almost
+  nothing on acted Mandarin.
+- <strong>Ablation (Table VIII, Emo-Emilia):</strong> full <strong>69.00</strong> → w/o Emotion2Vec-S <strong>57.93</strong> (−11.1) → w/o
+  CoT <strong>43.14</strong> (−25.9) → w/o Whisper <strong>32.07</strong> (−36.9, "fails to converge"). Semantic channel is the
+  most load-bearing single component. ✔
+- In-domain fine-tuning helps a lot (Table IX, MELD): 0-ep UA 38.66 → 3-ep 43.50 → 6-ep 49.30. ✔
+- <strong>Rare-class collapse:</strong> on Emo-Emilia, anger/happiness/neutral/sadness/surprise all &gt;90% category
+  accuracy but <strong>disgust and fear &lt; 20%</strong> (Fig 7), attributed to the &lt;2% training share. ✔</p>
+<p><strong>Tone:</strong> the word "tone" appears <strong>only</strong> as paralinguistic prosody ("low-pitched tone", Table I
+example). Two Mandarin corpora (CASIA, M3ED) are used and CASIA yields the largest single gain, yet
+<strong>lexical tone is never named as a variable or confound</strong> — validated: "tone" = pitch descriptor
+only (arXiv HTML check). The pitch feature fed to the CoT is <strong>mean-F0 discretized Low/Med/High</strong>,
+with no tone normalization.</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-by-decision-id">Parts directly useful for ViEmoSpeech (tagged by Decision ID)</h3>
+<ol>
+<li>
+<p><strong>[V-B] Emotion2Vec-S as a frozen audio-branch drop-in — with a register caveat.</strong> The released
+   checkpoint + Table V give a like-for-like "frozen features + trained linear head" comparison
+   (EmoBox 5-fold), which is <em>exactly</em> our audio-branch regime. Headline: CASIA Mandarin UA
+   <strong>62.95 vs 47.25 WavLM / 47.58 emotion2vec</strong> (✔). The mechanism is a single added loss term
+   (<code>λ_cate=100·L_Cate</code>, Eq 2) that separates confusable categories — no architecture change, no
+   fine-tune. <strong>Transfer risk (real):</strong> every large gain is on <strong>acted / clean</strong> sets (CASIA, ESD,
+   Emo-Emilia-expert-filtered); on <strong>M3ED (Mandarin <em>spontaneous</em>)</strong> — the closest register to our
+   VN TV-drama — Emotion2Vec-S (23.82) is within noise of WavLM (22.76) and near chance, and on
+   <strong>MELD English conversational</strong> it is <em>worse</em> than data2vec2.0/WavLM. So the checkpoint is a
+   defensible default, but the A/B must be run on our own spontaneous VN clips, not assumed.</p>
+</li>
+<li>
+<p><strong>[V-A] Whisper-semantic + Emotion2Vec-S-acoustic + CoT fusion as a bimodal template.</strong> This is a
+   concrete design that beats a text-only cascade: ablation Table VIII shows <em>both</em> streams are
+   needed (−11 without acoustic, −37 without semantic), and the fused model beats the
+   Whisper→Qwen2 cascade on acoustic-dominant sets. <strong>Transfer risk (large):</strong> their "fusion" lives
+   <em>inside a 7B LLM with LoRA</em> (Qwen2-7B) driven by CoT text generation — orders of magnitude
+   heavier than our target lightweight learned-fusion head over PhoWhisper+PhoBERT, and their
+   semantic channel is Whisper <em>encoder features</em>, not ASR <em>tokens</em>. It is a <strong>template for what to
+   fuse and an existence proof that acoustic+semantic &gt; either alone</strong>, not a copyable module.</p>
+</li>
+<li>
+<p><strong>[V-C] The text channel under ASR: a register-dependent collapse, quantified.</strong> The
+   Whisper-m→Qwen2-7B cascade is the paper's own "ASR-transcript-only text branch". It swings from
+   <strong>63.31 UA (Emo-Emilia, in-wild)</strong> to <strong>13.93 UA (CASIA, acted Mandarin)</strong> (Table VI, ✔). For
+   ViEmoSpeech (acted TV drama, Mandarin-adjacent tonal register) this predicts our PhoWhisper text
+   branch will carry <strong>little</strong> on high-arousal acted turns — the same turns where PhoWhisper makes
+   tone-swap errors (mày→máy). <strong>Transfer risk:</strong> the cascade discards paralinguistics by
+   construction (that is its point), and CoT <em>feeds the transcript into the rationale</em>, so a wrong
+   ASR token propagates into a wrong reason — which is exactly why they added <strong>explicit→implicit
+   self-distillation</strong> (batch prob 1.0→0.0) to damp error accumulation. That self-distillation trick
+   is the transferable V-C mechanic for a noisy text channel.</p>
+</li>
+<li>
+<p><strong>[V-B/V-E] Reusable frozen-feature recipe + rare-class warning.</strong> Emotion2Vec-S training config
+   (Adam, lr 7.5e-5, wd 1e-2, cosine, 5% warmup, grad-accum 2, classifier = 3 FC layers, backbone/
+   dims identical to emotion2vec) is a ready arm for our audio-branch bake-off. And Fig 7's
+   <strong>disgust/fear &lt; 20%</strong> accuracy at 69% overall, from a &lt;2% training share, is a direct rare-class
+   red flag for our 7-class scheme + ≥50-clip floor (ADR-002).</p>
+</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>[V-B] Audio-branch bake-off gets a third contender + a hypothesis.</strong> Add <strong>Emotion2Vec-S</strong> as an
+  arm next to WavLM and emotion2vec in the frozen-feature probe, evaluated with our
+  speaker-disjoint + whole-series-holdout protocol (V-G). The <strong>pre-registered hypothesis</strong>, from
+  Table V's own pattern: Emotion2Vec-S wins on <em>acted/clean</em> and ties on <em>spontaneous</em> — so if it
+  wins on our VN-TV-drama clips (which are acted but noisy), that is a genuine result; if it only
+  ties (M3ED-like), we keep WavLM (the vn-12/bimodal-12 default). Either way the CASIA +15 pt gain
+  is the citation for trying it.</li>
+<li><strong>[V-A] Fusion experiment scope + baseline ladder.</strong> Adopt the <em>shape</em> — two frozen streams
+  (audio = Emotion2Vec-S/WavLM, semantic = PhoBERT-over-PhoWhisper) into a light learned-fusion head
+  — and borrow C2SER's <strong>ablation grid</strong> (full / −audio / −semantic / −fusion) verbatim as our own
+  ablation table so the "both modalities needed" claim is measured, not asserted. Their −Whisper
+  −37 pt result is the argument that the semantic branch is not optional even on tonal speech.</li>
+<li><strong>[V-C] Bake a conflict/high-arousal slice + audio-anchoring.</strong> Because the text channel collapses
+  on acted tonal speech (CASIA 13.93), our training must not let a strong PhoBERT dominate: carry a
+  <strong>high-arousal / ASR-tone-swap slice</strong> in eval, and consider an <strong>audio-only auxiliary head</strong> or
+  modality dropout (echoing vn-12's safeguard) so fusion cannot degenerate to text. Report the text
+  branch's stand-alone number on <em>both</em> a clean-caption arm and a PhoWhisper-transcript arm to
+  quantify the ASR gap directly (C2SER never runs this on tonal ASR — whitespace we can own).</li>
+<li><strong>[V-B/V-E] Rare-class floor is empirically justified.</strong> Cite Fig 7 (disgust/fear &lt;20% at 69%
+  overall) as external evidence that a 7-class scheme with a &lt;2% tail collapses on the tail — motivating
+  our ≥50-clip floor, class-balanced sampling, and per-class (not just macro) reporting.</li>
+</ul>
+<h3 id="vietnamese-ser-transfer-lens-frozen-backbone-phowhisper-asr-toneemotion-acted-proxy">Vietnamese SER transfer lens (frozen backbone · PhoWhisper ASR · tone×emotion · acted proxy)</h3>
+<ul>
+<li><strong>Frozen-backbone fit is genuine.</strong> Table V is a frozen-features + trained-head probe, and
+  Emotion2Vec-S stays frozen inside C2SER — both match our non-negotiable frozen-encoder design. The
+  Emotion2Vec-S checkpoint is openly released, so the V-B A/B costs no training of the backbone.</li>
+<li><strong>Tonal-language evidence is present but tone-blind.</strong> The largest gain (CASIA Mandarin) and a
+  second Mandarin set (M3ED) are used, yet the paper never treats lexical tone as a variable; its
+  emotion pitch cue is raw mean-F0 → Low/Med/High. Per <strong>vn-13 (Chang PLOS ONE)</strong> F0 is precisely the
+  channel where tone×emotion interact (F0-mean χ²(12)=70.18, F0-range χ²(12)=114.64, both p&lt;.001),
+  so C2SER's F0-as-emotion-cue is <em>tone-contaminated by construction</em> — for VN (6 phonation-heavy
+  tones, vn-06) doubly so. This is <strong>whitespace for V-D</strong>: Emotion2Vec-S encodes tonal audio as a
+  black box with no tone/emotion disentanglement, and no paper in the set (C2SER included) measures
+  the interaction on lexical tone. Our tone×emotion claim is untouched by this strong bimodal SoTA.</li>
+<li><strong>Acted register is a two-edged match.</strong> ViEmoSpeech is acted TV drama; C2SER's biggest wins are on
+  acted corpora (CASIA/ESD) — encouraging. But its spontaneous set (M3ED) shows the gains largely
+  evaporate, and its text channel collapses on acted speech — so "acted" cuts both ways for us.</li>
+<li><strong>No distress / no dimensional output.</strong> C2SER is purely 7-class categorical: it offers <strong>nothing</strong>
+  for our valence/arousal (CCC) or distress-recall-floor heads (V-F). Do not cite it for those.</li>
+<li><strong>Silver-label lineage worth borrowing (V-E boundary).</strong> Their 2-teacher intersection
+  (Emotion2Vec ∩ GLM-4-9B) then <strong>4-expert-unanimous</strong> filter for Emo-Emilia is a clean
+  weak-then-human pattern — but note under <strong>ADR-003</strong> our LLM teachers are <em>on-screen suggestion
+  only</em>, so we adopt the human-adjudication half, not machine-intersection-as-label.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech">Limitations &amp; open questions for ViEmoSpeech</h3>
+<ul>
+<li><strong>Contradiction vs the ViEmoSpeech hook (and reconciliation of vn-08 ↔ vn-12).</strong> Our method-paper
+  hook is that <em>because VN tone is phonation-heavy, the semantic/text branch must carry more load
+  than in non-tonal SER</em>. C2SER's own text-only cascade says the opposite for <strong>acted</strong> tonal
+  speech: <strong>CASIA Mandarin text-only = 13.93 UA (near chance)</strong> — on acted tonal speech the semantic
+  channel carries almost nothing and <strong>acoustic dominates</strong>. Yet on <strong>in-the-wild</strong> speech the same
+  cascade hits <strong>63.31</strong>. This reconciles vn-08's "text near-useless (38.7–44.1%)" with vn-12's
+  "semantics dominate": <em>how much content carries emotion is register-dependent</em>, high on
+  naturalistic content-laden speech, low on short acted exclamations. Direct consequence: on our
+  acted VN drama the text branch may underperform exactly where tone-swap ASR errors cluster (high
+  arousal), so the "text carries more load" hook needs to be reframed as "text carries more load
+  <em>when there is content to carry it</em>, and our tone×emotion competition is an <em>acoustic-channel</em>
+  claim, not a text-reliance claim." Must confront this explicitly in the method paper.</li>
+<li><strong>F0-as-emotion-cue vs vn-13.</strong> C2SER discretizes mean-F0 as an emotion feature with no tone
+  control; vn-13 shows F0 is the tone-shared channel. Any VN system that copies this uncritically
+  will conflate tone and emotion. Our audio branch should instead weight amplitude/energy + duration
+  (vn-13: tone-independent emotion carriers) and treat F0 features as tone-contaminated.</li>
+<li><strong>Zero-shot vs in-domain confound in the tables.</strong> Table V (Emotion2Vec-S) is in-domain 5-fold;
+  Table VI (C2SER) is mostly zero-shot cross-dataset — so C2SER's 69.00 and Emotion2Vec-S's 80.66 on
+  Emo-Emilia are <em>not</em> the same experiment. For our design (frozen features + trained head), <strong>Table
+  V is the relevant comparison</strong>, not the C2SER ALM numbers.</li>
+<li><strong>Rare-class collapse persists even at SoTA</strong> (disgust/fear &lt;20%, Fig 7) — a warning that our 7-way
+  scheme's tail will not be rescued by a better backbone alone; needs sampling/loss design (V-E/V-F).</li>
+<li><strong>Heavy, generative, non-turn-level.</strong> C2SER is a 7B LoRA ALM emitting free-form text later mapped
+  to a label by <em>another</em> 14B model (Qwen2.5-14B) — not a lightweight turn-level classifier. Its
+  fusion recipe is a template, not a deployable module for our pipeline.</li>
+<li><strong>Open question worth one experiment:</strong> run the released Emotion2Vec-S frozen features through a
+  layer-wise tone-vs-arousal probe (Shen/vn-06 protocol) on VN syllables — does the category-
+  contrastive loss that helps Mandarin emotion also <em>entangle</em> tone, or leave it separable? That
+  answer decides whether Emotion2Vec-S helps or hurts our V-D disentanglement goal.</li>
+</ul></article>
+</div></body></html>

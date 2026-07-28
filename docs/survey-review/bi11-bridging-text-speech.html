@@ -1,0 +1,263 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M4 · Bridging Text and Speech — RoBERTa + WavLM fusion</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#2563eb">M4 · Phương pháp được benchmark</span>
+<h1>Bridging Text and Speech — RoBERTa + WavLM fusion</h1><p class="venue">J. Intelligence 2025</p>
+<div class="role" style="--accent:#2563eb"><b>Vai trò trong survey:</b> Khớp gần nhất với PhoBERT+WavLM: nhánh text + concat fusion (method 4 & 5).</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/11-bridging-text-speech-fusion.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/11-bridging-text-speech-fusion.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/11-bridging-text-speech-fusion.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-11-bridging-text-and-speech-for-emotion-understanding-explainable-multimodal-transformer-fusion-with-unified-audiotext-attribution">Paper 11 — Bridging Text and Speech for Emotion Understanding: Explainable Multimodal Transformer Fusion with Unified Audio–Text Attribution</h1>
+<ul>
+<li><strong>Authors:</strong> Ashutosh Pandey, Jasmeet Singh, Maninder Kaur</li>
+<li><strong>Venue / year:</strong> Journal of Intelligence (MDPI), 13(12):159, 2025 (CC-BY; mirror PMC12733550)</li>
+<li><strong>Links:</strong> abs https://www.mdpi.com/2079-3200/13/12/159 · PDF <code>pdfs/11-bridging-text-speech-fusion.pdf</code></li>
+<li><strong>Group:</strong> survey / benchmark (fusion framework)</li>
+</ul>
+<p><strong>Summary:</strong> RoBERTa (text) + WavLM (audio) chiếu vào latent space chung; attribution Integrated-Gradients/Occlusion tách phần đóng góp linguistic vs acoustic.</p>
+<p><strong>Relevance to Pebble:</strong> Kiến trúc audio+text fusion cụ thể + phương pháp explainability chuyển được sang voice-mode. Venue tier thấp hơn IEEE/Interspeech — rank vì topical fit.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<p><strong>Profile assembled at analysis time</strong> (from <code>docs/intent/constraints.md</code> + <code>docs/spec/capabilities/voice-multimodal.md</code> + <code>docs/tasks/voice-mtl-heads.md</code>):
+Pebble = a primary <strong>ordinal suicide-risk text</strong> program (BERT-family encoder, teacher-LLM silver labels, strict gold-holdout + subject-level splits, ordinal-aware QWK/MAE) <strong>plus</strong> an adjacent active <strong>voice</strong> stream: a frozen WavLM-Large / emotion2vec backbone with <strong>three heterogeneous MTL heads</strong> — emotion (CE), affect (valence+arousal, CCC loss), crisis (BCE under a <strong>hard recall floor ≥0.90</strong>) — balanced by <strong>Kendall uncertainty weighting</strong>; voice+text fusion is the named forward direction. This paper is a <strong>single-head, end-to-end late-fusion</strong> emotion classifier (RoBERTa-base + WavLM-Base-Plus) on MELD, 5 categories, with post-hoc XAI attribution.</p>
+<p><strong>Per-dimension scores (before the number):</strong>
+- <strong>D1</strong> (multi-task heterogeneous heads; w=3) = <strong>0</strong> — one classification head over 5 emotion categories; no continuous/regression head, no safety head, no MTL at all.
+- <strong>D2</strong> (mental-health / crisis domain; w=2) = <strong>0</strong> — generic conversational emotion (MELD / "Friends" TV); mental health is only rhetorical framing in the intro.
+- <strong>D3</strong> (emotion-transfer corpora; w=1) = <strong>1</strong> — MELD is a categorical emotion corpus usable for Pebble's emotion head, though not one of the listed GoEmotions/EmpatheticDialogues/intensity sets.
+- <strong>D4</strong> (teacher-LLM silver-label distillation; w=2) = <strong>0</strong> — human-annotated MELD labels only; no distillation.
+- <strong>D5</strong> (principled MTL loss balancing; w=2) = <strong>0</strong> — plain cross-entropy, single objective; no uncertainty/GradNorm/PCGrad.
+- <strong>D6</strong> (safety/crisis recall constraint as objective; w=2) = <strong>0</strong> — per-class recall is reported, but no recall-floor constraint drives training/thresholding.
+- <strong>D7</strong> (encoder backbone match; w=1) = <strong>2</strong> — WavLM-Base-Plus <strong>and</strong> RoBERTa-base directly match both Pebble streams' backbone families.</p>
+<p><strong>Overlap:</strong> <code>(3·0 + 2·0 + 1·1 + 2·0 + 2·0 + 2·0 + 1·2) / 26 × 100 = 3/26 × 100</code> = <strong>12%</strong> — <strong>peripheral (&lt;40%)</strong>.</p>
+<ul>
+<li><strong>Closest on:</strong> D7 (exact WavLM+RoBERTa backbone match) and, weakly, D3 (MELD as an emotion corpus).</li>
+<li><strong>Best point (Method to adopt):</strong> the <strong>unified per-modality attribution</strong> — Integrated Gradients on text tokens + Occlusion on fixed audio windows — decomposes a single prediction into linguistic vs acoustic-prosodic evidence.</li>
+<li><strong>How to apply to Pebble:</strong> wrap the same IG(text)+Occlusion(audio) pass around the crisis head so every flag raised under the hard recall floor carries a "driven by prosody vs. lexical content" attribution — the clinical-auditability layer a bare recall number can't provide, and the one thing here that a generic fusion recipe doesn't already give us.</li>
+<li><strong>Caveats:</strong> open-access, full text read (no paywalled sections). Confidence-lowering mismatches, not unread gaps: (1) fine-tuned <strong>end-to-end</strong>, opposite to Pebble's frozen-backbone probe; (2) MELD uses the standard split with <strong>no speaker/subject-disjoint guarantee</strong>, which would violate Pebble's subject-level integrity constraint if reused as-is; (3) statistical power is thin (Wilcoxon p=0.125, 3 seeds); (4) 83% MELD accuracy is a within-distribution number, not a gold-holdout result. The fusion recipe (project 768→256, concat→512, dropout 0.3, 2-layer head; ablation: 128-d bottleneck &gt; 256 &gt; 512) is a usable secondary blueprint when Pebble reaches the fusion forward direction.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Analyzed against the <strong>current ViEmoSpeech profile + Decision Register V-A…V-H</strong>
+(<code>docs/tasks/paper-deep-analysis.md</code>), NOT the archived text-stream profile / D-A…D-H that
+the "Analysis" section above uses. This is the <strong>closest architectural match to our PhoBERT+WavLM
+plan</strong> in the whole related-work set — a BERT-family text encoder + WavLM audio encoder fused for
+categorical emotion — so the read focuses on the exact fusion mechanism, the frozen-vs-fine-tuned
+question, the per-modality contribution numbers (the text-vs-audio dominance evidence), and the
+attribution method as a candidate instrument for our tone×emotion channel-competition figure.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<p>Read from the local PDF <code>docs/papers/bimodal-ser/pdfs/11-bridging-text-speech-fusion.pdf</code> via
+<code>pdftotext</code> (full 24-page body, all 4 tables, 3 algorithm listings, Eqs 1–6). The local PDF <strong>is
+the published venue version</strong> — MDPI <em>Journal of Intelligence</em> 13(12):159, DOI
+10.3390/jintelligence13120159, published 3 Dec 2025, CC-BY (page footers <code>J. Intell. 2025, 13, 159</code>,
+received 15 Sep / accepted 28 Nov 2025), so there is no preprint-vs-published delta to reconcile.
+Web validation:
+- Published record + headline numbers confirmed via WebSearch (<code>Pandey Singh Kaur "Bridging Text
+  and Speech" Journal of Intelligence 2025 …</code>) → resolved DOI https://doi.org/10.3390/jintelligence13120159
+  and PMC mirror https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12733550/ (0.83 accuracy / 5 classes /
+  RoBERTa+WavLM / IG+Occlusion — all match the local PDF). The MDPI HTML page itself returns HTTP 403
+  to the fetch tool (bot protection), so headline facts are corroborated via the PMC/DOI records + the
+  venue-version PDF. <strong>✔</strong>
+- Their Table-4 comparison baseline <strong>TelME</strong>: independently checked (WebSearch
+  <code>TelME MELD emotion recognition weighted F1 …</code> → WebFetch https://arxiv.org/html/2401.12987v2).
+  TelME's actual MELD result is <strong>weighted-F1 67.37 on the full 7-class</strong> set, and its <strong>headline metric
+  is weighted-F1, not accuracy</strong>. This corroborates that this paper's "TelME 67.4%" row is being
+  compared against the proposed model's <strong>5-class accuracy 83%</strong> — a metric-and-class-count mismatch
+  (see Limitations). <strong>✔</strong></p>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Task / data.</strong> Single-head 5-way categorical emotion classification on <strong>MELD</strong> (spontaneous
+dialogue from the sitcom <em>Friends</em>). MELD ships 7 emotions; the authors <strong>drop <code>disgust</code> and <code>fear</code></strong>
+(too few samples, low inter-annotator agreement) leaving <strong>Anger, Joy, Neutral, Sadness, Surprise</strong>
+(§3.1, §3.4). Audio pipeline (§3.2, Alg. 1): extract 48 kHz WAV from the video, <strong>DeepFilterNet v2</strong>
+neural denoise (default weights, FFT 512 / hop 128), downsample to 16 kHz, per-utterance mean–variance
+normalize, pad/truncate to a fixed <strong>8 s (128,000 samples)</strong>. Text: strip non-alphanumerics,
+<code>RobertaTokenizerFast</code>, fixed <strong>64 tokens</strong>.</p>
+<p><strong>Backbones (§4.1).</strong> Audio = <strong>WavLM-Base-Plus</strong> (7-conv front-end, kernels [10,3,3,3,3,2,2] /
+strides [5,2,2,2,2,2,2]; 12 transformer layers, 12 heads × 64-d; FFN 768→3072→768; pre-LN) →
+<strong>768-d</strong> speech embedding. Text = <strong>RoBERTa-base</strong> (byte-level BPE ~50k vocab; 12 layers/12 heads;
+FFN 768→3072→768; post-LN) → <strong>768-d [CLS]</strong> embedding. <em>How the WavLM frame sequence is pooled to a
+single 768-d vector is never stated</em> (gap).</p>
+<p><strong>Fusion (§4.2–4.4, the load-bearing mechanism, Eqs 1–4).</strong> Late/feature-level concat:
+1. Project each modality into a common subspace: <code>a' = W_a·a + b_a</code>, <code>t' = W_t·t + b_t</code>, with
+   <code>W_a, W_t ∈ ℝ^{256×768}</code> → each modality to <strong>256-d</strong> (Eq 1).
+2. <strong>Concatenate</strong>: <code>m = [a'; t'] ∈ ℝ^{512}</code> (Eq 2), then <strong>dropout p=0.3</strong>.
+3. 2-layer MLP head: <code>h1 = ReLU(W1·m + b1)</code>, <code>W1 ∈ ℝ^{256×512}</code> (Eq 3); <code>ŷ = W2·h1 + b2</code>,
+   <code>W2 ∈ ℝ^{C×256}</code> (Eq 4) → softmax.
+There is <strong>no cross-attention, no gating, no query-based alignment</strong> — this is the <em>simplest possible</em>
+learned fusion (project → concat → MLP), i.e. the "Concat" baseline that stronger designs beat.</p>
+<p><strong>Training (§4.6).</strong> <strong>Fine-tuned end-to-end, NO layers frozen.</strong> AdamW, lr <strong>2e-5</strong>, weight decay
+<strong>0.01</strong>, batch <strong>8</strong>/GPU, linear warm-up over first <strong>10%</strong> steps, dropout <strong>0.3</strong>, grad-clip norm
+<strong>1.0</strong>, CrossEntropy, max <strong>15 epochs</strong>, early-stop patience <strong>2</strong> on val loss (converged at epoch 4:
+train acc 55→87%, val 70→83%, §5.4), <strong>3 seeds (42, 123, 2025)</strong> reported as mean±std. Stack:
+transformers <strong>4.41.0</strong>, PyTorch 2.2.0, dual Tesla T4 16 GB.</p>
+<p><strong>Explainability (§4.5, §5.5–5.8, Alg. 3).</strong> <strong>Integrated Gradients</strong> (Sundararajan 2017; steps=10)
+applied to <strong>both</strong> text tokens and the audio waveform; <strong>Occlusion</strong> on audio with window
+<code>w = 0.1·fs = 1600 samples (0.1 s)</code>, stride <code>s = w/2 = 800</code>, interpolated back to length. IG(text)
+highlights sentiment words ("great", "play", "song") and suppresses function words; IG/Occlusion(audio)
+localize prosodic regions per class (Surprise = early/front-loaded burst; Sadness = diffuse sustained;
+Anger = early + late spikes). §5.8 reports IG and Occlusion <strong>agree</strong> on voiced/harmonic regions.</p>
+<p><strong>Results.</strong> Multimodal <strong>accuracy 0.83 ± 0.01, macro-F1 0.82 ± 0.01</strong> (5-class, Table 2). Per-class
+F1: <strong>Sadness 0.90, Anger 0.85, Surprise 0.85, Joy 0.77, Neutral 0.74</strong> (Table 2). Per-class one-vs-rest
+AUC: Anger 0.9389, Joy 0.9089, Neutral 0.9019, <strong>Sadness 0.9623</strong>, Surprise 0.9546 (§5.2). Unimodal vs
+multimodal (Table 3): <strong>RoBERTa text-only 0.79 / macro-F1 0.78</strong> (beats BERT 0.75, DistilBERT 0.76);
+<strong>WavLM audio-only 0.65 / 0.61</strong> (beats Wav2Vec2 0.60 / 0.57); multimodal <strong>0.83 / 0.82</strong> — a
+<strong>+4–5% gain over the best unimodal (text)</strong>. Significance across 3 seeds: <strong>Wilcoxon W=6.00,
+p=0.125; Sign test p=0.25</strong> — <em>both non-significant at α=0.05</em> (§5.2). Ablation (§4.7): bottleneck
+<strong>128 → ~82%</strong>, <strong>512 → ~77%</strong>, 256 "best balance"; <strong>removing DeepFilterNet denoise degrades
+accuracy</strong>. SOTA table (Table 4): Proposed 83.0 vs Bi-LG-GCN 80.1 vs TelME 67.4 (see Limitations — a
+metric/class mismatch).</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-by-decision-id">Parts directly useful for ViEmoSpeech (tagged by Decision ID)</h3>
+<ol>
+<li><strong>[V-A] The exact concat-projection-MLP fusion (Eqs 1–4) = our simplest learned-fusion baseline
+   arm.</strong> Project WavLM-768 and PhoBERT-768 each to a shared d (they use 256; ablation says a <em>smaller</em>
+   128 bottleneck was better), concat → dropout 0.3 → 2-layer ReLU MLP → softmax. This is the minimal
+   learned alternative to the withdrawn rule-fusion prior (vn-09) and the <em>floor</em> below cross-attention
+   (bimodal-03) / gated (WavFusion) / Q-Former (vn-07 FAS). <strong>Status of the numbers: ✔</strong> (Table 2/3,
+   venue version).</li>
+<li><strong>[V-C] RoBERTa-base config as the direct PhoBERT analogue.</strong> 64-token cap, [CLS] pooling, linear
+   project to shared subspace, lr 2e-5, wd 0.01, warm-up 10%. Text-only RoBERTa <strong>0.79/0.78</strong> here is
+   the clean-transcript ceiling of the text branch (Table 3, <strong>✔</strong>).</li>
+<li><strong>[V-A / V-B] Fine-tuned end-to-end, no frozen layers</strong> (§4.6) — their 0.83 is a <em>fully-fine-tuned</em>
+   ceiling, not a frozen-probe bar. This is the counter-point to our V-B lean toward a <strong>frozen</strong> WavLM;
+   it means their audio-only 0.65 is an <em>upper</em> estimate for WavLM's standalone capacity, and a frozen
+   WavLM in our stack will sit below it. <strong>✔</strong> (§4.6).</li>
+<li><strong>[V-G] Unified per-modality attribution: IG(text tokens) + Occlusion(audio windows)</strong> (§4.5, Alg. 3)
+   as a candidate instrument for explaining tone×emotion conflicts, plus the <strong>reporting stack</strong>:
+   3-seed mean±std, per-class one-vs-rest AUC, and non-parametric significance tests. <strong>✔</strong> (§5.2, §5.5–5.8).</li>
+<li><strong>[V-B] DeepFilterNet-v2 enhancement before the SSL encoder measurably helps</strong> (ablation, §4.7).
+   <strong>≈ approximate</strong> (reported as "consistent degradation" when removed, no isolated number).</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>V-A baseline ladder (→ the method paper's fusion table).</strong> Add this concat-projection-MLP as the
+  <strong>"simplest learned fusion" row</strong> directly above the re-implemented vn-09 rule-fusion row and below
+  our cross-attention / gated / FAS-style candidates. Concrete config to copy: project both 768-d
+  streams to a <strong>small shared dim (128, per their ablation, not 256/512), dropout 0.3, 2-layer ReLU MLP</strong>.
+  <em>Transfer risk (stated):</em> their <strong>+4–5% multimodal-over-text gain is measured on CLEAN English gold
+  transcripts</strong> where text already hits 0.79; under Vietnamese <strong>PhoWhisper ASR with tone-swap errors at
+  high arousal</strong> the text branch is degraded, so the <em>audio contribution in our regime should be larger</em>
+  and this exact +4–5% will not transfer. They also <strong>fine-tune end-to-end</strong>; if we freeze WavLM (V-B),
+  the concat baseline can underperform — so run <strong>both frozen and fine-tuned WavLM arms</strong> of the concat
+  baseline, don't inherit their number.</li>
+<li><strong>V-C PhoBERT branch config.</strong> Reuse the 64-token / [CLS] / lr 2e-5 recipe as the PhoBERT branch
+  default. <em>Transfer risk:</em> their result is the strongest single evidence that <strong>a strong text encoder
+  dominates on clean transcripts</strong> — and the strongest reason to <strong>not</strong> assume PhoBERT will dominate on
+  our ASR transcripts. Feed the branch <strong>ASR text</strong> (not gold captions) in the primary arm and keep a
+  gold-caption arm as the clean-transcript upper bound, so the ASR-noise penalty on the text branch is
+  measured, not assumed (V-C is exactly this robustness question).</li>
+<li><strong>V-G attribution + eval instrument.</strong> Port <strong>Occlusion on aligned audio windows</strong> as one lens for the
+  tone×emotion channel-competition figure: occlude a syllable's rime and read the emotion-logit change,
+  paired with IG on the corresponding PhoBERT token. Adopt their <strong>3-seed mean±std + per-class
+  one-vs-rest AUC</strong> reporting (upgrade to ≥5 seeds per THAI-SER vn-11). <em>Transfer risk:</em> their occlusion
+  window is a <strong>fixed 0.1 s / 800-sample stride, unaligned to phones</strong> — too coarse to isolate a
+  syllable-tone from its emotion; we must <strong>align windows to PhoWhisper syllable boundaries</strong> and, per
+  their own §5.8 caveat that attribution similarity "may reflect emotion-dependent correlations …
+  rather than explicit cross-modal integration," <strong>never present the attribution picture as proof of
+  channel competition</strong> — pair it with a quantitative metric (vn-13 Cramér's V on tone-vs-emotion,
+  vn-06 layer-wise Ridge probe). Visual attribution is the illustration, not the measurement.</li>
+<li><strong>V-B enhancement step.</strong> Their denoise-before-SSL ablation supports keeping an <strong>enhancement stage
+  before WavLM</strong>. <em>Transfer risk:</em> their DeepFilterNet <em>removes</em> noise from clean sitcom audio; our
+  Demucs stage <em>source-separates</em> to <strong>restore</strong> a music/noise substrate we deliberately keep — different
+  goal, so treat "enhancement helps" as directional support only, and A/B our Demucs output vs raw.</li>
+</ul>
+<h3 id="child-mental-health-viemospeech-transfer-lens">Child mental-health / ViEmoSpeech transfer lens</h3>
+<p>This is our <strong>backbone pair</strong> (WavLM + a BERT-family encoder), so transfer validity is unusually high on
+architecture and unusually low on regime. What transfers and what does not:</p>
+<ul>
+<li><strong>Register match, language mismatch.</strong> MELD is <strong>acted TV-show dialogue</strong> — the same acted-drama register
+  as our VN TV-drama corpus, which is genuinely useful precedent (found/scripted dialogue, spontaneous
+  within scenes). But it is <strong>English and non-tonal</strong>, so the paper says <strong>nothing</strong> about the
+  tone×emotion F0/phonation competition that is our headline claim (V-D untouched — add to the running
+  tally: still <strong>0 of 16 papers</strong> measure lexical-tone×emotion channel competition).</li>
+<li><strong>The text-dominance number is regime-specific and must not be over-read.</strong> RoBERTa-alone <strong>0.79</strong> ≈
+  multimodal <strong>0.83</strong>, audio-alone <strong>0.65</strong> — on <strong>clean gold transcripts</strong>, text carries the task and
+  audio adds ~4 pts. This is the <strong>opposite pole</strong> from vn-08's VN-spontaneous-ASR "text near-useless"
+  (38–44%). ViEmoSpeech sits between them: PhoWhisper ASR is cleaner than vn-08's setup but tone-corrupted
+  at high arousal, and Vietnamese is tonal so the audio branch should carry <em>more</em> than MELD's +4 pts.
+  ⇒ our method paper must frame audio contribution as <strong>regime-dependent and measured per-register</strong>,
+  citing this paper as the clean-English anchor — not as generic "multimodal &gt; unimodal" support.</li>
+<li><strong>Fine-tuned, not frozen, and not speaker-disjoint.</strong> Two invariant conflicts for us: (a) they
+  fine-tune both encoders end-to-end (our V-B leans frozen WavLM), and (b) their evaluation is <strong>not
+  speaker-disjoint</strong> (MELD's standard split isn't, and Alg. 2's <code>RandomSplit(0.8/0.2)</code> certainly isn't) —
+  which would violate our speaker-disjoint / whole-series-holdout invariant (ADR-002) if reused as-is.
+  Their 0.83 is a within-distribution, non-speaker-disjoint number; our honest speaker-disjoint anchor
+  will be lower (cf THAI-SER WA ~60, MSP naturalistic macro-F1 ~0.30).</li>
+<li><strong>No dimensional / distress output.</strong> Purely 5-way categorical; no valence/arousal-CCC, no distress
+  head — moves nothing for V-D (dimensional) or V-F (distress). The clinical framing is one sentence in
+  the conclusion ("mental-health platforms could support emotional self-awareness"), with no clinical
+  label — the same acted-categorical-emotion-with-clinical-veneer pattern V-F names as an anti-pattern.</li>
+<li><strong>Dropping the hard rare classes is a lesson against, not for.</strong> They drop <code>fear</code> and <code>disgust</code> for low
+  N / low agreement — directly opposite to our <strong>≥50-clip rare-class floor</strong> (ADR-002). Our design keeps
+  rare classes with a floor and honest per-class reporting rather than deleting them to inflate accuracy.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech-incl-explicit-contradictiongap">Limitations &amp; open questions for ViEmoSpeech (incl. explicit contradiction/gap)</h3>
+<ul>
+<li><strong>CONTRADICTION vs vn-08 and the cross-cutting synthesis (text-vs-audio dominance).</strong> This paper's clean
+  text dominance (RoBERTa 0.79 ≈ multimodal 0.83; audio 0.65) is the <strong>direct opposite</strong> of vn-08's
+  "text near-useless" (38–44% VN ASR) and confirms cross-cutting synthesis point #1: <strong>dominance is
+  register/language-dependent, not settled.</strong> It anchors the <em>clean-transcript, non-tonal, fine-tuned</em>
+  pole. Load-bearing consequence: ViEmoSpeech's hook cannot cite "multimodal beats unimodal"
+  generically — the audio-contribution magnitude is exactly what our tonal/ASR-noisy regime changes, and
+  is the thing we must <em>measure</em>.</li>
+<li><strong>GAP / internal inconsistency — the evaluation set is not well-defined, so the headline metric is not
+  comparable.</strong> §3.1 states the <strong>standard MELD splits</strong> (train 10,000 / val 1109 / <strong>test 1353</strong>) and
+  <strong>WavLM-Base-Plus</strong> audio, but <strong>Algorithm 2</strong> actually does <code>RandomSplit(D, [0.8, 0.2])</code> into
+  <strong>train/val only</strong> (no held-out test) and instantiates a <strong><code>Wav2Vec2Processor("wav2vec2-base-960h")</code></strong>,
+  not WavLM. Worse, the confusion-matrix true-positive counts (§5.3: Sadness <strong>898</strong> + Surprise 837 +
+  Anger 753 + Joy 746 = <strong>3,234</strong> across just four classes) <strong>exceed any plausible 20% split of the
+  ~12,462-utterance 5-class set (~2,500)</strong> and are far above the standard 1,353-utterance test set — so
+  the reported 0.83 <strong>cannot be mapped to the standard MELD test partition</strong>. This makes <strong>Table 4's SOTA
+  comparison invalid</strong>: 5-class accuracy on an under-specified, non-speaker-disjoint split vs <strong>TelME's
+  7-class weighted-F1 67.37</strong> (validated ✔) and Bi-LG-GCN's number — different metric, different class
+  count, different split. ⇒ ViEmoSpeech cites this as a <strong>what-not-to-do for reporting</strong>: it is exactly
+  why our protocol fixes speaker-disjoint splits (ADR-002), reports macro-F1 (not accuracy) on a
+  class-imbalanced set, and never compares across mismatched metrics.</li>
+<li><strong>Statistical power is absent, not just thin.</strong> Wilcoxon <strong>p=0.125</strong> and Sign-test <strong>p=0.25</strong> are
+  <strong>both non-significant at α=0.05</strong>, yet the text reads them as "consistently outperformed." 3 seeds
+  cannot support a significance claim — our eval must use ≥5 seeds (vn-11) and report CIs honestly.</li>
+<li><strong>Frozen-vs-fine-tuned unanswered for our regime.</strong> They only run fully-fine-tuned; there is <strong>no
+  frozen-encoder arm</strong>, so this paper gives no evidence on whether a frozen WavLM (V-B) suffices — an
+  open A/B we must run ourselves.</li>
+<li><strong>Attribution ≠ integration (their own caveat).</strong> §5.8 concedes the IG/Occlusion agreement across
+  modalities "may reflect emotion-dependent correlations between textual and acoustic content rather than
+  explicit cross-modal integration." For V-G this is a direct warning: an attribution figure alone cannot
+  substantiate the tone×emotion channel-competition claim; it must be backed by a quantitative,
+  probe-based measurement (vn-06 Ridge probe, vn-13 statistical interaction / Cramér's V).</li>
+<li><strong>WavLM pooling unspecified</strong> — how the frame sequence collapses to one 768-d vector (mean-pool? CLS?
+  attention-pool?) is never stated; if we copy the recipe we must choose and report it (mid-layer
+  mean-pool per vn-06 for tone-sensitivity).</li>
+</ul></article>
+</div></body></html>

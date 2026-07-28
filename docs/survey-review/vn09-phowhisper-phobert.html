@@ -1,0 +1,245 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M6 · PhoWhisper + PhoBERT pipeline (VNU) — withdrawn</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#2563eb">M6 · Phương pháp được benchmark</span>
+<h1>PhoWhisper + PhoBERT pipeline (VNU) — withdrawn</h1><p class="venue">arXiv 2024 (rút)</p>
+<div class="role" style="--accent:#2563eb"><b>Vai trò trong survey:</b> Rule-fusion baseline (§2.6) phải tự re-implement — bài gốc đã bị rút, không có số.</div>
+<div class="links"><a href="../papers/vietnamese-ser/pdfs/09-phowhisper-phobert-fusion.pdf">📄 PDF gốc</a><a href="../papers/vietnamese-ser/09-phowhisper-phobert-fusion.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/vietnamese-ser/09-phowhisper-phobert-fusion.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-vn-09-phowhisper-phobert-bimodal-vietnamese-ser-vnu-ha-noi">Paper vn-09 — PhoWhisper + PhoBERT Bimodal Vietnamese SER (VNU Hà Nội)</h1>
+<ul>
+<li><strong>Authors:</strong> (VNU Hà Nội group — verify from PDF)</li>
+<li><strong>Venue / year:</strong> arXiv preprint, Dec 2024</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2412.09829 · PDF <code>pdfs/09-phowhisper-phobert-fusion.pdf</code></li>
+<li><strong>Group:</strong> vietnamese-ser / direct baseline to beat</li>
+</ul>
+<p><strong>Summary:</strong> Bimodal Vietnamese SER combining PhoWhisper ASR transcripts with
+PhoBERT text features via rule-based fusion, on a ~250-clip corpus.</p>
+<p><strong>Relevance to ViEmoSpeech:</strong> The direct baseline the method paper must beat —
+same building blocks (PhoWhisper+PhoBERT) but rule-based fusion, tiny corpus,
+no tone treatment, no recall-floor. Our deltas: learned fusion (V-A), 3611+ utt
+corpus, tone annotations (V-D), distress recall-floor (V-F).</p>
+<blockquote>
+<p>Stub created 2026-07-10 (task <code>docs/tasks/paper-deep-analysis.md</code>); deep-read pending.</p>
+</blockquote>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p><strong>Stub-correction up front.</strong> The stub above (and the task inventory) call this "PhoWhisper +
+PhoBERT bimodal Vietnamese SER, rule fusion, ~250-clip corpus." The full PDF is something else:
+a <strong>service-quality-assessment pipeline</strong> (call-centre grading: <em>Good / Neutral / Offensive</em>),
+not a SER paper. It does <strong>not</strong> build a corpus, does <strong>not</strong> fuse audio+text for emotion, and
+reports <strong>no end-to-end evaluation of its fusion</strong>. The text branch is PhoBERT-CNN doing
+<strong>hate-speech</strong> classification (not emotion); the ~250 clips are the <em>external</em> VNEMOS SER set it
+borrows a pretrained model from (that model is paper vn-10, arXiv:2412.08683, same authors). The
+paper is still the right "rule-fusion baseline" reference for <strong>V-A</strong>, but the baseline is a
+hand-written override rule with no measured accuracy, so "the number to beat" does not exist.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>Local read:</strong> <code>pdftotext "docs/papers/vietnamese-ser/pdfs/09-phowhisper-phobert-fusion.pdf" -</code>
+  extracted the full 8 pages cleanly (arXiv:2412.09829<strong>v1</strong> [cs.CY], 13 Dec 2024). All figures are
+  images (architecture diagrams, GDP chart); the extraction captured every equation (Eqs 1–5,
+  denoiser) and the only numeric block (the ViHSD component numbers in §2.4). A <code>grep</code> sweep for
+  <code>table|accuracy|F1|precision|recall|%|WER|split|test</code> over the whole PDF returned <strong>no results
+  table and no fusion/service-quality evaluation</strong> — confirming §2.4's ViHSD numbers are the sole
+  quantitative content.</li>
+<li><strong>Web validation — status of the paper.</strong> Query <code>arXiv 2412.09829 Speech-based Multimodel
+  Pipeline Vietnamese Services Quality Assessment</code> → <code>https://arxiv.org/abs/2412.09829</code>. The paper
+  was <strong>withdrawn by the authors</strong> at v2 (18 Dec 2024, five days after v1). Withdrawal note
+  (verbatim, ✔ corroborated): <em>"I am writing to request the withdrawal of my preprint due to the
+  discovery of significant inaccuracies in the results. These errors could mislead future research
+  and applications, which compromises the integrity of my work. I believe withdrawing the paper is
+  essential to uphold scientific standards…"</em> This is decision-bearing: the direct-baseline paper
+  is self-retracted.</li>
+<li><strong>Web validation — borrowed text-branch numbers.</strong> Query <code>PhoBERT-CNN ViHSD Vietnamese hate
+  offensive detection accuracy macro F1 Tran 2022</code> → <code>https://arxiv.org/abs/2206.00524</code> (Tran et
+  al., <em>Vietnamese Hate and Offensive Detection using PhoBERT-CNN</em>, Neural Computing &amp; Applications
+  2022, the ref [16]/[23] this paper reuses). Original reports <strong>macro-F1 67.46%</strong> on ViHSD (✔
+  corroborated). This paper's §2.4 reports <strong>86.14% accuracy</strong> with per-class F1s that macro-average
+  to ~53.7% — <em>lower</em> than and inconsistent with the source (see inconsistency flag below).</li>
+<li><strong>Author/affiliation (stub lacked it, now filled, ✔ from PDF title block + arXiv):</strong>
+  Quang-Anh N.D. (<code>anhnd@vnuis.edu.vn</code>), Minh-Duc Pham (<code>pmduc2808@gmail.com</code>), Thai Kim Dinh
+  (<code>thaikd@vnu.edu.vn</code>, corresponding) — <strong>International School, Vietnam National University, Hanoi
+  (VNU-IS)</strong>. Same lab as vn-10 (VNEMOS / Dynamic-CBAM depression).</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p>A five-stage <strong>cascade pipeline</strong> (§2, Figs 2–5) that grades a customer-service phone call:</p>
+<ol>
+<li><strong>Denoiser</strong> (§2.1, Eqs 1–5): Resemble-AI <code>resemble-enhance</code>, a UNet on complex spectrograms
+   (predict amplitude mask + phase rotation), L1 waveform loss. Off-the-shelf, not trained here.</li>
+<li><strong>WhisperX</strong> (§2.2): speaker diarization ("who spoke when") via wav2vec2.0 alignment + pyannote
+   VAD/embedding/clustering. Off-the-shelf.</li>
+<li><strong>PhoWhisper</strong> (§2.3): Vietnamese ASR (S2T). Cited as fine-tuned on <strong>844 h</strong> (Common Voice-Vi,
+   VIVOS, VLSP-2020, + a private 26,000-speaker / 63-province set), "SOTA for Vietnamese S2T"
+   (≈ corroborated; this is the PhoWhisper paper's claim, ref [15] Le &amp; Nguyen, ICLR 2024 Tiny
+   Papers, not measured here). Off-the-shelf.</li>
+<li><strong>Text branch — PhoBERT-CNN</strong> (§2.4): PhoBERT-base (frozen, feature extractor) → Text-CNN head,
+   <strong>fine-tuned on ViHSD</strong> for <strong>3-way hate-speech</strong> classification (<strong>CLEAN / OFFENSIVE / HATE</strong>),
+   20 epochs. Reported (§2.4, the paper's only numbers): <strong>accuracy 86.14%</strong>; per-class
+   (P / R / F1): CLEAN <strong>94.90 / 36.71 / 47.38</strong>, OFFENSIVE <strong>91.55 / 41.79 / 60.48</strong>,
+   HATE <strong>93.19 / 30.90 / 53.14</strong>. Note this classifies <strong>written social-media text</strong>, and is
+   applied at inference to <strong>ASR transcripts</strong> — no adaptation between the two registers.</li>
+<li><strong>Audio branch — SER</strong> (§2.5): the <strong>Dynamic Attention Network / Dynamic-CBAM</strong> (MFCC → stacked
+   Conv-BatchNorm-MaxPool blocks → GRU → Dynamic CBAM → FC), used <strong>as a pretrained model</strong> trained
+   on <strong>VNEMOS</strong> — <strong>250 annotated segments from 27 movies/series/live-shows, 5 emotions</strong> (anger,
+   happiness, sadness, neutral, fear). This is the external SER set the stub mislabelled as "their
+   corpus"; it is ref [26] (VNEMOS, ICDV 2024) and the model is ref [24] (= vn-10). No SER numbers
+   are reported in <em>this</em> paper.</li>
+</ol>
+<p><strong>The fusion (§2.6) — the whole "bimodal" claim.</strong> A hand-written <strong>grading rule</strong> over the two
+branch outputs, producing <strong>Good / Neutral / Offensive</strong>:</p>
+<ul>
+<li><strong>Text overrides:</strong> if S2T (PhoBERT-CNN) returns <strong>OFFENSIVE or HATE → grade = Offensive</strong>
+  (unconditional priority to the text stream).</li>
+<li><strong>Emotion escalation:</strong> else if text is clean <strong>but SER ∈ {Anger, Anxiety, Sadness} → Offensive</strong>
+  ("customer did not have a good experience"). (Note: the SER head only emits anger/happy/sad/
+  neutral/fear — "Anxiety" in the rule has no corresponding class, a loose end.)</li>
+<li><strong>Otherwise:</strong> clean text → grade follows SER: <strong>Happiness → Good, Neutral → Neutral</strong>.</li>
+</ul>
+<p>That is the entire "fusion": a <strong>priority-override decision tree</strong>, text-dominant, with <strong>no learned
+parameters, no weighting, no confidence, and no evaluation</strong>. There is no §3 experiments — the paper
+goes straight from §2.6 to a one-paragraph §3 Conclusion.</p>
+<p><strong>Internal inconsistency (supports the withdrawal, ✖ uncorroborated / self-contradictory):</strong> ViHSD
+is ~82–83% CLEAN. A CLEAN <strong>recall of 36.71%</strong> is mathematically incompatible with an overall
+<strong>accuracy of 86.14%</strong> (majority-class recall of 0.37 caps accuracy near ~0.30). The §2.4 numbers
+cannot all be true simultaneously; they also macro-average below the source paper's 67.46%. This is
+concrete evidence for why the authors self-retracted.</p>
+<h3 id="parts-directly-useful-for-pebble">Parts directly useful for Pebble</h3>
+<ol>
+<li><strong>The rule-fusion baseline, stated exactly — [V-A].</strong> The competitor our learned fusion must beat
+   is: <em>text-verdict priority override → emotion fallback</em>, a hard decision tree, text-dominant,
+   zero learned fusion parameters. Two properties matter for ViEmoSpeech: (a) it fuses <strong>hard class
+   labels</strong>, not features/logits — it discards all cross-modal interaction and all confidence; (b)
+   it is <strong>text-first by construction</strong> (text can veto; audio only decides among the residual
+   cases). Our learned fusion (cross-attention / gated / query-based) should be positioned precisely
+   as <em>soft, feature-level, jointly-trained</em> against this <em>hard, label-level, hand-ordered</em> rule.</li>
+<li><strong>The "baseline number to beat" is empty — [V-A][V-G].</strong> Because there is no end-to-end
+   evaluation and the paper is withdrawn, ViEmoSpeech <strong>cannot cite a fusion accuracy from vn-09</strong>.
+   The honest framing: vn-09 is the <em>architectural</em> baseline (rule fusion exists in the VN
+   literature) but supplies <strong>no quantitative bar</strong>. The quantitative bars come from vn-08
+   (arXiv:2604.01711, 86.6% / κ 0.857) and VNEMOS-line audio-only — not from here.</li>
+<li><strong>The text branch is trained on the wrong register — [V-C].</strong> PhoBERT-CNN is fit on <strong>clean
+   written ViHSD</strong> and run on <strong>PhoWhisper ASR output</strong> with no domain adaptation and no
+   noise-robustness treatment. This is exactly the ASR-noise gap V-C names. It is a <em>negative
+   exemplar</em>: it shows what happens if you ignore the written↔ASR mismatch (and, in a tonal
+   language, the high-arousal tone-swap errors — mày→máy — that flip meaning). ViEmoSpeech's V-C
+   choice (PhoBERT vs ViSoBERT vs CafeBERT, trained/evaluated on ASR transcripts, tested against
+   gold captions) directly fixes what vn-09 left unaddressed.</li>
+<li><strong>The corpus/SER provenance chain — [V-G][V-H].</strong> VNEMOS = <strong>250 clips / 27 sources / 5 classes</strong>
+   is the concrete "small VN drama-sourced SER set" ViEmoSpeech's 3611-utt / 7-class + V/A + distress
+   corpus supersedes. The 250-vs-3611 and 5-class-vs-7+V/A+distress deltas are the quantifiable
+   corpus-design contribution, and vn-09 shows the ceiling of building <em>on top of</em> 250 clips: you
+   can only borrow a pretrained model, you cannot do speaker-disjoint SER evaluation.</li>
+<li><strong>Cascade error-propagation as a design warning — [V-A][V-B].</strong> Five off-the-shelf stages in
+   series (denoise → diarize → ASR → text-clf ‖ SER → rule) means errors compound and are never
+   jointly optimised. This motivates ViEmoSpeech's <strong>jointly-trained</strong> audio+text fusion over a
+   frozen cascade, and motivates keeping the audio branch (V-B) able to carry emotion even when ASR
+   is wrong — the opposite of vn-09's text-veto ordering.</li>
+</ol>
+<h3 id="how-each-part-helps-pebble-succeed">How each part helps Pebble succeed</h3>
+<ul>
+<li><strong>[V-A] Position the method paper's fusion ablation against a re-implemented vn-09 rule.</strong> Concrete
+  artifact: in the fusion experiment, include a <strong>"rule-fusion" baseline row</strong> that reproduces
+  §2.6's logic on ViEmoSpeech labels (map: text-toxicity/negation override → emotion fallback), and
+  show learned cross-attention/gated fusion beating it on macro-F1 and CCC. Because vn-09 gives no
+  number, <em>we generate the baseline number ourselves</em> on our corpus — that is the fair, reproducible
+  comparison, and it directly answers "does learned fusion beat the rule."</li>
+<li><strong>[V-C] Make the ASR-noise robustness an explicit experiment, not an assumption.</strong> Artifact: train
+  the text branch on <strong>PhoWhisper transcripts</strong> (not gold text) and evaluate on both ASR and gold
+  captions; report the degradation. vn-09's train-on-clean / infer-on-ASR mismatch is the ablation's
+  "naive" arm. Add a tone-swap stress slice (high-arousal utterances where mày/tao mis-transcribe)
+  to quantify the phonation-channel confound the profile predicts.</li>
+<li><strong>[V-G] Do not report a vn-09 fusion accuracy; report its absence.</strong> Artifact: the eval-protocol
+  doc's baseline table lists vn-09 as <em>"rule fusion, no end-to-end eval, withdrawn"</em> and draws the
+  numeric baselines from vn-08 and VNEMOS-line audio-only. This keeps ViEmoSpeech's comparison
+  honest and avoids inheriting retracted numbers.</li>
+<li><strong>[V-H] Use the 250→3611 clip and 5→7+V/A+distress jumps as the stated corpus contribution.</strong>
+  Artifact: <code>docs/spec/capabilities/</code> corpus card cites VNEMOS-250 as the prior VN drama-SER ceiling
+  and positions ViEmoSpeech's size/label-richness/speaker-disjoint-split/tone-annotation as the
+  delta.</li>
+<li><strong>[V-B] Keep the audio branch load-bearing.</strong> Artifact: in the fusion, avoid a text-veto ordering;
+  use a symmetric learned fusion so the audio branch (WavLM/emotion2vec + phonation features) can
+  override text when ASR is unreliable — the exact failure vn-09's text-priority rule cannot handle.</li>
+</ul>
+<h3 id="child-mental-health-lens">Child mental-health lens</h3>
+<ul>
+<li><strong>Domain is adult call-centre service quality, not child affect.</strong> vn-09's <em>distress</em> proxy is
+  "customer had a bad experience → Offensive grade" — a commercial-satisfaction construct, not a
+  clinical or child-safety one. Transfer to ViEmoSpeech's <strong>distress head is essentially nil at the
+  label level</strong>; only the <em>architecture</em> (VN ASR + VN text encoder + SER) transfers. State plainly:
+  vn-09 corroborates that PhoWhisper+PhoBERT+SER is a workable VN stack, and <strong>nothing about how to
+  score distress in acted child-facing drama</strong>.</li>
+<li><strong>Recall floor: vn-09 does the opposite of what ViEmoSpeech needs.</strong> Its text branch has
+  catastrophic recall on the minority classes it cares about (OFFENSIVE R 41.8%, HATE R 30.9% —
+  ≈/✖ given the internal inconsistency), i.e. it <em>misses</em> most of the harmful cases while boasting
+  86% accuracy. For a recall-floored distress head this is the anti-pattern: accuracy on an
+  imbalanced set hides minority-class misses. ViEmoSpeech's V-F recall-floor objective exists
+  precisely to avoid this failure.</li>
+<li><strong>Tone treatment: none.</strong> vn-09 has no tone annotation and no awareness that VN lexical tone is
+  phonation-heavy; it applies a written-text hate classifier to ASR output where high-arousal
+  tone-swaps corrupt exactly the toxic/negation words the rule keys on. For child speech (higher
+  pitch, more variable prosody) this ASR fragility would be worse, reinforcing why ViEmoSpeech
+  annotates syllable tone and does not let text unilaterally veto (V-D).</li>
+<li><strong>Ethics/framing note.</strong> vn-09 grades and stores judgements about individuals ("Offensive")
+  from call audio with no consent/annotation-quality discussion. ViEmoSpeech's acted-drama,
+  feature-only, CC-BY release and honest "acted proxy ≠ clinical" framing is the responsible
+  contrast to draw.</li>
+</ul>
+<h3 id="limitations-open-questions-for-pebble">Limitations &amp; open questions for Pebble</h3>
+<ul>
+<li><strong>Contradiction / gap #1 (vs the paper's own status):</strong> the direct architectural baseline is
+  <strong>self-retracted for "significant inaccuracies,"</strong> and its only numbers are <strong>internally
+  inconsistent</strong> (CLEAN recall 36.71% cannot co-exist with 86.14% accuracy on ~82%-CLEAN ViHSD).
+  ViEmoSpeech therefore <strong>must not</strong> quote a vn-09 fusion metric as a bar; it can only cite the
+  <em>design</em> (rule fusion) and must generate the comparison number itself.</li>
+<li><strong>Contradiction / gap #2 (vs ViEmoSpeech's tone×emotion thesis):</strong> vn-09 is <strong>text-priority</strong>
+  (text can unconditionally veto the emotion stream). ViEmoSpeech's core claim is the <strong>opposite</strong> —
+  in a tonal, phonation-heavy language the audio/prosody channel is <em>more</em> load-bearing and ASR text
+  is <em>less</em> trustworthy under high arousal. The two designs encode contradictory priors about which
+  modality to trust; our method paper should make that disagreement explicit and settle it
+  empirically (fusion ablation, ASR-noise slice).</li>
+<li><strong>Contradiction / gap #3 (vs vn-08 / vn-10 quantitatively):</strong> vn-09 supplies <strong>no SER or fusion
+  accuracy at all</strong>, while vn-08 (arXiv:2604.01711) reports 86.6% / κ 0.857 and vn-10 reports SER on
+  VNEMOS. vn-09 cannot be placed on the same axis — a gap in the baseline landscape that
+  ViEmoSpeech's own re-implemented rule-fusion row must fill.</li>
+<li><strong>Open question:</strong> is the <strong>VNEMOS 250-clip set</strong> obtainable (license/gate) so ViEmoSpeech can run
+  a <em>cross-corpus</em> audio-only sanity check (train ViEmoSpeech → test VNEMOS-5-class subset)? The
+  paper gives no availability terms; VNEMOS is ref [26] (ICDV 2024, IEEE) — likely gated. If
+  unobtainable, VNEMOS stays a <em>citation-only</em> prior, not a comparison corpus.</li>
+<li><strong>Open question:</strong> the rule's undefined <strong>"Anxiety"</strong> SER class (not in the 5-way head) suggests
+  the pipeline was never actually run end-to-end — consistent with the withdrawal. Treat every vn-09
+  operational detail as <em>unverified intent</em>, not measured behaviour.</li>
+</ul></article>
+</div></body></html>

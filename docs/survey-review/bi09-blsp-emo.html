@@ -1,0 +1,258 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F4 · BLSP-Emo — empathetic speech-language model</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#7c3aed">F4 · Fusion khảo sát (v2 tương lai)</span>
+<h1>BLSP-Emo — empathetic speech-language model</h1><p class="venue">arXiv 2024</p>
+<div class="role" style="--accent:#7c3aed"><b>Vai trò trong survey:</b> Bằng chứng 'fusion nhỏ > ALM lớn' — chứng minh hướng frozen-probe hợp lý.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/09-blsp-emo.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/09-blsp-emo.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/09-blsp-emo.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-09-blsp-emo-towards-empathetic-large-speech-language-models">Paper 09 — BLSP-Emo: Towards Empathetic Large Speech-Language Models</h1>
+<ul>
+<li><strong>Authors:</strong> Chen Wang, Minpeng Liao, Zhongqiang Huang, Junhong Wu, Chengqing Zong, Jiajun Zhang</li>
+<li><strong>Venue / year:</strong> arXiv preprint, 06/2024</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2406.03872 · PDF <code>pdfs/09-blsp-emo.pdf</code></li>
+<li><strong>Group:</strong> audio+text (trục chính)</li>
+</ul>
+<p><strong>Summary:</strong> Speech-LM hai giai đoạn: semantic alignment (ASR data) → emotion alignment (SER continuation task), hướng tới phản hồi đồng cảm.</p>
+<p><strong>Relevance to Pebble:</strong> Audio-LLM analogue gần nhất với framing emotional-support-chat của Pebble.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<p><strong>Profile scored against (assembled 2026-07-03 from IDD layers):</strong> primary = ordinal suicide-risk <strong>text</strong> classification, teacher-LLM <strong>silver labels</strong> → BERT-family encoder, <strong>gold-holdout</strong> eval, ordinal-aware losses (QWK/MAE) — validity/ethics over SOTA (<code>docs/intent/constraints.md</code>). Adjacent <strong>voice</strong> stream (<code>voice-multimodal.md</code> → <code>docs/tasks/voice-mtl-heads.md</code>): frozen <strong>emotion2vec/WavLM-Large</strong> backbone + shared trunk, <strong>3 heterogeneous heads</strong> (emotion CE · affect V/A <strong>CCC</strong> · crisis BCE under <strong>hard recall-floor 0.90</strong>), <strong>Kendall uncertainty weighting</strong>, trained on <strong>RAVDESS</strong> proxy labels, Kaggle run pending.</p>
+<h3 id="analysis-blsp-emo">Analysis — BLSP-Emo</h3>
+<ul>
+<li><strong>Overlap:</strong> 35% (peripheral) — D1=1, D2=0, D3=1, D4=2, D5=0, D6=0, D7=1.</li>
+<li>Formula: (3·1 + 2·0 + 1·1 + 2·2 + 2·0 + 2·0 + 1·1)/26 = 9/26 = 35%.</li>
+<li><strong>Closest on:</strong> D4 (teacher-LLM silver-label distillation — LLM generates emotion-conditioned continuations as supervision, distilled via KD); secondarily D3/D7 (SER corpora incl. RAVDESS; WavLM/HuBERT/wav2vec2 baselines = Pebble's voice backbones).</li>
+<li><strong>Best point (Baseline to beat):</strong> Table 1 reports <strong>encoder-based SER classifiers on the exact backbone+corpus Pebble's voice stream uses</strong> — WavLM-Large = <strong>70.3%</strong> acc on RAVDESS (5-class), 68.9% IEMOCAP; HuBERT-Large 70.5% RAVDESS; wav2vec2-Large 64.0% RAVDESS.</li>
+<li><strong>How to apply to Pebble:</strong> use WavLM-Large 70.3% / RAVDESS as the external sanity-check comparator for the emotion head in the pending <code>voice-mtl-heads</code> Kaggle run — but note the labels aren't apples-to-apples (BLSP-Emo maps RAVDESS onto a 5-class {neutral,happy,sad,angry,surprise} set as an OOD test; the MTL probe uses 8-class RAVDESS with a random 10-fold split), so treat it as a ballpark for a frozen-backbone SER head, not a matched benchmark.</li>
+<li><strong>Caveats:</strong> end-to-end <strong>generative</strong> empathetic Speech-LLM (Whisper enc + Qwen-7B + modality adapter) — architecturally far from Pebble's frozen-probe MTL classifier; no continuous/regression head, no principled MTL balancing, no crisis/safety objective, not a clinical/mental-health domain (hence D2/D5/D6=0). PDF read pages 1–5 (method + main-results tables); later sections (multi-turn conversation, cross-lingual generalization, appendices B/C) unread — not needed for the score, but confidence on those is lower.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Analyzed against the <strong>current ViEmoSpeech profile + Decision Register (V-A…V-H)</strong> in
+<code>docs/tasks/paper-deep-analysis.md</code>, NOT the stale text-stream profile in the "Analysis"
+block above (which scored this paper for the archived suicide-risk product and is retained
+only as history). This section is APPENDED; nothing above is altered.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<p>Local PDF <code>pdfs/09-blsp-emo.pdf</code> (arXiv:2406.03872<strong>v1</strong>, 6 Jun 2024) read end-to-end via
+<code>pdftotext</code> — method (§2), experiment setup (§3), all main-results tables (Tables 1–5), the
+cross-lingual table (Table 3), ablations (§4.2), the ChatGPT/MultiTask analysis (§4.3),
+Limitations, and Appendices B–E (dataset table, training details, prompts, qualitative examples).
+Provenance validation:
+- <strong>Venue status</strong> — search <code>BLSP-Emo … 2406.03872 published venue</code> resolved to
+  <code>https://arxiv.org/abs/2406.03872</code>; the paper is an <strong>arXiv preprint</strong> (cs.CL, 6 Jun 2024),
+  code+weights at <code>github.com/cwang621/blsp-emo</code> / <code>huggingface.co/cwang621/blsp-emo</code>. No
+  peer-reviewed venue confirmed in the arXiv HTML (a ResearchGate mirror hints at a later
+  posting but is not corroborable) → treated as preprint; v1 is the only version, so no
+  preprint-vs-published delta to reconcile. ✔
+- <strong>Table 1 numbers</strong> — cross-checked against the arXiv HTML render
+  <code>https://arxiv.org/html/2406.03872v1</code>; the load-bearing MELD figure <strong>BLSP-Emo = 57.3%</strong>
+  matches the local PDF exactly and equals the <strong>0.573</strong> that bimodal-03 (EAA) cites. ✔
+  All Table 1 rows below are corroborated against that HTML render.</p>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Goal.</strong> Build an end-to-end empathetic speech-LLM that understands <em>both</em> semantics <em>and</em>
+paralinguistic emotion in speech and generates empathetic text, using ONLY existing ASR + SER
+datasets (no new emotion-conditioned instruction data). It is an <strong>Audio-Language Model (ALM)</strong>,
+not a discriminative SER fusion network.</p>
+<p><strong>Architecture (§2.1, App. C).</strong> Whisper-large-v2 <strong>encoder</strong> → convolution <strong>modality adapter</strong>
+(3× 1-D conv, stride 2, kernel 5, pad 2, ×8 downsample, bottleneck dim 512) → <strong>Qwen-7B-Chat</strong> LLM.
+✔ (App. C).</p>
+<p><strong>Two-stage alignment (the core method):</strong>
+1. <strong>Semantic alignment (§2.2).</strong> Behavior-cloning on ASR data: prompt the <em>text</em> LLM to continue a
+   transcript, then train the speech model to emit the <em>same</em> continuation from speech, via a
+   <strong>KL-divergence knowledge-distillation loss</strong> (Eq. 1). <strong>Only the modality adapter is tuned;
+   speech encoder + LLM stay frozen.</strong> Produces the "BLSP" checkpoint.
+2. <strong>Emotion alignment (§2.3).</strong> From SER triples (speech <code>s</code>, transcript <code>x</code>, emotion <code>e</code>), prompt
+   the LLM to write an <strong>emotion-aware continuation</strong> ("Continue … that reflects a <code>&lt;emotion&gt;</code> tone
+   … <code>&lt;transcript&gt;</code>"). Then fine-tune the model to reproduce that continuation <strong>from speech alone</strong>
+   (prompt no longer names the emotion — the model must read it off the audio). Primary loss = LM
+   loss on the continuation (Eq. 2), <strong>plus an auxiliary SER classification head</strong> on pooled adapter
+   hidden states (Eq. 3). <strong>Here the speech encoder AND the LLM are unfrozen</strong> (LLM via <strong>PLoRA</strong>,
+   R=16, α=16, applied only to speech tokens), plus the adapter and the classifier. ✔ (§2.3, App. C).</p>
+<p><strong>Data (§3.1, App. B/Table 6).</strong> Semantic stage: ~<strong>1.9M</strong> English (speech, transcript) pairs
+(LibriSpeech + CommonVoice 13 + GigaSpeech-M) + a comparable Chinese set from WeNetSpeech. Emotion
+stage: ~<strong>70k</strong> utts from IEMOCAP + MELD + CMU-MOSEI + MEAD + ESD (EN+ZH), collapsed to <strong>5 classes:
+neutral, happy, sad, angry, surprise</strong>. In-domain test = IEMOCAP S5 + MELD-test; OOD = RAVDESS +
+MerBench; zero-shot cross-lingual = AESDD (Gr), CaFE (Fr), RESD (Ru). ✔</p>
+<p><strong>Key results (all Acc%, corroborated ✔):</strong>
+- <strong>Table 1 (standalone SER).</strong> BLSP-Emo tops the board overall: <strong>IEMOCAP 76.0 · MELD 57.3 ·
+  RAVDESS 72.0</strong> (MerBench t1/t2 60.0/54.7). Encoder classifiers: <strong>WavLM-Large 68.9/54.6/70.3</strong>,
+  <strong>HuBERT-Large 64.6/53.2/70.5</strong>, <strong>wav2vec2-Large 69.3/54.8/64.0</strong>. <strong>SALMONN-7B</strong> (a rival ALM)
+  is far worse: 67.0/32.9/38.8. Text-only baselines are the tell: <strong>Text+LLM RAVDESS = 11.1%</strong>,
+  <strong>Whisper(ASR)+LLM RAVDESS = 13.7%</strong>, yet Text/Whisper+LLM are <em>comparable-or-better on MELD</em>
+  (54.0/53.8) — i.e. text is informative on conversational TV content but near-useless on
+  acted/fixed-sentence content.
+- <strong>Table 2 (SpeechAlpaca, synthetic TTS instructions).</strong> BLSP-Emo SER <strong>83.8%</strong>, GPT-4 quality
+  <strong>8.8</strong>, empathy <strong>7.7</strong>; BLSP-SER (fine-tuned to predict the label directly) collapses on
+  response quality (1.9/2.1) — proving the <em>continuation</em> objective, not label prediction, preserves
+  instruction-following. ✔
+- <strong>Table 3 (zero-shot cross-lingual).</strong> BLSP-Emo avg <strong>63.4</strong> (AESDD 68.8 / CaFE 75.3 / RESD 46.2),
+  best overall; emotion knowledge transfers to unseen languages. ✔
+- <strong>Table 4 (ablation).</strong> Remove semantic-alignment pretraining → IEMOCAP <strong>76.0→68.5</strong>, quality
+  <strong>8.8→6.7</strong> (semantic-first is essential). Remove the auxiliary SER loss → IEMOCAP <strong>76.0→72.2</strong>,
+  RAVDESS <strong>72.0→66.6</strong> (aux SER helps <em>natural-speech</em> SER, no effect on the synthetic
+  SpeechAlpaca). ✔
+- <strong>Table 5.</strong> Constructing continuations with the <strong>same internal LLM</strong> beats using ChatGPT
+  (BLSP-ChatGPT worse on every metric), and <strong>emotion-aware continuation</strong> beats a naive
+  <strong>continuation+SER multi-task</strong> framing (BLSP-MultiTask worse across the board). ✔</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-by-decision-id">Parts directly useful for ViEmoSpeech (tagged by Decision ID)</h3>
+<ol>
+<li>
+<p><strong>[V-A] The staged "semantic-first, emotion-second" curriculum — as a <em>schedule</em> concept, not an
+   architecture.</strong> BLSP-Emo's headline ablation (Table 4: w/o semantic pretraining, IEMOCAP
+   76.0→68.5, quality 8.8→6.7 ✔) says paralinguistic-emotion alignment only works <em>after</em> the model
+   is semantically grounded. This is the same ordering signal as bimodal-05 (task-alternating &gt; naive
+   joint) and C²SER (bimodal-01). <strong>Transfer risk: HIGH on the architecture, LOW on the ordering.</strong>
+   BLSP-Emo achieves "fusion" by <em>unfreezing and fine-tuning a 7B LLM + the whole Whisper encoder</em>
+   with PLoRA — the polar opposite of ViEmoSpeech's frozen-backbone + small learned-fusion
+   constraint. So it is an <strong>ALM existence proof (like C²SER), not a copyable fusion template</strong> (that
+   role belongs to FAS/CASE vn-07 and EAA bimodal-03). What <em>does</em> transfer: a two-phase training
+   plan — (a) align/warm the PhoBERT-over-PhoWhisper text branch on our transcripts first, (b) then
+   train the audio↔text fusion for emotion — rather than one cold joint objective.</p>
+</li>
+<li>
+<p><strong>[V-C] Auxiliary categorical SER head on top of the primary objective improves natural-speech
+   SER.</strong> Table 4 w/o-SER row: IEMOCAP 76.0→72.2 and RAVDESS 72.0→66.6 ✔ when the aux classification
+   loss (Eq. 3) is removed. <strong>Transfer risk: LOW/MEDIUM</strong> — this is a generic multi-objective
+   regularizer that survives register change (it helped <em>natural</em> speech, not the synthetic set).
+   Concretely: keep an <strong>auxiliary audio-only (or text-only) categorical emotion head alongside the
+   fused head</strong> in our model, exactly the audio-anchoring safeguard vn-12 argued for.</p>
+</li>
+<li>
+<p><strong>[V-C] Text-channel-on-acted-content evidence: Text/Whisper+LLM = 11.1% / 13.7% on RAVDESS but
+   ≈54% on MELD (Table 1 ✔).</strong> <strong>Transfer risk: LOW — this is the most ViEmoSpeech-relevant number
+   in the paper.</strong> RAVDESS is <em>acted, fixed carrier sentences</em> (semantically emotion-neutral) — the
+   text channel carries essentially nothing (near-chance). MELD is <em>conversational TV dialogue</em> —
+   text is informative. ViEmoSpeech is cut from <strong>acted VN TV drama</strong>, whose scripted lines sit
+   between these poles but lean toward the acted/low-text-signal regime for many turns. This says our
+   PhoBERT-over-PhoWhisper branch <strong>cannot be assumed to carry emotion the way conversational-corpus
+   results suggest</strong>, and quantifies the register-dependence the cross-cutting synthesis already
+   flagged.</p>
+</li>
+<li>
+<p><strong>[V-B] Frozen-vs-fine-tuned encoder anchors.</strong> WavLM-Large <strong>70.3</strong> / HuBERT-Large <strong>70.5</strong> /
+   wav2vec2-Large <strong>64.0</strong> on RAVDESS; WavLM <strong>68.9</strong> / wav2vec2 <strong>69.3</strong> / HuBERT <strong>64.6</strong> on
+   IEMOCAP (Table 1 ✔). Whisper-large-v2 encoder, once <strong>emotion-fine-tuned</strong> inside BLSP-Emo,
+   reaches 72.0 RAVDESS / 76.0 IEMOCAP — i.e. a Whisper encoder is a viable SER backbone, but <em>only
+   after fine-tuning</em>. <strong>Transfer risk: MEDIUM</strong> — every encoder number here is from a <em>fine-tuned</em>
+   encoder + pooling + linear head, so these are NOT frozen-backbone bars; they tell us WavLM ≈
+   HuBERT ≥ wav2vec2 and that Whisper-encoder is defensible, but they don't settle our frozen-vs-FT
+   question. Keep the WavLM frozen arm as default (consistent with bimodal-12) and treat
+   Whisper-encoder as an ASR-adjacent alternative worth an A/B, noting PhoWhisper is already in the
+   pipeline for ASR.</p>
+</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>V-A → training-schedule ADR, not a model swap.</strong> Write the fusion experiment as two phases:
+  Phase-1 warm-start the text branch (PhoBERT fine-tune on our ASR transcripts + emotion labels),
+  Phase-2 train the audio↔text fusion head with the backbone frozen. Cite BLSP-Emo Table 4 as
+  evidence that emotion alignment on a <em>semantically-cold</em> model underperforms — the paralinguistic
+  signal needs a grounded semantic scaffold first. Do <strong>not</strong> cite BLSP-Emo as a fusion architecture;
+  our positioning line: "unlike generative ALMs (BLSP-Emo, C²SER) that fine-tune a multi-B-param LLM,
+  we keep the backbone frozen and learn a small fusion module."</li>
+<li><strong>V-C → concrete head config.</strong> Add an auxiliary audio-only 7-class emotion head (small linear on
+  pooled WavLM features) trained jointly with the fused head; use BLSP-Emo's Eq. 3 + Table-4
+  ablation as the precedent that this aux head lifts <em>natural-speech</em> SER. This also operationalizes
+  the vn-12 "modality-dropout / audio-anchoring" safeguard against text-collapse.</li>
+<li><strong>V-C → the acted-content stress test.</strong> Build an explicit eval slice of <em>low-lexical-content</em>
+  turns (short exclamations, emotion-neutral carrier lines) and report audio-only vs text-only vs
+  fused there. BLSP-Emo's RAVDESS 11.1% text-only is the citation that on such turns the text branch
+  is at chance — so the fusion's job on those turns is to <em>not</em> be dragged toward text.</li>
+<li><strong>V-B → keep the ladder honest.</strong> Put WavLM-Large (frozen) as the default audio arm; record
+  BLSP-Emo's fine-tuned encoder numbers as an upper-bound reference (fine-tuned, not frozen) so we
+  don't mistake a 70% fine-tuned RAVDESS bar for a frozen-probe target. Add a Whisper-encoder A/B
+  since PhoWhisper is already loaded for ASR.</li>
+</ul>
+<h3 id="child-mental-health-viemospeech-transfer-risk-lens">Child mental-health / ViEmoSpeech transfer-risk lens</h3>
+<ul>
+<li><strong>This is an ALM, so it is an <em>existence proof</em>, not a build target — same verdict as C²SER
+  (bimodal-01).</strong> BLSP-Emo fine-tunes Whisper-large-v2 + Qwen-7B-Chat (PLoRA) on ~1.9M ASR + 70k SER
+  utts across 4× A100 (2.5 days + 3 h). ViEmoSpeech's constraint is a <em>frozen</em> backbone + small
+  fusion on ~18k VN utts. We can borrow its <em>findings</em> (semantic-first ordering, aux-SER benefit,
+  same-LLM data construction) but not its recipe.</li>
+<li><strong>Register match is partial and favorable-to-cite.</strong> BLSP-Emo trains/tests heavily on <strong>acted</strong>
+  corpora (IEMOCAP, RAVDESS, MEAD, ESD all "Act" in Table 6) — the same acted regime as VN TV drama.
+  Its honest acted numbers (IEMOCAP 76, RAVDESS 72, <em>with a fine-tuned 7B ALM</em>) sit far below the
+  leaky VN baselines (vn-08 86.6, vn-10 0.87) and are a useful sanity anchor for what acted 5-class
+  SER actually costs.</li>
+<li><strong>"Empathetic response" framing ≠ our task.</strong> Their downstream is <em>generating</em> empathetic text
+  (SpeechAlpaca quality/empathy 8.8/7.7 via GPT-4 judge). ViEmoSpeech does <em>labeling</em> (7-class + V/A</li>
+<li>distress), no generation, no child-directed dialogue. Their empathy metric is a GPT-4 preference
+  on synthetic TTS — no clinical or child-safety grounding; do not import it. Our distress head stays
+  an acted-drama proxy with a recall floor (V-F), untouched by this paper.</li>
+<li><strong>Language transfer is encouraging but shallow.</strong> Zero-shot to Greek/French/Russian (Table 3, avg
+  63.4 ✔) shows emotion cues learned in EN+ZH transfer to unseen languages — mild positive signal
+  that a Vietnamese emotion signal is learnable — but none of their languages is tonal in the lexical
+  sense, and they never probe tone, so this says nothing about the tone×emotion channel competition
+  that is our novelty.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech-incl-explicit-contradictionsgaps">Limitations &amp; open questions for ViEmoSpeech (incl. explicit contradictions/gaps)</h3>
+<ul>
+<li><strong>CONTRADICTION vs ViEmoSpeech's core constraint (frozen backbone).</strong> BLSP-Emo's entire "emotion
+  understanding" gain comes from <em>unfreezing</em> the encoder and LLM in stage 2 (§2.3). If the frozen
+  audio channel proves too weak on our acted VN clips, this paper is the reminder that the field's
+  strongest empathetic ALMs bought their paralinguistic sensitivity by fine-tuning — a lever we have
+  deliberately foreclosed. Mitigation to test: a lightweight partial-unfreeze (top encoder layers
+  only) A/B, budgeted but bounded.</li>
+<li><strong>CONTRADICTION / triangulation on text dominance.</strong> BLSP-Emo's Text+LLM <strong>RAVDESS 11.1%</strong> (Table
+  1 ✔) directly contradicts vn-12's "semantics dominate" claim and corroborates vn-08's "text
+  near-useless on VN acted (38–44%)" and bimodal-01's "text collapses on acted tonal (13.93)". The
+  reconciliation stands: text-reliance is <strong>register-dependent</strong> — high on conversational content
+  (MELD ≈54%), near-chance on acted fixed-sentence content (RAVDESS 11.1%). Our hook must be the
+  <em>measurable acoustic-channel</em> claim (tone×emotion in F0/phonation, vn-06/vn-13), not a blanket
+  "text carries more load."</li>
+<li><strong>CROSS-REFERENCE anchor with EAA (bimodal-03).</strong> EAA reports <strong>MELD 0.687</strong> for its dual
+  cross-attention audio↔audio fusion (HuBERT+BEATs) vs BLSP-Emo's <strong>0.573</strong> (Table 1 ✔, = the 0.573
+  EAA cites). A specialized sub-billion-param bimodal fusion <strong>beats a 7B generative ALM by ~11 pts
+  on MELD SER</strong> — direct evidence for ViEmoSpeech's bet that a small learned fusion can out-classify
+  a giant ALM on the discriminative SER task. (Caveat: not identical train sets, so treat as
+  directional, not head-to-head.)</li>
+<li><strong>GAP — "tone" named, lexical tone untouched (Nth paper in the set).</strong> The Limitations section
+  lists "other types of paralinguistic cues in human speech, such as tones and intentions … not
+  addressed" — but "tones" here means intonation/prosody, not <strong>lexical tone</strong>. Like CASE, C²SER,
+  MDAT, THAI-SER before it, BLSP-Emo uses/mentions "tone" without ever treating lexical tone as a
+  variable. V-D novelty remains fully intact and is now triangulated from another angle.</li>
+<li><strong>Open question for our aux-head design.</strong> BLSP-Emo shows <em>label-prediction fine-tuning alone</em>
+  (BLSP-SER) destroys downstream behavior (Table 2: quality 1.9) while an <em>auxiliary</em> SER loss on top
+  of a generative objective helps (Table 4). We have no generative objective, so the destructive
+  failure mode doesn't apply — but it is a caution that a categorical SER objective can dominate/warp
+  a shared representation. Test our aux categorical head at low loss weight and watch the V/A-CCC and
+  distress-recall heads for degradation.</li>
+</ul></article>
+</div></body></html>

@@ -1,0 +1,221 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F2 · WavFusion — gated cross-modal attention</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#7c3aed">F2 · Fusion khảo sát (v2 tương lai)</span>
+<h1>WavFusion — gated cross-modal attention</h1><p class="venue">MMM 2025</p>
+<div class="role" style="--accent:#7c3aed"><b>Vai trò trong survey:</b> Gated fusion; nhắc rằng gain phụ thuộc transcript sạch (v2).</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/06-wavfusion.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/06-wavfusion.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/06-wavfusion.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-06-wavfusion-towards-wav2vec-20-multimodal-speech-emotion-recognition">Paper 06 — WavFusion: Towards wav2vec 2.0 Multimodal Speech Emotion Recognition</h1>
+<ul>
+<li><strong>Authors:</strong> Feng Li, Jiusong Luo, Wanjun Xia</li>
+<li><strong>Venue / year:</strong> MMM 2025 (Springer LNCS)</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2412.05558 · PDF <code>pdfs/06-wavfusion.pdf</code></li>
+<li><strong>Group:</strong> audio+text (trục chính)</li>
+</ul>
+<p><strong>Summary:</strong> Gated cross-modal attention + homogeneous-feature-discrepancy learning, wav2vec2 audio + text branch, eval IEMOCAP/MELD.</p>
+<p><strong>Relevance to Pebble:</strong> Reference ablation gọn cho lựa chọn cơ chế fusion.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<p><strong>Assembled Pebble profile (at analysis time):</strong> Primary intent = <em>ordinal</em> suicide-risk <strong>text</strong> classification with LLM silver labels under strict gold-holdout (ordinal-aware, subject-level splits, reproducible; <code>docs/intent/constraints.md</code>). Adjacent <strong>voice</strong> stream (<code>voice-multimodal.md</code> → <code>docs/tasks/voice-mtl-heads.md</code>) = heterogeneous multi-task heads on a <strong>frozen SSL speech backbone</strong> (WavLM-Large / emotion2vec): emotion (CE) + affect (valence/arousal <strong>CCC regression</strong>) + crisis (BCE under a <strong>hard recall floor</strong>), balanced by <strong>Kendall uncertainty weighting</strong>; <strong>voice+text fusion</strong> is the forward direction.</p>
+<h3 id="analysis-wavfusion-audiotextvisual-ser">Analysis — WavFusion (audio+text+visual SER)</h3>
+<ul>
+<li><strong>Overlap:</strong> 19% (peripheral) — D1=0, D2=0, D3=1, D4=0, D5=1, D6=0, D7=2.</li>
+<li>Formula: (3·0 + 2·0 + 1·1 + 2·0 + 2·1 + 2·0 + 1·2) / 26 × 100 = 5/26 × 100 ≈ 19%.</li>
+<li>D1=0 single categorical emotion head + a representation-level margin loss — no continuous/safety heads. D2=0 general acted/TV SER, not mental-health/crisis (mental health only namechecked in intro). D3=1 IEMOCAP/MELD are emotion corpora but not the intensity/transfer exemplars. D4=0 no teacher-LLM labels (fully supervised gold). D5=1 balances CE + margin loss but via a hand-tuned scalar λ grid (Table 5), not the principled methods (uncertainty/GradNorm/PCGrad). D6=0 no recall constraint. D7=2 wav2vec2.0 audio SSL backbone (same family as the voice stream's WavLM/emotion2vec) <strong>and</strong> RoBERTa-base text (BERT-family, matches the text stream).</li>
+<li><strong>Closest on:</strong> D7 (SSL-speech + RoBERTa backbones match both Pebble streams); secondarily D5 (a concrete two-loss balancing sensitivity study).</li>
+<li><strong>Best point (Method to adopt):</strong> Gated cross-modal attention fusion — a learnable per-channel sigmoid gate <code>P = σ(FC(X_A→T ⊕ X_A→V))</code>, <code>X_F = P⊙X_A→T + (1−P)⊙X_A→V</code> (Eqs 10–11) that dynamically filters redundant/misleading cross-modal signal, ablated cleanly against naive concatenation (concat 66.78 → gated attention 70.6 WF1 on IEMOCAP, Table 6).</li>
+<li><strong>How to apply to Pebble:</strong> when the voice MTL heads gain a text branch, fuse the audio and text streams with this learnable gate rather than concatenation — it is a drop-in, cheap, citable fusion block and its concat-vs-gated ablation is the reference comparison for that design choice.</li>
+<li><strong>Caveats:</strong> Read in full (arXiv PDF, all 11 pp) — no paywall. Single <strong>categorical</strong> emotion task only; no continuous/CCC head, no crisis/recall-floor objective, no ordinal structure, no LLM weak labels, no gold-holdout — so it touches Pebble's <em>architecture forward-direction</em>, not its core evaluation thesis. Fusion gains are modest (+0.74 WF1 IEMOCAP, +0.44 MELD); MELD uses a fixed split while IEMOCAP is 5-fold (no reported std). The margin ("homogeneous feature discrepancy") loss needs paired same-emotion-across-modality samples, which Pebble's proxy-labeled RAVDESS voice-only setup cannot supply.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Read against the <strong>ViEmoSpeech</strong> profile (audio + PhoWhisper-ASR text, frozen backbone, 7-class +
+V/A(1–5) + distress, VN tone×emotion). The stale text-stream "Analysis (overlap with Pebble)" block
+above is archived — decisions cited here are <strong>V-A…V-H</strong> from <code>docs/tasks/paper-deep-analysis.md</code>.
+This section APPENDS below history; it does not edit it.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>PDF read in full</strong> via <code>pdftotext "docs/papers/bimodal-ser/pdfs/06-wavfusion.pdf" -</code> (arXiv:2412.05558v1,
+  11 pp incl. all 6 tables + Eqs 1–15 + reference list). Local PDF = arXiv preprint.</li>
+<li><strong>Provenance / venue check:</strong> the paper is published as <strong>MMM 2025 (MultiMedia Modeling), Springer LNCS,
+  DOI 10.1007/978-981-96-2071-5_24</strong> (Li, Luo, Xia). WebSearch <code>"WavFusion wav2vec 2.0 … IEMOCAP MELD MMM
+  2025"</code> → <code>link.springer.com/chapter/10.1007/978-981-96-2071-5_24</code>. The Springer abstract reproduces the
+  <strong>exact headline deltas</strong> in the local PDF (IEMOCAP +0.84% ACC / +0.74% WF1; MELD +0.43% ACC / +0.44% WF1)
+  → the preprint's load-bearing numbers are corroborated by the venue version. <strong>✔ corroborated (deltas).</strong>
+  Absolute table cells (WF1 70.6 etc.) are arXiv-only but internally consistent with the corroborated deltas.</li>
+<li><strong>Journal extension exists (flag, not read):</strong> same authors/mechanism appear as <em>"Improving speech emotion
+  recognition using gated cross-modal attention and multimodal homogeneous feature discrepancy learning"</em>,
+  <strong>Applied Soft Computing 2025</strong> (Elsevier, <code>S1568494625012281</code>) — <strong>paywalled, HTTP 403, abstract-only, not
+  bypassed.</strong> If the gate becomes ViEmoSpeech's fusion candidate, this extension likely holds the fuller
+  ablations MMM omits (std, per-class F1); worth a licensed pull later.</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Task.</strong> Utterance-level <strong>categorical</strong> emotion classification (ERC), <code>y_j ∈ R^c</code>. No V/A, no dimensional
+output, no distress. Trimodal: audio (a) + text (t) + <strong>visual (v)</strong>.</p>
+<p><strong>Architecture (Eqs 1–11).</strong> Two encoder groups feed a modified wav2vec 2.0:
+- <em>Auxiliary encoders (frozen):</em> <strong>visual</strong> = EfficientNet → <code>A-GRU-LVC</code> block (GRU + self-attention <code>X_v1</code>
+  ⊕ a 1-D <strong>Learnable Visual Center</strong> local block <code>X_v2</code>, Eqs 2–4); <strong>text</strong> = <strong>RoBERTa-base (frozen)</strong> →
+  GRU + self-attention (Eqs 5–6). Last dims: text 768, visual 64.
+- <em>Major encoder (partly fine-tuned):</em> wav2vec 2.0. The <strong>shallow</strong> (original) transformer layers stay
+  self-attention; the <strong>deep</strong> transformer layers have their self-attention <strong>replaced by gated cross-modal
+  attention</strong>. Crucially: <em>"we unfreeze the parameters of the deep transformer layer in wav2vec 2.0 … the
+  other layers are freezing"</em> (§3.2). So the audio backbone is <strong>partially fine-tuned</strong>, not frozen.</p>
+<p><strong>Gated cross-modal fusion (the V-A mechanism, Eqs 7–11):</strong></p>
+<pre><code>X_a  = FST(S_a)                       # shallow-transformer acoustic features   (Eq 7)
+X_F1 = CMA-T(X_a, X_t)                 # audio&lt;-text cross-modal attention       (Eq 8)
+X_F2 = CMA-V(X_a, X_v)                 # audio&lt;-visual cross-modal attention     (Eq 9)
+P    = sigmoid( FC( X_F1 (+) X_F2 ) )  # per-channel learnable gate              (Eq 10)
+X_F  = P (.) X_F1 + (1 - P) (.) X_F2   # gated convex mix of the two streams     (Eq 11)
+</code></pre>
+<p>The gate <code>P</code> is a per-channel sigmoid on the concatenation of the two cross-modal-augmented tensors; <code>X_F</code>
+convex-mixes the text-augmented and visual-augmented acoustic features to "filter out misinformation
+generated during cross-modal interactions." <strong>⚠ Eq 10 in both the arXiv PDF and OCR literally reads
+<code>FC(X_F1 ⊕ X_F1)</code> — a typo; it must be <code>X_F1 ⊕ X_F2</code> (otherwise <code>P</code> never sees the visual stream). Load-bearing
+for any re-implementation.</strong></p>
+<p><strong>Homogeneous-feature-discrepancy (margin) loss (Eqs 12–15).</strong> Unfused <code>X_a, X_t, X_v</code> pass through a shared
+linear encoder <code>SD</code>; a triplet <strong>margin loss</strong> <code>L_mar</code> (Eq 13) pulls <em>same-emotion / different-modality</em> pairs
+together and pushes <em>same-modality / different-emotion</em> pairs apart (cosine sim, margin θ). Total loss
+<code>L_total = L_task(CE) + β·L_mar</code> (Eq 15). <strong>This loss requires paired samples of the same utterance across
+≥2 modalities carrying the same gold emotion.</strong></p>
+<p><strong>Data.</strong> IEMOCAP (12 h, 10 actors, 7,380 samples, 5-fold CV — sessions 1–4 train/val, session 5 test) and
+MELD (Friends TV, ~1,400 dialogues / ~13,000 utts, 7-way, predefined splits). Metrics: ACC, Weighted-F1.</p>
+<p><strong>Results (exact, table refs):</strong>
+- <strong>IEMOCAP (Table 1):</strong> WavFusion <strong>ACC 70.53 / WF1 70.6</strong>; prior SOTA M2FNet WF1 69.86 / HAAN-ERC ACC 69.69,
+  WF1 69.47. Delta <strong>+0.84 ACC / +0.74 WF1</strong> over SOTA. <strong>✔ corroborated</strong> (Springer abstract).
+- <strong>MELD (Table 2):</strong> WavFusion <strong>ACC 66.93 / WF1 66.1</strong>; HAAN-ERC ACC 66.5 / WF1 65.66. Delta <strong>+0.43 ACC /
+  +0.44 WF1</strong>. <strong>✔ corroborated</strong> (Springer abstract).
+- <strong>Modality ablation (Table 3, IEMOCAP, WF1):</strong> A 65.59 · T 58.63 · <strong>V 26.31</strong> · A+T <strong>67.45</strong> · A+V 64.14 ·
+  A+T+V <strong>70.6</strong>. <strong>≈ arXiv-only.</strong> Note: <strong>A+V (64.14) is <em>lower</em> than A alone (65.59)</strong> — visual hurts
+  without text; text is the load-bearing partner (+1.86 WF1 over audio-only), the full trimodal adds +5.01.
+- <strong>LVC block (Table 4):</strong> w/o 69.84 → w/ <strong>70.60</strong> WF1 (+0.76). <strong>≈ arXiv-only</strong> (visual-only, irrelevant to us).
+- <strong>Margin-loss weight β (Table 5, WF1):</strong> β=0 → 67.66; 0.01 → 68.39; 0.1 → 68.96; <strong>β=1 → 70.6</strong>; β=10 → 64.19.
+  Best β=1 gives <strong>+2.94 WF1 over β=0</strong>; β=10 <em>collapses</em> (−3.47 vs β=1). <strong>≈ arXiv-only.</strong>
+- <strong>Gated attention vs concat (Table 6, the V-A ablation, WF1):</strong> plain <strong>concat</strong> (12 shallow / 0 deep) = <strong>66.78</strong>;
+  gated attention at 11/1 = 68.55 · 10/2 = 68.32 · <strong>9 shallow / 3 deep = 70.6</strong> · 8/4 = 69.06. Gate at the
+  optimal 9/3 split beats concat by <strong>+3.82 WF1 / +3.86 ACC</strong>. <strong>≈ arXiv-only</strong> (single-run, no std).</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-by-decision-id">Parts directly useful for ViEmoSpeech (tagged by Decision ID)</h3>
+<ol>
+<li><strong>[V-A] The gate itself (Eqs 8–11) as a learned-fusion candidate.</strong> Concrete, cheap (one FC + sigmoid + a
+   convex mix) alternative to concatenation, with a <em>clean concat-vs-gated ablation</em> (66.78 → 70.6 WF1,
+   Table 6). This is the reference comparison row for "does learned gating beat rule/concat fusion?"</li>
+<li><strong>[V-A/V-B] Where the gate lives is load-bearing.</strong> WavFusion does <strong>not</strong> bolt the gate onto frozen
+   features — it <strong>replaces self-attention inside the last 3 wav2vec2 transformer layers</strong> and <strong>fine-tunes
+   those layers</strong> (§3.2, Table 6's shallow/deep sweep). The +3.82 WF1 is entangled with backbone fine-tuning.</li>
+<li><strong>[V-C] Frozen RoBERTa-base + GRU + self-attention text head</strong> feeding cross-attention (Eqs 5–6). Direct
+   analogue for a frozen <strong>PhoBERT-over-PhoWhisper</strong> text branch — but they use <strong>gold IEMOCAP transcripts</strong>,
+   never ASR output.</li>
+<li><strong>[V-A/V-E] Margin (homogeneous-discrepancy) loss (Eqs 12–15), best β=1, +2.94 WF1.</strong> A representation-level
+   auxiliary that needs <em>same-utterance same-emotion cross-modality</em> pairs — ViEmoSpeech (audio + ASR-text,
+   both from the same clip with one shared gold label) <strong>can supply the audio↔text pair</strong> (no visual).</li>
+<li><strong>[V-G] Modality-ablation table format (Table 3)</strong> as the reporting template for "how much does the text
+   branch carry?" — the exact register-dependent measurement the ViEmoSpeech synthesis needs.</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>[V-A] Add a "gated fusion" arm to the fusion bake-off.</strong> Alongside CASE/FAS (vn-07) and plain
+  cross-attention, implement Eqs 8–11 with <strong>two</strong> streams only (drop <code>CMA-V</code>): re-specify the gate over
+  audio↔text (e.g. <code>X_F = P⊙X_audio-aug + (1−P)⊙X_text-aug</code>). Report it against the concat and
+  rule-fusion baseline rows. <strong>Transfer risk:</strong> WavFusion's gate arbitrates <strong>text-aug vs visual-aug</strong> acoustic
+  streams; with visual removed the two-way convex mix loses its original meaning and must be re-specified
+  (audio↔text gate). The +3.82 WF1 does <strong>not</strong> transfer as-is — it is a trimodal number.</li>
+<li><strong>[V-B] Do NOT copy the "graft gate into wav2vec2 + fine-tune deep layers" recipe under the frozen-backbone
+  constraint.</strong> ViEmoSpeech's default is a <strong>frozen</strong> WavLM/emotion2vec. WavFusion's gains are confounded with
+  unfreezing the last 3 transformer layers, so its ablation cannot certify a <em>post-hoc, frozen-feature</em> gate.
+  <strong>Action:</strong> if we want the gate, put it in a <strong>separate fusion head on top of frozen features</strong>, and treat
+  WavFusion's number as a fine-tuned ceiling, not a frozen bar. <strong>Transfer risk: high</strong> — the compact-entry
+  claim above that this is a "drop-in" block is wrong; it is embedded in a fine-tuned backbone.</li>
+<li><strong>[V-C] Text branch is the load-bearing partner, but they cheated on transcript quality.</strong> Table 3 shows text
+  lifts audio +1.86 WF1 while visual <em>hurts</em> (−1.45). Encouraging for our audio+text-only design — <strong>except</strong>
+  their text = <strong>gold transcripts</strong>; ViEmoSpeech feeds <strong>PhoWhisper ASR that tone-swaps at high arousal</strong>
+  (mày→máy). <strong>Action:</strong> run the Table-3 ablation twice — gold-caption text vs ASR text — to size the ASR
+  penalty on the fusion gain. <strong>Transfer risk: high</strong> — the +1.86 is an upper bound we will not see on ASR.</li>
+<li><strong>[V-A/V-E] Reuse the margin loss to align audio↔ASR-text of the same clip.</strong> With one shared gold emotion per
+  clip, we can form same-emotion/different-modality positives directly. β=1 (Table 5) is the starting weight;
+  β=10 collapse warns against over-weighting. <strong>Transfer risk: medium</strong> — cosine-margin alignment assumes the
+  two modalities <em>should</em> converge; on ASR-noised text of a high-arousal clip they may legitimately diverge,
+  so cap β low and gate it out on low-ASR-confidence turns.</li>
+<li><strong>[V-G] Publish the modality-ablation table</strong> (audio-only / text-only / audio+text) on our speaker-disjoint
+  holdout, as the honest register-specific answer to the cross-cutting "text-vs-audio dominance is
+  register-dependent" theme (synthesis pt 1).</li>
+</ul>
+<h3 id="cross-ref-is-fusion-gain-registerdataset-dependent-where-does-gating-help-most">Cross-ref — is fusion gain register/dataset-dependent? Where does gating help most?</h3>
+<p><strong>Yes, and WavFusion under-reports it.</strong> The full fusion/gating ablation (Tables 3–6) is run <strong>only on
+IEMOCAP</strong> (acted, scripted+improvised, clean gold transcripts, 5-fold). MELD (Friends TV, short noisy
+overlapping utterances) gets <strong>no modality/gating ablation</strong> — only the two headline SOTA-comparison rows,
+where WavFusion's absolute WF1 is much lower (66.1 vs 70.6) and the margin over SOTA shrinks (+0.44 vs +0.74).
+So the evidence says <strong>gating/fusion helps most on the cleaner, acted, gold-transcript corpus (IEMOCAP)</strong> and
+its benefit on the noisier conversational corpus (MELD) is unmeasured/smaller. This directly matches the
+program-level finding (vn-08 vs vn-12 vs bimodal-01): <strong>fusion gain is register- and transcript-quality
+dependent, largest where the text channel is clean.</strong> For ViEmoSpeech — found TV-drama audio + <em>noisy ASR
+text</em> — this predicts our fusion gain sits closer to the (unmeasured, likely smaller) MELD regime than the
+IEMOCAP showcase. We must measure it on our own register rather than inherit the +3.82.</p>
+<h3 id="child-mental-health-viemospeech-transfer-lens">Child mental-health / ViEmoSpeech transfer lens</h3>
+<ul>
+<li><strong>No tone, no phonation, no VN.</strong> WavFusion has zero notion of lexical tone or voice-quality; its "extra"
+  modality is <strong>visual (faces)</strong>, which ViEmoSpeech does not have and legally would not release. The whole
+  A-GRU-LVC apparatus (Eqs 1–4, Table 4) is dead weight for us. What survives is <em>only</em> the audio↔text gate.</li>
+<li><strong>Acted, categorical, adult.</strong> IEMOCAP/MELD are adult acted/TV emotion, no distress, no V/A, no minors —
+  consistent with the rest of the set; contributes <strong>nothing</strong> to V-D (tone×emotion), V-F (distress
+  recall-floor), or the child-register question. Its value is purely architectural (V-A) and cautionary (V-B).</li>
+<li><strong>Ethics/risk:</strong> none specific; but the "mental health" name-check in the intro (ref 4) with a purely acted
+  benchmark is the same overclaim pattern flagged for vn-10/EAA — cite as <em>not-our-framing</em>.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech-1-contradictiongap">Limitations &amp; open questions for ViEmoSpeech (≥1 contradiction/gap)</h3>
+<ul>
+<li><strong>Contradiction vs the ViEmoSpeech frozen-backbone constraint (V-B):</strong> WavFusion's headline gain requires
+  <strong>fine-tuning the deep wav2vec2 layers</strong> and <strong>embedding the gate inside them</strong> (§3.2, Table 6). It is <em>not</em>
+  a frozen-feature post-hoc fusion result. Any citation of "gated fusion beats concat by +3.82 WF1" must carry
+  this caveat, or it misrepresents what a frozen-backbone ViEmoSpeech would get. <strong>This also corrects the
+  archived compact entry above, which called the gate a "drop-in" block.</strong></li>
+<li><strong>Contradiction vs bimodal-02 ABHINAYA &amp; vn-07 CASE on rare classes:</strong> WavFusion reports <strong>no per-class F1
+  and no std</strong> — on a 4–7-class imbalanced task with a single 5-fold number, the +0.74 WF1 margin is plausibly
+  within CV variance, and rare-class (fear/disgust) collapse — which ABHINAYA caps at ~26–29% F1 and CASE
+  shows as 0-correct — is <strong>completely hidden</strong>. For our distress/rare-class floor (V-F/V-E) WavFusion offers
+  no evidence the gate helps the tail; it may only move the head classes.</li>
+<li><strong>Gap — ASR never confronted:</strong> text is gold transcripts throughout; the fusion gain under <strong>ASR tone-swap
+  noise</strong> (our actual input) is untested. Open question: does the gate learn to <strong>down-weight</strong> the text stream
+  (drive <code>P→1</code> toward audio) when ASR is wrong, or does it propagate the error? Worth a dedicated
+  ASR-confidence×gate-value analysis on our clips.</li>
+<li><strong>Gap — margin loss needs cross-modal pairs we only half-have:</strong> designed for 3 modalities; with audio↔ASR-text
+  only, the "same-emotion/different-modality" positive set is thinner and noisier (ASR text may not carry the
+  emotion at all on a short interjection). Untested whether β=1 survives the 2-modality, noisy-text regime.</li>
+<li><strong>Metric mismatch:</strong> WavFusion is WF1-on-categorical only — no CCC, no V/A, no distress — so it moves <strong>nothing</strong>
+  on V-D/V-F/V-G's dimensional and recall-floor evaluation; it is a V-A/V-B/V-C architectural input only.</li>
+</ul></article>
+</div></body></html>

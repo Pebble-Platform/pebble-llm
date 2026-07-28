@@ -1,0 +1,247 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>N4 · Emotion Recognition on Incongruent Speech (SLM)</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#dc2626">N4 · Novelty tone×emotion & tiền đề</span>
+<h1>Emotion Recognition on Incongruent Speech (SLM)</h1><p class="venue">arXiv 2025</p>
+<div class="role" style="--accent:#dc2626"><b>Vai trò trong survey:</b> Khung register-dependence + công cụ đo (target/proxy, Cramér's V).</div>
+<div class="links"><a href="../papers/vietnamese-ser/pdfs/12-emotionally-incongruent-slm.pdf">📄 PDF gốc</a><a href="../papers/vietnamese-ser/12-emotionally-incongruent-slm.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/vietnamese-ser/12-emotionally-incongruent-slm.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-vn-12-evaluating-emotion-recognition-in-spoken-language-models-on-emotionally-incongruent-speech">Paper vn-12 — Evaluating Emotion Recognition in Spoken Language Models on Emotionally Incongruent Speech</h1>
+<ul>
+<li><strong>Authors:</strong> (not yet extracted — verify from PDF)</li>
+<li><strong>Venue / year:</strong> arXiv preprint, Oct 2025</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2510.25054 · PDF <code>pdfs/12-emotionally-incongruent-slm.pdf</code></li>
+<li><strong>Group:</strong> vietnamese-ser / contrastive citation (semantics dominate)</li>
+</ul>
+<p><strong>Summary:</strong> Tests SLMs (SALMONN, DeSTA2, Qwen2-Audio, Audio Flamingo-3) on
+synthetic emotionally-incongruent speech; SLMs rely almost entirely on textual
+semantics (80–100% acc.) and are near-random (~25%) on acoustic-only emotion,
+while a dedicated SER baseline handles acoustic cues far better.</p>
+<p><strong>Relevance to ViEmoSpeech:</strong> Contrastive citation — "semantics can dominate"
+already happens in SLMs but as a <em>model-bias artifact</em>; our claim is a
+<em>principled phonetic cause</em> (tone-locked F0/phonation). Also informs V-A/V-C
+(text-branch dominance risks) and eval design for conflict cases.</p>
+<blockquote>
+<p>Stub created 2026-07-10 (task <code>docs/tasks/paper-deep-analysis.md</code>); deep-read pending.</p>
+</blockquote>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<h3 id="source-access-note">Source-access note</h3>
+<p>The local PDF <code>pdfs/12-emotionally-incongruent-slm.pdf</code> was extracted end-to-end with <code>pdftotext</code>
+(abstract, §§1–5, Table 1, Figures 1–2 captions, acknowledgements, ethics statement, references).
+This is an <strong>arXiv preprint</strong> (arXiv:2510.25054v2 [cs.CL], 30 Oct 2025), ICASSP-style two-column
+format ("Index Terms"), most likely submitted to ICASSP 2026 — no published venue version was
+locatable, so the preprint is authoritative and no preprint-vs-published delta exists.</p>
+<p><strong>Full author list (stub previously lacked it):</strong> Pedro Corrêa, João Lima, Victor Moreno, Lucas Ueda,
+Paula Dornhofer Paro Costa — School of Electrical and Computer Engineering, Universidade Estadual de
+Campinas (UNICAMP), Campinas, Brazil; affiliated with the Recod.ai Artificial Intelligence Lab.
+Funded by CAPES, FAPESP (#2020/09838-0 BI0S, #2023/12865-8 Horus), PPI-SOFTEX. Human-eval approved by
+UNICAMP CEP, CAAE 59536022.8.0000.5404.</p>
+<p>Web-validation of load-bearing numbers:
+- Query <code>Evaluating Emotion Recognition Spoken Language Models Emotionally Incongruent Speech EMIS UNICAMP Correa</code>
+  → resolved arXiv abstract/HTML (<code>https://arxiv.org/abs/2510.25054</code>, <code>https://arxiv.org/html/2510.25054v1</code>).
+  Confirmed authors incl. full name "Paula Dornhofer Paro Costa", EMIS dataset, "semantics dominate" claim [✔].
+- Query <code>EMIS ... SALMONN DeSTA2 Qwen2-Audio Cramer's V 0.65 proxy</code> + <code>WebFetch</code> of <code>arxiv.org/html/2510.25054v1</code>
+  → confirmed <strong>all Table 1 cells</strong> (SLM target ≈25–41%, proxy 66–100%; Baseline SER target 46–52.5%),
+  <strong>Cramér's V = 0.08 (target) / 0.65 (proxy)</strong>, <strong>human perception 39.4/58.1/62.0% + 70.8% GT</strong>,
+  <strong>EMIS = 1248 samples</strong>, chi-square N = 4,978 [✔]. HTML v1 numbers are identical to local PDF v2.</p>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Question.</strong> Do speech language models (SLMs) that fuse a speech encoder with a pretrained LLM actually
+integrate acoustics, or do they collapse to the text/semantic channel? Emotion recognition is used as
+the probe because semantic and prosodic channels can be deliberately put in conflict.</p>
+<p><strong>Stimulus construction (EMIS dataset).</strong> [§3.1, ✔]
+- GPT-4.5 generates <strong>104 emotion-rich English sentences</strong> across 4 emotions (angry/happy/neutral/sad),
+  each split into <strong>explicit</strong> (contains the emotion word, e.g. "I'm so happy we finally adopted a
+  puppy!") vs <strong>implicit</strong> (emotion only from context, e.g. "I can't stop smiling after our date last
+  night"). Neutral has no explicit/implicit split (analyzed separately).
+- <strong>Three SoTA zero-shot expressive TTS systems</strong> — CosyVoice2, StyleTTS2, F5-TTS — synthesize each
+  sentence in <strong>all 4 acoustic emotions</strong>, conditioning expressiveness on reference recordings from the
+  <strong>ESD</strong> emotional-speech database (10 English speakers, 350 utt/emotion; refs = 7 longest utts
+  concatenated to ~32.2±3.5 s). Each TTS produces 416 samples (104×4) → <strong>EMIS = 1248 total</strong>.
+- Per sentence this yields <strong>1 congruent + 3 incongruent</strong> samples. In the incongruent condition the
+  <strong>acoustic emotion is the target label</strong>; the <strong>semantic-content emotion is the "proxy" label</strong>.
+  Modality reliance is read off directly: high <em>proxy</em> accuracy = text-dominant; high <em>target</em> accuracy
+  = prosody-attentive.</p>
+<p><strong>Stimulus validation (two independent checks).</strong> [§3.3, §4, ✔]
+- A <strong>fine-tuned acoustic SER baseline</strong> (emotion2vec-based, ref [9], fine-tuned on an ESD subset)
+  confirms the TTS acoustics carry the intended emotion — it scores <strong>target 46–52.5% / proxy ≈1–33%</strong>,
+  i.e. it tracks the acoustic label, the desired behavior.
+- <strong>Human perceptual eval</strong>, 40 participants on a balanced subset: identification of the <em>acoustic</em>
+  emotion = <strong>39.4% StyleTTS2, 58.1% CosyVoice2, 62.0% F5-TTS, 70.8% ground-truth ESD</strong> [✔]. Note this
+  is only modestly above 25% chance for StyleTTS2 — the synthetic incongruence is imperfectly realized
+  (a real ceiling on the "SLMs are random on acoustics" claim; see Limitations).</p>
+<p><strong>SLM evaluation.</strong> [§3.2] Four SLMs — <strong>SALMONN, DeSTA2, Qwen2-Audio, Audio Flamingo-3</strong> — are prompted
+with a <strong>single fixed instruction that explicitly tells the model to ignore word meaning</strong>: <em>"Using tone
+of voice only (prosody: pitch, rhythm, loudness, timbre). Ignore word meaning; do not transcribe. Reply
+with exactly one: angry — happy — sad — neutral."</em> Default decoding hyperparameters. Chi-square tests of
+independence over N=4,978 predictions (≈4 models × 1248, minus parse failures — a minor internal
+inconsistency, ≈; 4×1248=4992), 9 dof, plus Cramér's V effect size.</p>
+<p><strong>Key results (Table 1 / Figure 2 / §4, all ✔ corroborated):</strong>
+- <strong>SLM target (acoustic) accuracy ≈ chance (25% for 4-class) everywhere:</strong> DeSTA2 25.6–38.4%,
+  Audio Flamingo-3 25.0–41.3%, Qwen2-Audio 21.1–30.1%, SALMONN 25.6–36.5%.
+- <strong>SLM proxy (semantic) accuracy is high whenever text carries emotion:</strong> in the <strong>explicit</strong> condition
+  DeSTA2/Qwen2-Audio <strong>95.5–100%</strong>, Audio Flamingo-3 up to <strong>100.0%</strong> (categorical — always predicts the
+  proxy on StyleTTS2), SALMONN 80.2–89.6%. Implicit is lower (66–92%). <strong>Neutral</strong> collapses proxy for
+  the text-sentiment-sensitive models (DeSTA2 7.6–10.5%, Qwen2-Audio 6.7–11.5%) but stays high for
+  SALMONN/Flamingo-3 (71–92%).
+- <strong>Baseline SER is the mirror image:</strong> target 46–52.5% (well above chance), proxy ≈1–33% — genuinely
+  acoustic.
+- <strong>Effect sizes:</strong> predicted-vs-target <strong>Cramér's V = 0.08</strong> (negligible); predicted-vs-proxy
+  <strong>V = 0.65</strong> (large). p&lt;0.01 for both associations but the effect-size gap is the headline [§4, ✔].
+- <strong>Figure 2:</strong> under the <strong>congruent</strong> condition SLM predictions track the (jointly-signalled) emotion
+  well (diagonal ≈53–97%); under <strong>incongruent</strong> the diagonal collapses and predictions skew toward
+  <strong>angry/happy while ignoring sad</strong> — an interaction between LLM text-sentiment priors and the fact
+  that angry/happy are more prosodically salient than sad/neutral.</p>
+<p><strong>Their explanation of <em>why</em> SLMs collapse to text.</strong> [§4–§5] The LLM backbone's text-representation
+prior dominates the fused representation; the "more easily available" the semantic emotion (explicit &gt;
+implicit &gt; neutral), the more the model leans on it — even under a prompt that explicitly forbids using
+word meaning. They frame this as a <strong>model/architecture bias</strong> ("text-related representations largely
+dominate over acoustic representations"), not a property of any language's phonetics, and warn that
+congruent-only benchmarks mask this deficiency.</p>
+<h3 id="parts-directly-useful-for-viemospeech">Parts directly useful for ViEmoSpeech</h3>
+<ol>
+<li><strong>The target/proxy-accuracy + Cramér's V protocol as a modality-reliance metric [V-D, V-G, ✔].</strong>
+   For each conflict sample, score predictions against <em>two</em> labels (acoustic-target and text-proxy) and
+   report a Cramér's V for each; the gap (0.08 vs 0.65 here) quantifies text dominance in a single,
+   citable pair of numbers. This is a ready-made instrument for <strong>quantifying tone×emotion channel
+   competition</strong> — run against our audio-target label and our text/ASR-sentiment proxy on a conflict
+   sub-slice.</li>
+<li><strong>The incongruent test-set design as a conflict-slice template [V-G].</strong> One congruent + three
+   incongruent per stem; acoustic emotion = target, semantic emotion = proxy; explicit/implicit/neutral
+   text-signal strata; validate stimuli with (a) an acoustic SER baseline and (b) human perception
+   <em>before</em> trusting them. This is the cleanest published blueprint for our conflict sub-slice.</li>
+<li><strong>The empirical warning that a strong text branch collapses a fused model to text [V-C].</strong> SLM target
+   accuracy sits at chance while proxy hits 80–100% whenever text carries emotion — direct evidence that
+   a learned fusion containing a strong text encoder will over-attend to the semantic channel unless
+   forced not to. Load-bearing for our fusion-regularization and audio-branch-not-starved decisions.</li>
+<li><strong>The explicit contrastive distinction for our novelty defense [V-D].</strong> Their dominance is a
+   <em>model-bias artifact</em> (LLM prior beats the speech encoder, in <strong>non-tonal English</strong>, under
+   synthetic TTS incongruence). Our claim is a <em>signal-level phonetic cause</em> — Vietnamese lexical tone
+   locks F0/phonation, the same channel emotion uses, so the text branch must carry load for a
+   <em>phonetic</em> reason intrinsic to the language, not because a big LLM overrides a weak encoder. Cite-and-
+   distinguish sentence is now securable verbatim.</li>
+<li><strong>The neutral-condition finding [V-C, V-D].</strong> When the text is emotion-neutral, some SLMs' target
+   accuracy <em>rises</em> (DeSTA2/Flamingo-3 to 37–41%) — evidence that text dominance is <strong>conditional on the
+   text carrying signal</strong>. Directly relevant to our regime: spontaneous drama ASR text is often
+   low-emotion-signal, which should <em>reduce</em> text dominance — but ASR tone-swap errors can inject
+   <em>false</em> text signal exactly at high arousal (see lens).</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>V-D (tone×emotion measurable claim).</strong> Adopt the target/proxy + Cramér's V instrument as the
+  <em>reporting format</em> for our channel-competition figure: on the conflict sub-slice, report our fusion
+  model's V(pred, audio-emotion) vs V(pred, text-sentiment). If our model — unlike these SLMs — shows a
+  non-negligible V against the audio label on tonal Vietnamese conflict cases, that is the positive
+  result the method paper needs. Pair it with Shen-style layer-wise probing (vn-06) for the mechanism
+  and this metric for the behavioral outcome.</li>
+<li><strong>V-D (novelty defense).</strong> One sentence in Related Work: "Prior work shows SLMs default to semantics
+  under incongruence (Corrêa et al. 2025), but attributes this to an LLM-backbone <em>representation bias</em>
+  in non-tonal English synthetic speech; we instead identify a <em>phonetic</em> mechanism — lexical-tone
+  F0/phonation competition — specific to tonal-language SER." Distinguishes cleanly without conceding
+  our hook.</li>
+<li><strong>V-C (text branch under ASR noise).</strong> Bake a <strong>conflict sub-slice into training, not just eval</strong>, and
+  add an audio-anchoring safeguard so the fusion cannot collapse to PhoBERT: candidate levers — a
+  modality-dropout schedule on the text branch, an auxiliary audio-only head, or a fusion-attention
+  regularizer. Success criterion: on the conflict slice, audio-target accuracy stays well above chance
+  (their SLMs failed this at V=0.08). Cite this paper as the empirical justification that the safeguard
+  is necessary.</li>
+<li><strong>V-G (eval protocol).</strong> Add a <strong>conflict sub-slice metric line</strong> to the eval table alongside the
+  speaker-disjoint / whole-series-holdout numbers: report macro-F1 on congruent vs conflict separately,
+  plus the two Cramér's V values, mirroring their Table 1 structure. Validate the conflict slice with
+  our dual-teacher agreement + human gold (our analogue of their SER-baseline + human-perception check).</li>
+<li><strong>Stimulus-validity discipline.</strong> Their human perception only reached 39.4% on StyleTTS2 — a lesson to
+  <em>gate</em> our conflict slice on human recognizability before reporting model numbers, so we don't attribute
+  a model's failure to text-dominance when the acoustic emotion was never audible to humans either.</li>
+</ul>
+<h3 id="child-vietnamese-drama-mental-health-lens-transfer-validity-risks-mitigations">Child / Vietnamese-drama mental-health lens (transfer validity, risks, mitigations)</h3>
+<ul>
+<li><strong>Transfer of the finding is LOW; transfer of the method and the distinction is HIGH.</strong> The result
+  (SLMs random on acoustics) is measured on <strong>non-tonal English, TTS-synthetic, cross-speaker-reference</strong>
+  stimuli, evaluated on <strong>giant English LLM-backbone SLMs</strong> — none of these match ViEmoSpeech (tonal
+  Vietnamese, real TV-drama speech, a small bespoke WavLM+PhoBERT fusion). So the <em>magnitude</em> of text
+  dominance will not transfer. What transfers is (a) the <strong>target/proxy Cramér's V instrument</strong> [V-D/V-G]
+  and (b) the <strong>direction-of-risk warning</strong> [V-C].</li>
+<li><strong>Their mechanism is prompt-specific — our model can't disobey a prompt.</strong> Their SLMs collapse to text
+  <em>despite an instruction to ignore word meaning</em>; the failure is partly instruction-following, not pure
+  representation. A jointly-trained fusion with no natural-language instruction interface <strong>cannot exhibit
+  this exact failure mode</strong> — which both weakens naive transfer of their headline and means our
+  text-dominance risk, if it appears, is a genuinely learned attention imbalance, cleanly attributable.</li>
+<li><strong>The Vietnamese amplifier they never see: ASR false-signal at high arousal.</strong> In our pipeline PhoWhisper
+  makes <strong>tone-swap errors precisely at high arousal</strong> (mày→máy, tao→tháo). Their English text is either
+  clean (GPT-generated) or absent; ours is <em>corrupted exactly when the audio matters most</em>. A text-dominant
+  fusion would therefore be misled by hallucinated lexical signal at the highest-stakes (high-arousal /
+  distress) moments — a sharper version of their risk with direct <strong>V-F (distress recall-floor)</strong>
+  implications. Mitigation: the conflict slice must include high-arousal ASR-error cases, and the
+  distress head should be able to fire from the audio branch alone.</li>
+<li><strong>Ethics / framing.</strong> Their EMIS is fully synthetic English TTS — no human-subjects data beyond the
+  40-listener validation (UNICAMP CEP approved). ViEmoSpeech cannot synthesize (human-labeled real drama
+  under CC-BY, media never released); our conflict slice is <strong>naturally occurring, rarer, and unbalanced</strong>,
+  so it needs human identification of conflict cases rather than controlled generation — a design cost to
+  budget, not a shortcut we can borrow.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech">Limitations &amp; open questions for ViEmoSpeech</h3>
+<ul>
+<li><strong>Contradiction #1 (REQUIRED — vs vn-08 Table V).</strong> vn-08 (HGR VN-SER, arXiv:2604.01711) reports a
+  <strong>text-only path scoring only 38.70–44.11%</strong> on 3-class Vietnamese SER — text "near-useless" — while
+  this paper reports SLM <strong>proxy (semantic) accuracy of 80–100%</strong> — "semantics dominate." <strong>Reconciliation:</strong>
+  the two measure different things on different inputs. (i) <em>Different text signal:</em> vn-12's text is
+  GPT-generated, deliberately emotion-loaded English (explicit tags like "I'm so happy"); vn-08's text is
+  PhoWhisper ASR of spontaneous Vietnamese dialogue with little explicit emotion vocabulary — a genuinely
+  low-signal, noisy transcript. (ii) <em>Different quantity:</em> vn-12's "proxy accuracy" measures how strongly a
+  model <em>relies on</em> whatever emotion the text carries; vn-08's "text-only accuracy" measures how much
+  emotion the text <em>carries</em> in the first place. (iii) <em>Different models:</em> huge English LLM-backbone SLMs
+  vs an un-tuned Whisper→LLM prompt path. <strong>Both are over-readings of weak baselines</strong> (vn-08's text branch
+  is un-fine-tuned; vn-12's SLMs under-weight prosody by architecture). For ViEmoSpeech the synthesis is
+  precise: <em>text carries little emotion in spontaneous VN drama (per vn-08), yet a strong text encoder will
+  still over-attend to whatever weak/false lexical signal exists (per vn-12)</em> — so our text branch must be
+  both fine-tuned (to extract the little real signal) and regularized/anchored (to not collapse onto ASR
+  hallucinations). The measurable tone×emotion claim stays open — neither paper disentangles the phonetic
+  channel.</li>
+<li><strong>Gap #2 (stimulus validity caps the "random on acoustics" claim).</strong> Human listeners identified the
+  acoustic emotion only <strong>39.4% (StyleTTS2) / 58.1% / 62.0%</strong> of the time (§4, ✔) — for StyleTTS2 barely
+  above 25% chance. If humans can't hear the intended emotion, an SLM scoring ≈25% is not necessarily
+  "ignoring acoustics" — the acoustics may not be there. The paper's headline slightly over-reads
+  imperfectly-realized synthetic incongruence. ViEmoSpeech should gate its conflict slice on human
+  recognizability to avoid the same trap.</li>
+<li><strong>Gap #3 (mechanism does not transfer to jointly-trained fusion).</strong> Their dominance is demonstrated on
+  <strong>prompted</strong> SLMs told to ignore text and failing to comply. A jointly-trained audio+PhoBERT fusion has
+  no such instruction to disobey, so this paper is <strong>motivation, not a prediction</strong>, for our architecture —
+  we must measure our own model's Cramér's V rather than assume the SLM result carries over.</li>
+<li><strong>Open question.</strong> EMIS + code are released; worth pulling their <strong>target/proxy scoring script and
+  chi-square/Cramér's V harness</strong> directly to standardize our conflict-slice reporting (their Github is
+  cited but URL not in the extracted text — resolve from the arXiv abstract page). Also unresolved: whether
+  their neutral-condition target-accuracy <em>rise</em> replicates on tonal-language audio, where "neutral text"
+  still carries tonal F0 that competes with emotional F0 — a question only ViEmoSpeech can answer.</li>
+</ul></article>
+</div></body></html>

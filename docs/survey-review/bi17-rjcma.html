@@ -1,0 +1,248 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M5 · RJCMA — Recursive Joint Cross-Modal Attention</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#2563eb">M5 · Phương pháp được benchmark</span>
+<h1>RJCMA — Recursive Joint Cross-Modal Attention</h1><p class="venue">CVPRW 2024 (ABAW6)</p>
+<div class="role" style="--accent:#2563eb"><b>Vai trò trong survey:</b> Nguồn objective CCC loss (L=1−ρc) cho head valence/arousal.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/17-rjcma.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/17-rjcma.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/17-rjcma.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-17-rjcma-recursive-joint-cross-modal-attention-for-multimodal-fusion-in-dimensional-emotion-recognition">Paper 17 — RJCMA: Recursive Joint Cross-Modal Attention for Multimodal Fusion in Dimensional Emotion Recognition</h1>
+<ul>
+<li><strong>Authors:</strong> R. Gnana Praveen, Jahangir Alam</li>
+<li><strong>Venue / year:</strong> CVPRW 2024 (ABAW6 — hạng 2 valence-arousal challenge)</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2403.13659 · PDF <code>pdfs/17-rjcma.pdf</code></li>
+<li><strong>Group:</strong> audio-visual (đối chứng)</li>
+</ul>
+<p><strong>Summary:</strong> Recursive joint cross-modal attention, predict continuous valence/arousal với CCC loss.</p>
+<p><strong>Relevance to Pebble:</strong> Fusion modality-agnostic + head hồi quy liên tục — pattern chuyển thẳng sang audio+text cho crisis/severity head.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<h3 id="analysis-rjcma-recursive-joint-cross-modal-attention-der">Analysis — RJCMA (recursive joint cross-modal attention, DER)</h3>
+<ul>
+<li><strong>Supersedes the 2026-07-02 score of 19% computed against the stale text-only profile.</strong></li>
+<li><strong>Profile assembled at analysis time</strong> (intent + capabilities, not remembered text-only text): (1) <code>docs/intent/constraints.md</code> — primary program is ordinal suicide-risk <strong>text</strong> classification (LLM silver labels honestly augmenting scarce clinical gold), bound by gold-holdout, <strong>subject-level integrity</strong>, ordinal-aware losses/metrics, reproducibility, clinical ethics. (2) <code>docs/spec/capabilities/voice-multimodal.md</code> → <code>docs/tasks/voice-mtl-heads.md</code> — an <strong>active adjacent voice stream</strong>: frozen WavLM-Large / emotion2vec + shared trunk with <strong>three heterogeneous heads</strong> (emotion CE · <strong>affect V/A regression that already uses CCC loss <code>1−ρc</code></strong> · crisis BCE under a hard recall floor 0.90), balanced by <strong>Kendall uncertainty weighting</strong>, subject-independent 10-fold. <strong>Voice+text fusion is the named forward direction.</strong></li>
+<li><strong>Overlap:</strong> D1=1, D2=0, D3=1, D4=0, D5=0, D6=0, D7=1 → <code>(3·1 + 2·0 + 1·1 + 2·0 + 2·0 + 2·0 + 1·1)/26 × 100</code> = 5/26 × 100 = <strong>19% (peripheral)</strong>.</li>
+<li><strong>Closest on:</strong> D1 — RJCMA's continuous valence/arousal regression is the <strong>direct analog of the voice stream's <code>affect</code> head</strong> (<code>Linear(256,2)</code> V/A), not a weak "text-score" analog as the stale block claimed; and D7 — it fuses a <strong>BERT-family text encoder with an audio stream</strong>, the exact voice+text pairing that is Pebble's named forward direction.</li>
+<li><strong>Best point (Method to adopt):</strong> RJCMA is a <strong>published, code-available (github.com/praveena2j/RJCMA), ABAW6-2nd-place template for exactly the audio+text continuous-affect fusion Pebble names as its forward direction</strong> — its joint cross-modal attention block (build a joint FC over concatenated modality features <code>J</code>, compute per-modality cross-correlation attention <code>H·W</code> against <code>J</code>, recursively refine, concatenate → head) is the transferable element that the stale text-only analysis wrongly dismissed as "not transferable."</li>
+<li><strong>How to apply to Pebble:</strong> When the voice stream moves from single-modality to <strong>voice+text fusion</strong>, fork RJCMA's joint cross-modal attention (Eqs 1–14) to wire frozen <strong>WavLM/emotion2vec voice features + NeoBERT text features</strong> into a joint representation, recursively refine (<code>l=3</code> was optimal in their ablation), then feed the concatenated attended features into the <strong>existing</strong> emotion / affect-CCC / crisis heads — a fork-and-adapt on public code, not a reimplementation. (Note: the CCC loss the <em>stale</em> block flagged as the takeaway is <strong>already in</strong> the voice affect head, so it is no longer the novel point.)</li>
+<li><strong>Caveats:</strong> Full PDF read (6 pp, incl. CCC-loss Eq 16 <code>L = 1 − ρc</code> and Table 1); nothing paywalled. The <strong>% coincides with the stale 19% but on a corrected basis</strong> — the paper still touches <strong>none</strong> of Pebble's high-weight dimensions: not mental-health/crisis (Affwild2 = in-the-wild YouTube V/A; D2=0), no teacher-LLM distillation (D4=0), <strong>no principled MTL loss balancing</strong> (valence &amp; arousal are plain regression outputs, no uncertainty/GradNorm — contrast the voice stream's Kendall weighting; D5=0), no safety/recall-floor objective (D6=0), and its heads are <strong>homogeneous continuous</strong>, not the heterogeneous emotion+affect+crisis topology, so D1=1 (partial), not 2. Backbones only <strong>partially</strong> match (D7=1): BERT-family text yes, but the audio backbone is <strong>VGGish, not WavLM/emotion2vec SSL</strong>, and BERT is used as <strong>frozen word-level features (sum of last 4 layers), not a fine-tuned ~250M encoder</strong>. Minor positive alignment (not scored): RJCMA partitions Affwild2 <strong>subject-independently</strong>, matching Pebble's subject-level-integrity constraint (I2).</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Read against the <strong>CVPRW 2024 / ABAW6 venue version</strong> (CVF Open Access:
+<code>openaccess.thecvf.com/content/CVPR2024W/ABAW/html/Praveen_Recursive_Joint_Cross-Modal_Attention_..._CVPRW_2024_paper.html</code>).
+Local PDF <code>pdfs/17-rjcma.pdf</code> = arXiv:2403.13659v4 (13 Apr 2024). The headline CCC numbers, the
+"2nd place" claim, and the baseline numbers were independently confirmed against the CVF listing +
+abstract; internal per-fold tables are read from the venue PDF (arXiv v4 matches the CVF abstract).
+This section is scored against the <strong>current ViEmoSpeech profile + V-A…V-H register</strong> (paper-deep-analysis.md,
+2026-07-10), superseding the stale D1…D7 "Analysis" block above. This is an <strong>audio-VISUAL control-group</strong>
+paper; the transferable parts are the <strong>fusion mechanism (V-A)</strong>, the <strong>CCC loss for continuous V/A (V-G)</strong>,
+and (as a negative signal) the <strong>audio backbone choice (V-B)</strong>.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>Extraction:</strong> <code>pdftotext "docs/papers/bimodal-ser/pdfs/17-rjcma.pdf" -</code> (full 6-page read incl. all
+  4 tables, Eqs 1–16, and both preprocessing + training sections). Formulae are printed as LaTeX inside
+  the PDF, so Eqs 1–16 were read verbatim, not OCR-reconstructed.</li>
+<li><strong>Web-validated (venue = authoritative):</strong></li>
+<li>Query <code>RJCMA Recursive Joint Cross-Modal Attention Aff-Wild2 CCC valence 0.542 arousal 0.619 ABAW6 second place</code>
+    → resolved the <strong>CVF Open Access CVPRW 2024</strong> page + the arXiv abstract, both stating CCC <strong>valence 0.585 (0.542)
+    and arousal 0.674 (0.619)</strong> for validation (test), "second place in the valence-arousal challenge of the 6th ABAW",
+    baseline <strong>valence 0.240 (0.211) / arousal 0.200 (0.191)</strong>. ✔ corroborated (headline, place, baseline).</li>
+<li>No preprint/venue conflict found; arXiv v4 (13 Apr 2024) == CVPRW camera-ready. Code:
+    <code>github.com/praveena2j/RJCMA</code> (cited in-paper, not re-fetched — not load-bearing for any number).</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<ul>
+<li><strong>Task.</strong> Dimensional Emotion Recognition (DER) on <strong>Aff-Wild2</strong> (ABAW6 track): regress <strong>continuous
+  valence and arousal in [-1,1]</strong>, evaluated by Concordance Correlation Coefficient (CCC). Not categorical.</li>
+<li><strong>Three modalities, one fusion block.</strong> Audio + <strong>Visual</strong> + Text, each encoded then temporally modeled
+  by a <strong>TCN</strong>, then fused by the proposed <strong>Recursive Joint Cross-Modal Attention (RJCMA)</strong> (§3.4).</li>
+<li>Visual: ResNet-50 (MS-CELEB-1M pretrain → FER+ fine-tune) → TCN (§3.1).</li>
+<li>Audio: <strong>VGGish</strong> (VGG pretrained on AudioSet) on <strong>log-mel spectrograms</strong>, hop = 1/fps → TCN (§3.2).</li>
+<li>Text: <strong>ASR-derived.</strong> Speech → <strong>Vosk</strong> ASR → punctuation/capitalization restoration →
+    <strong>BERT</strong> word-level features = <strong>sum of the last 4 layers</strong> (frozen; not fine-tuned) → TCN, with
+    word features time-broadcast to frame rate by ASR timestamps (§3.3, §4.2.1).</li>
+<li><strong>The RJCMA fusion mechanism (§3.4, load-bearing equations, all ✔ read verbatim from venue PDF):</strong></li>
+<li><strong>Eq 1 — joint representation:</strong> <code>J = FC([X_a ; X_v ; X_t]) ∈ R^{d×K}</code>, <code>d = d_a+d_v+d_t</code>, K frames.</li>
+<li><strong>Eqs 2–4 — joint cross-correlation</strong> of each modality against <code>J</code>:
+    <code>C_a = tanh( X_aᵀ W_ja J / √d )</code>, likewise <code>C_v</code>, <code>C_t</code> (learnable <code>W_j·</code>).</li>
+<li><strong>Eqs 5–7 — attention maps:</strong> <code>H_a = ReLU( X_a W_ca C_a )</code>, likewise <code>H_v</code>, <code>H_t</code> (<code>W_c· ∈ R^{K×K}</code>).</li>
+<li><strong>Eqs 8–10 — attended features with residual:</strong> <code>X_att,a = H_a W_ha + X_a</code>, likewise v, t.</li>
+<li><strong>Eqs 11–13 — recursion:</strong> feed attended features back: <code>X_att,·^(l) = H_·^(l) W_·^(l) + X_·^(l-1)</code>, l = recursive step.</li>
+<li><strong>Eq 14 — concatenate:</strong> <code>X_att^(l) = [X_att,a^(l); X_att,v^(l); X_att,t^(l)]</code> → MLP regression head → valence <em>or</em> arousal.</li>
+<li><strong>The CCC loss (§4.2.3, load-bearing for V-G):</strong></li>
+<li><strong>Eq 15 — metric:</strong> <code>ρ_c = 2·σ²_xy / ( σ²_x + σ²_y + (μ_x − μ_y)² )</code> (x=predictions, y=ground truth).</li>
+<li><strong>Eq 16 — objective:</strong> <code>L = 1 − ρ_c</code>. Chosen explicitly <em>over MSE</em> as "the standard loss in the literature for DER."</li>
+<li><strong>Training (§4.2.2, ✔ from PDF).</strong> Adam, weight-decay 0.001, <strong>batch 12</strong>, max 100 epochs + early stop; init
+  LR 1e-5, min LR 1e-8; <strong>ReduceLROnPlateau on validation CCC</strong> (patience 5, factor 0.1) with warm-up;
+  <strong>progressive unfreezing</strong> of backbones in 3 layer-groups; sub-sequences <strong>K=300</strong>, stride 200; <strong>6-fold CV</strong>
+  (fold 0 = official split); <strong>l=3 recursions</strong> in all runs. <strong>Valence and arousal trained as separate models.</strong></li>
+<li><strong>Dataset (§4.1, ✔).</strong> Aff-Wild2 / ABAW6: 594 videos, ~2,993,081 frames, 584 subjects; V/A continuous [-1,1],
+  labels = <strong>average of 4 expert joystick annotations</strong>; <strong>subject-independent</strong> split 356/76/162 (train/val/test).</li>
+<li><strong>Results (✔ corroborated headline; ≈ per-fold internal):</strong></li>
+<li>Headline (abstract + CVF): <strong>valence CCC 0.585 (0.542), arousal 0.674 (0.619)</strong> for val (test) — but the
+    val numbers 0.585/0.674 are the <strong>best-fold (Fold 1)</strong> figures (Table 1/Table 3), <em>not</em> the official Fold-0
+    validation, which is <strong>valence 0.455 / arousal 0.652</strong> (Table 2). ✔ (both appear in Table 1 &amp; Table 2).</li>
+<li>Baseline: <strong>valence 0.211 / arousal 0.191</strong> (test, Table 4). ✔.</li>
+<li><strong>ABAW6 test leaderboard (Table 4):</strong> RJCMA <strong>2nd</strong> overall, mean 0.5807 (valence 0.5418 / arousal 0.6196);
+    1st = Netease Fuxi (mean 0.6721, MAE-pretrained + ensemble, audio-visual only). ✔.</li>
+<li><strong>Recursion ablation (Table 3, Fold 1):</strong> l=1 mean 0.607 → l=2 0.618 → <strong>l=3 0.629 (best)</strong> → l=4 0.615
+    (declines, attributed to over-fitting). Total lift l=1→l=3 = <strong>+0.022 mean CCC</strong>. ≈ (single-fold, no std).</li>
+<li><strong>Adding text vs their own audio-visual RJCA (Table 2, test):</strong> RJCA (their reimplementation, A+V only)
+    valence 0.537 / arousal 0.576 → RJCMA (A+V+<strong>T</strong>) valence 0.542 / arousal 0.619. <strong>Text added +0.005 valence,
+    +0.043 arousal.</strong> ≈ (their reimplementation, one split). This is the single most ViEmoSpeech-relevant internal number.</li>
+</ul>
+<h3 id="parts-directly-useful-for-viemospeech-each-tagged-with-decision-id-transfer-risk">Parts directly useful for ViEmoSpeech (each tagged with Decision ID + transfer risk)</h3>
+<ol>
+<li>
+<p><strong>[V-A] The joint cross-modal attention block (Eqs 1–14) collapsed to two modalities = a drop-in
+   audio↔text fusion template.</strong> ViEmoSpeech has no visual stream, so set <code>X_v = ∅</code>: Eq 1 becomes
+   <code>J = FC([X_a ; X_t])</code>, and only the audio + text branches of Eqs 2–14 survive — which is <em>exactly</em>
+   Praveen's earlier 2-modality Joint Cross-Attention, here with a text branch already wired in. The
+   mechanism is <strong>modality-count-agnostic</strong>: the joint representation <code>J</code> and per-modality cross-correlation
+   <code>C_·</code> are defined over whatever modalities you concatenate. <strong>Transfer risk — LOW-to-MEDIUM.</strong> The math
+   transfers cleanly, but (a) their fusion operates on <strong>frame-synchronized sequences</strong> (K=300, word features
+   time-broadcast to frame rate) — our audio↔text alignment is <strong>utterance/turn-level</strong> (single clip, one
+   ASR transcript), so we would fuse <em>pooled</em> audio + <em>pooled</em> text vectors, losing the per-frame cross-attention
+   that is half the point; or we keep it sequence-level by broadcasting PhoBERT token features across WavLM
+   frames via PhoWhisper word timestamps (we already have these from the ASR pipeline). (b) The recursive
+   refinement bought only <strong>+0.022 mean CCC</strong> (Table 3) and over-fits at l=4 on 356 videos — on our smaller
+   3611-utt corpus, l=1 (plain joint cross-attention, no recursion) is the honest default and l&gt;1 needs a
+   held-out-fold justification. Concrete artifact: the <strong>learned-fusion arm</strong> that must beat the rule-based
+   PhoWhisper+PhoBERT baseline — RJCMA sits alongside CASE/FAS Q-Former, WavFusion gate, BCAF deep-supervision
+   in the V-A fusion-candidate menu, as the <strong>cross-correlation-attention</strong> option.</p>
+</li>
+<li>
+<p><strong>[V-G] The CCC loss <code>L = 1 − ρ_c</code> (Eqs 15–16) is the direct objective for our valence/arousal head.</strong>
+   This is the highest-value transfer: our V/A head regresses Russell valence/arousal, and CCC is the metric
+   the profile already names for V-G eval ("CCC for V/A"). Using <code>1 − ρ_c</code> as the <strong>training</strong> loss (not just
+   the eval metric) aligns the objective with the metric and, unlike MSE, is <strong>scale- and shift-invariant</strong> —
+   it rewards <em>agreement in trend</em>, robust to annotator offset. RJCMA's own lift over the ABAW baseline
+   (valence 0.211→0.542, arousal 0.191→0.619 test) is a clean existence proof that CCC-loss regression works
+   on noisy, in-the-wild, ASR-fed multimodal affect. <strong>Transfer risk — MEDIUM.</strong> CCC is computed <strong>over a
+   batch/sequence</strong> (needs variance σ²_x, σ²_y across samples), so it demands <strong>reasonably large batches</strong> and
+   <strong>breaks on tiny/degenerate batches</strong> (σ²→0 when all predictions equal); our batch 12–32 on 3611 utts is
+   near their batch-12 regime, workable but watch for near-constant-prediction collapse early in training.
+   Bigger caveat: their V/A is <strong>continuous [-1,1], 4-expert-averaged joystick</strong>; <strong>ours is 1–5 Russell,
+   single-pass human-labeled, discrete/ordinal</strong> (V-E). CCC on a 5-point discrete scale is defensible but far
+   coarser — the variance term is dominated by 5 bins, so report CCC <strong>and</strong> an ordinal metric (QWK / MAE), and
+   treat the CCC number as <strong>not like-for-like</strong> with Aff-Wild2 or MSP-Podcast (which is 1–7 SAM; see bimodal-12).
+   Concrete artifact: the V/A head loss in the fusion training config + the V-G metric row.</p>
+</li>
+<li>
+<p><strong>[V-B] The audio backbone is a <em>negative</em> signal — VGGish/log-mel + 2D-CNN is a dated control, not a
+   recommendation.</strong> RJCMA reaches 2nd place with <strong>VGGish (AudioSet) on log-mel spectrograms</strong> as its audio
+   encoder — no WavLM, no emotion2vec, no wav2vec2. For ViEmoSpeech this is a <strong>do-NOT-copy</strong> data point:
+   VGGish predates SSL speech encoders and captures generic audio-event structure, not phonation/voice-quality
+   — precisely the channel VN tone×emotion lives in (vn-06 Shen, vn-13 Chang). <strong>Transfer risk — HIGH if copied
+   naively.</strong> But two sub-parts <em>do</em> transfer: (a) the <strong>TCN temporal head over frame-level embeddings</strong> is a
+   lightweight, order-preserving pooling we can put on top of frozen WavLM/emotion2vec frames instead of mean-pool;
+   (b) their <strong>progressive-unfreezing</strong> schedule (3 layer-groups, warm-restart LR per group, best-state reload)
+   is a concrete recipe for the frozen-vs-fine-tuned backbone decision (V-B). Concrete artifact: the audio-branch
+   encoder choice + the frozen/FT schedule in the fusion config — RJCMA is evidence that even a <em>weak</em> audio
+   encoder + strong fusion is competitive, which sharpens our ablation question "how much of the gain is fusion
+   vs. backbone."</p>
+</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>[V-A] Fusion arm.</strong> Add an <strong><code>rjcma_fusion</code> experiment</strong> to the V-A menu: two frozen branches
+  (WavLM/emotion2vec audio + PhoBERT-over-PhoWhisper text), broadcast PhoBERT token features across WavLM
+  frames by ASR word-timestamps (pipeline already emits these), then Eqs 1–14 with <strong>l=1 default</strong>, l∈{1,2,3}
+  swept only on a held-out fold. Wire the fused <code>X_att</code> into the shared trunk feeding the 7-class emotion,
+  V/A-CCC, and distress heads. This is a <em>fork-and-adapt</em> on public code (<code>github.com/praveena2j/RJCMA</code>),
+  not a from-scratch build — the joint-correlation block is ~10 lines.</li>
+<li><strong>[V-G] V/A head objective.</strong> Set the valence/arousal head loss to <code>1 − ρ_c</code> (Eq 16), computed per-batch,
+  and add a <strong>guard</strong> against constant-prediction collapse (min-variance floor / warm-up with MSE for the
+  first N steps then anneal to CCC). Report CCC alongside QWK+MAE so the discrete 1–5 scale is legible.
+  This directly instantiates the V-G "CCC for V/A" metric as a <em>trainable</em> objective, not just an eval.</li>
+<li><strong>[V-B] Backbone ablation design.</strong> Use RJCMA as the <strong>"weak-encoder + strong-fusion" control row</strong>: run our
+  fusion with (i) a VGGish/log-mel arm (their setup) vs (ii) WavLM vs (iii) emotion2vec-S — if fusion dominates,
+  the tone×emotion story needs a <em>phonation-aware</em> encoder to move the needle (motivating the handcrafted
+  jitter/shimmer/HNR/H1-H2 vector from vn-06). Adopt their TCN-over-frames + progressive-unfreeze recipe for
+  the fine-tuned arm.</li>
+</ul>
+<h3 id="child-mental-health-lens-viemospeech-transfer-validity">Child mental-health lens / ViEmoSpeech transfer validity</h3>
+<ul>
+<li><strong>Register mismatch is total on content, partial on mechanism.</strong> Aff-Wild2 is adult, in-the-wild <strong>YouTube
+  reaction/vlog</strong> video — no children, no clinical distress, no tonal-language phonetics, and crucially
+  <strong>audio-visual</strong> where face dominates. Nothing about <em>what</em> is predicted transfers; only the <em>fusion math</em>
+  and the <em>CCC objective</em> do. This is a <strong>control-group</strong> paper by design (per the task framing), and should be
+  cited as method-provenance for V-A/V-G, never as an empirical anchor for VN SER.</li>
+<li><strong>Their text branch is the most ViEmoSpeech-relevant window — and it is a cautionary tale.</strong> RJCMA's text is
+  <strong>ASR-derived (Vosk) + frozen BERT (sum of last 4 layers)</strong>, i.e. exactly our ASR-noise regime and a <em>frozen</em>
+  text encoder. Adding that text branch moved <strong>arousal +0.043 but valence only +0.005</strong> (Table 2, test). Read
+  against the cross-cutting synthesis (theme #1, register-dependent text dominance): in a <strong>noisy-ASR, non-fine-tuned</strong>
+  text regime, the text branch barely helps the <em>valence</em> (pleasantness) dimension — consistent with vn-08's
+  "VN ASR text near-useless" pole and <em>opposite</em> to the clean-transcript text-dominance pole (bimodal-11).
+  <strong>Implication for our V-C:</strong> a <strong>frozen</strong> ASR-fed text branch is near-useless for valence; PhoBERT must be
+  <strong>fine-tuned</strong> (and regularized against tone-swap ASR noise) for the text branch to carry the load the
+  tone×emotion hook needs. RJCMA is direct evidence that <em>frozen</em> text is not enough.</li>
+<li><strong>Ethics/legality.</strong> No child data, no clinical claim, no scraped-media release issue that touches our
+  constraints — Aff-Wild2 is a public academic benchmark. The only reusable practice is the <strong>subject-independent
+  split</strong>, which matches our speaker-disjoint invariant (I2) — a small alignment, not a lesson.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech-incl-1-explicit-contradictiongap">Limitations &amp; open questions for ViEmoSpeech (incl. ≥1 explicit contradiction/gap)</h3>
+<ul>
+<li><strong>CONTRADICTION vs our multi-task plan (V-A/V-G/V-E).</strong> RJCMA trains <strong>separate models for valence and
+  arousal</strong> (§4.2.2), and separate models per emotion dimension is standard in ABAW. ViEmoSpeech's whole design
+  is a <strong>single shared-trunk multi-task</strong> model (7-class + V/A + distress). So RJCMA's fusion block and CCC loss
+  transfer, but its <strong>training topology does not</strong> — we must fuse <em>once</em> and branch to heads, and balance V/A-CCC
+  against categorical CE + distress recall-floor (an MTL loss-balancing problem RJCMA never faces, because it has
+  one continuous output per model). RJCMA gives us <strong>zero</strong> guidance on loss-balancing across heterogeneous heads.</li>
+<li><strong>CONTRADICTION vs bimodal-11 / CASE on text-encoder handling.</strong> RJCMA uses <strong>frozen</strong> BERT (sum of last 4
+  layers); bimodal-11 (RoBERTa+WavLM, closest to our stack) and CASE/FAS both <strong>fine-tune / distill</strong> the text
+  side. RJCMA's near-zero valence gain from frozen ASR-text is the empirical cost of that choice — evidence for
+  the fine-tune camp. We should cite RJCMA as the "frozen text underperforms" data point, not follow its recipe.</li>
+<li><strong>GAP — no ASR-robustness analysis despite an ASR-fed pipeline.</strong> RJCMA feeds Vosk ASR into the text branch
+  but never measures how ASR errors affect CCC (no clean-vs-ASR ablation). This is the <em>same</em> gap as every fusion
+  paper in the set (CASE, WavFusion, BCAF all use gold transcripts) — and it is precisely our novel contribution:
+  ViEmoSpeech operates under <strong>high-arousal tone-swap ASR errors</strong> (mày→máy) that RJCMA's English Vosk pipeline
+  never confronts. Our ASR-robustness ablation on the fusion + CCC head is genuinely unaddressed by this paper.</li>
+<li><strong>Weak internal evidence for the headline mechanism.</strong> The recursion (the paper's named novelty over prior
+  RJCA) buys <strong>+0.022 mean CCC</strong> on a <em>single fold</em> with no std (Table 3), and the text modality (the other
+  novelty) adds <strong>+0.005 valence</strong> (Table 2). Both "improvements" are plausibly within fold/seed variance —
+  a caution that we should <strong>not</strong> assume recursive depth or a bolted-on text branch will help our V/A head
+  without our own held-out-fold + multi-seed measurement (the V-G protocol: speaker-disjoint 8-fold + seed std,
+  per THAI-SER precedent).</li>
+<li><strong>Scale non-comparability.</strong> Aff-Wild2 CCC is on <strong>continuous [-1,1] 4-expert joystick</strong> labels; our CCC will
+  be on <strong>discrete 1–5 single-pass</strong> labels. Their 0.542/0.619 is <strong>not</strong> a target or a bar for us — it is only
+  evidence the CCC-loss regression recipe converges. Any cross-corpus CCC comparison (Aff-Wild2 vs MSP-Podcast
+  1–7 vs ours 1–5) must be flagged as scale-mismatched, same caveat we logged for bimodal-12 (MSP).</li>
+</ul></article>
+</div></body></html>
