@@ -123,7 +123,15 @@ giờ biết `epKey`/`clip_id`, không liệt kê được corpus) · `POST /rat
 `GET /rate/whoami`. UI `rate.html`/`rate.js` **mù**: không transcript, không gợi ý
 teacher, không nhãn owner.
 
+**Màn owner của change 011:** `/gold.html` (nghe & chốt gold set — đếm clip đã thật
+sự phát, cảnh báo khi ghi nếu còn "giữ mà chưa nghe"; ghi `gold-set.txt`) ·
+`/review.html` (so nhãn mọi rater trên **từng clip**, ô lệch đa số tô đỏ, lọc
+bất đồng/no_agreement/bỏ qua/clip lặp; clip lặp hiện cả 2 lần gán của cùng một
+người). Cả hai owner-only qua middleware `guard`. Dùng `/review.html` **sau khi đóng
+vòng** — xem nhãn giữa chừng rồi góp ý là neo nhãn, hỏng phép đo.
+
 Script: `build_assignments.py` (phân tầng + gold + dup + xáo trộn per-annotator) ·
+`pick_gold_candidates.py` (lọc đồng thuận ba chiều → ứng viên gold) ·
 `iaa_report.py` (Fleiss κ + Krippendorff α, nhãn-của-record). Giao thức + runbook:
 [change 011](../../docs/spec/changes/011-online-multi-annotator/README.md).
 

@@ -13,6 +13,7 @@ media, local-only (intent §1). Human labels are the source of truth (ADR-003).
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from pathlib import Path
 
 import audio
@@ -216,6 +217,65 @@ def save_gold_set(g: GoldSetIn) -> dict:
         encoding="utf-8",
     )
     return {"written": len(g.keys), "path": str(path)}
+
+
+@app.get("/review")
+def review() -> dict:
+    """Per-clip comparison of every rater's judgment (owner-only, change 011).
+
+    One row per clip: the owner's label of record plus what each annotator said, so
+    disagreement can be inspected where it actually lives instead of only in aggregate.
+    An annotator may appear twice on one clip — that is the QC duplicate, and seeing
+    both answers side by side is exactly the point.
+    """
+    rows: dict[tuple[str, str], dict] = {}
+    for r in store.all_ratings():
+        key = (r["epkey"], r["id"])
+        row = rows.setdefault(
+            key, {"epKey": r["epkey"], "id": r["id"], "kinds": set(), "ratings": {}}
+        )
+        row["kinds"].add(r["kind"])
+        row["ratings"].setdefault(r["annotator"], []).append(
+            {
+                "emotion": r["emotion"],
+                "valence": r["valence"],
+                "arousal": r["arousal"],
+                "skip": r["skip_reason"],
+                "listen_ms": r["listen_ms"],
+            }
+        )
+
+    out = []
+    for (ep_key, clip_id), row in rows.items():
+        rec = store.STATE.get(store.skey(ep_key, clip_id), {})
+        # majority over one answer per rater (first presentation) + the owner's label
+        votes = [a[0]["emotion"] for a in row["ratings"].values() if a[0]["emotion"]]
+        if rec.get("emotion"):
+            votes.append(rec["emotion"])
+        top, n = ("", 0)
+        if votes:
+            top, n = Counter(votes).most_common(1)[0]
+        out.append(
+            {
+                "key": f"{ep_key}/{clip_id}",
+                "wav": f"/clip/{ep_key}/{clip_id}.wav",
+                "kind": sorted(row["kinds"]),
+                "owner": {
+                    "emotion": rec.get("emotion", ""),
+                    "valence": rec.get("valence"),
+                    "arousal": rec.get("arousal"),
+                },
+                "ratings": row["ratings"],
+                "majority": top if n >= 2 else "no_agreement",
+                "unanimous": bool(votes) and n == len(votes),
+                "n_votes": len(votes),
+            }
+        )
+    out.sort(key=lambda r: (r["unanimous"], r["key"]))  # disagreement first
+    return {
+        "annotators": sorted({a for r in out for a in r["ratings"]}),
+        "rows": out,
+    }
 
 
 # ---------- online second-pass rating (change 011) ----------

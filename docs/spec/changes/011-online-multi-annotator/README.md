@@ -32,6 +32,7 @@ single-pass, 1 người).
 | `scripts/vietnamese-ser/iaa_report.py` | Fleiss κ + Krippendorff α + nhãn-của-record + bảng QC |
 | `scripts/vietnamese-ser/pick_gold_candidates.py` | lọc đồng thuận ba chiều + phân tầng → `gold-candidates.tsv` |
 | `tools/labeler/gold.html` · `gold.js` | màn nghe & chốt gold set (owner-only) → ghi `gold-set.txt` |
+| `tools/labeler/review.html` · `review.js` | bảng so nhãn mọi rater trên từng clip (owner-only) |
 
 ## Phạm vi
 

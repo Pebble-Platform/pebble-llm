@@ -105,6 +105,17 @@ print({a: store.progress(a) for a in ['ann01','ann02']})"
 gán nhãn** — trừ đúng những gì `qc-protocol.md` §4 cho phép (chỉ tiêu chí khách quan).
 Góp ý kiểu "clip này chắc là giận chứ nhỉ" là neo nhãn, và làm hỏng cả vòng đo.
 
+## 5b. Sau khi đóng vòng — soi từng clip
+
+`http://127.0.0.1:8000/review.html` — bảng **so nhãn mọi người trên từng clip**:
+owner + từng annotator cạnh nhau, ô nào lệch đa số thì tô đỏ, nghe được tại chỗ.
+Lọc: `chỉ bất đồng` · `no_agreement` · `có bỏ qua` · `clip lặp` (clip lặp hiện **cả
+hai lần gán** của cùng một người — nhìn ra ngay ai tự mâu thuẫn).
+
+Dùng khi κ của một lớp thấp và cần biết **clip mơ hồ thật hay hướng dẫn chưa rõ** —
+`iaa_report.py` chỉ trả lời "đồng thuận bao nhiêu", trang này trả lời "họ nói gì về
+clip NÀY". Clip đồng thuận tuyệt đối tự xếp xuống cuối.
+
 ## 6. Đóng vòng
 
 1. Tắt tunnel.
