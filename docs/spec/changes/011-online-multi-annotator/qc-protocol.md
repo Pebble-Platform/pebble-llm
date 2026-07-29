@@ -39,7 +39,27 @@ nằm ở κ 0.34 (MELD), 0.411 (MSP-Podcast), α 0.42 (CREMA-D).
    (đồng thuận ba chiều).
 2. Owner **nghe lại từng clip** và chỉ giữ những clip mình thấy **hiển nhiên, không
    phân vân**.
-3. Lấy ~**24 clip**, trải đủ 7 lớp trong khả năng cho phép và cả 2 series.
+3. Lấy ~**40 clip**, trải đủ 7 lớp trong khả năng cho phép và cả 2 series.
+
+**Vì sao 40 chứ không phải 24 (sửa 2026-07-29):** gold dùng ở **hai nơi** — 18 clip
+trong vòng qualification (§3.1) và ~22 clip rải trong vòng chính (§3.2 R1) — và
+**hai tập phải RỜI NHAU**. Nếu vòng chính dùng lại clip annotator đã gặp lúc
+qualification thì R1 đang đo **trí nhớ**, không đo việc họ còn nghe hay không. Con số
+24 ở bản đầu là tính thiếu. `build_assignments.py` cắt tự động: 18 đầu cho pretest,
+phần còn lại cho vòng chính, và cảnh báo nếu không đủ.
+
+Nguồn ứng viên: `pick_gold_candidates.py --per-class 9` → **58 ứng viên** (`surprise`
+chỉ có 4 trên toàn corpus — trần cứng, xem bảng dưới). Nghe rồi giữ lại ~40.
+
+| lớp | toàn corpus | đồng thuận 3 chiều | ứng viên |
+|---|--:|--:|--:|
+| joy | 151 | 70 | 9 |
+| sadness | 73 | 16 | 9 |
+| anger | 160 | 105 | 9 |
+| fear_anxiety | 81 | 30 | 9 |
+| **surprise** | 40 | **4** | **4** ← trần cứng |
+| disgust | 66 | 10 | 9 |
+| neutral | 227 | 143 | 9 |
 
 **Vì sao phải qua bước lọc này:** gold **không phải** "nhãn đúng" — nhãn của owner
 không phải sự thật nền độc lập (phim truyền hình tìm được không có nhãn do đạo diễn
@@ -70,9 +90,10 @@ phát**, không chỉ thời gian ở trên màn hình (annotator có thể mở
 
 ### 2.4 Trap trong vòng qualification
 
-Vòng qualification có **2 clip bẫy**: clip **không có tiếng nói** (chỉ nhạc nền hoặc
-tiếng động). Đáp án đúng duy nhất = **bỏ qua, lý do "không có tiếng nói"**. Người gán
-một cảm xúc cho tiếng nhạc là người đang click bừa.
+Vòng qualification có **2 clip bẫy**: lấy từ các clip **owner đã loại** với lý do
+`noise` hoặc `bad_cut` (hiện có **17 clip** như vậy) — clip mà gán bất kỳ cảm xúc nào
+cũng là đoán bừa. Đáp án đúng = **bỏ qua**. Người chấm một cảm xúc cho tiếng ồn là
+người đang click bừa. `build_assignments.py --qualify` tự rút từ pool này.
 
 ## 3. Ngưỡng — chốt cứng
 
@@ -202,8 +223,9 @@ CREMA-D α 0.42 (diễn xuất — gần domain nhất) · THAI-SER α thô 0.41
 
 1. Owner rà soát và chốt mọi con số ở §3.
 2. Điền thù lao ở [consent.vi.md §5](consent.vi.md) và mục xét duyệt đạo đức §9.
-3. Dựng gold set theo §2.1, lưu **danh sách clip id** vào
-   `docs/spec/changes/011-online-multi-annotator/gold-set.txt`.
+3. Dựng gold set theo §2.1 (`pick_gold_candidates.py` → nghe & chốt ở `/gold.html`
+   → `gold-set.txt`). **Nhắm giữ ≥40 clip** để cắt được 18 + 22 rời nhau; dưới 33 thì
+   `build_assignments.py` sẽ cảnh báo vòng chính còn quá ít neo.
 4. Commit tất cả. **Đổi trạng thái file này thành `frozen` + ghi ngày.**
 5. **Từ lúc này mới được mời annotator.**
 

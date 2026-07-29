@@ -37,6 +37,27 @@ gửi thẳng.
 
 Chạy lại được an toàn: hàng đợi đã có câu trả lời thì **không bị ghi đè**.
 
+### Vòng qualification trước, vòng chính sau
+
+`invite_annotators.py` dựng **vòng chính**. Vòng qualification (30 slot: 18 gold +
+10 thường + 2 bẫy) dựng riêng:
+
+```bash
+.venv-vnser/Scripts/python.exe scripts/vietnamese-ser/build_assignments.py \
+  --annotators ann01,ann02,ann03,ann04 --qualify \
+  --gold docs/spec/changes/011-online-multi-annotator/gold-set.txt
+```
+
+Chấm theo §3.1 (`iaa_report.py` bảng QC) → ai đạt mới dựng hàng đợi vòng chính cho
+người đó. **Gold của hai vòng rời nhau tự động** (18 đầu cho pretest, phần còn lại
+cho vòng chính): dùng lại clip pretest ở vòng chính là đo trí nhớ, không đo việc còn
+nghe hay không.
+
+⚠️ `store.assign()` từ chối ghi đè hàng đợi **đã có câu trả lời** — nên sau khi ai đó
+làm xong qualification, dựng vòng chính cho họ sẽ bị chặn. Xoá hàng đợi cũ của người
+đó trước (hoặc dùng id khác, vd `ann01` → `ann01r`) và **giữ lại dữ liệu qualification**
+để chấm.
+
 `tokens.json` nằm trong `data/**` → **gitignored, không bao giờ commit**. Một token
 = một người (safeguard #1), không dùng chung. Giữ **bảng ánh xạ `ann01` → tên thật
 riêng, ngoài repo** — bản phát hành chỉ có mã giả danh (consent §6).

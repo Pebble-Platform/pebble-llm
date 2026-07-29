@@ -35,7 +35,11 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="shortlist gold candidates to confirm by ear")
     ap.add_argument("--root", default="data/vietnamese-ser/episodes")
-    ap.add_argument("--per-class", type=int, default=5, help="candidates per emotion class")
+    # 9/class -> ~58 candidates -> keep ~40 after listening, which is what the protocol
+    # actually needs: 18 for the qualification pretest plus ~22 for the main round, and
+    # the two sets must be DISJOINT (reusing a pretest anchor scores recall, not
+    # listening). 5/class would have left the main round with almost no anchors.
+    ap.add_argument("--per-class", type=int, default=9, help="candidates per emotion class")
     ap.add_argument(
         "--out", default="docs/spec/changes/011-online-multi-annotator/gold-candidates.tsv"
     )
