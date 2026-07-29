@@ -28,6 +28,46 @@ $env:PYTHONIOENCODING = "utf-8"
 - Server in ra `-> http://127.0.0.1:8000/index.html`.
 
 Mở trình duyệt: **http://127.0.0.1:8000/index.html**
+
+## ⚠️ KHI SERVER ĐANG BẬT: đừng chạy script GHI vào `data/`
+
+`state.db` **chưa có lock 1-writer** (nợ đã biết của
+[ADR-004](../../docs/spec/decisions/ADR-004-labeler-state-durability.md)). Server giữ
+toàn bộ nhãn trong RAM và các route `save()` (chia / loại nhiều / cắt thủ công / undo)
+**ghi đè lại cả bảng** từ bản RAM đó. Tiến trình khác ghi xen vào sẽ **bị nuốt mất
+lặng lẽ** — SQLite/WAL đảm bảo ACID cho từng transaction, nhưng không chặn được
+2 tiến trình cùng ghi.
+
+| | |
+|---|---|
+| ✅ **Chạy được** khi server bật | `pick_gold_candidates.py` · `iaa_report.py` · sqlite mở `mode=ro` |
+| ❌ **PHẢI tắt server trước** | `build_assignments.py` · `invite_annotators.py` · `migrate_*.py` · mọi thay đổi schema · server thứ hai trỏ vào cùng `--root` |
+
+Kiểm tra server có đang chạy không:
+
+```powershell
+netstat -ano | findstr ":8000"
+```
+
+Trước khi chạy script ghi, **backup nóng** (không cần tắt server để backup):
+
+```powershell
+.venv-vnser\Scripts\python.exe -c "import sqlite3; sqlite3.connect('data/vietnamese-ser/episodes/state.db').execute(\"VACUUM INTO 'data/vietnamese-ser/episodes/state.db.bak-$(Get-Date -f yyyyMMdd)'\")"
+```
+
+## Sau khi code backend đổi: PHẢI restart
+
+Route mới chỉ đăng ký lúc server khởi động, nhưng file tĩnh (`*.html`, `*.js`) được
+phục vụ **thẳng từ đĩa**. Nên một trang mới có thể **mở lên 200 mà API của nó vẫn
+404** — trông như lỗi nhưng không phải, chỉ là server đang chạy code cũ.
+
+Kiểm nhanh xem server có phải bản mới nhất không:
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}`n" http://127.0.0.1:8000/review
+```
+
+`404` = code cũ, cần restart. `200` = đã mới.
 (phải qua server — **không** mở `file://` trực tiếp; UI là ES-module gọi API).
 
 **Dừng:** `Ctrl-C` trong cửa sổ đang chạy server.
