@@ -30,6 +30,8 @@ single-pass, 1 người).
 | `tools/labeler/rate.html` · `rate.js` | màn annotator (mù, tối giản) |
 | `scripts/vietnamese-ser/build_assignments.py` | dựng hàng đợi: phân tầng + gold + dup + xáo trộn |
 | `scripts/vietnamese-ser/iaa_report.py` | Fleiss κ + Krippendorff α + nhãn-của-record + bảng QC |
+| `scripts/vietnamese-ser/pick_gold_candidates.py` | lọc đồng thuận ba chiều + phân tầng → `gold-candidates.tsv` |
+| `tools/labeler/gold.html` · `gold.js` | màn nghe & chốt gold set (owner-only) → ghi `gold-set.txt` |
 
 ## Phạm vi
 
@@ -91,6 +93,11 @@ thực — κ tính offline bằng script.
 3. **Rà soát các ngưỡng ở `qc-protocol.md` §3** (Q1 ≥9/18, R1 <40%, R2 <40%, R3 >25%,
    R4 >40%). Chốt xong là **đông cứng**, sau đó chỉ được ghi thêm mục sửa đổi có ngày.
 4. **Dựng `gold-set.txt`** theo qc-protocol §2.1 — cần owner nghe lại thủ công.
+   Bước 1 (lọc + phân tầng) đã tự động: `pick_gold_candidates.py` → 34 ứng viên
+   trong `gold-candidates.tsv`. Bước 2 nghe và xác nhận: mở **`/gold.html`** trong
+   labeler (`Space` nghe · `K` giữ · `D` loại), bấm ghi → `gold-set.txt`.
+   Màn này **đếm clip đã thật sự phát** và cảnh báo khi ghi nếu còn clip "giữ mà
+   chưa nghe" — gold chưa nghe là gold không kiểm chứng, mà cả QC gate dựa lên nó.
 
 ## Milestone còn lại
 

@@ -9,7 +9,9 @@
 ## Trước khi mở vòng — checklist
 
 - [ ] `qc-protocol.md` đã **đông cứng** (trạng thái `frozen` + ngày + commit).
-- [ ] `gold-set.txt` đã dựng (qc-protocol §2.1).
+- [ ] `gold-set.txt` đã dựng (qc-protocol §2.1): chạy
+      `scripts/vietnamese-ser/pick_gold_candidates.py`, rồi mở
+      **`http://127.0.0.1:8000/gold.html`** để nghe và chốt.
 - [ ] `consent.vi.md` **đã điền hết ô trống** (thù lao, người phụ trách, IRB).
 - [ ] Mỗi annotator đã **xác nhận consent** trước khi được cấp token.
 
