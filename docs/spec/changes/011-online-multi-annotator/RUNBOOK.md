@@ -15,35 +15,53 @@
 - [ ] `consent.vi.md` **đã điền hết ô trống** (thù lao, người phụ trách, IRB).
 - [ ] Mỗi annotator đã **xác nhận consent** trước khi được cấp token.
 
-## 1. Tạo token
-
-```bash
-.venv-vnser/Scripts/python.exe -c "import sys; sys.path.insert(0,'tools/labeler'); import auth, json; \
-print(json.dumps({auth.mint(): {'id': f'ann{i:02d}', 'role': 'annotator'} for i in range(1,4)}, indent=2))" \
-  > data/vietnamese-ser/episodes/tokens.json
-```
-
-`tokens.json` nằm trong `data/**` → **gitignored, không bao giờ commit**. Một token
-= một người (safeguard #1). Không dùng chung.
-
-Giữ **bảng ánh xạ `ann01` → tên thật riêng, ngoài repo** — bản phát hành chỉ có mã
-giả danh (consent §6).
-
-## 2. Dựng hàng đợi
+## 1–2. Token + hàng đợi + thư mời — một lệnh
 
 **Tắt server trước** (ADR-004: chưa có lock 1-writer).
 
 ```bash
-.venv-vnser/Scripts/python.exe scripts/vietnamese-ser/build_assignments.py \
+# xem trước, không ghi gì
+.venv-vnser/Scripts/python.exe scripts/vietnamese-ser/invite_annotators.py \
+  --annotators ann01,ann02 --dry-run
+
+# làm thật (chạy SAU khi đã có URL ngrok ở bước 4)
+.venv-vnser/Scripts/python.exe scripts/vietnamese-ser/invite_annotators.py \
   --annotators ann01,ann02 --n 250 \
-  --gold docs/spec/changes/011-online-multi-annotator/gold-set.txt
+  --gold docs/spec/changes/011-online-multi-annotator/gold-set.txt \
+  --base-url https://<subdomain>.ngrok.app
 ```
 
-Bỏ `--dry-run` mới ghi thật. Script **từ chối ghi đè** hàng đợi đã có câu trả lời —
-chạy lại không mất việc đã làm.
+Script làm 3 việc: tạo token (người đã có thì **giữ nguyên token cũ**, nên link đã gửi
+vẫn chạy) → dựng hàng đợi → in **thư mời sẵn kèm link riêng** cho từng người, copy
+gửi thẳng.
 
-Xáo trộn khác nhau cho từng người (safeguard #4). Cùng một subset cho mọi người —
-đó là điều làm Fleiss κ hợp lệ.
+Chạy lại được an toàn: hàng đợi đã có câu trả lời thì **không bị ghi đè**.
+
+`tokens.json` nằm trong `data/**` → **gitignored, không bao giờ commit**. Một token
+= một người (safeguard #1), không dùng chung. Giữ **bảng ánh xạ `ann01` → tên thật
+riêng, ngoài repo** — bản phát hành chỉ có mã giả danh (consent §6).
+
+Cùng một subset cho mọi người (điều làm Fleiss κ hợp lệ), xáo trộn khác nhau từng
+người (safeguard #4).
+
+### Gửi kèm gì
+
+Đính kèm **2 file** vào thư mời: `annotator-guideline.vi.md` và `consent.vi.md`
+(bản đã điền thù lao + IRB). Thư mời do script in đã nhắc sẵn.
+
+Lần đầu mở link, annotator gặp **màn xác nhận đồng ý**; server **ghi lại** ai đồng ý,
+lúc nào, **phiên bản văn bản nào** vào bảng `consent`. Chưa xác nhận thì **không lấy
+được clip nào** — chặn ở server, không chỉ giấu trên giao diện. Đây là bằng chứng cho
+phần ethics statement của bài báo:
+
+```bash
+.venv-vnser/Scripts/python.exe -c "import sys; sys.path.insert(0,'tools/labeler'); \
+import store; from pathlib import Path; store.set_root(Path('data/vietnamese-ser/episodes')); \
+store.load(); print(store.all_consent())"
+```
+
+⚠️ Nếu sửa `consent.vi.md`, **phải tăng `CONSENT_VERSION`** trong `server.py` — nếu
+không, bản ghi sẽ trỏ tới một phiên bản văn bản không còn tồn tại.
 
 ## 3. Chạy server
 

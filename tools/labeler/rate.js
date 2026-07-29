@@ -80,6 +80,49 @@ function play() {
   audio.play().catch(() => {});
 }
 
+// ---------- consent gate (ADR-005 safeguard #5) ----------
+// The full agreement is the document they were sent; this records acceptance of a
+// NAMED VERSION of it, with a timestamp. The server enforces it too — a gate only the
+// UI honours is not a gate.
+async function consentGate() {
+  const c = await api("/rate/consent");
+  if (c.accepted) return true;
+  msg.hidden = false;
+  app.hidden = true;
+  msg.style.textAlign = "left";
+  msg.innerHTML = `
+    <h2 style="font-size:17px;margin:0 0 10px">Trước khi bắt đầu</h2>
+    <p>Anh/chị đã nhận <b>Bản đồng ý tham gia &amp; Thoả thuận sử dụng dữ liệu</b>
+       (phiên bản ${c.version}). Xác nhận lại những điểm chính:</p>
+    <ul style="padding-left:20px">
+      <li>Nghe đoạn thoại ngắn cắt từ <b>phim truyền hình</b> và gán cảm xúc nghe thấy.</li>
+      <li>Nội dung có cảnh <b>cãi vã, quát mắng, khóc, hoảng sợ, đau khổ</b> — diễn xuất,
+          không phải người thật. Có thể gây mệt mỏi cảm xúc.</li>
+      <li><b>Tự nguyện hoàn toàn</b> — bỏ qua clip bất kỳ, dừng bất cứ lúc nào, không cần lý do.</li>
+      <li>Audio là <b>phim có bản quyền</b>: không tải về, không ghi màn hình, không chia sẻ
+          link hay tài khoản.</li>
+      <li>Nhãn của anh/chị + <b>mã giả danh</b> (không phải tên thật) + thời điểm sẽ được
+          <b>công bố công khai</b> (CC-BY 4.0). Audio thì <b>không bao giờ</b>.</li>
+    </ul>
+    <label style="display:block;margin:16px 0">
+      <input type="checkbox" id="agree"> Tôi đã đọc, hiểu, và <b>đồng ý tham gia</b>.
+      Tôi từ 18 tuổi trở lên.
+    </label>
+    <button id="go" disabled style="padding:12px 22px;font-size:15px;font-weight:600;
+      border:0;border-radius:8px;background:#16a34a;color:#fff">Bắt đầu</button>
+    <p style="color:#6b7280;font-size:13px">Chưa rõ điểm nào thì nhắn cho người phụ trách
+       trước khi bấm.</p>`;
+  return new Promise((resolve) => {
+    $("agree").addEventListener("change", (e) => ($("go").disabled = !e.target.checked));
+    $("go").addEventListener("click", async () => {
+      $("go").disabled = true;
+      await api("/rate/consent", { method: "POST", body: JSON.stringify({ accept: true }) });
+      msg.style.textAlign = "center";
+      resolve(true);
+    });
+  });
+}
+
 // ---------- queue ----------
 async function load() {
   const st = await api("/rate/next");
@@ -147,7 +190,9 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-load().catch(() => {
+consentGate()
+  .then(load)
+  .catch(() => {
   msg.innerHTML = `<b>Không truy cập được.</b><br>
     <span style="color:#6b7280">Đường link có thể sai hoặc đã hết hạn —
     nhắn cho người phụ trách để lấy link mới.</span>`;

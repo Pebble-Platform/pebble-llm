@@ -92,6 +92,13 @@ def connect(db_path: Path) -> sqlite3.Connection:
         "ts TEXT, "  # NULL = not answered yet
         "PRIMARY KEY (annotator, seq))"
     )
+    # Consent record (ADR-005 safeguard #5): who accepted the data-use agreement, when,
+    # and WHICH VERSION of it — consent to a document nobody can identify later is not
+    # a record. The paper's ethics statement rests on this table.
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS consent ("
+        "annotator TEXT PRIMARY KEY, version TEXT NOT NULL, ts TEXT NOT NULL)"
+    )
     conn.commit()
     return conn
 
@@ -207,6 +214,31 @@ def assign(annotator: str, items: list[tuple[str, str, str]]) -> int:
             [(annotator, i, ep, cid, kind) for i, (ep, cid, kind) in enumerate(items)],
         )
     return len(items)
+
+
+def consent_of(annotator: str) -> dict | None:
+    row = _CONN.execute(
+        "SELECT version, ts FROM consent WHERE annotator = ?", (annotator,)
+    ).fetchone()
+    return None if row is None else {"version": row[0], "ts": row[1]}
+
+
+def record_consent(annotator: str, version: str) -> dict:
+    """First acceptance wins — re-opening the tool must not rewrite the original date."""
+    with LOCK, _CONN:
+        _CONN.execute(
+            "INSERT OR IGNORE INTO consent (annotator, version, ts) VALUES (?, ?, ?)",
+            (annotator, version, now()),
+        )
+    return consent_of(annotator)
+
+
+def all_consent() -> list[dict]:
+    cols = ("annotator", "version", "ts")
+    return [
+        dict(zip(cols, r, strict=True))
+        for r in _CONN.execute(f"SELECT {', '.join(cols)} FROM consent ORDER BY annotator")
+    ]
 
 
 def next_seq(annotator: str) -> dict | None:

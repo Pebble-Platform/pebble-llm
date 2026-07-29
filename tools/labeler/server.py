@@ -21,7 +21,7 @@ import auth
 import episodes
 import store
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -287,6 +287,40 @@ class RateIn(BaseModel):
     listen_ms: int = 0  # audio actually played (QC §2.3 min-time gate)
 
 
+CONSENT_VERSION = "1 (2026-07-28)"
+
+
+class ConsentIn(BaseModel):
+    accept: bool
+
+
+@app.get("/rate/consent")
+def get_consent(request: Request) -> dict:
+    return {"version": CONSENT_VERSION, "accepted": store.consent_of(request.state.principal.id)}
+
+
+@app.post("/rate/consent")
+def post_consent(request: Request, c: ConsentIn) -> dict:
+    if not c.accept:
+        raise HTTPException(400, "not accepted")
+    who = request.state.principal
+    rec = store.record_consent(who.id, CONSENT_VERSION)
+    auth.log_access(who.id, "consent", rec["version"])
+    return {"accepted": rec}
+
+
+def _consented(request: Request) -> str:
+    """Gate every audio/rating path on a recorded consent (ADR-005 safeguard #5).
+
+    Enforced server-side, not just in the UI: a safeguard the client could skip by
+    calling the API directly is not a safeguard.
+    """
+    who = request.state.principal
+    if who.role == "annotator" and store.consent_of(who.id) is None:
+        raise HTTPException(403, "consent required")
+    return who.id
+
+
 @app.get("/rate/next")
 def rate_next(request: Request) -> dict:
     """The annotator's next queue slot — position + progress only, never clip identity."""
@@ -297,7 +331,7 @@ def rate_next(request: Request) -> dict:
 
 
 @app.get("/rate/clip/{seq}.wav")
-def rate_clip(request: Request, seq: int) -> FileResponse:
+def rate_clip(request: Request, seq: int, _: str = Depends(_consented)) -> FileResponse:
     """Serve one clip BY QUEUE POSITION — the annotator's only path to audio.
 
     Addressing by position (not epKey/clip_id) means an annotator cannot enumerate the
@@ -314,7 +348,7 @@ def rate_clip(request: Request, seq: int) -> FileResponse:
 
 
 @app.post("/rate/{seq}")
-def rate_save(request: Request, seq: int, r: RateIn) -> dict:
+def rate_save(request: Request, seq: int, r: RateIn, _: str = Depends(_consented)) -> dict:
     """Save one judgment. Writes only this annotator's own slot; `records` untouched."""
     who = request.state.principal
     if not r.emotion and not r.skip_reason:
