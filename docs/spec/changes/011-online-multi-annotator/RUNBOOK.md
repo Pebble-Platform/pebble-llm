@@ -91,11 +91,18 @@ không, bản ghi sẽ trỏ tới một phiên bản văn bản không còn t�
   --root data/vietnamese-ser/episodes --no-local-admin
 ```
 
-**`--no-local-admin` là bắt buộc khi tunnel đang mở.** Không có nó, request loopback
-vẫn được admin. Server *đã* chặn tunnel bằng cách phát hiện header `x-forwarded-*`,
-nhưng cờ này là lớp thứ hai — dùng cả hai.
+**Với ngrok: KHÔNG dùng `--no-local-admin`** (sửa 2026-07-30). Lý do: request qua
+tunnel luôn mang header `x-forwarded-*`, và `auth._is_local()` đã dựa vào đó để **từ
+chối admin** cho mọi traffic proxy — đã test trên instance thật (`X-Forwarded-For` →
+401). Nên loopback-admin **không hở ra ngoài** qua ngrok.
 
-Khi bật cờ, chính owner cũng cần token admin trong `tokens.json`.
+Còn bật `--no-local-admin` thì **UI owner không dùng được**: `index.html`, `gold.js`,
+`review.js` **không gửi token** trong fetch, nên trang mở lên được mà mọi call API đều
+401. Chỉ gọi API bằng `curl -H "X-Token: <admin>"` mới chạy.
+
+⚠️ Điều này **phụ thuộc vào việc tunnel có set `x-forwarded-*`**. ngrok và Cloudflare
+Tunnel đều set. Nếu đổi sang tunnel khác **không** set header đó thì lỗ loopback-admin
+mở ra — lúc đó buộc phải `--no-local-admin` và làm UI owner biết gửi token.
 
 ## 4. Mở tunnel
 

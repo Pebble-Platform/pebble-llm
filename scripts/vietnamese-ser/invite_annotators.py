@@ -90,12 +90,14 @@ def main() -> None:
     )
     by_id = {v["id"]: k for k, v in tokens.items()}
     minted = []
-    for ann in anns:
-        if ann not in by_id:
+    # An admin token for the owner, always: with --no-local-admin the loopback shortcut
+    # is gone, so without this the owner locks themselves out of their own labeler.
+    for ident, role in [("owner", "admin"), *((a, "annotator") for a in anns)]:
+        if ident not in by_id:
             tok = auth.mint()
-            tokens[tok] = {"id": ann, "role": "annotator"}
-            by_id[ann] = tok
-            minted.append(ann)
+            tokens[tok] = {"id": ident, "role": role}
+            by_id[ident] = tok
+            minted.append(ident)
     if not a.dry_run:
         tpath.write_text(json.dumps(tokens, indent=2, ensure_ascii=False), encoding="utf-8")
     print(
@@ -134,6 +136,14 @@ def main() -> None:
                 ann=ann, link=f"{a.base_url}/rate.html?t={by_id[ann]}", n=n or a.n, hours=hours
             )
         )
+
+    print("--- owner ------------------------------------------------------------")
+    print("  Chạy server KHÔNG có --no-local-admin: mở http://127.0.0.1:8000/index.html")
+    print("  bình thường, không cần token. Request qua tunnel vẫn bị chặn admin (server")
+    print("  phát hiện header x-forwarded-*), nên loopback-admin không hở ra ngoài.")
+    print(f"  Token admin dự phòng (cho curl / --no-local-admin): {by_id['owner']}")
+    print("  ⚠ Với --no-local-admin thì UI owner KHÔNG dùng được — index/gold/review.js")
+    print("    không gửi token trong fetch. Chỉ gọi API bằng curl -H 'X-Token: ...'.\n")
 
     if a.dry_run:
         print("(dry run — tokens.json and queues NOT written)")
