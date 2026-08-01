@@ -136,7 +136,7 @@ nhánh text/ngữ nghĩa phải gánh nhiều hơn so với SER ở ngôn ngữ 
 Dòng chảy chính của đề tài — từ tập phim thô đến bài báo:
 
 ```mermaid
-flowchart LR
+flowchart TD
   A["A · Pipeline trích xuất<br/>✅ Xong"] --> B["B · Corpus 2 phim<br/>✅ 3.775 clip"]
   B --> F["F · Gán nhãn người<br/>🔄 926/3.775 · 25%"]
   F --> G["G · κ human–human<br/>⛔ ĐANG CHẶN"]

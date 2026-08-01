@@ -74,22 +74,22 @@
   .board .t .nm{font-size:14px;font-weight:600}
   .board .t .ev{font-size:12px;color:var(--muted);margin-top:5px}
 
-  /* ---- flow (mục 3) ---- */
-  .flow{display:flex;align-items:stretch;gap:0;margin:16px 0 6px;flex-wrap:nowrap;
-    overflow-x:auto;padding-bottom:6px}
-  .flow .st{flex:1 0 158px;background:var(--panel);border:1px solid var(--line);
-    border-left:4px solid var(--line);border-radius:9px;padding:11px 12px;position:relative}
+  /* ---- flow (mục 3) — dọc, đúng thứ tự A→B→F→G→H→I ---- */
+  .flow{display:flex;flex-direction:column;gap:0;margin:16px 0 6px}
+  .flow .st{background:var(--panel);border:1px solid var(--line);
+    border-left:5px solid var(--line);border-radius:9px;padding:11px 14px;
+    display:grid;grid-template-columns:30px 1fr auto;gap:4px 12px;align-items:baseline}
   .flow .st.done{border-left-color:var(--ok)}
   .flow .st.run{border-left-color:var(--run)}
   .flow .st.block{border-left-color:var(--warn);
     box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 22%,transparent)}
   .flow .st.todo{border-left-color:var(--todo)}
-  .flow .st .ltr{font-weight:700;font-size:11px;color:var(--muted);letter-spacing:.06em}
-  .flow .st .nm{font-size:13.5px;font-weight:700;margin:3px 0 5px;line-height:1.3}
-  .flow .st .big{font-size:15px;font-weight:700;margin:4px 0 2px}
-  .flow .st .ev{font-size:11.5px;color:var(--muted);line-height:1.45}
-  .flow .ar{display:flex;align-items:center;justify-content:center;flex:0 0 26px;
-    color:var(--muted);font-size:19px}
+  .flow .st .ltr{grid-column:1;font-weight:700;font-size:15px;color:var(--muted)}
+  .flow .st .nm{grid-column:2;font-size:14.5px;font-weight:700;line-height:1.3}
+  .flow .st .big{grid-column:3;font-size:14px;font-weight:700;white-space:nowrap;
+    text-align:right}
+  .flow .st .ev{grid-column:2/4;font-size:12.5px;color:var(--muted);line-height:1.5}
+  .flow .ar{color:var(--muted);font-size:17px;line-height:1;padding:3px 0 3px 13px}
   .flowbase{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
     gap:8px;margin:8px 0 4px}
   .flowbase .b{background:var(--panel);border:1px solid var(--line);
@@ -97,10 +97,10 @@
   .flowbase .b .nm{font-size:13px;font-weight:600}
   .flowbase .b .ev{font-size:11.5px;color:var(--muted);margin-top:3px}
   .flownote{font-size:12.5px;color:var(--muted);margin:2px 0 16px}
-  @media(max-width:860px){
-    .flow{flex-direction:column;overflow-x:visible}
-    .flow .st{flex:1 1 auto}
-    .flow .ar{flex:0 0 20px;transform:rotate(90deg);padding:1px 0}
+  @media(max-width:520px){
+    .flow .st{grid-template-columns:26px 1fr}
+    .flow .st .big{grid-column:2;text-align:left;margin-top:2px}
+    .flow .st .ev{grid-column:1/3}
   }
 
   /* ---- charts ---- */
@@ -337,34 +337,34 @@ trái = trạng thái. Ô có viền cam là <b>chỗ đang bị chặn</b>.</p>
     <div class="big">✅ Xong</div>
     <div class="ev">video → tách nhạc → VAD → cắt theo lượt nói → ASR.
     Chạy local + kernel Kaggle.</div></div>
-  <div class="ar">→</div>
+  <div class="ar">↓</div>
 
   <div class="st done"><div class="ltr">B</div>
     <div class="nm">Trích corpus 2 bộ phim</div>
     <div class="big">3.775 clip</div>
     <div class="ev">đơn-giọng theo cấu tạo (VAD ∩ lượt nói).</div></div>
-  <div class="ar">→</div>
+  <div class="ar">↓</div>
 
   <div class="st run"><div class="ltr">F</div>
     <div class="nm">Gán nhãn người (chủ nhiệm)</div>
     <div class="big">926 / 3.775 · 25%</div>
     <div class="ev">🔄 đang chạy · +113 clip so với 07-29.
     Đo lại <code>state.db</code> 2026-08-01.</div></div>
-  <div class="ar">→</div>
+  <div class="ar">↓</div>
 
   <div class="st block"><div class="ltr">G</div>
     <div class="nm">κ human–human</div>
     <div class="big">⛔ ĐANG CHẶN</div>
     <div class="ev"><b>Công cụ xong</b> (change 011). Thiếu <b>người thật</b> ngồi
     gán nhãn — không tự động hoá được.</div></div>
-  <div class="ar">→</div>
+  <div class="ar">↓</div>
 
   <div class="st run"><div class="ltr">H</div>
     <div class="nm">Huấn luyện + đánh giá</div>
     <div class="big">🔄 Có baseline</div>
     <div class="ev">audio-only trên nhãn người đã có số; benchmark 6 phương pháp —
     harness xong, <b>chưa chạy</b>.</div></div>
-  <div class="ar">→</div>
+  <div class="ar">↓</div>
 
   <div class="st todo"><div class="ltr">I</div>
     <div class="nm">Viết bài báo</div>
