@@ -72,6 +72,47 @@
 <!-- ================= PHẦN 1 ================= -->
 <h2 id="p1">Phần 1 — Cơ sở lý luận + bài báo tham khảo</h2>
 
+<h3>1.0 Đề tài này làm gì</h3>
+
+<p><b>Bài toán.</b> <i>Speech Emotion Recognition</i> (SER) — nhận diện cảm xúc từ
+giọng nói: máy nghe một đoạn thoại và đoán người nói đang vui, buồn, giận, sợ hay
+bình thường. Ứng dụng ở tổng đài chăm sóc khách hàng, trợ lý ảo, và sàng lọc sức
+khoẻ tinh thần.</p>
+
+<p><b>Vướng ở đâu với tiếng Việt.</b> Muốn huấn luyện mô hình thì phải có
+<b>dữ liệu giọng nói đã gán nhãn cảm xúc</b>. Tiếng Anh có nhiều bộ lớn và dùng
+được tự do; tiếng Việt thì <b>gần như không có bộ nào vừa lấy được, vừa là lời nói
+tự nhiên, vừa có giấy phép rõ ràng</b>. Nghĩa là ở Việt Nam, bài toán này
+<b>chưa có điểm xuất phát</b> — không có dữ liệu thì không có gì để so sánh, cũng
+không có gì để cải tiến.</p>
+
+<p><b>Đề tài làm hai việc, theo thứ tự:</b></p>
+<ol>
+  <li><b>Xây bộ dữ liệu (ViEmoSpeech).</b> Lấy thoại từ phim truyền hình Việt Nam,
+  tách nhạc nền, cắt thành từng câu nói của <b>một người</b>, rồi cho <b>người thật
+  nghe và gán nhãn cảm xúc</b>. Sản phẩm là bộ dữ liệu công bố công khai dưới giấy
+  phép CC-BY — thứ hiện chưa tồn tại cho tiếng Việt.</li>
+  <li><b>Bài báo phương pháp trên bộ dữ liệu đó.</b> Chỗ này mới là phần khoa học.</li>
+</ol>
+
+<div class="callout">
+<p><b>Ý tưởng khoa học trung tâm.</b> Tiếng Việt là <b>ngôn ngữ thanh điệu</b>: cao độ
+giọng quyết định <i>nghĩa của từ</i> (ma ≠ má ≠ mà ≠ mã ≠ mạ). Nhưng cao độ
+<b>cũng chính là</b> kênh mà cảm xúc dùng để bộc lộ — người ta lên giọng khi giận,
+chùng giọng khi buồn. Hai thứ <b>giành nhau một kênh âm thanh</b>.</p>
+
+<p>Hệ quả kéo theo: ở tiếng Việt, nghe giọng thôi <b>không đủ</b> để đoán cảm xúc như
+ở tiếng Anh, vì một phần biến thiên cao độ đã bị "trưng dụng" để chở thanh điệu. Vậy
+mô hình phải <b>dựa nhiều hơn vào nội dung lời nói</b> (nhánh văn bản). Đây là giả
+thuyết <b>đo được</b> và <b>chưa ai kiểm chứng</b> cho bất kỳ ngôn ngữ thanh điệu nào
+— đó là đóng góp mới của đề tài.</p>
+</div>
+
+<p><b>Ràng buộc cứng, chi phối toàn bộ thiết kế.</b> Nguồn dữ liệu là phim
+<b>có bản quyền</b>. Nên bộ dữ liệu phát hành ra ngoài <b>chỉ gồm đặc trưng âm thanh
++ mốc thời gian + nhãn</b>, <b>không bao giờ</b> có file audio hay transcript đầy đủ.
+Toàn bộ phần còn lại của báo cáo này đọc dưới ràng buộc đó.</p>
+
 <h3>1.1 Bài toán &amp; khoảng trống</h3>
 <p><b>ViEmoSpeech</b> = corpus speech-emotion tiếng Việt đầu tiên đồng thời:
 free-content · đa lớp (emotion 7 lớp + valence/arousal + distress) · gán thanh điệu ·
@@ -104,7 +145,17 @@ Russell) <b>+ distress flag</b> — tương thích cross-corpus với IEMOCAP/MS
 <ul>
   <li><b>arXiv:2601.04564</b> <i>"When Tone and Words Disagree"</i> (01/2026) — "tone" = tone-of-voice (paralinguistic), <b>không</b> lexical tone → phân biệt tường minh.</li>
   <li><b>arXiv:2604.01711</b> (04/2026, VN SER + LLM) — <i>nêu tên</i> tone-confound mà không giải → gap có thật + niche mở nhanh (áp lực thời gian).</li>
-  <li><b>arXiv:2412.09829</b> (VNU Hà Nội) — PhoWhisper+PhoBERT fusion rule-based, 250 clip → <b>baseline trực tiếp để vượt</b>.</li>
+  <li><b>arXiv:2412.09829</b> (VNU Hà Nội) — <s>PhoWhisper+PhoBERT fusion SER</s>
+  <b>[đính chính 2026-07-10 sau deep-read — xem
+  <a href="papers/vietnamese-ser/09-phowhisper-phobert-fusion.md">vn-09</a>]:</b>
+  bài này <b>đã bị tác giả rút (v2, 18/12/2024)</b> vì "significant inaccuracies", và
+  <b>không phải bài SER</b> — nó là pipeline chấm chất lượng cuộc gọi call-center
+  (Good/Neutral/Offensive), nhánh text = PhoBERT-CNN hate-speech (ViHSD), fusion =
+  luật ưu tiên text viết tay <b>không có eval end-to-end</b>.
+  ⇒ <b>không tồn tại "số baseline để vượt"</b>; định vị nó là <i>tiền lệ rule-fusion
+  đã rút</i>, và baseline rule-fusion phải <b>tự re-implement §2.6</b> của họ trên
+  nhãn ViEmoSpeech. Baseline số thực dùng vn-08 (86.6%/κ0.857, nhưng leak-inflated)
+  + VNEMOS audio-only.</li>
 </ul>
 
 <h3>1.4 Phương pháp luận (kế thừa + pivot)</h3>
@@ -114,9 +165,14 @@ Russell) <b>+ distress flag</b> — tương thích cross-corpus với IEMOCAP/MS
   bỏ weak-supervision LLM-teacher → <b>nhãn người là nguồn sự thật</b>; teacher chỉ còn gợi ý.</li>
 </ul>
 
-<h3>1.5 Bài báo tham khảo — 21 PDF (mở trực tiếp)</h3>
+<h3>1.5 Bài báo tham khảo — 29 PDF (mở trực tiếp)</h3>
 <p class="sub">Sweep 2026-07-02. Sát Pebble nhất: <b>#12 MSP-Podcast (46%)</b>,
-#10 JMIR (42%), #05 AudioLLM reasoning (38%), #01 C²SER (35%).</p>
+#10 JMIR (42%), #05 AudioLLM reasoning (38%), #01 C²SER (35%).<br>
+<b>Cập nhật 2026-07-10:</b> cả <b>21 bài bimodal</b> + <b>8 bài VN/thanh điệu mới
+tải</b> đều đã có <b>phân tích sâu toàn văn PDF</b> (mục <code>## Deep research —
+full-PDF read (2026-07-10)</code> trong từng file, chấm theo profile ViEmoSpeech +
+register V-A…V-H) kèm <b>bản dịch tiếng Việt</b> <code>NN-slug.vi.md</code>. Tổng hợp:
+<a href="tasks/paper-deep-analysis.md">paper-deep-analysis.md</a>.</p>
 
 <h4 class="tag">Audio + Text (trục chính)</h4>
 <table><thead><tr><th>#</th><th>Paper</th><th>Venue/Year</th><th>PDF</th></tr></thead><tbody>
@@ -151,6 +207,18 @@ Russell) <b>+ distress flag</b> — tương thích cross-corpus với IEMOCAP/MS
 <tr><td>21</td><td>Hybrid Multi-Attention AV-ER</td><td>Mathematics (MDPI) 2025</td><td class="pdf"><a href="papers/bimodal-ser/pdfs/21-hybrid-multi-attention-avser.pdf">📄 pdf</a></td></tr>
 </tbody></table>
 
+<h4 class="tag">Vietnamese SER + thanh điệu (8 PDF mới tải 2026-07-10, đều có deep-read + bản .vi)</h4>
+<table><thead><tr><th>#</th><th>Paper</th><th>Venue/Year</th><th>Vai trò</th><th>PDF</th></tr></thead><tbody>
+<tr><td>06</td><td>Shen — Encoding of Lexical Tone in SSL</td><td>NAACL 2024</td><td>Tiền đề phonation-heavy (V-B/V-D)</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/06-shen-lexical-tone-ssl.pdf">📄 pdf</a></td></tr>
+<tr><td>07</td><td>CASE/FAS — When Tone and Words Disagree</td><td>arXiv 2026</td><td>Đối thủ kiến trúc gần nhất; cite-and-distinguish</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/07-case-tone-words-disagree.pdf">📄 pdf</a></td></tr>
+<tr><td>08</td><td>Human-Guided LLM Reasoning VN SER</td><td>arXiv 2026</td><td>VN SER mới nhất; κ0.857/86.6% (leaky)</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/08-human-guided-reasoning-vnser.pdf">📄 pdf</a></td></tr>
+<tr><td>09</td><td>PhoWhisper+PhoBERT (VNU) — <b>đã rút</b></td><td>arXiv 2024 (withdrawn)</td><td>Không phải SER; rule-fusion tiền lệ</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/09-phowhisper-phobert-fusion.pdf">📄 pdf</a></td></tr>
+<tr><td>10</td><td>VN Depression Dynamic-CBAM (VNEMOS)</td><td>arXiv 2024</td><td>Baseline audio-only VN (leaky UA0.87)</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/10-vn-depression-dynamic-cbam.pdf">📄 pdf</a></td></tr>
+<tr><td>11</td><td>THAI-SER corpus</td><td>arXiv 2025</td><td>Tiền lệ corpus ngôn ngữ thanh điệu (CC-BY-SA)</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/11-thai-ser-corpus.pdf">📄 pdf</a></td></tr>
+<tr><td>12</td><td>Emotionally Incongruent Speech (SLM eval)</td><td>arXiv 2025</td><td>Contrastive "semantics dominate"</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/12-emotionally-incongruent-slm.pdf">📄 pdf</a></td></tr>
+<tr><td>13</td><td>Chang — Mandarin tone×emotion acoustics</td><td>PLOS ONE 2023</td><td>Tiền đề thực nghiệm F0-channel (V-D)</td><td class="pdf"><a href="papers/vietnamese-ser/pdfs/13-chang-mandarin-tone-emotion.pdf">📄 pdf</a></td></tr>
+</tbody></table>
+
 <p class="sub"><b>Phân tích nội bộ (không PDF):</b>
 <a href="papers/vietnamese-ser/01-vn-ser-corpora-benchmarks.md">01 VN-SER corpora</a> ·
 <a href="papers/vietnamese-ser/02-tonal-language-ser-prior-art.md">02 tonal-language SER</a> ·
@@ -178,7 +246,7 @@ Russell) <b>+ distress flag</b> — tương thích cross-corpus với IEMOCAP/MS
 ffmpeg → Demucs → silero VAD → <b>turn-split v2</b> (pyannote) → PhoWhisper-base ASR →
 align YouTube → gợi ý 2-teacher.</p>
 <ul>
-  <li>Yield thoại sạch: <b>33%</b> (ep01); sau turn-split v2: <b>175 utt/10.3′</b>, 100% đơn-giọng.</li>
+  <li>Yield thoại sạch: <b>33%</b> (ep01 11.9/35.6′); sau turn-split v2: <b>175 utt/10.3′</b>, 100% đơn-giọng.</li>
   <li>Similarity PhoWhisper↔YouTube: mean 87.2 (base đủ).</li>
   <li>κ 2-teacher (lịch sử, tiền-pivot): ~0.68–0.70.</li>
 </ul>

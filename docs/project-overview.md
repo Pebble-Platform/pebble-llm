@@ -9,6 +9,43 @@
 
 # Phần 1 — Cơ sở lý luận + bài báo tham khảo
 
+## 1.0 Đề tài này làm gì
+
+**Bài toán.** *Speech Emotion Recognition* (SER) — nhận diện cảm xúc từ giọng nói:
+máy nghe một đoạn thoại và đoán người nói đang vui, buồn, giận, sợ hay bình thường.
+Ứng dụng ở tổng đài chăm sóc khách hàng, trợ lý ảo, và sàng lọc sức khoẻ tinh thần.
+
+**Vướng ở đâu với tiếng Việt.** Muốn huấn luyện mô hình thì phải có **dữ liệu giọng
+nói đã gán nhãn cảm xúc**. Tiếng Anh có nhiều bộ lớn và dùng được tự do; tiếng Việt
+thì **gần như không có bộ nào vừa lấy được, vừa là lời nói tự nhiên, vừa có giấy
+phép rõ ràng**. Nghĩa là ở Việt Nam, bài toán này **chưa có điểm xuất phát** — không
+có dữ liệu thì không có gì để so sánh, cũng không có gì để cải tiến.
+
+**Đề tài làm hai việc, theo thứ tự:**
+
+1. **Xây bộ dữ liệu (ViEmoSpeech).** Lấy thoại từ phim truyền hình Việt Nam, tách
+   nhạc nền, cắt thành từng câu nói của **một người**, rồi cho **người thật nghe và
+   gán nhãn cảm xúc**. Sản phẩm là bộ dữ liệu công bố công khai dưới giấy phép
+   CC-BY — thứ hiện chưa tồn tại cho tiếng Việt.
+
+2. **Bài báo phương pháp trên bộ dữ liệu đó.** Chỗ này mới là phần khoa học.
+
+**Ý tưởng khoa học trung tâm.** Tiếng Việt là **ngôn ngữ thanh điệu**: cao độ giọng
+quyết định *nghĩa của từ* (ma ≠ má ≠ mà ≠ mã ≠ mạ). Nhưng cao độ **cũng chính là**
+kênh mà cảm xúc dùng để bộc lộ — người ta lên giọng khi giận, chùng giọng khi buồn.
+Hai thứ **giành nhau một kênh âm thanh**.
+
+Hệ quả kéo theo: ở tiếng Việt, nghe giọng thôi **không đủ** để đoán cảm xúc như ở
+tiếng Anh, vì một phần biến thiên cao độ đã bị "trưng dụng" để chở thanh điệu. Vậy
+mô hình phải **dựa nhiều hơn vào nội dung lời nói** (nhánh văn bản). Đây là giả
+thuyết **đo được** và **chưa ai kiểm chứng** cho bất kỳ ngôn ngữ thanh điệu nào —
+đó là đóng góp mới của đề tài.
+
+**Ràng buộc cứng, chi phối toàn bộ thiết kế.** Nguồn dữ liệu là phim **có bản
+quyền**. Nên bộ dữ liệu phát hành ra ngoài **chỉ gồm đặc trưng âm thanh + mốc thời
+gian + nhãn**, **không bao giờ** có file audio hay transcript đầy đủ. Toàn bộ phần
+còn lại của báo cáo này đọc dưới ràng buộc đó.
+
 ## 1.1 Bài toán & khoảng trống (vì sao làm)
 
 **ViEmoSpeech** = corpus **speech-emotion tiếng Việt đầu tiên** đồng thời:
@@ -70,7 +107,8 @@ IEMOCAP/MSP-Podcast (dùng V-A-D).
 ## 1.5 Bài báo tham khảo — 29 PDF (mở trực tiếp)
 
 Sweep 2026-07-02 ([index đầy đủ](papers/bimodal-ser/00-INDEX.md)); ưu tiên 2023–2026,
-venue uy tín. **Cập nhật 2026-07-10:** cả **21 bài bimodal** + **8 bài VN/thanh điệu
+venue uy tín. Sát Pebble nhất: **#12 MSP-Podcast (46%)**, #10 JMIR (42%),
+#05 AudioLLM reasoning (38%), #01 C²SER (35%). **Cập nhật 2026-07-10:** cả **21 bài bimodal** + **8 bài VN/thanh điệu
 mới tải** đều đã có **phân tích sâu toàn văn PDF** (mục `## Deep research — full-PDF
 read (2026-07-10)` trong từng file, chấm theo profile ViEmoSpeech + register V-A…V-H)
 kèm **bản dịch tiếng Việt** `NN-slug.vi.md`. Tổng hợp phát hiện + synthesis:

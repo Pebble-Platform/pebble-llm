@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViEmoSpeech — Báo cáo tiến độ 2026-07-29</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --line:#d8dee4;
+    --accent:#2563eb; --ok:#1a7f37; --run:#9a6700; --todo:#8250df; --warn:#bc4c00;
+    --code:#eef1f4;
+    /* chart tokens — validated (validate_palette.js, light surface): band · chroma ·
+       CVD ΔE 31,4 · normal ΔE 35,5 · contrast — all PASS */
+    --c1:#2563eb; --c2:#bc4c00; --track:#e6eaef;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0d1117;--panel:#161b22;--ink:#e6edf3;--muted:#9aa4af;--line:#2d333b;
+      --accent:#589bff;--ok:#3fb950;--run:#d29922;--todo:#bc8cff;--warn:#f0883e;--code:#1c2128;
+      /* dark steps chosen (not flipped) — re-validated against the dark surface */
+      --c1:#3b82f6;--c2:#d97706;--track:#22272e;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px}
+  h2{font-size:21px;margin:36px 0 12px;padding-top:12px;border-top:1px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--accent)}
+  p,li{margin:8px 0}
+  .sub{color:var(--muted);font-size:13.5px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;
+    font-family:"SF Mono",Consolas,monospace}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.02em;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1px solid transparent;white-space:nowrap}
+  .b-ok{color:var(--ok);border-color:var(--ok)}
+  .b-run{color:var(--run);border-color:var(--run)}
+  .b-todo{color:var(--todo);border-color:var(--todo)}
+  .b-block{color:var(--warn);border-color:var(--warn)}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+    margin:18px 0;font-size:14px}
+  .toc a{margin-right:16px;white-space:nowrap;display:inline-block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin:18px 0}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .kpi .v{font-size:23px;font-weight:700;line-height:1.2}
+  .kpi .k{font-size:12.5px;color:var(--muted);margin-top:4px}
+  ul{padding-left:22px}
+  .lead{font-size:15.5px;color:var(--muted)}
+
+  /* ---- why-cards ---- */
+  .why{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:14px 0}
+  .why .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 15px}
+  .why .card h4{margin:0 0 6px;font-size:14.5px;color:var(--accent)}
+  .why .card p{margin:0;font-size:14px}
+
+  /* ---- status board ---- */
+  .board{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:14px 0}
+  .board .t{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 13px}
+  .board .t .top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .board .t .ltr{font-weight:700;font-size:13px;color:var(--muted)}
+  .board .t .nm{font-size:14px;font-weight:600}
+  .board .t .ev{font-size:12px;color:var(--muted);margin-top:5px}
+
+  /* ---- flow (mục 3) ---- */
+  .flow{display:flex;align-items:stretch;gap:0;margin:16px 0 6px;flex-wrap:nowrap;
+    overflow-x:auto;padding-bottom:6px}
+  .flow .st{flex:1 0 158px;background:var(--panel);border:1px solid var(--line);
+    border-left:4px solid var(--line);border-radius:9px;padding:11px 12px;position:relative}
+  .flow .st.done{border-left-color:var(--ok)}
+  .flow .st.run{border-left-color:var(--run)}
+  .flow .st.block{border-left-color:var(--warn);
+    box-shadow:0 0 0 2px color-mix(in srgb,var(--warn) 22%,transparent)}
+  .flow .st.todo{border-left-color:var(--todo)}
+  .flow .st .ltr{font-weight:700;font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .flow .st .nm{font-size:13.5px;font-weight:700;margin:3px 0 5px;line-height:1.3}
+  .flow .st .big{font-size:15px;font-weight:700;margin:4px 0 2px}
+  .flow .st .ev{font-size:11.5px;color:var(--muted);line-height:1.45}
+  .flow .ar{display:flex;align-items:center;justify-content:center;flex:0 0 26px;
+    color:var(--muted);font-size:19px}
+  .flowbase{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:8px;margin:8px 0 4px}
+  .flowbase .b{background:var(--panel);border:1px solid var(--line);
+    border-left:4px solid var(--ok);border-radius:8px;padding:8px 11px}
+  .flowbase .b .nm{font-size:13px;font-weight:600}
+  .flowbase .b .ev{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .flownote{font-size:12.5px;color:var(--muted);margin:2px 0 16px}
+  @media(max-width:860px){
+    .flow{flex-direction:column;overflow-x:visible}
+    .flow .st{flex:1 1 auto}
+    .flow .ar{flex:0 0 20px;transform:rotate(90deg);padding:1px 0}
+  }
+
+  /* ---- charts ---- */
+  figure{margin:16px 0;padding:14px 16px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px}
+  figure .ftitle{font-size:14px;font-weight:600;margin-bottom:12px}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:11px}
+  .bars{display:grid;gap:11px}
+  .row .lab{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+    font-size:13.5px;margin-bottom:4px}
+  .row .lab .v{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .track{background:var(--track);border-radius:4px;height:13px}
+  .fill{height:100%;background:var(--c1);border-radius:0 4px 4px 0}
+  .fill.alt{background:var(--c2)}
+  .stack{display:flex;gap:2px;height:20px}
+  .stack>span{display:block;height:100%}
+  .stack>span:first-child{border-radius:4px 0 0 4px}
+  .stack>span:last-child{border-radius:0 4px 4px 0}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:11px;font-size:13px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;
+    vertical-align:-1px}
+  svg{display:block;width:100%;height:auto}
+  svg .grid{stroke:var(--line);stroke-width:1}
+  svg .tick{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}
+  svg .lbl{fill:var(--ink);font-size:12px}
+  svg .lbl.dim{fill:var(--muted)}
+  svg .val{fill:var(--ink);font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>ViEmoSpeech — Báo cáo tiến độ</h1>
+  <p class="lead">Corpus nhận dạng cảm xúc từ giọng nói (SER) tiếng Việt trích từ phim
+  truyền hình + phương pháp bimodal <b>tone × emotion</b>.</p>
+  <p class="sub"><b>Người thực hiện:</b>
+  Nguyễn Duy Tấn Phát · <b>Kỳ báo cáo:</b> 2026-07-03 → <b>2026-08-01</b> ·
+  bản Markdown: <a href="progress-report-2026-07-29.md">progress-report-2026-07-29.md</a></p>
+</header>
+
+<div class="toc">
+  <b>Mục lục:</b>
+  <a href="#s1">1 · Tóm tắt</a>
+  <a href="#s2">2 · Mục tiêu &amp; đóng góp</a>
+  <a href="#s3">3 · Tiến độ theo khối</a>
+  <a href="#s4">4 · Số liệu đã đo</a>
+  <a href="#s5">5 · Phụ lục</a>
+</div>
+
+<p class="sub">Mọi con số đều truy được về một file trong repo (§5). Toàn bộ §4 là
+<b>số đã đo</b>; chỗ nào là ước lượng đều ghi rõ ngay tại chỗ.</p>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1">1 · Tóm tắt</h2>
+
+<h3>1.0 Đề tài này làm gì</h3>
+
+<p><b>Bài toán.</b> <i>Speech Emotion Recognition</i> (SER) — nhận diện cảm xúc từ
+giọng nói: máy nghe một đoạn thoại và đoán người nói đang vui, buồn, giận, sợ hay
+bình thường. Ứng dụng ở tổng đài chăm sóc khách hàng, trợ lý ảo, và sàng lọc sức
+khoẻ tinh thần.</p>
+
+<p><b>Vướng ở đâu với tiếng Việt.</b> Muốn huấn luyện mô hình thì phải có
+<b>dữ liệu giọng nói đã gán nhãn cảm xúc</b>. Tiếng Anh có nhiều bộ lớn và dùng
+được tự do; tiếng Việt thì <b>gần như không có bộ nào vừa lấy được, vừa là lời nói
+tự nhiên, vừa có giấy phép rõ ràng</b>. Nghĩa là ở Việt Nam, bài toán này
+<b>chưa có điểm xuất phát</b> — không có dữ liệu thì không có gì để so sánh, cũng
+không có gì để cải tiến.</p>
+
+<p><b>Đề tài làm hai việc, theo thứ tự:</b></p>
+<ol>
+  <li><b>Xây bộ dữ liệu (ViEmoSpeech).</b> Lấy thoại từ phim truyền hình Việt Nam,
+  tách nhạc nền, cắt thành từng câu nói của <b>một người</b>, rồi cho <b>người thật
+  nghe và gán nhãn cảm xúc</b>. Sản phẩm là bộ dữ liệu công bố công khai dưới giấy
+  phép CC-BY — thứ hiện chưa tồn tại cho tiếng Việt.</li>
+  <li><b>Bài báo phương pháp trên bộ dữ liệu đó.</b> Chỗ này mới là phần khoa học.</li>
+</ol>
+
+<div class="callout">
+<p><b>Ý tưởng khoa học trung tâm.</b> Tiếng Việt là <b>ngôn ngữ thanh điệu</b>: cao độ
+giọng quyết định <i>nghĩa của từ</i> (ma ≠ má ≠ mà ≠ mã ≠ mạ). Nhưng cao độ
+<b>cũng chính là</b> kênh mà cảm xúc dùng để bộc lộ — người ta lên giọng khi giận,
+chùng giọng khi buồn. Hai thứ <b>giành nhau một kênh âm thanh</b>.</p>
+
+<p>Hệ quả kéo theo: ở tiếng Việt, nghe giọng thôi <b>không đủ</b> để đoán cảm xúc như
+ở tiếng Anh, vì một phần biến thiên cao độ đã bị "trưng dụng" để chở thanh điệu. Vậy
+mô hình phải <b>dựa nhiều hơn vào nội dung lời nói</b> (nhánh văn bản). Đây là giả
+thuyết <b>đo được</b> và <b>chưa ai kiểm chứng</b> cho bất kỳ ngôn ngữ thanh điệu nào
+— đó là đóng góp mới của đề tài. Số đầu tiên đã ủng hộ: audio-only cho CCC
+valence/arousal ≈ <b>0,09</b> (gần sàn) — xem §4.3.</p>
+</div>
+
+<p><b>Ràng buộc cứng, chi phối toàn bộ thiết kế.</b> Nguồn dữ liệu là phim
+<b>có bản quyền</b>. Nên bộ dữ liệu phát hành ra ngoài <b>chỉ gồm đặc trưng âm thanh
++ mốc thời gian + nhãn</b>, <b>không bao giờ</b> có file audio hay transcript đầy đủ.
+Toàn bộ phần còn lại của báo cáo này đọc dưới ràng buộc đó.</p>
+
+<h3>1.1 Vì sao chọn đề tài này</h3>
+<div class="why">
+  <div class="card">
+    <h4>① Khoảng trống dữ liệu đang chặn cả lĩnh vực</h4>
+    <p>Không corpus SER tiếng Việt nào <i>đồng thời</i> lấy được + thoại tự do +
+    license rõ. ViSEC mở nhưng <b>thiếu license</b>; VLSP 56h nhãn nhị phân, site
+    gated. Ai muốn nghiên cứu cũng phải tự dựng dữ liệu trước.</p>
+  </div>
+  <div class="card">
+    <h4>② Câu hỏi khoa học chỉ ngôn ngữ thanh điệu mới có</h4>
+    <p>Thanh điệu tiếng Việt đi qua <b>phonation/chất giọng</b>, không chỉ F0
+    (Shen et al., NAACL 2024) — <b>đúng kênh cảm xúc dùng</b>. Chưa ai mô hình hoá
+    SER tone-aware cho <b>bất kỳ</b> ngôn ngữ thanh điệu nào.</p>
+  </div>
+  <div class="card">
+    <h4>③ Giả thuyết đó đo được — số đầu tiên đã ủng hộ</h4>
+    <p>Audio-only cho <b>CCC valence/arousal ≈ 0,09 (gần sàn)</b>: chỉ nghe âm thanh
+    thì gần như không đọc được cảm xúc. Song song, ASR sai <b>thanh điệu</b> đúng ở
+    đoạn cảm xúc mạnh (<i>“mày → máy”</i>, <i>“tao → tháo”</i>).</p>
+  </div>
+  <div class="card">
+    <h4>④ Khả thi bằng nguồn lực một người</h4>
+    <p>Pipeline tự động cho <b>33% thời lượng phim</b> thành thoại sạch đơn-giọng,
+    chạy trên máy cá nhân + GPU Kaggle miễn phí. Không phòng thu, không thuê diễn viên.</p>
+  </div>
+</div>
+
+<h3>1.2 Trạng thái hiện tại</h3>
+<p>Đã qua giai đoạn “có chạy được không”, đang ở giai đoạn
+<b>gán nhãn người + đo độ tin cậy nhãn</b>.</p>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">33%</div><div class="k">thoại sạch thu được / thời lượng tập phim</div></div>
+  <div class="kpi"><div class="v">3.775</div><div class="k">clip đơn-giọng đã cắt (≈10 giờ)</div></div>
+  <div class="kpi"><div class="v">926</div><div class="k">clip đã có nhãn người (~25%)</div></div>
+  <div class="kpi"><div class="v">0,249</div><div class="k">macro-F1 emotion, đánh giá trung thực (ngẫu nhiên ≈0,04)</div></div>
+  <div class="kpi"><div class="v">29</div><div class="k">bài báo đọc sâu toàn văn + dịch</div></div>
+  <div class="kpi"><div class="v">chưa có</div><div class="k">κ human–human — nút thắt số 1</div></div>
+</div>
+
+<figure>
+  <div class="ftitle">Corpus đã đi được tới đâu — 3.775 clip trên đĩa</div>
+  <div class="stack">
+    <span style="width:24.5%;background:var(--c1)" title="926 clip có nhãn cảm xúc (24,5%)"></span>
+    <span style="width:11.8%;background:var(--c2)" title="445 clip bị loại: cắt hỏng / nhiều giọng / không thoại (11,8%)"></span>
+    <span style="width:63.7%;background:var(--track)" title="phần còn lại chưa duyệt"></span>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--c1)"></i><b>926</b> có nhãn cảm xúc</span>
+    <span><i style="background:var(--c2)"></i><b>445</b> bị loại khi duyệt</span>
+    <span><i style="background:var(--track)"></i>chưa duyệt</span>
+  </div>
+  <figcaption>Tỉ lệ theo tổng 3.775 clip. Nguồn: truy vấn read-only <code>state.db</code>
+  ngày <b>2026-08-01</b> — phân bố lớp chi tiết ở §4.2 (chốt ở mốc 07-29, 813 nhãn).</figcaption>
+</figure>
+
+<h3>Ba nút thắt</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>Nút thắt</th><th>Vì sao quan trọng</th><th>Cần gì để gỡ</th></tr></thead>
+  <tbody>
+  <tr><td><b>Chưa có κ human–human</b> (độ đồng thuận giữa người gán nhãn)</td>
+      <td>Không có số này thì bài báo dataset <b>không qua nổi phản biện</b> — mọi corpus SER được trích dẫn đều báo κ</td>
+      <td>Cần <b>3 annotator thật</b>. Công cụ + thống kê đã xong và test, chỉ thiếu người</td></tr>
+  <tr><td><b>Nhãn người mới phủ ~25% corpus</b> (926/3.775)</td>
+      <td>Chi phí gán nhãn tuyến tính theo số clip; một mình làm sẽ rất lâu</td>
+      <td>Chốt <b>mục tiêu quy mô corpus</b> — không nhất thiết nhãn hết</td></tr>
+  <tr><td><b>Chưa chạy benchmark 6 phương pháp trên nhãn người</b></td>
+      <td>Đây là phần “đo” của bài báo phương pháp</td>
+      <td>Nhãn ổn định + quota GPU Kaggle</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2">2 · Mục tiêu và đóng góp dự kiến</h2>
+
+<p>Đề tài cho ra <b>hai sản phẩm</b>: <b>(A)</b> bài báo corpus — ViEmoSpeech, corpus
+SER tiếng Việt đầu tiên <i>đồng thời</i> free-content, đa lớp (7 cảm xúc +
+valence/arousal + distress), gán thanh điệu, license rõ (CC-BY); và <b>(B)</b> bài
+báo phương pháp bimodal <b>tone × emotion</b>.</p>
+
+<h3>2.1 Ba khoảng trống mà đề tài lấp</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>Khoảng trống</th><th>Hiện trạng văn liệu</th><th>ViEmoSpeech</th></tr></thead>
+  <tbody>
+  <tr><td><b>Corpus</b></td>
+      <td>Không corpus SER tiếng Việt nào vừa <i>lấy được</i> + <i>thoại tự do</i> + <i>license rõ</i>. ViSEC: mở nhưng <b>thiếu license</b>; VLSP 56h: nhãn nhị phân + site gated</td>
+      <td>Trích từ phim truyền hình → thoại tự do; artifact phát hành = đặc trưng + timestamp + nhãn, CC-BY khai báo từ commit đầu</td></tr>
+  <tr><td><b>Phương pháp (tone × emotion)</b></td>
+      <td>Chưa ai mô hình hoá SER <i>tone-aware</i> cho <b>bất kỳ</b> ngôn ngữ thanh điệu nào</td>
+      <td>Giả thuyết: khi F0 bận “chở” thanh điệu thì nhánh ngữ nghĩa phải gánh nặng hơn</td></tr>
+  <tr><td><b>Recall-floor cho distress</b></td>
+      <td>21/21 bài bimodal trong sweep không đặt recall-floor làm mục tiêu tối ưu</td>
+      <td>Head distress có sàn recall — nói rõ là <b>proxy trên phim diễn, không phải nhãn lâm sàng</b></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>2.2 Luận điểm trung tâm (chưa ai claim, và đo được)</h3>
+<div class="callout">
+Tiếng Việt là ngôn ngữ thanh điệu <b>thiên về phonation/chất giọng</b>, không chỉ
+đường F0 (Shen et al., <b>NAACL 2024</b>) — <b>đúng kênh mà cảm xúc cũng dùng</b>.
+⇒ xung đột <i>thanh điệu × cảm xúc</i> ở tiếng Việt <b>mạnh hơn tiếng Quan Thoại</b>,
+và nhánh text/ngữ nghĩa phải gánh nhiều hơn so với SER ở ngôn ngữ phi-thanh-điệu.
+</div>
+<p><b>Bằng chứng sớm đã bắt được trong pilot:</b> ASR (PhoWhisper) sai <b>thanh điệu</b>
+đúng ở đoạn cảm xúc mạnh — khi nhân vật quát, <i>“mày → máy/mây”</i>, <i>“tao → tháo”</i>.
+Vừa là <b>rủi ro</b> (nhánh text nhiễu có hệ thống ở high-arousal), vừa là
+<b>bằng chứng thực nghiệm</b> cho chính giả thuyết của bài báo.</p>
+
+<h3>2.3 Rủi ro về tính mới (đã rà)</h3>
+<ul>
+  <li><b>arXiv:2601.04564</b> <i>“When Tone and Words Disagree”</i> (01/2026) — “tone”
+  của họ là <i>tone-of-voice</i> (ngữ điệu), <b>không phải thanh điệu từ vựng</b> →
+  phải cite-and-distinguish tường minh.</li>
+  <li><b>arXiv:2604.01711</b> (04/2026, VN SER + LLM) — <b>nêu tên</b> vấn đề
+  tone-confound nhưng <b>không giải</b> → khoảng trống có thật, nhưng niche mở nhanh
+  ⇒ <b>có áp lực thời gian</b>.</li>
+  <li><b>arXiv:2412.09829</b> (VNU Hà Nội) — sau khi đọc toàn văn: bài này <b>đã bị
+  tác giả rút</b> và <b>không phải bài SER</b> ⇒ <i>không tồn tại “số baseline để
+  vượt”</i> như ghi trong bản tổng quan 07-08; nay định vị lại là tiền lệ rule-fusion
+  đã rút.</li>
+</ul>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3">3 · Tiến độ theo khối công việc</h2>
+
+<p class="flownote">Dòng chảy chính của đề tài: từ tập phim thô đến bài báo. Màu viền
+trái = trạng thái. Ô có viền cam là <b>chỗ đang bị chặn</b>.</p>
+
+<div class="flow">
+  <div class="st done"><div class="ltr">A</div>
+    <div class="nm">Pipeline trích xuất</div>
+    <div class="big">✅ Xong</div>
+    <div class="ev">video → tách nhạc → VAD → cắt theo lượt nói → ASR.
+    Chạy local + kernel Kaggle.</div></div>
+  <div class="ar">→</div>
+
+  <div class="st done"><div class="ltr">B</div>
+    <div class="nm">Trích corpus 2 bộ phim</div>
+    <div class="big">3.775 clip</div>
+    <div class="ev">đơn-giọng theo cấu tạo (VAD ∩ lượt nói).</div></div>
+  <div class="ar">→</div>
+
+  <div class="st run"><div class="ltr">F</div>
+    <div class="nm">Gán nhãn người (chủ nhiệm)</div>
+    <div class="big">926 / 3.775 · 25%</div>
+    <div class="ev">🔄 đang chạy · +113 clip so với 07-29.
+    Đo lại <code>state.db</code> 2026-08-01.</div></div>
+  <div class="ar">→</div>
+
+  <div class="st block"><div class="ltr">G</div>
+    <div class="nm">κ human–human</div>
+    <div class="big">⛔ ĐANG CHẶN</div>
+    <div class="ev"><b>Công cụ xong</b> (change 011). Thiếu <b>người thật</b> ngồi
+    gán nhãn — không tự động hoá được.</div></div>
+  <div class="ar">→</div>
+
+  <div class="st run"><div class="ltr">H</div>
+    <div class="nm">Huấn luyện + đánh giá</div>
+    <div class="big">🔄 Có baseline</div>
+    <div class="ev">audio-only trên nhãn người đã có số; benchmark 6 phương pháp —
+    harness xong, <b>chưa chạy</b>.</div></div>
+  <div class="ar">→</div>
+
+  <div class="st todo"><div class="ltr">I</div>
+    <div class="nm">Viết bài báo</div>
+    <div class="big">⬜ Chưa</div>
+    <div class="ev">chờ κ (G) + benchmark (H).</div></div>
+</div>
+
+<p class="flownote"><b>Nền tảng đã xong — đỡ cho cả dòng trên:</b></p>
+<div class="flowbase">
+  <div class="b"><div class="nm">C · Phương pháp gán nhãn</div>
+    <div class="ev">✅ ADR-003 (07-07): bỏ weak-supervision, nhãn người là nguồn sự
+    thật duy nhất, LLM chỉ còn là gợi ý.</div></div>
+  <div class="b"><div class="nm">D · Công cụ gán nhãn (owner)</div>
+    <div class="ev">✅ change 003–010, 6 vòng cải tiến: cắt/chia/loại, nghe ngữ cảnh,
+    cắt thủ công, SQLite.</div></div>
+  <div class="b"><div class="nm">E · Related work</div>
+    <div class="ev">✅ 29 PDF đọc sâu toàn văn + bản dịch tiếng Việt + 18 trang
+    review HTML.</div></div>
+</div>
+
+<h3>3.1 Khối G — đã dựng xong những gì (change 011)</h3>
+
+<p>Đây là khối mới nhất và cũng là khối đang chặn, nên tách riêng. Toàn bộ phần
+<b>máy làm được</b> đã xong và có kiểm thử; phần còn lại <b>chỉ người làm được</b>.</p>
+
+<table>
+  <thead><tr><th>Thành phần</th><th>Việc</th><th>Trạng thái</th></tr></thead>
+  <tbody>
+  <tr><td><b>ADR-005</b></td><td>Làm rõ ràng buộc bản quyền: stream clip cho annotator
+    được mời đích danh ≠ "phát hành". Kèm <b>7 safeguard bắt buộc</b>.</td>
+    <td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Giao thức</b></td><td>Hướng dẫn gán nhãn (bài báo sẽ đăng nguyên văn),
+    bản đồng ý tham gia, <b>giao thức QC pre-registered</b> — ngưỡng loại annotator
+    chốt <i>trước</i> khi nhìn dữ liệu.</td><td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Backend</b></td><td>Token đích danh + phân quyền + log truy cập; một
+    middleware làm biên bảo mật; annotator chỉ chạm clip <b>theo vị trí hàng đợi</b>,
+    không bao giờ biết id clip.</td><td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Màn gán nhãn</b></td><td><b>Mù hoàn toàn</b>: không transcript, không gợi ý
+    LLM, không thấy nhãn người khác — thấy là nhãn bị neo, κ vô nghĩa.</td>
+    <td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Cửa consent</b></td><td>Ghi ai đồng ý, lúc nào, phiên bản văn bản nào.
+    Chưa đồng ý thì không lấy được clip — chặn ở server, không chỉ ẩn trên giao diện.</td>
+    <td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Màn owner</b></td><td>Chốt gold set (đếm clip đã thật sự nghe) · so nhãn
+    mọi rater trên từng clip.</td><td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Script κ</b></td><td>Fleiss κ + Krippendorff α (nominal &amp; ordinal), tự
+    cài — đối chiếu tính tay khớp tới 6 chữ số.</td><td><span class="badge b-ok">✅</span></td></tr>
+  <tr><td><b>Vòng qualification</b></td><td>30 slot: 18 gold + 10 thường + 2 bẫy;
+    gold hai vòng <b>rời nhau</b> (dùng lại là đo trí nhớ, không đo việc nghe).</td>
+    <td><span class="badge b-ok">✅ công cụ</span></td></tr>
+  <tr><td><b>Chốt gold-set</b></td><td>58 ứng viên đã lọc sẵn (đồng thuận 3 chiều
+    owner+2 LLM); cần <b>nghe và xác nhận thủ công</b>.</td>
+    <td><span class="badge b-run">🔄 chờ owner</span></td></tr>
+  <tr><td><b>Chạy 2 vòng gán nhãn</b></td><td>Qualification rồi reliability, ~3 người,
+    ~250 clip trùng nhau hoàn toàn.</td>
+    <td><span class="badge b-block">⛔ chờ người</span></td></tr>
+  </tbody>
+</table>
+
+<div class="callout">
+<p><b>Vì sao khối G không thể tự động hoá.</b> κ đo <i>mức đồng thuận giữa người với
+người</i>. Nếu nhãn thứ hai do máy sinh ra thì con số đó không còn nghĩa gì — nó chỉ
+nói mô hình có giống chủ nhiệm hay không, đúng thứ mà ADR-003 đã loại bỏ. Nên khối
+này <b>bắt buộc</b> phải có người thật ngồi nghe.</p>
+<p><b>Rào kỹ thuật mới phát sinh (07-31):</b> phương án ban đầu là mở tunnel từ máy cá
+nhân, nhưng <b>chính sách công ty chặn</b>. Đang cân nhắc đưa clip lên hạ tầng cloud —
+việc này <b>phá vỡ lập luận pháp lý của ADR-005</b> (vốn dựa trên "media không rời khỏi
+một máy") nên phải ra quyết định lại ở tầng intent trước khi làm.</p>
+</div>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4">4 · Số liệu <u>đã đo</u> đến 2026-07-29</h2>
+
+<div class="callout"><p><b>Mục này là ảnh chụp cố định ở mốc 2026-07-29</b> — giữ nguyên
+để mọi số trong đây truy được về đúng một lần truy vấn. Số <b>tiến độ hiện tại</b>
+(926 nhãn, 25%) nằm ở §1.2 và §3, đo lại ngày <b>2026-08-01</b>. Hai mốc khác nhau là
+có chủ ý, không phải sai lệch.</p></div>
+
+<h3>4.1 Pipeline trích xuất (đo trên tập ep01, 35,6 phút)</h3>
+
+<figure>
+  <div class="ftitle">Từ 1 tập phim còn lại bao nhiêu thoại dùng được</div>
+  <div class="bars">
+    <div class="row">
+      <div class="lab"><span>Tập phim gốc</span><span class="v">35,6′ · 100%</span></div>
+      <div class="track"><div class="fill" style="width:100%" title="35,6 phút"></div></div>
+    </div>
+    <div class="row">
+      <div class="lab"><span>Thoại sạch sau tách nhạc + VAD</span><span class="v">11,9′ · 33%</span></div>
+      <div class="track"><div class="fill" style="width:33.4%" title="11,9 phút — 33%"></div></div>
+    </div>
+    <div class="row">
+      <div class="lab"><span>Sau cắt theo lượt nói → <b>175 clip</b></span><span class="v">10,3′ · 29%</span></div>
+      <div class="track"><div class="fill" style="width:28.9%" title="10,3 phút / 175 clip — 29%"></div></div>
+    </div>
+  </div>
+  <figcaption><b>100% clip đơn-người-nói</b> theo diarization ở bước cuối. Mức 33% là
+  con số đã quyết định GO cho việc dùng nguồn phim truyền hình.</figcaption>
+</figure>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">11,4%</div><div class="k">điểm mù diarization (20/175) — 2 giọng nữ giống nhau bị gộp, lý do tồn tại của lớp lọc text thứ hai</div></div>
+  <div class="kpi"><div class="v">87,2</div><div class="k">similarity ASR PhoWhisper-base vs caption YouTube (median 90,5) ⇒ không cần bản <code>-medium</code></div></div>
+</div>
+
+<h3>4.2 Corpus và tiến độ gán nhãn</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>Đại lượng</th><th class="num">Giá trị</th></tr></thead>
+  <tbody>
+  <tr><td>Bộ phim</td><td class="num">2 (<i>Về nhà đi con</i> 10 tập · <i>Chạy trốn thanh xuân</i> 22 phần)</td></tr>
+  <tr><td>Clip đã cắt trên đĩa</td><td class="num"><b>3.775</b> (2.082 + 1.693) ≈ <b>10 giờ</b></td></tr>
+  <tr><td>Clip đã được người duyệt</td><td class="num"><b>1.198</b> (~32% corpus)</td></tr>
+  <tr><td>— trong đó <b>có nhãn cảm xúc</b></td><td class="num"><b>813</b></td></tr>
+  <tr><td>— trong đó <b>bị loại</b> (cắt hỏng / nhiều giọng / không có thoại)</td><td class="num"><b>395</b> (33% số đã duyệt)</td></tr>
+  <tr><td>Theo bộ phim</td><td class="num">Chạy trốn thanh xuân 538 · Về nhà đi con 275</td></tr>
+  </tbody>
+</table>
+</div>
+
+<figure>
+  <div class="ftitle">Phân bố 813 nhãn cảm xúc của người gán</div>
+  <div class="bars">
+    <div class="row"><div class="lab"><span>neutral</span><span class="v">230</span></div>
+      <div class="track"><div class="fill" style="width:100%" title="neutral — 230 clip"></div></div></div>
+    <div class="row"><div class="lab"><span>anger</span><span class="v">165</span></div>
+      <div class="track"><div class="fill" style="width:71.7%" title="anger — 165 clip"></div></div></div>
+    <div class="row"><div class="lab"><span>joy</span><span class="v">154</span></div>
+      <div class="track"><div class="fill" style="width:67.0%" title="joy — 154 clip"></div></div></div>
+    <div class="row"><div class="lab"><span>fear_anxiety</span><span class="v">84</span></div>
+      <div class="track"><div class="fill" style="width:36.5%" title="fear_anxiety — 84 clip"></div></div></div>
+    <div class="row"><div class="lab"><span>sadness</span><span class="v">73</span></div>
+      <div class="track"><div class="fill" style="width:31.7%" title="sadness — 73 clip"></div></div></div>
+    <div class="row"><div class="lab"><span>disgust</span><span class="v">67</span></div>
+      <div class="track"><div class="fill" style="width:29.1%" title="disgust — 67 clip"></div></div></div>
+    <div class="row"><div class="lab"><span>⚠ surprise — lớp mỏng nhất</span><span class="v">40</span></div>
+      <div class="track"><div class="fill alt" style="width:17.4%" title="surprise — 40 clip, lớp mỏng nhất toàn corpus"></div></div></div>
+  </div>
+  <figcaption><b>Lớp <code>surprise</code> chỉ 40 clip toàn corpus</b> — ràng buộc thật
+  cho cả huấn luyện lẫn lấy mẫu phân tầng khi đo κ (đúng như kỳ vọng với phim
+  gia đình/tâm lý).</figcaption>
+</figure>
+
+<div class="callout warn">
+Chênh <b>3.775</b> (đĩa hôm nay) vs <b>3.611</b> (lúc đóng gói dataset Kaggle v3 ngày
+06-07): do trong quá trình gán nhãn có <b>cắt lại / tách</b> một số clip.
+</div>
+
+<h3>4.3 Kết quả mô hình</h3>
+<p class="sub">Baseline audio-only trên nhãn <b>NGƯỜI</b> — 750 clip sạch,
+WavLM-Large <b>đóng băng</b> + linear probe, Kaggle P100 (kernel <code>vnser-train</code> v6, 2026-07-22).</p>
+
+<figure>
+  <div class="ftitle">macro-F1 emotion (7 lớp) — hai cách đánh giá cùng một mô hình</div>
+  <svg viewBox="0 0 960 178" role="img"
+       aria-label="macro-F1: cách đánh giá lạc quan 0,314; cách đánh giá trung thực 0,249; mức ngẫu nhiên 0,04">
+    <!-- grid -->
+    <line class="grid" x1="340" y1="44" x2="340" y2="150"/>
+    <line class="grid" x1="465" y1="44" x2="465" y2="150"/>
+    <line class="grid" x1="590" y1="44" x2="590" y2="150"/>
+    <line class="grid" x1="715" y1="44" x2="715" y2="150"/>
+    <line class="grid" x1="840" y1="44" x2="840" y2="150"/>
+    <line class="grid" x1="340" y1="150" x2="840" y2="150"/>
+    <!-- ngưỡng ngẫu nhiên -->
+    <line x1="390" y1="44" x2="390" y2="150" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text class="tick" x="390" y="34" text-anchor="middle">ngẫu nhiên ≈0,04</text>
+    <!-- A -->
+    <text class="lbl dim" x="326" y="66" text-anchor="end">A — GroupKFold theo tập</text>
+    <text class="lbl dim" x="326" y="81" text-anchor="end">(lạc quan)</text>
+    <rect x="340" y="60" width="392" height="22" rx="4" fill="var(--c1)" opacity=".38"><title>A — macro-F1 0,314 (CI 0,278–0,348)</title></rect>
+    <line x1="688" y1="71" x2="775" y2="71" stroke="var(--muted)" stroke-width="2"/>
+    <line x1="688" y1="65" x2="688" y2="77" stroke="var(--muted)" stroke-width="2"/>
+    <line x1="775" y1="65" x2="775" y2="77" stroke="var(--muted)" stroke-width="2"/>
+    <text class="val" x="855" y="76">0,314</text>
+    <!-- B -->
+    <text class="lbl" x="326" y="118" text-anchor="end">B — train 1 phim / test phim kia</text>
+    <text class="lbl dim" x="326" y="133" text-anchor="end">(trung thực, speaker-disjoint)</text>
+    <rect x="340" y="112" width="311" height="22" rx="4" fill="var(--c1)"><title>B — macro-F1 0,249 (CI 0,218–0,277)</title></rect>
+    <line x1="613" y1="123" x2="686" y2="123" stroke="var(--muted)" stroke-width="2"/>
+    <line x1="613" y1="117" x2="613" y2="129" stroke="var(--muted)" stroke-width="2"/>
+    <line x1="686" y1="117" x2="686" y2="129" stroke="var(--muted)" stroke-width="2"/>
+    <text class="val" x="855" y="128">0,249</text>
+    <!-- ticks -->
+    <text class="tick" x="340" y="166" text-anchor="middle">0</text>
+    <text class="tick" x="465" y="166" text-anchor="middle">0,1</text>
+    <text class="tick" x="590" y="166" text-anchor="middle">0,2</text>
+    <text class="tick" x="715" y="166" text-anchor="middle">0,3</text>
+    <text class="tick" x="840" y="166" text-anchor="middle">0,4</text>
+  </svg>
+  <figcaption>Vạch ngang = khoảng tin cậy. <b>Khoảng cách A→B ≈ 0,065</b> là lượng
+  “thổi phồng” do diễn viên tái xuất trong cùng một bộ phim — chỉ con số B mới
+  được báo cáo. Số đầy đủ (UAR, CCC) ở bảng ngay dưới.</figcaption>
+</figure>
+
+<figure>
+  <div class="ftitle">CCC valence / arousal — thang 0 → 1,0 (audio-only, đánh giá B)</div>
+  <div class="bars">
+    <div class="row"><div class="lab"><span>CCC valence</span><span class="v">0,091</span></div>
+      <div class="track"><div class="fill" style="width:9.1%" title="CCC valence 0,091 trên thang tối đa 1,0"></div></div></div>
+    <div class="row"><div class="lab"><span>CCC arousal</span><span class="v">0,087</span></div>
+      <div class="track"><div class="fill" style="width:8.7%" title="CCC arousal 0,087 trên thang tối đa 1,0"></div></div></div>
+  </div>
+  <figcaption><b>Gần sàn</b> — chỉ nghe âm thanh thì gần như không đọc được
+  valence/arousal. Đây chính là <b>động cơ định lượng cho nhánh text / tone×emotion</b>:
+  kết quả “xấu” này lại là bằng chứng ủng hộ hướng nghiên cứu.</figcaption>
+</figure>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Cách đánh giá</th><th class="num">macro-F1 (7 lớp)</th><th class="num">UAR</th><th class="num">CCC valence</th><th class="num">CCC arousal</th></tr></thead>
+  <tbody>
+  <tr><td><b>A</b> — GroupKFold theo tập (<i>lạc quan</i>)</td><td class="num">0,314 [0,278–0,348]</td><td class="num">0,319</td><td class="num">0,116</td><td class="num">0,132</td></tr>
+  <tr><td><b>B</b> — train 1 phim / test phim kia (<i>trung thực, speaker-disjoint</i>)</td><td class="num"><b>0,249</b> [0,218–0,277]</td><td class="num">0,247</td><td class="num">0,091</td><td class="num">0,087</td></tr>
+  </tbody>
+</table>
+</div>
+
+<ol>
+  <li><b>0,249 vượt xa mức ngẫu nhiên (≈0,04)</b> → tín hiệu có thật; pipeline + nhãn không phải nhiễu.</li>
+  <li>Bắt buộc giữ split theo bộ phim (ADR-002). Đây cũng là chỗ <b>các bài VN SER
+  hiện có bị leak</b> (VNEMOS báo UA 0,87; human-guided báo 86,6% — cả hai đều không
+  speaker-disjoint).</li>
+</ol>
+<p class="sub">Baseline sàn (MFCC + MLP, không dùng SSL, chạy local không tốn quota):
+macro-F1 0,181 cross-series — chạy trên nhãn máy thời tiền-pivot, chỉ dùng để kiểm tra
+pipeline, <b>không</b> đưa vào bài báo.</p>
+
+<h3>4.4 Trung thực về giới hạn (ghi rõ, không giấu)</h3>
+<ul>
+  <li>Nhãn hiện tại <b>single-pass, một người gán</b> → <b>chưa có κ human–human</b>;
+  vì vậy 0,249 là <b>kết quả pilot</b>, <b>không</b> phải “accuracy chốt hạ”.</li>
+  <li>Backbone WavLM-Large huấn luyện chủ yếu trên tiếng Anh — chưa bake-off backbone đa ngữ.</li>
+  <li>Lớp hiếm (surprise 40, disgust 67) khi chia test có thể còn &lt;15 mẫu → đọc theo
+  khoảng tin cậy, không đọc theo điểm.</li>
+  <li>Số κ ≈ 0,61 của “2 LLM teacher” trong báo cáo cũ <b>không còn là số đo chất lượng
+  nhãn corpus</b> kể từ pivot ADR-003; giữ lại chỉ như lịch sử.</li>
+</ul>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5">5 · Phụ lục — nguồn của từng con số</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Số trong báo cáo</th><th>File sinh ra nó</th></tr></thead>
+  <tbody>
+  <tr><td>Yield 33% · turn-split 175 clip/10,3′ · điểm mù 11,4% · similarity 87,2</td>
+      <td><a href="spec/capabilities/extraction-pipeline.md">extraction-pipeline.md</a>, <a href="tasks/vn-tv-ser-pilot.md">vn-tv-ser-pilot.md</a></td></tr>
+  <tr><td>3.775 clip · 1.198 record · 813 nhãn · 395 loại · phân bố lớp</td>
+      <td>truy vấn read-only <code>data/vietnamese-ser/episodes/state.db</code> ngày 2026-07-29</td></tr>
+  <tr><td>macro-F1 0,314 / 0,249 · UAR · CCC</td>
+      <td><a href="spec/capabilities/training-baseline.md">training-baseline.md</a> + <a href="tasks/vnser-human-pilot-train.md">vnser-human-pilot-train.md</a></td></tr>
+  <tr><td>MFCC baseline 0,181</td>
+      <td><a href="tasks/viemospeech-benchmark-survey.md">viemospeech-benchmark-survey.md</a></td></tr>
+  <tr><td>κ các corpus tham chiếu (IEMOCAP/MELD/MSP-Podcast/CREMA-D/THAI-SER)</td>
+      <td><a href="tasks/online-multi-annotator-labeling.md">online-multi-annotator-labeling.md</a> §Research Findings (có link nguồn gốc)</td></tr>
+  <tr><td>Ràng buộc pháp lý + 7 safeguard</td>
+      <td><a href="intent/constraints.md">constraints.md</a> §1, <a href="spec/decisions/ADR-005-annotation-streaming-not-release.md">ADR-005</a></td></tr>
+  <tr><td>Giao thức κ, gold-set, ngưỡng QC</td>
+      <td><a href="spec/changes/011-online-multi-annotator/README.md">change 011</a> (guideline · consent · qc-protocol · RUNBOOK)</td></tr>
+  <tr><td>29 paper đọc sâu</td>
+      <td><a href="papers/bimodal-ser/00-INDEX.md">papers/</a> (mỗi bài có bản <code>.vi.md</code>) · bản duyệt HTML: <a href="survey-review/index.html">survey-review/index.html</a></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+<b>Kỷ luật kỹ thuật đang áp dụng:</b> repo tổ chức 3 tầng (intent → spec → execution);
+<b>6 invariant I1–I6</b> (media không bao giờ commit · mọi nhãn mang annotator id +
+timestamp · clip đơn-giọng hai lớp kiểm · split speaker-disjoint · mọi số truy được về
+report do script sinh · mọi claim accuracy phải nêu test set speaker-disjoint);
+<b>5 ADR</b> ghi lại mọi quyết định đổi hướng kèm lý do và phương án đã loại.
+</div>
+
+<p class="sub">Bản Markdown: <a href="progress-report-2026-07-29.md">progress-report-2026-07-29.md</a> ·
+Bản tổng quan dự án (07-08): <a href="project-overview.html">project-overview.html</a></p>
+
+</div>
+</body>
+</html>
