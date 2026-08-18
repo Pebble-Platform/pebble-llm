@@ -1,62 +1,43 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>Chốt gold set — ViEmoSpeech</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Review gold candidates — ViEmoSpeech</title>
 <style>
-  :root { --bd:#d5d8dc; --mut:#6b7280; --acc:#2563eb; --ok:#16a34a; --no:#dc2626; }
-  * { box-sizing: border-box; }
-  body { font: 15px/1.5 system-ui, "Segoe UI", sans-serif; margin: 0 auto; padding: 20px 16px 64px;
-         max-width: 860px; color: #111; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  .note { color: var(--mut); font-size: 13px; margin-bottom: 6px; }
-  .note b { color: #111; }
-  .head { position: sticky; top: 0; background: #fff; padding-bottom: 10px;
-          border-bottom: 1px solid var(--bd); margin-bottom: 12px; z-index: 2; }
-  .counts { font-size: 13px; color: var(--mut); margin-top: 8px; }
-  .counts b { color: #111; }
-  table { border-collapse: collapse; width: 100%; }
-  td { border-bottom: 1px solid var(--bd); padding: 7px 6px; vertical-align: middle; }
-  tr.cur td { background: #eff6ff; }
-  tr.drop td { opacity: .42; }
-  tr.drop td.emo { text-decoration: line-through; }
-  td.emo { font-weight: 600; width: 118px; }
-  td.key { color: var(--mut); font-size: 12px; font-family: ui-monospace, monospace; }
-  td.act { width: 210px; text-align: right; white-space: nowrap; }
-  button { cursor: pointer; border: 1px solid var(--bd); background: #fff; border-radius: 6px;
-           padding: 6px 11px; font-size: 13px; }
-  button:hover { border-color: var(--acc); }
-  .play.heard { border-color: var(--ok); color: var(--ok); }
-  .keep[data-on="1"] { background: var(--ok); color: #fff; border-color: var(--ok); }
-  .keep[data-on="0"] { background: var(--no); color: #fff; border-color: var(--no); }
-  .unheard { color: var(--no); font-size: 11px; margin-left: 6px; }
-  #save { padding: 11px 20px; font-size: 15px; font-weight: 600; background: var(--acc);
-          color: #fff; border: 0; border-radius: 8px; }
-  #msg { margin-left: 12px; font-size: 13px; color: var(--mut); }
-  @media (prefers-color-scheme: dark) {
-    :root { --bd:#374151; --mut:#9ca3af; }
-    body { background: #0f1115; color: #e5e7eb; }
-    .head { background: #0f1115; }
-    .note b { color: #e5e7eb; }
-    tr.cur td { background: #172554; }
-    button { background: #1f2430; color: #e5e7eb; }
-  }
+  :root{font:15px/1.5 system-ui;color:#172033;background:#f3f5f8}*{box-sizing:border-box}
+  body{max-width:760px;margin:0 auto;padding:32px 16px}.card{background:#fff;border:1px solid #d7dce3;border-radius:12px;padding:22px;margin-bottom:16px}
+  h1{font-size:22px;margin:0 0 14px}.row,.actions{display:flex;gap:12px;flex-wrap:wrap}.field{flex:1;min-width:180px}label{display:block;font-size:12px;color:#667085;margin-bottom:4px}
+  input,select,textarea,button{width:100%;padding:10px;border:1px solid #c7cdd6;border-radius:7px;background:#fff;font:inherit}button{width:auto;cursor:pointer;font-weight:600}.primary{background:#167344;color:#fff;border-color:#167344}.danger{background:#b42318;color:#fff;border-color:#b42318}.reject{background:#344054;color:#fff;border-color:#344054}
+  #subtitle{font-size:19px;text-align:center;padding:18px;background:#f8fafc;border-radius:8px;margin:14px 0}.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.muted{color:#667085;font-size:13px}.hidden{display:none!important}audio{width:100%;margin:12px 0}.status{min-height:24px;color:#b42318}.actions{margin-top:18px}.actions button{flex:1}.done{text-align:center;font-size:18px}
+  @media(max-width:600px){.meta{grid-template-columns:1fr}.actions{flex-direction:column}.actions button{width:100%}}
+  #emotion{font-weight:700;border-left-width:10px}.emo-joy{border-left-color:#f59e0b;background:#fffbeb}.emo-sadness{border-left-color:#3b82f6;background:#eff6ff}.emo-anger{border-left-color:#ef4444;background:#fef2f2}.emo-fear_anxiety{border-left-color:#8b5cf6;background:#f5f3ff}.emo-surprise{border-left-color:#ec4899;background:#fdf2f8}.emo-disgust{border-left-color:#22c55e;background:#f0fdf4}.emo-neutral{border-left-color:#64748b;background:#f8fafc}
 </style>
-
-<div class="head">
-  <h1>Chốt gold set</h1>
-  <div class="note">
-    Gold <b>không phải "đáp án đúng"</b> — nhãn của bạn không phải sự thật nền độc lập.
-    Gold = <b>dễ tới mức ai nghe nghiêm túc cũng ra thế</b>, để bắt annotator
-    <b>không nghe</b>, không phải để bắt người <b>nghe khác</b>.
-    Clip nào phải ngẫm mới quyết được → <b>loại</b>.
-  </div>
-  <div class="note">
-    <kbd>Space</kbd> nghe · <kbd>K</kbd> giữ · <kbd>D</kbd> loại · <kbd>J</kbd>/<kbd>N</kbd> xuống ·
-    <kbd>↑</kbd> lên
-  </div>
-  <div class="counts" id="counts">…</div>
-  <div style="margin-top:10px"><button id="save">Ghi gold-set.txt</button><span id="msg"></span></div>
-</div>
-
-<table><tbody id="rows"></tbody></table>
+<section id="login" class="card">
+  <h1>Đăng nhập để review</h1>
+  <form id="login-form" class="row">
+    <div class="field"><label for="username">User name</label><input id="username" autocomplete="username" required></div>
+    <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <button class="primary" type="submit">Đăng nhập</button>
+  </form>
+  <div id="login-status" class="status"></div>
+</section>
+<main id="review" class="hidden">
+  <div class="muted"><span id="who"></span> · <span id="progress"></span></div>
+  <section id="card" class="card">
+    <h1>Nghe và kiểm tra thông tin</h1>
+    <audio id="audio" controls preload="none"></audio>
+    <div id="subtitle"></div>
+    <div class="meta">
+      <div class="field"><label>Nhãn</label><select id="emotion"></select></div>
+      <div class="field"><label>Valence</label><select id="valence"></select></div>
+      <div class="field"><label>Arousal</label><select id="arousal"></select></div>
+      <div class="field"><label>Giới tính</label><select id="gender"></select></div>
+      <div class="field"><label>Tuổi</label><select id="age_group"></select></div>
+      <div class="field"><label>Vùng miền</label><select id="dialect"></select></div>
+    </div>
+    <div id="reject-box" class="hidden"><label for="reject-reason">Lý do loại (bắt buộc)</label><textarea id="reject-reason" rows="3" maxlength="500" placeholder="Ví dụ: nhiều người nói, không nghe rõ, audio cắt lỗi…"></textarea></div>
+    <div class="actions"><button id="agree" class="primary">Đồng ý</button><button id="disagree" class="danger">Không đồng ý</button><button id="reject" class="reject">Loại</button><button id="save-fix" class="primary hidden">Lưu</button><button id="save-reject" class="reject hidden">Xác nhận loại</button><button id="cancel-fix" class="hidden">Hủy</button></div>
+    <div id="status" class="status"></div>
+  </section>
+  <section id="done" class="card done hidden">Bạn đã review xong tất cả audio.</section>
+</main>
 <script type="module" src="gold.js"></script>

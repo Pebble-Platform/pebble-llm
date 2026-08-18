@@ -198,7 +198,7 @@ export async function selectClip(i) {
   S.splitMode = false; S.splitPoints = []; $("splitbtn").classList.remove("primary"); updateSplitBtnLabel();
   $("cutinfo").textContent = g && g.recut ? "✂ đã recut" : "";
   $("g-gender").value = (g && g.gender) || ""; $("g-age").value = (g && g.age_group) || "";
-  $("g-dialect").value = (g && g.dialect) || "";
+  $("g-dialect").value = (g && g.dialect) || "north";
   const rj = !!(g && g.rejected);
   $("rej-reason").value = (g && g.reject_reason) || "multi_speaker";
   $("rejbtn").textContent = rj ? "↺ bỏ loại" : "⚑ loại";

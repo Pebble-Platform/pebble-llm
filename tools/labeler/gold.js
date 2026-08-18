@@ -1,137 +1,29 @@
-// Gold-set audition (change 011, qc-protocol §2.1 step 2) — owner-only.
-//
-// Step 1 (three-way agreement + stratified draw) is already done by
-// pick_gold_candidates.py. This screen is step 2, the part that CANNOT be automated:
-// the owner listens and keeps only the clips that are obvious.
-//
-// Rows start as "keep" because they survived three-way agreement — the job is to DROP
-// the unclear ones. But a row is only counted as confirmed once its audio has actually
-// been played, and saving warns about unheard rows: otherwise "listen to each one"
-// quietly degrades into clicking save, and the QC gate ends up resting on clips nobody
-// ever checked.
-
 const $ = (id) => document.getElementById(id);
-let rows = [];
-let cur = 0;
-let audio = null;
-
-const render = () => {
-  $("rows").innerHTML = rows
-    .map(
-      (r, i) => `<tr class="${i === cur ? "cur" : ""}${r.keep ? "" : " drop"}" data-i="${i}">
-        <td class="emo">${r.emotion}</td>
-        <td class="key">${r.key}</td>
-        <td class="act">
-          <button class="play${r.heard ? " heard" : ""}" data-a="play">
-            ${r.heard ? "▶ nghe lại" : "▶ nghe"}</button>
-          <button class="keep" data-on="${r.keep ? 1 : 0}" data-a="toggle">
-            ${r.keep ? "giữ" : "loại"}</button>
-          ${r.keep && !r.heard ? '<span class="unheard">chưa nghe</span>' : ""}
-        </td>
-      </tr>`,
-    )
-    .join("");
-
-  const keep = rows.filter((r) => r.keep);
-  const unheard = keep.filter((r) => !r.heard).length;
-  const byClass = {};
-  for (const r of keep) byClass[r.emotion] = (byClass[r.emotion] || 0) + 1;
-  $("counts").innerHTML =
-    `giữ <b>${keep.length}</b> / ${rows.length}` +
-    (unheard ? ` · <b style="color:#dc2626">${unheard} chưa nghe</b>` : "") +
-    " · " +
-    Object.entries(byClass)
-      .map(([k, v]) => `${k} ${v}`)
-      .join(" · ");
-  document.querySelector("tr.cur")?.scrollIntoView({ block: "nearest" });
+const options = {
+  emotion: [["joy","vui"],["sadness","buồn"],["anger","tức giận"],["fear_anxiety","sợ / lo âu"],["surprise","ngạc nhiên"],["disgust","ghê tởm"],["neutral","trung tính"]],
+  valence: [["1","1 · rất tiêu cực"],["2","2 · tiêu cực"],["3","3 · trung tính"],["4","4 · tích cực"],["5","5 · rất tích cực"]],
+  arousal: [["1","1 · rất bình thản"],["2","2 · bình thản"],["3","3 · trung bình"],["4","4 · kích động"],["5","5 · rất kích động"]],
+  gender: [["","—"],["female","nữ"],["male","nam"]],
+  age_group: [["","—"],["child","trẻ em"],["teen","thiếu niên"],["young_adult","thanh niên"],["middle_aged","trung niên"],["senior","cao tuổi"]],
+  dialect: [["","—"],["north","Bắc"],["central","Trung"],["south","Nam"]],
 };
-
-const play = (i) => {
-  cur = i;
-  audio?.pause();
-  audio = new Audio(rows[i].wav);
-  audio.play().catch(() => {});
-  rows[i].heard = true;
-  render();
-};
-
-const move = (d) => {
-  cur = Math.max(0, Math.min(rows.length - 1, cur + d));
-  render();
-};
-
-const toggle = (i) => {
-  rows[i].keep = !rows[i].keep;
-  cur = i;
-  render();
-};
-
-$("rows").addEventListener("click", (e) => {
-  const btn = e.target.closest("button");
-  const tr = e.target.closest("tr");
-  if (!tr) return;
-  const i = Number(tr.dataset.i);
-  if (btn?.dataset.a === "play") play(i);
-  else if (btn?.dataset.a === "toggle") toggle(i);
-  else {
-    cur = i;
-    render();
-  }
-});
-
-document.addEventListener("keydown", (e) => {
-  if (e.ctrlKey || e.altKey || e.metaKey) return;
-  const k = e.key.toLowerCase();
-  if (e.code === "Space") {
-    e.preventDefault();
-    play(cur);
-  } else if (k === "k") {
-    rows[cur].keep = true;
-    move(1);
-  } else if (k === "d") {
-    rows[cur].keep = false;
-    move(1);
-  } else if (k === "j" || k === "n" || e.key === "ArrowDown") {
-    e.preventDefault();
-    move(1);
-  } else if (k === "p" || e.key === "ArrowUp") {
-    e.preventDefault();
-    move(-1);
-  }
-});
-
-$("save").addEventListener("click", async () => {
-  const keep = rows.filter((r) => r.keep);
-  const unheard = keep.filter((r) => !r.heard);
-  if (unheard.length) {
-    const ok = confirm(
-      `${unheard.length} clip được GIỮ nhưng chưa nghe.\n\n` +
-        "Gold chưa nghe là gold không kiểm chứng — cả QC gate sẽ dựa lên nó.\n" +
-        "Vẫn ghi?",
-    );
-    if (!ok) return;
-  }
-  try {
-    const r = await fetch("/gold-set", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ keys: keep.map((x) => x.key) }),
-    });
-    if (!r.ok) throw new Error(r.status);
-    const j = await r.json();
-    $("msg").textContent = `đã ghi ${j.written} dòng → gold-set.txt`;
-  } catch {
-    $("msg").textContent = "ghi lỗi — xem log server";
-  }
-});
-
-fetch("/gold-candidates")
-  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-  .then((d) => {
-    rows = d.map((r) => ({ ...r, heard: false }));
-    render();
-  })
-  .catch(() => {
-    $("counts").textContent =
-      "Chưa có gold-candidates.tsv — chạy scripts/vietnamese-ser/pick_gold_candidates.py trước.";
-  });
+const AUTH_KEY = "goldReviewAuth";
+let auth = sessionStorage.getItem(AUTH_KEY) || "", item = null, sending = false;
+for (const [id, vals] of Object.entries(options)) $(id).innerHTML = vals.map((x) => { const [v,l] = Array.isArray(x) ? x : [x,x]; return `<option value="${v}">${l}</option>`; }).join("");
+const headers = (json=false) => ({Authorization: auth, ...(json ? {"Content-Type":"application/json"} : {})});
+async function api(url, init={}) { const r=await fetch(url,{...init,headers:{...headers(!!init.body),...(init.headers||{})}}); if(!r.ok){let d={};try{d=await r.json()}catch{} throw new Error(d.detail||`HTTP ${r.status}`)} return r.json(); }
+function values(){return {emotion:$("emotion").value,valence:+$("valence").value,arousal:+$("arousal").value,gender:$("gender").value,age_group:$("age_group").value,dialect:$("dialect").value}}
+function emotionColor(){const el=$("emotion");el.className=`emo-${el.value}`}
+function restore(){for(const id of Object.keys(options)) $(id).value=item[id]??"";emotionColor();$("reject-reason").value=""}
+function editable(on){for(const id of Object.keys(options)) $(id).disabled=!on; $("agree").classList.toggle("hidden",on); $("disagree").classList.toggle("hidden",on); $("reject").classList.toggle("hidden",on); $("save-fix").classList.toggle("hidden",!on); $("save-reject").classList.add("hidden"); $("reject-box").classList.add("hidden"); $("cancel-fix").classList.toggle("hidden",!on)}
+function rejectMode(){$("agree").classList.add("hidden");$("disagree").classList.add("hidden");$("reject").classList.add("hidden");$("save-reject").classList.remove("hidden");$("cancel-fix").classList.remove("hidden");$("reject-box").classList.remove("hidden");$("reject-reason").focus()}
+function decisionEnabled(on){$("agree").disabled=!on;$("disagree").disabled=!on;$("reject").disabled=!on;$("status").textContent=on?"":"Hãy nghe hết audio trước khi trả lời."}
+function show(d){$("who").textContent=`User: ${d.user}`;$("progress").textContent=`${d.completed}/${d.total}`;item=d.item;$("card").classList.toggle("hidden",!item);$("done").classList.toggle("hidden",!!item);if(!item)return;$("subtitle").textContent=item.subtitle||"(không có subtitle)";restore();editable(false);decisionEnabled(false);const a=$("audio");a.pause();a.removeAttribute("src");a.onended=()=>decisionEnabled(true);fetch(item.wav,{headers:headers()}).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.blob()}).then(b=>{a.src=URL.createObjectURL(b)}).catch(e=>$("status").textContent=`Không tải được audio: ${e.message}`)}
+async function next(){show(await api("/gold-review/next"))}
+async function save(agreed,rejected=false){if(sending||!item)return;const reject_reason=$("reject-reason").value.trim();if(rejected&&!reject_reason){$("status").textContent="Vui lòng nhập lý do loại.";$("reject-reason").focus();return}sending=true;$("status").textContent="Đang lưu…";try{await api(`/gold-review/item/${item.key}`,{method:"POST",body:JSON.stringify({agreed,rejected,reject_reason,...values()})});await next()}catch(e){$("status").textContent=e.message}finally{sending=false}}
+async function enter(){await api("/gold-review/login",{method:"POST"});sessionStorage.setItem(AUTH_KEY,auth);$("password").value="";$("login").classList.add("hidden");$("review").classList.remove("hidden");await next()}
+$("login-form").addEventListener("submit",async e=>{e.preventDefault();auth=`Basic ${btoa(unescape(encodeURIComponent(`${$("username").value}:${$("password").value}`)))}`;try{await enter()}catch(e){auth="";sessionStorage.removeItem(AUTH_KEY);$("login-status").textContent=e.message}});
+$("emotion").onchange=emotionColor;
+$("agree").onclick=()=>save(true);$("disagree").onclick=()=>editable(true);$("reject").onclick=rejectMode;$("save-fix").onclick=()=>save(false);$("save-reject").onclick=()=>save(false,true);
+$("cancel-fix").onclick=()=>{restore();editable(false);decisionEnabled(true);$("status").textContent=""};
+if(auth)enter().catch(()=>{auth="";sessionStorage.removeItem(AUTH_KEY);$("login").classList.remove("hidden");$("review").classList.add("hidden");$("login-status").textContent="Phiên đăng nhập đã hết. Vui lòng đăng nhập lại."});
