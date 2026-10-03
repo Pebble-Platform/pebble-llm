@@ -54,8 +54,11 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def load_clips() -> tuple[list[str], list[np.ndarray]]:
-    rows = [r for r in csv.DictReader((IN / "manifest.csv").open(encoding="utf-8"))
-            if r["is_clean"].lower() == "true"]
+    rows = [
+        r
+        for r in csv.DictReader((IN / "manifest.csv").open(encoding="utf-8"))
+        if r["is_clean"].lower() == "true"
+    ]
     ids, wavs = [], []
     for r in rows:
         wav, sr = sf.read(IN / r["clip"])
@@ -70,9 +73,11 @@ def load_clips() -> tuple[list[str], list[np.ndarray]]:
 
 # ---- backbone extractors: each returns a list of (dim,) utterance vectors ----
 
+
 def extract_wavlm(wavs: list[np.ndarray]) -> np.ndarray:
     # Per-clip (bs=1) so there is no padding and mean-pool over time is exact.
     from transformers import AutoFeatureExtractor, WavLMModel
+
     fe = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-large")
     model = WavLMModel.from_pretrained("microsoft/wavlm-large").to(DEVICE).eval()
     out = []
@@ -80,7 +85,7 @@ def extract_wavlm(wavs: list[np.ndarray]) -> np.ndarray:
         for w in wavs:
             enc = fe(w, sampling_rate=SR, return_tensors="pt")
             enc = {k: v.to(DEVICE) for k, v in enc.items()}
-            h = model(**enc).last_hidden_state          # (1, T, 1024)
+            h = model(**enc).last_hidden_state  # (1, T, 1024)
             out.append(h.mean(1).float().cpu().numpy()[0])
     return np.stack(out)
 
@@ -93,26 +98,26 @@ def extract_emotion2vec_s(wavs: list[np.ndarray]) -> np.ndarray:
         user_dir: str
 
     fairseq.utils.import_user_module(UserDirModule("C2SER/Emotion2Vec-S/examples/data2vec"))
-    model, _, _ = fairseq.checkpoint_utils.load_model_ensemble_and_task(
-        ["e2vs_ckpt/checkpoint.pt"])
+    model, _, _ = fairseq.checkpoint_utils.load_model_ensemble_and_task(["e2vs_ckpt/checkpoint.pt"])
     model = model[0].to(DEVICE).eval()
     out = []
     with torch.no_grad():
         for w in wavs:
-            x = torch.tensor(w, device=DEVICE).unsqueeze(0)     # (1, T)
+            x = torch.tensor(w, device=DEVICE).unsqueeze(0)  # (1, T)
             r = model.extract_features(x)
-            out.append(r["utt_x"].cpu().numpy()[0])             # (768,)
+            out.append(r["utt_x"].cpu().numpy()[0])  # (768,)
     return np.stack(out)
 
 
 def extract_emotion2vec(wavs: list[np.ndarray]) -> np.ndarray:
     from funasr import AutoModel as FunASR
+
     try:
         model = FunASR(model="iic/emotion2vec_base", hub="hf", disable_update=True)
     except Exception:
         from huggingface_hub import snapshot_download
-        model = FunASR(model=snapshot_download("emotion2vec/emotion2vec_base"),
-                       disable_update=True)
+
+        model = FunASR(model=snapshot_download("emotion2vec/emotion2vec_base"), disable_update=True)
     out = []
     for w in wavs:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tf:
@@ -126,9 +131,10 @@ def extract_emotion2vec(wavs: list[np.ndarray]) -> np.ndarray:
 
 def extract_mfcc(wavs: list[np.ndarray]) -> np.ndarray:
     import torchaudio
+
     mf = torchaudio.transforms.MFCC(
-        sample_rate=SR, n_mfcc=20,
-        melkwargs={"n_fft": 400, "hop_length": 160, "n_mels": 40})
+        sample_rate=SR, n_mfcc=20, melkwargs={"n_fft": 400, "hop_length": 160, "n_mels": 40}
+    )
     out = []
     for w in wavs:
         m = mf(torch.tensor(w).unsqueeze(0)).squeeze(0)

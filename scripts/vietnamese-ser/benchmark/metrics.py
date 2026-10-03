@@ -29,8 +29,7 @@ def per_class_f1(y_true: list[str], y_pred: list[str], labels: list[str]) -> dic
     return out
 
 
-def emotion_metrics(y_true: list[str], y_pred: list[str],
-                    labels: list[str] = EMOTIONS) -> dict:
+def emotion_metrics(y_true: list[str], y_pred: list[str], labels: list[str] = EMOTIONS) -> dict:
     f1 = per_class_f1(y_true, y_pred, labels)
     yt = np.asarray(y_true)
     yp = np.asarray(y_pred)
@@ -38,8 +37,13 @@ def emotion_metrics(y_true: list[str], y_pred: list[str],
     present = [c for c in labels if np.any(yt == c)]
     macro = float(np.mean([f1[c] for c in present])) if present else 0.0
     acc = float(np.mean(yt == yp)) if len(yt) else 0.0
-    return {"macro_f1": macro, "accuracy": acc, "per_class_f1": f1,
-            "present_classes": present, "support": {c: int(np.sum(yt == c)) for c in labels}}
+    return {
+        "macro_f1": macro,
+        "accuracy": acc,
+        "per_class_f1": f1,
+        "present_classes": present,
+        "support": {c: int(np.sum(yt == c)) for c in labels},
+    }
 
 
 def ccc(y_true: list[float], y_pred: list[float]) -> float:

@@ -28,14 +28,29 @@ MANIFEST = REPO / "data/vietnamese-ser/kaggle-upload/viemospeech-pilot/manifest.
 OUTDIR = REPO / "data/vietnamese-ser/benchmark/splits"
 
 SERIES = ["chay-tron-thanh-xuan", "ve-nha-di-con"]
-FOLDS = [("fold1", "chay-tron-thanh-xuan", "ve-nha-di-con"),
-         ("fold2", "ve-nha-di-con", "chay-tron-thanh-xuan")]
+FOLDS = [
+    ("fold1", "chay-tron-thanh-xuan", "ve-nha-di-con"),
+    ("fold2", "ve-nha-di-con", "chay-tron-thanh-xuan"),
+]
 EMOTIONS = ["neutral", "anger", "joy", "sadness", "fear_anxiety", "disgust", "surprise"]
 
 # columns carried into the split (releasable: no audio, timestamps + labels + ids + text)
-COLS = ["ep", "id", "series", "speaker", "start", "end", "dur",
-        "emotion", "valence", "arousal", "distress",
-        "text_phowhisper", "text_youtube", "clip"]
+COLS = [
+    "ep",
+    "id",
+    "series",
+    "speaker",
+    "start",
+    "end",
+    "dur",
+    "emotion",
+    "valence",
+    "arousal",
+    "distress",
+    "text_phowhisper",
+    "text_youtube",
+    "clip",
+]
 
 
 def series_of(row: dict) -> str:
@@ -48,12 +63,19 @@ def label_of_record(row: dict) -> str:
 
 def to_split_row(row: dict) -> dict:
     return {
-        "ep": row["ep"], "id": row["id"], "series": series_of(row),
-        "speaker": row["speaker"], "start": row["start"], "end": row["end"],
-        "dur": row["dur"], "emotion": label_of_record(row),
-        "valence": row["valence_mean"], "arousal": row["arousal_mean"],
+        "ep": row["ep"],
+        "id": row["id"],
+        "series": series_of(row),
+        "speaker": row["speaker"],
+        "start": row["start"],
+        "end": row["end"],
+        "dur": row["dur"],
+        "emotion": label_of_record(row),
+        "valence": row["valence_mean"],
+        "arousal": row["arousal_mean"],
         "distress": row["distress_or"].lower() == "true",
-        "text_phowhisper": row["text_phowhisper"], "text_youtube": row["text_youtube"],
+        "text_phowhisper": row["text_phowhisper"],
+        "text_youtube": row["text_youtube"],
         "clip": row["clip"],
     }
 
@@ -77,31 +99,37 @@ def dist(rows: list[dict]) -> Counter:
 
 
 def report(clean: list[dict]) -> str:
-    L = ["# ViEmoSpeech benchmark — split readiness report (M1)",
-         "",
-         f"Source manifest: `{MANIFEST.relative_to(REPO)}`  ·  clean utt: **{len(clean)}**",
-         "Label of record = `emotion_consensus` else `emotion_opus`; clean = single-speaker.",
-         "Split = whole-series speaker-disjoint 2-fold cross-series (ADR-002).",
-         ""]
+    L = [
+        "# ViEmoSpeech benchmark — split readiness report (M1)",
+        "",
+        f"Source manifest: `{MANIFEST.relative_to(REPO)}`  ·  clean utt: **{len(clean)}**",
+        "Label of record = `emotion_consensus` else `emotion_opus`; clean = single-speaker.",
+        "Split = whole-series speaker-disjoint 2-fold cross-series (ADR-002).",
+        "",
+    ]
     for s in SERIES:
         S = [r for r in clean if r["series"] == s]
         d = dist(S)
         dpos = sum(1 for r in S if r["distress"])
-        L += [f"## {s}",
-              f"- clean labeled utt: **{len(S)}**  ·  distress+: {dpos}  ·  V/A: {len(S)} (all)",
-              "- emotion: " + ", ".join(f"{e} {d.get(e,0)}" for e in EMOTIONS),
-              ""]
+        L += [
+            f"## {s}",
+            f"- clean labeled utt: **{len(S)}**  ·  distress+: {dpos}  ·  V/A: {len(S)} (all)",
+            "- emotion: " + ", ".join(f"{e} {d.get(e, 0)}" for e in EMOTIONS),
+            "",
+        ]
     L += ["## Folds (train → test)"]
     for name, tr, te in FOLDS:
         ntr = sum(1 for r in clean if r["series"] == tr)
         nte = sum(1 for r in clean if r["series"] == te)
         L += [f"- **{name}**: train={tr} ({ntr})  →  test={te} ({nte})"]
-    L += ["",
-          "**Verdict: GO.** All 7 emotion classes present with non-zero support in both "
-          "test series; V/A available for CCC everywhere; distress+ small (59–68/series) "
-          "so distress-recall is reported with a small-support caveat. Neutral is ~55–57% "
-          "→ class-weighted loss + macro-F1 headline.",
-          ""]
+    L += [
+        "",
+        "**Verdict: GO.** All 7 emotion classes present with non-zero support in both "
+        "test series; V/A available for CCC everywhere; distress+ small (59–68/series) "
+        "so distress-recall is reported with a small-support caveat. Neutral is ~55–57% "
+        "→ class-weighted loss + macro-F1 headline.",
+        "",
+    ]
     return "\n".join(L)
 
 

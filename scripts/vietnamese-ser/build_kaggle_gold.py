@@ -153,8 +153,18 @@ def main() -> None:
         # whose intermediate dirs don't exist -> manifest.csv fails with ENOENT while
         # clips.zip still uploads. A one-level -p keeps the temp name flat.
         action = "version" if exists else "create"  # create = private by default
-        cmd = ["uvx", "--from", "kaggle", "kaggle", "datasets", action,
-               "-p", SLUG, "--dir-mode", "zip"]
+        cmd = [
+            "uvx",
+            "--from",
+            "kaggle",
+            "kaggle",
+            "datasets",
+            action,
+            "-p",
+            SLUG,
+            "--dir-mode",
+            "zip",
+        ]
         if exists:
             cmd += ["-m", f"human labels: {len(rows)} utt"]
         subprocess.run(cmd, check=True, cwd=stage.parent)

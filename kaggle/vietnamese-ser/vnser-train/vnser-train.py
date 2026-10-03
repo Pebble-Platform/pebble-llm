@@ -64,16 +64,29 @@ ON_KAGGLE = os.path.exists("/kaggle/input")
 # microsoft/wavlm-large ships a .bin — and we cannot bump torch (2.6 is unsafe on the
 # P100/sm_60). 4.46.3 predates that guard and is compatible with 2.5.1.
 PIP_PINS = [
-    "torch==2.5.1", "torchvision==0.20.1", "torchaudio==2.5.1",
-    "transformers==4.46.3", "soundfile", "pandas", "numpy",
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "torchaudio==2.5.1",
+    "transformers==4.46.3",
+    "soundfile",
+    "pandas",
+    "numpy",
 ]
 
 
 def _pip_install() -> None:
     # P100 = sm_60: pin torch 2.5.1+cu121 (default image torch won't run on P100).
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "--extra-index-url",
-         "https://download.pytorch.org/whl/cu121", *PIP_PINS],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "--extra-index-url",
+            "https://download.pytorch.org/whl/cu121",
+            *PIP_PINS,
+        ],
         check=True,
     )
 
@@ -165,7 +178,11 @@ def _ccc_loss(pred, target):
         x, y = pred[:, k], target[:, k]
         vx, vy = x - x.mean(), y - y.mean()
         cov = (vx * vy).mean()
-        ccc = 2 * cov / (x.var(unbiased=False) + y.var(unbiased=False) + (x.mean() - y.mean()) ** 2 + 1e-8)
+        ccc = (
+            2
+            * cov
+            / (x.var(unbiased=False) + y.var(unbiased=False) + (x.mean() - y.mean()) ** 2 + 1e-8)
+        )
         loss = loss + (1 - ccc)
     return loss / target.shape[1]
 
@@ -257,20 +274,33 @@ def cv_metrics(manifest, X, folds):
             counts = np.bincount(emo_label[etr], minlength=len(EMOTIONS))
             cw = len(emo_label[etr]) / (len(EMOTIONS) * np.maximum(counts, 1))
             head = _train_linear(
-                (X[etr] - mu) / sd, emo_label[etr], "cls", len(EMOTIONS),
-                class_w=cw, epochs=40 if SMOKE else 200,
+                (X[etr] - mu) / sd,
+                emo_label[etr],
+                "cls",
+                len(EMOTIONS),
+                class_w=cw,
+                epochs=40 if SMOKE else 200,
             )
             with torch.no_grad():
-                p = head(torch.tensor((X[eva] - mu) / sd, dtype=torch.float32,
-                                      device=next(head.parameters()).device))
+                p = head(
+                    torch.tensor(
+                        (X[eva] - mu) / sd,
+                        dtype=torch.float32,
+                        device=next(head.parameters()).device,
+                    )
+                )
             oof_emo[eva] = p.argmax(1).cpu().numpy()
 
         # affect (all rows)
-        head = _train_linear(Xtr, np.stack([val[tr], aro[tr]], 1), "reg2", 2,
-                             epochs=40 if SMOKE else 300)
+        head = _train_linear(
+            Xtr, np.stack([val[tr], aro[tr]], 1), "reg2", 2, epochs=40 if SMOKE else 300
+        )
         with torch.no_grad():
-            p = head(torch.tensor(Xva, dtype=torch.float32,
-                                  device=next(head.parameters()).device)).cpu().numpy()
+            p = (
+                head(torch.tensor(Xva, dtype=torch.float32, device=next(head.parameters()).device))
+                .cpu()
+                .numpy()
+            )
         oof_val[va], oof_aro[va] = p[:, 0], p[:, 1]
         print(f"[cv] fold {f} done")
 
@@ -283,11 +313,16 @@ def cv_metrics(manifest, X, folds):
     ca, ca_ci = ccc(aro, oof_aro), bootstrap_ci(ccc, aro, oof_aro)
     per_class = {EMOTIONS[c]: int((emo_label[em] == c).sum()) for c in range(len(EMOTIONS))}
     return {
-        "emotion_macro_f1": f1, "emotion_macro_f1_ci95": f1_ci,
-        "emotion_uar": ua, "emotion_uar_ci95": ua_ci,
-        "emotion_n": int(em.sum()), "emotion_support": per_class,
-        "ccc_valence": cv, "ccc_valence_ci95": cv_ci,
-        "ccc_arousal": ca, "ccc_arousal_ci95": ca_ci,
+        "emotion_macro_f1": f1,
+        "emotion_macro_f1_ci95": f1_ci,
+        "emotion_uar": ua,
+        "emotion_uar_ci95": ua_ci,
+        "emotion_n": int(em.sum()),
+        "emotion_support": per_class,
+        "ccc_valence": cv,
+        "ccc_valence_ci95": cv_ci,
+        "ccc_arousal": ca,
+        "ccc_arousal_ci95": ca_ci,
     }
 
 
@@ -409,20 +444,37 @@ def main() -> None:
         m_loso = cv_metrics(manifest, X, sfolds)
 
     import hashlib
+
     pairs = sorted(f"{c},{f}" for c, f in zip(manifest["clip"], gkf))
     split_hash = hashlib.md5("\n".join(pairs).encode()).hexdigest()
     art = out_dir / "artifact_wavlm-large"
     art.mkdir(exist_ok=True)
-    (art / "config.json").write_text(json.dumps({
-        "backbone": BACKBONE, "emotions": EMOTIONS, "n_splits": N_SPLITS, "seed": SEED,
-        "split_hash": split_hash, "pip_pins": PIP_PINS, "n_clips": len(manifest),
-        "series": series_names, "label_source": "human single-annotator (ADR-003)",
-        "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
-        "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
-        "metrics_groupkfold": m_gkf, "metrics_leave_one_series_out": m_loso,
-    }, indent=2, ensure_ascii=False), encoding="utf-8")
-    (out_dir / "metrics.json").write_text(json.dumps(
-        {"groupkfold": m_gkf, "leave_one_series_out": m_loso}, indent=2), encoding="utf-8")
+    (art / "config.json").write_text(
+        json.dumps(
+            {
+                "backbone": BACKBONE,
+                "emotions": EMOTIONS,
+                "n_splits": N_SPLITS,
+                "seed": SEED,
+                "split_hash": split_hash,
+                "pip_pins": PIP_PINS,
+                "n_clips": len(manifest),
+                "series": series_names,
+                "label_source": "human single-annotator (ADR-003)",
+                "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
+                "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
+                "metrics_groupkfold": m_gkf,
+                "metrics_leave_one_series_out": m_loso,
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (out_dir / "metrics.json").write_text(
+        json.dumps({"groupkfold": m_gkf, "leave_one_series_out": m_loso}, indent=2),
+        encoding="utf-8",
+    )
     write_report(m_gkf, m_loso, series_names, manifest, out_dir, split_hash)
 
 

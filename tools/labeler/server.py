@@ -191,6 +191,7 @@ GENDERS = {"", "female", "male"}
 AGE_GROUPS = {"", "child", "teen", "young_adult", "middle_aged", "senior"}
 DIALECTS = {"", "north", "central", "south"}
 
+
 def _gold_user(request: Request) -> str:
     raw = request.headers.get("authorization", "")
     if not raw.startswith("Basic "):
@@ -198,17 +199,20 @@ def _gold_user(request: Request) -> str:
     try:
         user, password = base64.b64decode(raw[6:]).decode("utf-8").split(":", 1)
     except (ValueError, UnicodeDecodeError):
-        raise HTTPException(401, "bad credentials")
+        raise HTTPException(401, "bad credentials") from None
     encoded = GOLD_USERS.get(user, "")
     try:
         rounds, salt, expected = encoded.split("$", 2)
-        actual = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), int(rounds)).hex()
+        actual = hashlib.pbkdf2_hmac(
+            "sha256", password.encode(), bytes.fromhex(salt), int(rounds)
+        ).hex()
         valid = hmac.compare_digest(actual, expected)
     except (ValueError, TypeError):
         valid = False
     if not SAFE_USER.fullmatch(user) or not valid:
         raise HTTPException(401, "bad credentials")
     return user
+
 
 def _candidate_rows() -> list[dict]:
     review_tsv = CHANGE_011 / "review-candidates.tsv"
@@ -222,17 +226,27 @@ def _candidate_rows() -> list[dict]:
         key, candidate_emotion, *_ = ln.split("\t")
         ep_key, _, clip_id = key.rpartition("/")
         rec = store.STATE.get(store.skey(ep_key, clip_id), {})
-        out.append({"key": key, "epKey": ep_key, "id": clip_id,
-                    "wav": f"/gold-review/audio/{key}.wav",
-                    "subtitle": rec.get("gold_text") or rec.get("asr") or rec.get("yt") or "",
-                    "emotion": rec.get("emotion") or candidate_emotion,
-                    "valence": rec.get("valence"), "arousal": rec.get("arousal"),
-                    "gender": rec.get("gender", ""), "age_group": rec.get("age_group", ""),
-                    "dialect": rec.get("dialect", "")})
+        out.append(
+            {
+                "key": key,
+                "epKey": ep_key,
+                "id": clip_id,
+                "wav": f"/gold-review/audio/{key}.wav",
+                "subtitle": rec.get("gold_text") or rec.get("asr") or rec.get("yt") or "",
+                "emotion": rec.get("emotion") or candidate_emotion,
+                "valence": rec.get("valence"),
+                "arousal": rec.get("arousal"),
+                "gender": rec.get("gender", ""),
+                "age_group": rec.get("age_group", ""),
+                "dialect": rec.get("dialect", ""),
+            }
+        )
     return out
+
 
 def _review_path(user: str) -> Path:
     return GOLD_REVIEW_DIR / f"{user}.json"
+
 
 def _read_reviews(user: str) -> dict:
     path = _review_path(user)
@@ -242,7 +256,8 @@ def _read_reviews(user: str) -> dict:
         data = json.loads(path.read_text(encoding="utf-8"))
         return data if isinstance(data, dict) else {}
     except (OSError, json.JSONDecodeError):
-        raise HTTPException(500, "review file is invalid")
+        raise HTTPException(500, "review file is invalid") from None
+
 
 class GoldReviewIn(BaseModel):
     agreed: bool
@@ -255,17 +270,24 @@ class GoldReviewIn(BaseModel):
     age_group: str = ""
     dialect: str = ""
 
+
 @app.post("/gold-review/login")
 def gold_review_login(request: Request) -> dict:
     user = _gold_user(request)
     return {"user": user, "completed": len(_read_reviews(user)), "total": len(_candidate_rows())}
 
+
 @app.get("/gold-review/next")
 def gold_review_next(request: Request) -> dict:
     user = _gold_user(request)
     rows, done = _candidate_rows(), _read_reviews(user)
-    return {"user": user, "completed": len(done), "total": len(rows),
-            "item": next((r for r in rows if r["key"] not in done), None)}
+    return {
+        "user": user,
+        "completed": len(done),
+        "total": len(rows),
+        "item": next((r for r in rows if r["key"] not in done), None),
+    }
+
 
 @app.get("/gold-review/audio/{ep_key:path}/{clip_id}.wav")
 def gold_review_audio(request: Request, ep_key: str, clip_id: str) -> FileResponse:
@@ -274,7 +296,10 @@ def gold_review_audio(request: Request, ep_key: str, clip_id: str) -> FileRespon
         raise HTTPException(404, "not a gold candidate")
     GOLD_HEARD.add((user, key))
     ep = store.episode_dir(ep_key, clip_id)
-    return FileResponse(store.clip_wav(ep, clip_id), media_type="audio/wav", headers={"Cache-Control": "no-store"})
+    return FileResponse(
+        store.clip_wav(ep, clip_id), media_type="audio/wav", headers={"Cache-Control": "no-store"}
+    )
+
 
 @app.post("/gold-review/item/{ep_key:path}/{clip_id}")
 def gold_review_save(request: Request, ep_key: str, clip_id: str, answer: GoldReviewIn) -> dict:
@@ -289,18 +314,34 @@ def gold_review_save(request: Request, ep_key: str, clip_id: str, answer: GoldRe
         if not reason:
             raise HTTPException(400, "reject reason is required")
     else:
-        if answer.emotion not in EMOTIONS or answer.valence not in range(1, 6) or answer.arousal not in range(1, 6):
+        if (
+            answer.emotion not in EMOTIONS
+            or answer.valence not in range(1, 6)
+            or answer.arousal not in range(1, 6)
+        ):
             raise HTTPException(400, "invalid labels")
-        if answer.gender not in GENDERS or answer.age_group not in AGE_GROUPS or answer.dialect not in DIALECTS:
+        if (
+            answer.gender not in GENDERS
+            or answer.age_group not in AGE_GROUPS
+            or answer.dialect not in DIALECTS
+        ):
             raise HTTPException(400, "invalid options")
-    original = {k: source[k] for k in ("emotion", "valence", "arousal", "gender", "age_group", "dialect")}
+    original = {
+        k: source[k] for k in ("emotion", "valence", "arousal", "gender", "age_group", "dialect")
+    }
     submitted = answer.dict(exclude={"agreed", "rejected", "reject_reason"})
     if answer.agreed and (answer.rejected or submitted != original):
         raise HTTPException(400, "agreed answer must keep original values")
     reviews = _read_reviews(user)
-    reviews[key] = {"key": key, "agreed": answer.agreed, "rejected": answer.rejected,
-                    "reject_reason": reason, "original": original, "answer": submitted,
-                    "ts": store.now()}
+    reviews[key] = {
+        "key": key,
+        "agreed": answer.agreed,
+        "rejected": answer.rejected,
+        "reject_reason": reason,
+        "original": original,
+        "answer": submitted,
+        "ts": store.now(),
+    }
     path = _review_path(user)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -539,8 +580,18 @@ def put_segment(ep_key: str, s: SegmentIn) -> dict:
     """
     if s.label_now:
         if not s.emotion or s.valence is None or s.arousal is None:
-            raise HTTPException(422, "emotion, valence and arousal are required when label_now=true")
-        if s.emotion not in {"joy", "sadness", "anger", "fear_anxiety", "surprise", "disgust", "neutral"}:
+            raise HTTPException(
+                422, "emotion, valence and arousal are required when label_now=true"
+            )
+        if s.emotion not in {
+            "joy",
+            "sadness",
+            "anger",
+            "fear_anxiety",
+            "surprise",
+            "disgust",
+            "neutral",
+        }:
             raise HTTPException(422, "invalid emotion")
         if s.valence not in range(1, 6) or s.arousal not in range(1, 6):
             raise HTTPException(422, "valence and arousal must be between 1 and 5")
@@ -550,16 +601,18 @@ def put_segment(ep_key: str, s: SegmentIn) -> dict:
         cid, a, b = audio.cut_from_full(ep, s.a, s.b)
         rec = store.manual_record(ep_key, cid, series, ep.name, a, b, s.text)
         if s.label_now:
-            rec.update({
-                "emotion": s.emotion,
-                "valence": s.valence,
-                "arousal": s.arousal,
-                "gender": s.gender,
-                "age_group": s.age_group,
-                "dialect": s.dialect,
-                "annotator": s.annotator or "human",
-                "ts": store.now(),
-            })
+            rec.update(
+                {
+                    "emotion": s.emotion,
+                    "valence": s.valence,
+                    "arousal": s.arousal,
+                    "gender": s.gender,
+                    "age_group": s.age_group,
+                    "dialect": s.dialect,
+                    "annotator": s.annotator or "human",
+                    "ts": store.now(),
+                }
+            )
         store.STATE[store.skey(ep_key, cid)] = rec
         store.save()
     return rec
@@ -739,8 +792,11 @@ def main() -> None:
         action="store_true",
         help="require a token even from localhost (use when a tunnel is open)",
     )
-    ap.add_argument("--gold-users", default=None,
-                    help="gold reviewer credentials (default <root>/gold-users.json)")
+    ap.add_argument(
+        "--gold-users",
+        default=None,
+        help="gold reviewer credentials (default <root>/gold-users.json)",
+    )
     a = ap.parse_args()
     root = Path(a.root).resolve()
     if not root.is_dir():
@@ -752,7 +808,10 @@ def main() -> None:
     global GOLD_USERS, GOLD_REVIEW_DIR
     gold_users_path = Path(a.gold_users) if a.gold_users else root / "gold-users.json"
     if gold_users_path.is_file():
-        GOLD_USERS = {str(k): str(v) for k, v in json.loads(gold_users_path.read_text(encoding="utf-8")).items()}
+        GOLD_USERS = {
+            str(k): str(v)
+            for k, v in json.loads(gold_users_path.read_text(encoding="utf-8")).items()
+        }
     GOLD_REVIEW_DIR = root / "gold-reviews"
     print(
         f"labeler: root={root}  ({len(store.STATE)} labels, {n_tok} tokens)"
