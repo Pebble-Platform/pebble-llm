@@ -46,12 +46,17 @@ def _label(d: dict | None) -> dict | None:
 
 
 def listing() -> list[dict]:
-    """Every epNN[_K] folder under ROOT that has cut clips, with progress counts."""
+    """Every epNN[_K] folder under ROOT that has cut clips OR de-musiced vocals.
+
+    An episode extracted with --vocals-only has NO clips yet: that is the starting
+    state of hand-segmentation, so it has to be selectable (total=0) rather than
+    hidden, or the ✂ cắt thủ công page can never be opened for it.
+    """
     out = []
     for ep_dir in sorted(p for p in store.ROOT.rglob("*") if p.is_dir() and EP_RE.match(p.name)):
         clips_dir = ep_dir / "clips"
         total = len(list(clips_dir.glob("seg*.wav"))) if clips_dir.is_dir() else 0
-        if not total:
+        if not total and not (ep_dir / "vocals_16k.wav").is_file():
             continue
         ep_rel = ep_dir.relative_to(store.ROOT).as_posix()
         series_rel = ep_dir.parent.relative_to(store.ROOT).as_posix()

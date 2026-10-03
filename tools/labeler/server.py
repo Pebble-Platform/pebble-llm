@@ -3,7 +3,7 @@
 Run (from repo root):
   .venv-vnser/Scripts/python.exe tools/labeler/server.py \
       --root data/vietnamese-ser/episodes
-  # then open http://127.0.0.1:8000/index.html
+  # then open http://127.0.0.1:8421/index.html
 
 Layers: store.py (config/state.db/records/paths) · episodes.py (read/join) ·
 audio.py (soundfile recut/split). Binds 127.0.0.1 only; data/** is copyrighted
@@ -103,6 +103,14 @@ class SegmentIn(BaseModel):
     a: float  # region start, episode seconds (on the full de-musiced audio)
     b: float  # region end
     text: str = ""  # YouTube-script text of the span (seeds gold_text)
+    label_now: bool = False
+    emotion: str | None = None
+    valence: int | None = None
+    arousal: int | None = None
+    gender: str = ""
+    age_group: str = ""
+    dialect: str = ""
+    annotator: str = "human"
 
 
 # ---------- reads ----------
@@ -529,11 +537,29 @@ def put_segment(ep_key: str, s: SegmentIn) -> dict:
     on the full de-musiced audio guided by the YouTube script, instead of the auto
     VAD∩turn cut that was losing context. Appends (auto clips kept).
     """
+    if s.label_now:
+        if not s.emotion or s.valence is None or s.arousal is None:
+            raise HTTPException(422, "emotion, valence and arousal are required when label_now=true")
+        if s.emotion not in {"joy", "sadness", "anger", "fear_anxiety", "surprise", "disgust", "neutral"}:
+            raise HTTPException(422, "invalid emotion")
+        if s.valence not in range(1, 6) or s.arousal not in range(1, 6):
+            raise HTTPException(422, "valence and arousal must be between 1 and 5")
     ep = store.episode_dir(ep_key)
     series = ep.parent.relative_to(store.ROOT).as_posix() or "(root)"
     with store.LOCK:
         cid, a, b = audio.cut_from_full(ep, s.a, s.b)
         rec = store.manual_record(ep_key, cid, series, ep.name, a, b, s.text)
+        if s.label_now:
+            rec.update({
+                "emotion": s.emotion,
+                "valence": s.valence,
+                "arousal": s.arousal,
+                "gender": s.gender,
+                "age_group": s.age_group,
+                "dialect": s.dialect,
+                "annotator": s.annotator or "human",
+                "ts": store.now(),
+            })
         store.STATE[store.skey(ep_key, cid)] = rec
         store.save()
     return rec
@@ -702,7 +728,7 @@ def main() -> None:
         help="episodes/ directory (default: %(default)s)",
     )
     ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--port", type=int, default=8421)
     ap.add_argument(
         "--tokens",
         default=None,

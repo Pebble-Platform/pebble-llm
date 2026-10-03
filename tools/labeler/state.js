@@ -14,6 +14,12 @@ export const AGE_VI = {
   middle_aged: "trung niên", senior: "cao tuổi",
 };
 export const DIALECT_VI = { north: "Bắc", central: "Trung", south: "Nam" };
+// A whole production is shot in one region, so the dialect default belongs to the
+// SERIES, not the tool. Kept in code (not the gitignored data root) so the default
+// applied to any label is recoverable from git history.
+export const SERIES_DIALECT = { "cay-tao-no-hoa": "south" };
+export const dialectFor = (series) => SERIES_DIALECT[series] || "north";
+export const curDialect = () => dialectFor((S.episodes[S.curEp] || {}).series);
 
 export const $ = (id) => document.getElementById(id);
 export const gk = (ep, id) => ep + "\t" + id;
@@ -34,10 +40,4 @@ export const S = {
   audioBuf: null,
   rafId: null,
   preview: new Audio(), // context preview (±pad s from full episode audio) — separate from clip audio
-  // manual segmentation (cắt thủ công): pick spans on full de-musiced audio via YT script
-  script: [], // YouTube srt blocks [{start,end,text}]
-  segDur: 0, // full-audio duration
-  segSel: null, // current span {i0,i1,a,b,text} (i0..i1 = selected script blocks)
-  segBuf: null, // selection waveform buffer
-  segAudio: new Audio(), // selection preview player (separate from clip/context)
 };

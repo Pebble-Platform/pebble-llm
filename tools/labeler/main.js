@@ -3,7 +3,6 @@
 import { $, EMOKEYS, S } from "./state.js";
 import { drawWave, loadEpisodes, renderEmoRow, selectClip, updateSplitBtnLabel, xToTime } from "./view.js";
 import { clearSel, confirmGold, exportCsv, exportZip, playContext, removeSelected, saveCut, saveExcise, saveSplit, toggleReject, undoCut } from "./actions.js";
-import { closeSegment, createSeg, nudge, openSegment, playSel } from "./segment.js";
 
 /* ---------- buttons ---------- */
 $("reload").onclick = loadEpisodes;
@@ -24,7 +23,7 @@ $("ctxplay").onclick = playContext;
 S.preview.onplay = () => ($("ctxplay").textContent = "⏸ dừng");
 S.preview.onpause = S.preview.onended = () => ($("ctxplay").textContent = "▶ nghe ±");
 
-/* ---------- volume boost (>1×) — routes all three players through one GainNode.
+/* ---------- volume boost (>1×) — routes both players through one GainNode.
    Built lazily on first slider drag (a user gesture, so resume() is allowed);
    until then playback stays native. */
 let actx, gain;
@@ -34,7 +33,7 @@ $("gain").oninput = () => {
   if (!actx) {
     actx = new (window.AudioContext || window.webkitAudioContext)();
     gain = actx.createGain(); gain.connect(actx.destination);
-    for (const a of [S.audio, S.preview, S.segAudio]) actx.createMediaElementSource(a).connect(gain);
+    for (const a of [S.audio, S.preview]) actx.createMediaElementSource(a).connect(gain);
   }
   actx.resume();
   gain.gain.value = v;
@@ -86,18 +85,12 @@ $("wave").addEventListener("mousemove", (e) => {
 window.addEventListener("mouseup", () => { S.cutDrag = false; });
 window.addEventListener("resize", drawWave);
 
-/* ---------- manual segmentation (cắt thủ công) ---------- */
-$("segbtn").onclick = openSegment;
-$("seg-close").onclick = closeSegment;
-$("segment").onclick = (e) => { if (e.target.id === "segment") closeSegment(); };
-$("seg-play").onclick = playSel;
-$("seg-create").onclick = createSeg;
-$("seg-a-minus").onclick = () => nudge("a", -0.2);
-$("seg-a-plus").onclick = () => nudge("a", 0.2);
-$("seg-b-minus").onclick = () => nudge("b", -0.2);
-$("seg-b-plus").onclick = () => nudge("b", 0.2);
-S.segAudio.onplay = () => ($("seg-play").textContent = "⏸ dừng");
-S.segAudio.onpause = S.segAudio.onended = () => ($("seg-play").textContent = "▶ nghe");
+/* ---------- manual segmentation (cắt thủ công) — own page, new tab ---------- */
+$("segbtn").onclick = () => {
+  if (!S.curEp) return;
+  const q = new URLSearchParams({ ep: S.curEp, annotator: $("annotator").value });
+  window.open("segment.html?" + q, "_blank");
+};
 
 /* ---------- keyboard ---------- */
 window.addEventListener("keydown", (e) => {

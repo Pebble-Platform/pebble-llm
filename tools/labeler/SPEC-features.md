@@ -196,6 +196,61 @@ Click trên sóng ở **chế độ thường** (không cut/split) dời `S.audi
 vị trí đó; `Space` phát tiếp từ đó thay vì từ đầu. Frontend-only (`main.js`
 mousedown), không thêm UI (con trỏ trắng sẵn có báo vị trí).
 
+## Cắt thủ công — cho phép label ngay khi tạo clip  [bổ sung 2026-08-18]
+
+> Từ 2026-10-03, “overlay” trong mục này là trang riêng `segment.html`, xem mục kế
+> tiếp. Hành vi `label ngay` không đổi.
+
+**Mục tiêu.** Người cắt đã vừa nghe và xác định nội dung của vùng chọn, nên có thể
+gán nhãn ngay trong overlay “✂ cắt thủ công”, không bắt buộc tạo clip rồi quay lại
+bảng để label thêm một lượt.
+
+- **UI:** dưới ô text có lựa chọn `label ngay` (mặc định bật) và các field
+  `emotion`, `valence`, `arousal`, `gender`, `age_group`, `dialect`; option
+  valence/arousal hiển thị cả số `1–5` và mô tả tiếng Việt, đồng nhất với form
+  label chính. Khi tắt,
+  các field nhãn bị vô hiệu hoá và nút giữ hành vi cũ “tạo clip để label sau”.
+- **Validation:** nếu `label ngay` bật thì bắt buộc đủ `emotion` + `valence` +
+  `arousal`; demographics vẫn không bắt buộc như form label chính. `annotator`
+  lấy từ ô annotator chung trên header.
+- **Lưu atomic theo record:** `POST /segment/{epKey}` nhận thêm các field nhãn tùy
+  chọn. Backend cắt WAV mới và seed `manual_segment`; nếu có bộ nhãn thì ghi luôn
+  emotion/V/A/demographics/annotator vào chính record đó trong cùng mutation.
+  `gold_text` luôn lấy từ text đã sửa trong overlay.
+- **Tương thích ngược:** request chỉ có `{a,b,text}` vẫn tạo clip chưa label như
+  trước. Không gọi tiếp `/gold` từ frontend, tránh trạng thái trung gian clip đã
+  tạo nhưng lần lưu nhãn thứ hai thất bại.
+- **Sau khi tạo:** refresh bảng/progress; vùng chọn và form nhãn được reset để cắt
+  clip kế tiếp.
+
+**REST mở rộng:** `POST /segment/{epKey}` `{a,b,text,label_now,emotion?,valence?,
+arousal?,gender?,age_group?,dialect?,annotator?}`. Khi `label_now=true`, server
+từ chối request thiếu emotion/V/A với HTTP 422.
+
+## Cắt thủ công — trang riêng + chọn vùng trên ngữ cảnh ±1 block  [bổ sung 2026-10-03]
+
+**Mục tiêu.** Overlay quá chật để chọn vùng; chỉnh mép `±0.2s` không đủ khi vùng
+cần lấy lan sang câu trước/sau. Chuyển thành trang riêng và chọn vùng trực tiếp
+trên waveform có ngữ cảnh.
+
+- **Trang riêng:** `segment.html?ep=<epKey>&annotator=<id>`; nút `✂ cắt thủ công`
+  ở labeler mở tab mới (overlay `#segment` bị gỡ). Không route backend mới —
+  `segment.html` là file tĩnh, owner-only qua middleware `guard` như `index.html`.
+- **Click 1 block script** → tải `/segment-audio` cho block đó **± 1 block liền
+  kề** (clamp ở đầu/cuối tập), vùng chọn mặc định = block đã click.
+- **Kéo trên sóng** → vùng chọn = clip chính (giây tuyệt đối của tập). Click
+  không kéo (<4px) chỉ dời con trỏ phát.
+- **`＋ đoạn trước` / `＋ đoạn sau`** (thay `đầu/cuối ±0.2s`): nới **vùng hiển
+  thị** thêm 1 block; vùng chọn giữ nguyên, kéo lại để lấy phần mới.
+- **Sau khi tạo clip:** giữ vùng hiển thị (clip kế thường nằm ngay cạnh), xoá vùng
+  chọn + form nhãn.
+
+**Verify (2026-10-03):** headless Edge qua CDP trên **bản sao 1 tập trong
+scratchpad** (server riêng cổng 8431, không đụng `state.db` thật): click block →
+view 3 block, kéo → vùng đổi đúng tỉ lệ, click → giữ vùng, `＋ trước/sau` → +1
+block, shift-click gộp, validation nhãn, `POST /segment` tạo record đúng
+emotion/V/A/dialect/annotator; `index.html` boot không lỗi JS.
+
 ## Trường trong `state.jsonl` (nguồn) → `gold.csv` (export)
 
 `state.jsonl` mỗi record: emotion/V/A/distress/multi, `gold_text`, `recut`+biên,

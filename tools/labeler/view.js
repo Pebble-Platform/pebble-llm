@@ -1,7 +1,7 @@
 /* View layer: waveform/audio drawing + sidebar/table/emo rendering +
    episode load / clip select. Reads & writes S; calls the api layer. */
 
-import { $, AGE_VI, DIALECT_VI, EMO, EMOKEYS, GENDER_VI, esc, gk, S } from "./state.js";
+import { $, AGE_VI, DIALECT_VI, EMO, EMOKEYS, GENDER_VI, curDialect, esc, gk, S } from "./state.js";
 import { clipUrl, getEpisode, getEpisodes } from "./api.js";
 
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
@@ -198,7 +198,7 @@ export async function selectClip(i) {
   S.splitMode = false; S.splitPoints = []; $("splitbtn").classList.remove("primary"); updateSplitBtnLabel();
   $("cutinfo").textContent = g && g.recut ? "✂ đã recut" : "";
   $("g-gender").value = (g && g.gender) || ""; $("g-age").value = (g && g.age_group) || "";
-  $("g-dialect").value = (g && g.dialect) || "north";
+  $("g-dialect").value = (g && g.dialect) || curDialect();
   const rj = !!(g && g.rejected);
   $("rej-reason").value = (g && g.reject_reason) || "multi_speaker";
   $("rejbtn").textContent = rj ? "↺ bỏ loại" : "⚑ loại";

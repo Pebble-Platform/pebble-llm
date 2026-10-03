@@ -22,6 +22,12 @@ Change đã tạo:
   annotator + consent + **QC protocol pre-registered**. Annotator chỉ label clip đã
   cắt — không cắt/chia.
 
+- [`016-labeler-segment-page/`](016-labeler-segment-page/README.md) — **xong
+  (2026-10-03)**: "✂ cắt thủ công" từ popup thành trang riêng `segment.html`. Click 1
+  block script thì tải thêm block liền trước và liền sau; kéo trên sóng để chọn vùng làm
+  clip; `＋ đoạn trước/sau` thay cho nút chỉnh mép ±0.2s. Không đổi backend. Spec:
+  `tools/labeler/SPEC.md`.
+
 Ứng viên change còn lại (theo thứ tự):
 - `001-invariant-suite/` — dựng `tests/invariants/` mirror I1–I6 mới
   (`docs/intent/invariants.md`) + gắn vào CI.

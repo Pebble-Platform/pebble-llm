@@ -2,11 +2,12 @@
 
 > Công cụ **con người gán nhãn** cho ViEmoSpeech. Tầng **execution** — phải thỏa
 > `docs/intent/` + `docs/spec/capabilities/extraction-pipeline.md`.
-> Cập nhật: 2026-07-21 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008 + loại-nhiều 009 + **bỏ speaker/cast, gán giới tính+tuổi trực tiếp per-clip**).
+> Cập nhật: 2026-10-03 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008 + loại-nhiều 009 + **bỏ speaker/cast, gán giới tính+tuổi trực tiếp per-clip** + cắt thủ công thành trang riêng 016).
 > Chi tiết tính năng: [`SPEC-features.md`](SPEC-features.md). Lịch sử build:
 > [change 003](../../docs/spec/changes/003-human-labeling-tool/README.md) (phase
 > 0–5) + [change 004](../../docs/spec/changes/004-labeler-refactor/README.md) (refactor)
-> + [change 005](../../docs/spec/changes/005-labeler-excise-seek/README.md) (excise + seek).
+> + [change 005](../../docs/spec/changes/005-labeler-excise-seek/README.md) (excise + seek)
+> + [change 016](../../docs/spec/changes/016-labeler-segment-page/README.md) (trang cắt thủ công).
 
 ## Vị trí trong pipeline
 
@@ -30,13 +31,15 @@ slice + backup `_orig/`).
 **Frontend** (ES modules, nạp qua `<script type="module" src="main.js">`):
 `state.js` (kernel `S` + consts) · `api.js` (mọi call server) · `view.js`
 (waveform + render + select) · `actions.js` (confirm/recut/split/reject
-+ export) · `segment.js` (cắt thủ công: script YT + chọn vùng + tạo clip) ·
-`main.js` (DOM wiring + keyboard + init). `index.html` = markup thuần.
++ export) · `main.js` (DOM wiring + keyboard + init). `index.html` = markup thuần.
+Trang riêng `segment.html` + `segment.js` (cắt thủ công: script YT + chọn vùng +
+tạo clip; dùng chung `state.js`/`api.js`).
 
 **Chạy** (từ repo root):
 ```
 .venv-vnser/Scripts/python.exe tools/labeler/server.py --root data/vietnamese-ser/episodes
-# mở http://127.0.0.1:8000/index.html  (cần server — không mở file:// trực tiếp)
+# mở http://127.0.0.1:8421/index.html  (cần server — không mở file:// trực tiếp)
+# cắt thủ công: nút ✂ mở tab http://127.0.0.1:8421/segment.html?ep=<epKey>
 ```
 `data/**` là media bản quyền, gitignored, **local-only** (intent §1).
 
@@ -150,7 +153,7 @@ public, loại rejected/test-series — là phase 4).
 | `GET /gold` | toàn bộ record (cho export) |
 | `GET /script/{epKey}` | `{duration, blocks:[{start,end,text}]}` — script YouTube de-rolled (segment mode) |
 | `GET /segment-audio/{epKey}.wav` `?a&b&pad` | slice vocals đã tách nhạc `[a−pad, b+pad]` (preview vùng, chỉ đọc) |
-| `POST /segment/{epKey}` `{a,b,text}` | cắt clip MỚI từ vocals cho vùng `[a,b]` + seed record (`manual_segment`, gold_text=text YT) |
+| `POST /segment/{epKey}` `{a,b,text,label_now,emotion?,valence?,arousal?,gender?,age_group?,dialect?,annotator?}` | cắt clip MỚI từ vocals + seed record (`manual_segment`, `gold_text`); nếu `label_now` thì ghi nhãn ngay |
 | `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,gender,age_group,dialect,annotator}` (distress/note: server default) |
 | `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
 | `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
@@ -163,14 +166,24 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 ## Chức năng
 
 - **Cắt thủ công (✂ cắt thủ công, per tập):** cho tập **chưa label** mà auto-cut
-  (VAD∩turn) đang cắt mất context. Overlay: **script YouTube** de-rolled
-  (`youtube_transcripts.txt`, `GET /script`) làm view chính; click 1 block chọn
-  vùng, shift-click block khác **gộp** vùng; waveform của vùng (`GET
-  /segment-audio` từ **vocals đã tách nhạc**), `▶ nghe` kèm **± ngữ cảnh** (0/1/2/3s
-  cắt từ audio đầy đủ — nghe lại phần bị mất), nút chỉnh mép `đầu/cuối ±0.2s`, ô
-  text seed từ script (sửa được). `＋ tạo clip` → `POST /segment` cắt vocals
-  `[a,b]` thành clip mới (seg kế tiếp, `manual_segment`), vào bảng để label như
-  thường. **Auto clip giữ nguyên** (thêm vào, không xoá). ⚠️ Người tự chọn vùng →
+  (VAD∩turn) đang cắt mất context. **Trang riêng** `segment.html?ep=<epKey>`
+  (nút ✂ mở tab mới, mang theo annotator; tab labeler giữ nguyên — `↻`/mở lại
+  tập để thấy clip mới). Cột trái = **script YouTube** de-rolled
+  (`youtube_transcripts.txt`, `GET /script`); click 1 block → tải waveform
+  **block đó + 1 block liền trước + 1 block liền sau** (`GET /segment-audio` từ
+  **vocals đã tách nhạc**), vùng chọn mặc định = block đã click; shift-click block
+  khác **gộp** (vẫn ±1 block). **Kéo trên sóng** chọn vùng làm clip chính (click
+  không kéo = dời con trỏ phát); vạch dọc = mép block script. `＋ đoạn trước` /
+  `＋ đoạn sau` nới vùng hiển thị thêm **1 block** mỗi lần (vùng chọn giữ nguyên).
+  `▶ phát` (Space) phát cả vùng hiển thị từ con trỏ, `▶ nghe vùng chọn` chỉ phát
+  vùng chọn. Ô text seed từ các block mà vùng chọn phủ quá nửa (sửa được; chỉ
+  seed lại khi tập block phủ thay đổi). `label ngay` (mặc định bật) cho phép chọn
+  emotion/V/A + demographics ngay trên trang (V/A hiển thị số `1–5` kèm mô
+  tả tiếng Việt như form label chính); `＋ tạo clip + label` → `POST
+  /segment` vừa cắt vocals `[a,b]` thành clip mới (seg kế tiếp,
+  `manual_segment`) vừa ghi nhãn vào cùng record. Có thể tắt `label ngay` để tạo
+  clip chưa nhãn và label sau như luồng cũ. **Auto clip giữ nguyên** (thêm vào,
+  không xoá). ⚠️ Người tự chọn vùng →
   **người chịu trách nhiệm single-speaker (I3)** thay cho auto; dùng `>>` trong
   caption + split/multi để giữ đơn-giọng.
 - **Label:** chọn emotion (phím `1`–`7` hoặc click), valence/arousal (**không
@@ -249,7 +262,8 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   ghi (vd `migrate_*`). `state.jsonl` cũ giữ lại làm nguồn bootstrap, **đông cứng**
   (server không ghi vào nữa).
 - **Cắt thủ công — nợ:** dùng script YT làm view (chưa render waveform full-track
-  14′), timestamp M:SS (giây) nên mép ~±0.5s → phải nudge + nghe; chưa overlay
+  14′), timestamp M:SS (giây) nên mép block ~±0.5s → chọn vùng bằng kéo + nghe;
+  chưa đánh dấu vùng đã cắt thành clip (dễ cắt trùng); chưa overlay
   speaker-turn (`diar_turns.csv`) để cảnh báo đa giọng. 1/33 tập thiếu
   `youtube_transcripts.txt` → script rỗng cho tập đó.
 - **Export Kaggle đầy đủ = phase 4** (chưa build): nhãn human + loại rejected +

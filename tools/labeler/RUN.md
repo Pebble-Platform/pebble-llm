@@ -25,9 +25,13 @@ $env:PYTHONIOENCODING = "utf-8"
 ```
 
 - `PYTHONIOENCODING=utf-8` — bắt buộc trên console Windows (tên tập/nhãn tiếng Việt).
-- Server in ra `-> http://127.0.0.1:8000/index.html`.
+- Server in ra `-> http://127.0.0.1:8421/index.html`.
 
-Mở trình duyệt: **http://127.0.0.1:8000/index.html**
+Mở trình duyệt: **http://127.0.0.1:8421/index.html**
+
+Cắt thủ công: chọn tập rồi bấm `✂ cắt thủ công`. Trang
+`segment.html?ep=<epKey>` mở trong **tab mới**. Clip tạo ở đó **không tự hiện** trong
+tab labeler: bấm `↻ tải lại tập` rồi mở lại tập.
 
 ## ⚠️ KHI SERVER ĐANG BẬT: đừng chạy script GHI vào `data/`
 
@@ -46,7 +50,7 @@ lặng lẽ** — SQLite/WAL đảm bảo ACID cho từng transaction, nhưng kh
 Kiểm tra server có đang chạy không:
 
 ```powershell
-netstat -ano | findstr ":8000"
+netstat -ano | findstr ":8421"
 ```
 
 Trước khi chạy script ghi, **backup nóng** (không cần tắt server để backup):
@@ -64,7 +68,7 @@ phục vụ **thẳng từ đĩa**. Nên một trang mới có thể **mở lên
 Kiểm nhanh xem server có phải bản mới nhất không:
 
 ```powershell
-curl.exe -s -o NUL -w "%{http_code}`n" http://127.0.0.1:8000/review
+curl.exe -s -o NUL -w "%{http_code}`n" http://127.0.0.1:8421/review
 ```
 
 `404` = code cũ, cần restart. `200` = đã mới.
@@ -78,20 +82,23 @@ curl.exe -s -o NUL -w "%{http_code}`n" http://127.0.0.1:8000/review
 |---|---|---|
 | `--root` | `data/vietnamese-ser/episodes` | thư mục `episodes/` (nguồn media + `state.db`) |
 | `--host` | `127.0.0.1` | giữ local-only, đừng đổi ra `0.0.0.0` |
-| `--port` | `8000` | đổi nếu cổng bận |
+| `--port` | `8421` | đổi nếu cổng bận |
 
 ## Phím tắt (trong UI)
 
 `Space` phát · `1`–`7` emotion · `Enter` xác nhận (lưu + nhảy clip kế) · `N`/`P` next/prev.
 
+Trang cắt thủ công: `Space` phát cả vùng đang hiện từ con trỏ · click 1 block script để
+tải block đó ±1 block · kéo trên sóng để chọn vùng · click sóng để dời con trỏ.
+
 ## Lỗi thường gặp
 
 - **`--root is not a directory`** — chạy sai chỗ (không phải repo root) hoặc dùng `/` thay `\`.
   Chạy từ repo root, đường dẫn `data\vietnamese-ser\episodes`.
-- **Cổng 8000 đã bận** (`address already in use`) — server cũ còn chạy, hoặc tab khác đang mở.
+- **Cổng 8421 đã bận** (`address already in use`) — server cũ còn chạy, hoặc tab khác đang mở.
   Đổi `--port 8001`, hoặc tìm & tắt tiến trình:
   ```powershell
-  Get-NetTCPConnection -LocalPort 8000 -State Listen | Select-Object OwningProcess
+  Get-NetTCPConnection -LocalPort 8421 -State Listen | Select-Object OwningProcess
   Stop-Process -Id <PID>
   ```
 - **Ký tự Việt bị lỗi / `UnicodeEncodeError`** — chưa set `$env:PYTHONIOENCODING = "utf-8"`.
