@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cắt thủ công — ViEmoSpeech</title>
+<style>
+  :root{--bg:#14161a;--panel:#1c1f26;--panel2:#232732;--line:#2e333f;
+    --txt:#e6e8ec;--muted:#9aa0aa;--accent:#4a90e2;--ok:#39a561;--warn:#e0a83a;--danger:#d64545}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;height:100vh;display:flex;flex-direction:column}
+  header{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0;font-weight:600}
+  .sp{flex:1}
+  .muted{color:var(--muted)}
+  a{color:var(--accent)}
+  button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 11px;cursor:pointer;font-size:13px}
+  button:hover{border-color:var(--accent)} button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  input,select{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 7px;font-size:13px}
+  .body{flex:1;display:flex;min-height:0}
+  .seg-script{width:380px;border-right:1px solid var(--line);overflow:auto;padding:6px}
+  .seg-blk{padding:4px 8px;border-radius:5px;cursor:pointer;font-size:13px}
+  .seg-blk:hover{background:var(--panel2)}
+  .seg-blk.view{background:var(--panel)}
+  .seg-blk.sel{background:rgba(74,144,226,.22)}
+  .seg-blk .t{color:var(--muted);font-size:11px;font-family:ui-monospace,monospace;margin-right:8px;user-select:none}
+  main{flex:1;overflow:auto;padding:12px 16px}
+  canvas#seg-wave{width:100%;height:140px;display:block;background:#0f1114;border-radius:6px;cursor:crosshair}
+  .seg-selrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+  #seg-text{width:100%;margin:4px 0 8px}
+  .emorow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .emobtn{padding:6px 10px;border-radius:6px;border:1px solid var(--line);cursor:pointer;font-size:13px;display:flex;gap:6px;align-items:center}
+  .emobtn.sel{outline:2px solid #fff}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .fld{display:flex;flex-direction:column;gap:2px} .fld span{font-size:10px;color:var(--muted);text-transform:uppercase}
+  .seg-label{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:0 0 8px;padding:8px;background:var(--panel2);border-radius:5px}
+  .seg-label .fld{min-width:110px}
+  .seg-label .fld.emo{flex-basis:100%}
+  #seg-emotion:disabled + .emorow{opacity:.4;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="seg-title">Cắt thủ công</h1>
+  <span class="muted" id="seg-status"></span>
+  <span class="sp"></span>
+  <label class="muted" title="khuếch đại âm lượng (1×–4×)" style="display:flex;align-items:center;gap:4px">🔊<input id="gain" type="range" min="1" max="4" step="0.1" value="1" style="width:90px"><span id="gainval">1.0×</span></label>
+  <label class="muted">annotator <input id="annotator" type="text" value="human" style="width:90px"></label>
+  <a href="index.html">← labeler</a>
+</header>
+
+<div class="body">
+  <div id="seg-script" class="seg-script"></div>
+  <main>
+    <div class="muted" style="font-size:12px;margin-bottom:6px">Audio đã tách nhạc + script YouTube. Click 1 block → tải block đó kèm 1 block trước + 1 block sau · shift-click để gộp nhiều block · kéo trên sóng để chọn vùng làm clip · click sóng để dời con trỏ phát.</div>
+    <canvas id="seg-wave"></canvas>
+    <div class="seg-selrow">
+      <button id="seg-prev" disabled title="tải thêm 1 block script trước vùng đang hiện">＋ đoạn trước</button>
+      <button id="seg-playall" title="phát cả vùng đang hiện từ con trỏ (Space)">▶ phát</button>
+      <button id="seg-play" title="chỉ phát vùng đã chọn">▶ nghe vùng chọn</button>
+      <span id="seg-info" class="muted">chưa chọn vùng</span>
+      <span class="sp"></span>
+      <button id="seg-next" disabled title="tải thêm 1 block script sau vùng đang hiện">＋ đoạn sau</button>
+    </div>
+    <input id="seg-text" type="text" placeholder="text (từ script YouTube, sửa được)">
+    <div class="seg-label">
+      <label><input id="seg-label-now" type="checkbox" checked> label ngay</label>
+      <div class="fld emo"><span>emotion *</span><input type="hidden" id="seg-emotion"><div class="emorow" id="seg-emorow"></div></div>
+      <div class="fld"><span>valence *</span><select id="seg-val"><option value="">—</option><option value="1">1 · rất tiêu cực</option><option value="2">2 · tiêu cực</option><option value="3">3 · trung tính</option><option value="4">4 · tích cực</option><option value="5">5 · rất tích cực</option></select></div>
+      <div class="fld"><span>arousal *</span><select id="seg-aro"><option value="">—</option><option value="1">1 · rất bình thản</option><option value="2">2 · bình thản</option><option value="3">3 · trung bình</option><option value="4">4 · kích động</option><option value="5">5 · rất kích động</option></select></div>
+      <div class="fld"><span>giới tính</span><select id="seg-gender"><option value="">—</option><option value="female">nữ</option><option value="male">nam</option></select></div>
+      <div class="fld"><span>tuổi</span><select id="seg-age"><option value="">—</option><option value="child">trẻ em</option><option value="teen">thiếu niên</option><option value="young_adult">thanh niên</option><option value="middle_aged">trung niên</option><option value="senior">cao tuổi</option></select></div>
+      <div class="fld"><span>vùng miền</span><select id="seg-dialect"><option value="">—</option><option value="north" selected>Bắc</option><option value="central">Trung</option><option value="south">Nam</option></select></div>
+    </div>
+    <button id="seg-create" class="primary">＋ tạo clip + label</button>
+  </main>
+</div>
+
+<script type="module" src="segment.js"></script>
+</body>
+</html>

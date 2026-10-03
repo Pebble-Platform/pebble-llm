@@ -1,0 +1,235 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F1 · ABHINAYA — SSL + LLM fusion, imbalance-aware</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#7c3aed">F1 · Fusion khảo sát (v2 tương lai)</span>
+<h1>ABHINAYA — SSL + LLM fusion, imbalance-aware</h1><p class="venue">Interspeech 2025</p>
+<div class="role" style="--accent:#7c3aed"><b>Vai trò trong survey:</b> Fusion late-vote + xử lý mất cân bằng bằng loss; ứng viên v2.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/02-abhinaya-ser-challenge.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/02-abhinaya-ser-challenge.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/02-abhinaya-ser-challenge.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-02-abhinaya-a-system-for-speech-emotion-recognition-in-naturalistic-conditions-challenge">Paper 02 — ABHINAYA: A System for Speech Emotion Recognition In Naturalistic Conditions Challenge</h1>
+<ul>
+<li><strong>Authors:</strong> Soumya Dutta, Smruthi Balaji, Varada R, Viveka Salinamakki, Sriram Ganapathy</li>
+<li><strong>Venue / year:</strong> Interspeech 2025 (challenge system, SOTA post-challenge)</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2505.18217 · PDF <code>pdfs/02-abhinaya-ser-challenge.pdf</code></li>
+<li><strong>Group:</strong> audio+text (trục chính)</li>
+</ul>
+<p><strong>Summary:</strong> Kết hợp speech-SSL + text-LLM + fused speech-text models, ensemble majority-voting, loss chống class imbalance.</p>
+<p><strong>Relevance to Pebble:</strong> Cùng lab với bài LLM-distillation ICASSP 2025 đã cite; blueprint production cho fusion speech+text với imbalance-aware losses — map thẳng sang bài toán crisis-class imbalance.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<h3 id="analysis-abhinaya-ser-naturalistic-challenge-interspeech-2025">Analysis — ABHINAYA (SER Naturalistic Challenge, Interspeech 2025)</h3>
+<blockquote>
+<p>Supersedes the 2026-07-02 score of 12% computed against the stale text-only profile.</p>
+</blockquote>
+<ul>
+<li><strong>Profile scored against (assembled at analysis time):</strong> (1) primary intent — honest ordinal suicide-risk <strong>text</strong> classification with LLM silver labels + gold-holdout eval; (2) active <strong>voice</strong> stream (<code>voice-multimodal.md</code> + <code>docs/tasks/voice-mtl-heads.md</code>) — heterogeneous MTL heads on a <strong>frozen WavLM-Large / emotion2vec</strong> backbone (emotion CE + affect <strong>CCC</strong> + crisis <strong>hard recall-floor 0.90</strong>, Kendall uncertainty weighting), currently on RAVDESS proxy labels, <strong>named next step = swap to MSP-Podcast (A/V/D) + DAIC (crisis)</strong>.</li>
+<li><strong>Overlap:</strong> D1=0, D2=0, D3=1, D4=0, D5=0, D6=1, D7=2 → 19% (peripheral)</li>
+<li>Formula: (3·0 + 2·0 + 1·1 + 2·0 + 2·0 + 2·1 + 1·2) / 26 × 100 = 5/26 × 100 ≈ 19%.</li>
+<li><strong>Closest on:</strong> D7 (<strong>WavLM-Large SSL backbone</strong> — exact match to the voice stream's frozen encoder) and, weaker, D6/D3 (rare-class imbalance objective on a categorical emotion corpus).</li>
+<li><strong>Best point (Baseline to beat):</strong> ABHINAYA's speech-only <strong>S1 = WavLM-Large (317M)</strong> with attentive-statistics pooling + a softmax emotion head scores <strong>34.43 balanced-val / 33 test macro-F1</strong> on <strong>MSP-Podcast</strong> 8-class categorical emotion — the same backbone and (per the voice roadmap) the same dataset Pebble's voice emotion head will move to.</li>
+<li><strong>How to apply to Pebble:</strong> When <code>voice-mtl-heads</code> swaps RAVDESS proxy labels for real MSP-Podcast (the roadmap's next task), anchor the emotion head against ABHINAYA's ~34% val / 33% test WavLM-Large single-model macro-F1 as the honest baseline, and trial its <strong>attentive-statistics pooling</strong> against the current masked-mean pool on the shared trunk.</li>
+<li><strong>Caveats:</strong> Full paper read (no paywall). Score rose from 12%→19% only because the assembled profile now includes the voice stream, flipping D7 (0→2) on the WavLM backbone match; the text-primary dimensions (D1 heterogeneous heads, D2 crisis domain, D4 LLM-teacher distillation, D5 MTL gradient balancing) remain 0 — this is single-task categorical SER, and the LLMs (LLaMA-3 8B/70B, SALMONN) are encoders/classifiers, not label teachers. The baseline is <strong>emotion-head only</strong>: ABHINAYA has no continuous A/V/D head (despite MSP-Podcast carrying those labels) and no recall-floor/safety objective, so it is <strong>not</strong> a comparator for Pebble's affect-CCC or crisis heads. MSP-Podcast test labels are hidden (leaderboard-only), so numbers are balanced-val macro-F1 + hidden-test macro-F1.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Read against the <strong>published Interspeech 2025 / ISCA-archive version</strong> (<code>dutta25_interspeech</code>,
+https://www.isca-archive.org/interspeech_2025/dutta25_interspeech.pdf) alongside the local
+preprint <code>pdfs/02-abhinaya-ser-challenge.pdf</code> (arXiv:2505.18217v1). <strong>Every load-bearing number
+below was cross-checked between the two and is identical</strong> — there is no preprint↔published delta
+on any figure I use. Scored against the <strong>current ViEmoSpeech profile + V-A…V-H register</strong>
+(<code>docs/tasks/paper-deep-analysis.md</code>), not the archived text-stream profile/D-A…D-H. The
+pre-existing "Analysis (overlap)" block above is superseded for decision purposes by this section.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>PDF read in full</strong> via <code>pdftotext</code> on the local arXiv PDF (method §3, experiments §4, all four
+  tables, references). Short 5-page Interspeech system paper — read end to end.</li>
+<li><strong>Web-validated</strong> against the venue version. Query: <code>ABHINAYA system Speech Emotion Recognition
+  Naturalistic Conditions Challenge Interspeech 2025 44.02 macro-F1 SALMONN WavLM</code> → resolved the
+  ISCA-archive PDF (<code>isca-archive.org/interspeech_2025/dutta25_interspeech.pdf</code>), downloaded and
+  <code>pdftotext</code>-diffed. Confirmed identical: SoTA 44.02, baseline 32.93, S1 34.43, S2 37.68, "4th of
+  166", "neutral ~26x fear", splits 84260/31961/3200, balanced-val 326/class, and the full Table 2
+  loss grid. All ✔ <strong>corroborated</strong> (published = preprint here).</li>
+<li>Challenge framing cross-referenced to the organizer paper (Naini et al., <code>naini25_interspeech</code>,
+  same proceedings) — MSP-Podcast new release, 8 categorical classes, imbalanced train / balanced test.</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Task.</strong> Interspeech 2025 SER-in-Naturalistic-Conditions Challenge, categorical track: 8-class
+emotion (angry, contempt, disgust, fear, happy, neutral, sad, surprise) on the new <strong>MSP-Podcast</strong>
+release. Train/val/test = <strong>84,260 / 31,961 / 3,200</strong> files (§4.1, ✔). Training is highly imbalanced
+(<strong>neutral ≈ 26× fear</strong>, §3.4, ✔); test is class-balanced and <strong>label-hidden (leaderboard-only)</strong>.
+Model selection uses a <strong>balanced validation set of 326 utterances/class</strong> (§4.1, ✔). Metric =
+<strong>macro-F1</strong>.</p>
+<p><strong>System = 5 heterogeneous models fused by decision-level majority vote</strong> (Fig 1, §3). This is
+<strong>late/decision fusion, not learned feature fusion</strong> — the ensemble vote is the top-level combiner;
+the only model that fuses modalities <em>inside</em> the network is ST1:
+- <strong>S1 — WavLM-Large (317M), speech-only.</strong> CNN feature-extractor <strong>frozen</strong>, transformer layers
+  <strong>fine-tuned</strong>; <strong>attentive statistics pooling</strong> (Okabe 2018: attention-weighted mean <strong>+</strong> weighted
+  std) → softmax head (§3.1.1).
+- <strong>S2 — SALMONN-13B SLLM, speech-only.</strong> Whisper+BEATs encoder and LLaMA <strong>frozen</strong>; only <strong>Q-Former
+  + LoRA</strong> (r=8, α=32, dropout 0.1) trained; last LLaMA-layer reps → attentive-stat pooling → softmax
+  (§3.1.2). Best individual system.
+- <strong>T1 — LLaMA-3.3-70B-Instruct, text-only, zero-shot</strong> on Whisper-large-v3 ASR transcripts (§3.2.1).
+- <strong>T2 — LLaMA-3.1-8B, text-only, LoRA fine-tuned</strong>, used as an <strong>encoder</strong> (last-layer reps →
+  attentive-stat pooling → head), not a generator (§3.2.2).
+- <strong>ST1 — SALMONN-7B, speech-text joint.</strong> ASR transcript <strong>appended to the speech sequence at the
+  input</strong>, LoRA fine-tuned; single jointly-trained bimodal model (§3.3).
+Majority vote across the five; <strong>S2 is the tiebreaker</strong> (best val) (§4.2).</p>
+<p><strong>Imbalance handling = loss functions only (no resampling/oversampling anywhere).</strong> Three losses
+(§3.4): <strong>WCE</strong> (class weight <code>w_c = N/(N_c·C)</code>); <strong>WFL</strong> weighted focal, <code>w_c(1−p)^γ</code>, <strong>γ=2</strong>;
+<strong>VS (vector-scaling / logit-adjustment)</strong>, pre-softmax <code>ẑ = (N_c/N_max)^τ · z + γ·log(N_c/N)</code>,
+<strong>τ=0.3, γ=1</strong> (§4.2). All fine-tuned with AdamW, LR <strong>1e-5</strong>, 20 epochs, 10-s audio cap, best-val-F1
+checkpoint.</p>
+<p><strong>Headline results (Table 1, all ✔).</strong> Challenge baseline (WavLM+WCE) <strong>test macro-F1 32.93</strong>.
+Best individual = S2 <strong>val 37.68 / test 35.34</strong>. S1 WavLM <strong>val 34.43 / test 33</strong>. Text-only: T1
+zero-shot <strong>val 32.78</strong>, T2 fine-tuned <strong>val 33.68</strong>; joint ST1 <strong>val 35.43</strong>. Full <strong>ABHINAYA
+ensemble: test 44.02 (SoTA, post-challenge; 4th/166 at deadline with ST1 only 3-epochs → test
+41.81)</strong>. Gains: <strong>+33.68% relative over baseline</strong>; <strong>+24.56% relative over best single model</strong>
+(35.34→44.02) (§4.3, ✔).</p>
+<p><strong>Loss ablation (Table 2, ✔).</strong> Best loss is <strong>model-dependent</strong>: <strong>speech models prefer WFL</strong> (S1
+33.07/<strong>34.43</strong>/32.12; S2 36.34/<strong>37.68</strong>/33.17 for WCE/WFL/VS), <strong>text &amp; speech-text prefer VS</strong> (T2
+29.79/30.12/<strong>33.68</strong>; ST1 33.92/34.73/<strong>35.43</strong>). Authors' hypothesis: text starts with better class
+separation (T2 zero-shot 28.47 vs S2 zero-shot 18.63), which suits logit-adjusting VS; less
+discriminative speech reps benefit from sample-wise focal reweighting (§4.5).</p>
+<p><strong>Rare-class analysis (Table 3, ✔).</strong> Speech models collapse on the three rarest classes: <strong>fear</strong>
+S1 12.22 / S2 16.79; contempt/disgust similar. <strong>Text models rescue the tail</strong> — zero-shot T1 gets
+<strong>fear 29.22</strong>, beating even the full ensemble (26.41) on the single rarest class; T2 and ST1 also
+lift contempt/disgust. Ensemble wins 4/8 classes overall. Removing ST1 from the vote costs ~2%
+absolute (Table 4, Comb IV); the all-5 vote reaches val 42.31 (§4.8).</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-by-decision-id">Parts directly useful for ViEmoSpeech (tagged by Decision ID)</h3>
+<ol>
+<li><strong>[V-A] The bimodal template is a 3-branch late-fusion ensemble, and the <em>only</em> learned fusion is
+   input-concatenation (ST1).</strong> Concrete artifact: ViEmoSpeech's fusion arm = one frozen-audio +
+   frozen-text jointly-trained model (ST1-shape) <strong>plus</strong> a majority-vote over independently
+   imbalance-tuned single-modality heads. ST1 (35.43 val) beats speech-only SALMONN-7B (33.87 val,
+   §4.6) by <strong>+1.56 absolute</strong> — the measured payoff of joint speech-text over speech-only, same
+   backbone. That +1.56 is the honest bar for "does learned fusion beat the branch."</li>
+<li><strong>[V-A/V-B] Attentive-statistics pooling (weighted mean + weighted std) is the shared, frozen-
+   compatible aggregation across every fine-tuned branch</strong> (S1/S2/T2/ST1). It is a drop-in replacement
+   for masked-mean pooling on a <strong>frozen</strong> WavLM/emotion2vec trunk and on a <strong>frozen PhoBERT/ViSoBERT</strong>
+   trunk — no backbone gradient required.</li>
+<li><strong>[V-E/V-G] Imbalance is fought with loss functions, not resampling — and the best loss is
+   modality-dependent.</strong> Artifact: the 7-class categorical head gets <strong>WFL (γ=2) on the audio branch</strong>
+   and <strong>VS logit-adjustment (τ=0.3, γ=1) on the PhoBERT/ViSoBERT text branch</strong>. Measured lift from
+   picking the right loss per branch: S1 +2.31 absolute (32.12→34.43), ST1 +1.51 (33.92→35.43).</li>
+<li><strong>[V-E/V-G] Decision-level majority voting is itself the biggest imbalance lever</strong> — <strong>+24.56%
+   relative</strong> over the best single model, and specifically because text branches carry the rare tail
+   (Table 3) the vote lifts minority classes the single models drop. Artifact: a rare-class-recall
+   audit that reports single-branch vs. ensemble macro-F1 <em>per class</em>, not just aggregate.</li>
+<li><strong>[V-C] The text-LLM branch runs on ASR transcripts (Whisper-large-v3), no gold text at test, and
+   fine-tuned-small-as-encoder beats zero-shot-large.</strong> T2 (LLaMA-8B, LoRA, used as encoder) val
+   33.68 &gt; T1 (LLaMA-70B zero-shot) val 32.78 (Table 1, ✔). Artifact: ViEmoSpeech's PhoBERT/ViSoBERT
+   branch as a <strong>fine-tuned encoder over PhoWhisper transcripts</strong> (not a prompted generator), pooled
+   with attentive-stats, VS-loss trained.</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>V-A fusion decision.</strong> Adopt the ST1 pattern as the <em>learned-fusion</em> comparator to beat the
+  withdrawn rule baseline (vn-09): one bimodal model that concatenates PhoWhisper transcript with the
+  WavLM/emotion2vec speech sequence and trains a joint head — and wrap it in a majority-vote with an
+  audio-only and a text-only head so no single modality can silently dominate. But <strong>budget-match it</strong>:
+  ABHINAYA's ST1 is SALMONN-7B and its ensemble spans 7B/13B/70B LLMs — ViEmoSpeech's frozen
+  PhoBERT-base + WavLM-Large is ~2 orders of magnitude smaller, so port the <em>shape</em> (input-concat +
+  attentive-stat pool + decision vote), not the scale. Cross-attention/gated fusion (WavFusion,
+  vn-07 FAS) remain the lighter alternatives to trial against ST1-concat.</li>
+<li><strong>V-B pooling.</strong> Swap masked-mean → attentive-statistics pooling on the frozen trunks; the weighted-
+  std channel is exactly the prosodic-variability signal the JMIR review (bimodal-10) flagged as the
+  distress signature, so it doubles as a cheap distress-head feature.</li>
+<li><strong>V-E/V-G imbalance.</strong> Run the loss as a <strong>per-branch, not global</strong> choice: WFL(γ=2) on audio,
+  VS(τ=0.3,γ=1) on text — ViEmoSpeech's exact 4-model matrix. Report per-class macro-F1 single vs.
+  ensemble to prove the rare-class rescue. This is the concrete imbalance-aware method + the +24.56%
+  relative / +2.31 absolute macro-F1 gains the task asked me to extract.</li>
+<li><strong>V-C text robustness.</strong> Use PhoBERT/ViSoBERT as a fine-tuned encoder over PhoWhisper output, VS-loss
+  trained, attentive-pooled — ABHINAYA shows this beats a prompted large LLM and rescues the rare tail
+  even when the <em>speech</em> branch fails on it.</li>
+</ul>
+<h3 id="child-mental-health-lens-viemospeech-transfer-risk-7-class-va-distress-50-clip-floor-frozen-backbones-phobertvisobert">Child mental-health lens → ViEmoSpeech transfer-risk (7-class + V/A + distress, ≥50-clip floor, frozen backbones, PhoBERT/ViSoBERT)</h3>
+<ul>
+<li><strong>Transfer risk on V-A (frozen backbones).</strong> <strong>Does not cleanly hold.</strong> ABHINAYA's S1 34.43
+  <strong>fine-tunes the WavLM transformer stack</strong> (only the CNN extractor is frozen) and every LLM branch
+  trains LoRA adapters — none is a truly frozen backbone. ViEmoSpeech's frozen-trunk constraint will
+  likely land <em>below</em> these single-model numbers; the frozen-compatible carry-over is the <strong>pooling
+  head + the loss + the ensemble</strong>, not the reported accuracies. State this explicitly in the method
+  paper: ABHINAYA numbers are a fine-tuned ceiling, not a frozen-trunk bar.</li>
+<li><strong>Transfer risk on V-C / V-D (text branch, tonal-language ASR).</strong> ABHINAYA's ASR is <strong>English
+  Whisper-large-v3</strong> on podcast speech; ViEmoSpeech runs <strong>PhoWhisper on Vietnamese TV drama with
+  tone-swap errors at high arousal</strong> (mày→máy, tao→tháo). ABHINAYA's text branch is barely above
+  baseline (33.68 vs 32.93) <em>even in the easy ASR regime</em> and speech beats text (37.68 &gt; 33.68) — so
+  the tonal-ASR text branch is at risk of being <em>weaker</em>, not the load-bearing branch the ViEmoSpeech
+  tone-competition hook predicts. Mitigation: the tone×emotion hook says text should carry more
+  because F0 is tone-occupied — but that must be <strong>measured on VN</strong>, because ABHINAYA is a
+  counter-example where text did not dominate. Bake the vn-12 audio-anchoring safeguard (aux
+  audio-only head / modality dropout) in so a weak ASR text branch cannot poison the vote.</li>
+<li><strong>Transfer risk on V-E/V-G (imbalance vs. the ≥50-clip floor).</strong> ABHINAYA fights <strong>26:1</strong> imbalance
+  purely post-hoc (loss + vote) and <strong>fear still tops out at ~26–29% F1</strong> with the entire 5-model
+  machinery. That is the strongest argument <em>for</em> ViEmoSpeech's corpus-design <strong>≥50-clip floor</strong>
+  (ADR-002): design-level balancing is a more reliable rare-class lever than any loss trick, which
+  only recovers a few absolute points. Losses/ensembling are complementary, not a substitute for the
+  floor. VS/WFL also apply <strong>only to the 7-class categorical head</strong> — the V/A regression (CCC) and the
+  distress recall-floor head do not use CE-family losses, so this paper does not touch V-F.</li>
+<li><strong>Ethics / framing.</strong> ABHINAYA is a challenge-leaderboard system with no clinical, child, or
+  distress framing — MSP-Podcast is adult naturalistic podcast speech. Nothing here transfers to the
+  distress-head honesty question; treat it purely as an engineering template.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech-incl-contradictionsgaps">Limitations &amp; open questions for ViEmoSpeech (incl. contradictions/gaps)</h3>
+<ul>
+<li><strong>Contradiction vs. the ViEmoSpeech tone-channel-competition hook AND vs. vn-12 ("semantics
+  dominate"):</strong> in ABHINAYA the <strong>speech branch beats the text branch</strong> (S2 37.68 &gt; T2 33.68 val;
+  Table 1) and text-only barely clears the baseline. This is naturalistic English, but it is a direct
+  data point that a strong ASR text branch need <strong>not</strong> dominate SER — reinforcing vn-08's "text
+  near-useless" over vn-12's "semantics dominate," and warning ViEmoSpeech not to <em>assume</em> the
+  tone-forces-text-to-carry-more claim without measuring it. (Reconciliation, consistent with the
+  wave-1/2 log: "how much text carries" ≠ "how much a model relies on text.")</li>
+<li><strong>Contradiction vs. FAIIR (exemplar) and vs. vn-09 fusion:</strong> ABHINAYA uses <strong>no
+  oversampling/resampling at all</strong> — pure loss reweighting + logit-adjust + decision vote — whereas
+  FAIIR's imbalance recipe was oversampling two of three ensemble members. ViEmoSpeech should trial
+  loss-only (ABHINAYA) vs. resample-based (FAIIR) and not conflate them; ABHINAYA is the cleaner fit
+  given a small floor-balanced corpus where oversampling ~50-clip classes risks overfitting.</li>
+<li><strong>Gap — frozen-backbone numbers are unknown.</strong> ABHINAYA never reports a fully-frozen-trunk variant,
+  so it gives no bar for ViEmoSpeech's actual constraint. Our frozen-WavLM + attentive-pool + WFL
+  single-model number would be a novel measurement, not a reproduction.</li>
+<li><strong>Gap — no speaker-disjoint discussion, no V/A/D.</strong> ABHINAYA inherits MSP-Podcast's challenge splits
+  (speaker-disjoint by construction, 2000+ speakers) but never analyzes speaker leakage, and it does
+  <strong>categorical only</strong> — no continuous V/A head despite MSP carrying V/A/D. So it is not a comparator
+  for ViEmoSpeech's CCC V/A head or speaker-disjoint whole-series holdout (V-G); those remain anchored
+  to bimodal-12 (MSP CCC) instead.</li>
+<li><strong>Gap — the 44.02 SoTA is on a hidden balanced test with 326/class.</strong> ViEmoSpeech's honest
+  speaker-disjoint, class-floored, whole-series-holdout macro-F1 is not like-for-like; use 44.02 only
+  as a genre anchor ("naturalistic 8-class categorical SER lives in the low-40s macro-F1"), next to
+  the leak-inflated VN numbers (vn-08 86.6, vn-10 0.87) as the opposite pole.</li>
+</ul></article>
+</div></body></html>

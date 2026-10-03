@@ -1,0 +1,301 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>N3 · When Tone and Words Disagree (CASE / FAS)</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#dc2626">N3 · Novelty tone×emotion & tiền đề</span>
+<h1>When Tone and Words Disagree (CASE / FAS)</h1><p class="venue">arXiv 2026</p>
+<div class="role" style="--accent:#dc2626"><b>Vai trò trong survey:</b> Đối thủ kiến trúc gần nhất — cite-and-distinguish: 'tone' của họ là paralinguistic.</div>
+<div class="links"><a href="../papers/vietnamese-ser/pdfs/07-case-tone-words-disagree.pdf">📄 PDF gốc</a><a href="../papers/vietnamese-ser/07-case-tone-words-disagree.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/vietnamese-ser/07-case-tone-words-disagree.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-vn-07-when-tone-and-words-disagree-robust-ser-under-acoustic-semantic-conflict-case-fas">Paper vn-07 — When Tone and Words Disagree: Robust SER under Acoustic-Semantic Conflict (CASE / FAS)</h1>
+<ul>
+<li><strong>Authors:</strong> (not yet extracted — verify from PDF)</li>
+<li><strong>Venue / year:</strong> arXiv preprint, Jan 2026</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2601.04564 · PDF <code>pdfs/07-case-tone-words-disagree.pdf</code></li>
+<li><strong>Group:</strong> vietnamese-ser / closest architectural competitor</li>
+</ul>
+<p><strong>Summary:</strong> Introduces CASE, a dataset dominated by cases where paralinguistic
+tone-of-voice contradicts lexical/semantic content, and a Fusion
+Acoustic-Semantic (FAS) model that disentangles acoustic and semantic pathways
+via query-based attention; beats ASR-based/SSL/audio-LLM baselines (59.38% on CASE).</p>
+<p><strong>Relevance to ViEmoSpeech:</strong> The single closest architectural competitor —
+must cite-and-distinguish: their "tone" is paralinguistic tone-of-voice, NOT
+phonemic lexical tone in a tonal language. Also a candidate fusion template (V-A).</p>
+<blockquote>
+<p>Stub created 2026-07-10 (task <code>docs/tasks/paper-deep-analysis.md</code>); deep-read pending.</p>
+</blockquote>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<h3 id="source-access-note">Source-access note</h3>
+<p>Read the full local PDF via <code>pdftotext "docs/papers/vietnamese-ser/pdfs/07-case-tone-words-disagree.pdf" -</code>
+(all pages of body + Tables 1–7, ablations, appendix case studies and confusion-matrix
+discussion). The PDF is <code>arXiv:2601.04564v1 [cs.SD], 8 Jan 2026</code> — a very recent preprint with
+<strong>no published/venue version yet</strong>, so the arXiv v1 is the authoritative source (nothing to
+reconcile). Web-validated the load-bearing facts against the arXiv abstract/HTML:
+- Query <code>"When Tone and Words Disagree" FAS CASE ... arXiv 2601.04564</code> → resolved
+  https://arxiv.org/abs/2601.04564 and https://arxiv.org/pdf/2601.04564 — confirms title, the
+  FAS/CASE framing, and the <strong>59.38% CASE SOTA</strong> headline; GitHub <code>github.com/24DavidHuang/FAS</code>.
+- Fetched https://arxiv.org/html/2601.04564v1 → confirms <strong>CASE languages = "English, Mandarin,
+  and representative Chinese dialects"</strong>; <strong>"tone" = paralinguistic tone-of-voice/prosody, not
+  phonemic/lexical tone</strong>; TTS engine = Doubao-Seed-TTS 2.0; 378 samples; 7 emotions; best
+  hyperparameters <code>k_aco=8, k_sem=16, N_q=2, d=512</code>. (This is the V-D novelty-defense fact.)</p>
+<p>Full author list (stub lacked it): <strong>Dawei Huang(1,2), Yongjie Lv(1), Ruijie Xiong(1), Chunxiang
+Jin(1), Xiaojiang Peng(2)*</strong> — (1) Inclusion AI, Ant Group; (2) Shenzhen University; *corresponding
+author (Xiaojiang Peng). ✔ corroborated (arXiv author block).</p>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Problem.</strong> Standard SER assumes acoustic–semantic <em>congruence</em> (a happy sentence said in a happy
+voice). The paper targets <em>conflict</em> cases — sarcasm, cold fury, polite masking — where prosody
+contradicts the literal words, and shows SOTA SER (SSL, ASR/semantic encoders, and audio-LLMs) all
+degrade sharply because they carry either a semantic bias or entangled acoustic⊗semantic features.</p>
+<p><strong>FAS framework</strong> (§3.1, Fig. 1) — two frozen pathways + a lightweight learned fusion head, trained
+on <em>pre-computed</em> features (encoders never fine-tuned):
+- Semantic pathway = <strong>Whisper-large encoder</strong>, 1280-d features. Acoustic pathway =
+  <strong>MingTok-Audio</strong> neural audio tokenizer (a TTS-derived codec), 64-d features. ✔ (§4.2)
+- <strong>Patchify</strong> each stream by downsample factor <code>s=5</code>, project to unified <code>d=512</code> (Eq. 1). ✔
+- <strong>Token distillation</strong> (Eq. 2–3): saliency score <code>s_t = ||f_t||_2</code> (L2-norm as an energy proxy);
+  <strong>Top-K</strong> keeps the most salient tokens per stream, asymmetric budgets <code>k_aco</code>, <code>k_sem</code>. ✔
+- <strong>Learnable queries</strong> <code>Q_learn ∈ R^{n×d}</code> (Q-Former-style) cross-attend the concatenated distilled
+  context: <code>F_fused = Attn(Q_learn, C·W_K, C·W_V)</code> (Eq. 4) → MLP → 7-way softmax. ✔ (§3.1)
+- Config (Table 3): <code>d=512</code>, <code>N_q=2</code>, dropout 0.4, AdamW, LR <code>2e-4</code>, cosine schedule, weight decay
+  <code>1e-4</code>, global batch 2048, CE loss, 100 epochs, warmup 0.05, 16 kHz, seed 42, 8×A6000. ✔
+- Parameter count: <strong>FAS 3.45M</strong> (vs Concat 1.22M, Gated 1.65M, w/o-Qlearn 0.82M). ✔ (Table 4)</p>
+<p><strong>CASE benchmark</strong> (§3.2, Fig. 2). A <em>diagnostic</em> zero-shot testbed of <strong>378</strong> human-verified
+conflict utterances, 7 emotions. Built by: Gemini-2.5-pro drafts a conflict scenario + an
+emotion-laden text (semantic anchor); a <strong>ground-truth acoustic emotion is deliberately chosen to
+contradict</strong> the text's semantic emotion; a timbre is drawn from <strong>21 multi-emotion voices</strong>;
+<strong>Doubao-Seed-TTS 2.0</strong> synthesizes the audio; <strong>12 expert annotators</strong> discard samples whose acoustic
+prosody is weak/ambiguous/overshadowed. Fully <strong>synthetic, no PII</strong> (Ethics §). Original utterances
+are <strong>Chinese</strong> (Appendix Table 7 lists English glosses); language coverage = English + Mandarin +
+Chinese dialects. ✔ (§3.2, Limitations, Appendix A.3)</p>
+<p><strong>Training corpus</strong> = ~66 h aggregated open SER sets: IEMOCAP, CMU-MOSEI, MER2024, MELD, RAVDESS, ESD
+(Table 1). In-domain test = MELD/RAVDESS/ESD; zero-shot = CASE, Emo-Emilia (Mandarin), EMOVO
+(Italian), EmoDB (German). ✔</p>
+<p><strong>Headline results</strong> (Table 2, ACC/F1):</p>
+<table>
+<thead>
+<tr>
+<th>Model (paradigm)</th>
+<th>CASE (zero-shot)</th>
+<th>MELD</th>
+<th>RAVDESS</th>
+<th>ESD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Whisper (semantic)</td>
+<td>47.26 / 44.97</td>
+<td>49.59 / 43.62</td>
+<td>62.30 / 60.61</td>
+<td>84.53 / 83.92</td>
+</tr>
+<tr>
+<td>WavLM (SSL)</td>
+<td>34.20 / 33.92</td>
+<td>52.99 / 53.57</td>
+<td>44.64 / 34.09</td>
+<td>61.90 / 60.69</td>
+</tr>
+<tr>
+<td>Emotion2Vec (SOTA SER)</td>
+<td>31.48 / 28.42</td>
+<td>45.04 / 45.49</td>
+<td>70.06 / 68.84</td>
+<td>51.39 / 50.87</td>
+</tr>
+<tr>
+<td>Qwen2.5-Omni (ALM)</td>
+<td>34.66 / 30.21</td>
+<td>54.06 / 36.05</td>
+<td>75.35 / 74.98</td>
+<td>51.60 / 35.70</td>
+</tr>
+<tr>
+<td><strong>FAS (Ours)</strong></td>
+<td><strong>59.38 / 55.08</strong></td>
+<td>51.89 / 48.42</td>
+<td>76.61 / 76.19</td>
+<td>87.27 / 86.72</td>
+</tr>
+</tbody>
+</table>
+<p>All ✔ (Table 2). In-domain avg ACC <strong>71.92%</strong>; zero-shot avg ACC <strong>54.66%</strong>. ✔ Note the semantic
+encoder (Whisper, 47.26) is the <em>strongest baseline on CASE</em> — even in "conflict" data, a
+semantics-heavy model beats SSL/ALMs; FAS's +12 pt gain over Whisper is the real claim.</p>
+<p><strong>Ablations.</strong> (a) Fusion strategy on CASE ACC (Table 4): Concat 53.65 &lt; Gated 53.12 &lt; w/o-Top-K
+55.47 &lt; w/o-Qlearn 55.99 &lt; <strong>FAS 59.38</strong>; removing Top-K costs −3.91 ACC on CASE, removing Qlearn
+costs <strong>−9.27 ACC on RAVDESS</strong>. ✔ (b) Token budgets (Table 5): best avg 62.06% ACC at
+<code>k_aco=8, k_sem=16</code> — <strong>asymmetric, more semantic than acoustic tokens is better</strong>; enlarging <code>k_aco</code>
+gives marginal/negative gains. ✔ (c) <code>N_q</code> saturates at <strong>2</strong> (Fig. 4); "SER is a low-complexity
+utterance-level task, minimal query capacity suffices." ✔ (d) Plug-and-play across encoders (Table
+6): MingTok+Whisper best on CASE; Whisper+XCodec2 best MELD; Whisper+VibeVoice best RAVDESS; CLAP as
+the semantic branch underperforms Whisper. ✔ (e) Confusion matrices (Appendix A.2.3):
+<strong>"no method correctly predicts any samples of fear or disgust" on CASE</strong> — the rare/high-conflict
+classes fully collapse even for the SOTA. ✔</p>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-with-decision-ids">Parts directly useful for ViEmoSpeech (tagged with Decision IDs)</h3>
+<ol>
+<li>
+<p><strong>[V-D — THE novelty-defense fact]</strong> CASE's "tone" is <strong>paralinguistic tone-of-voice (prosody)</strong>,
+   explicitly <em>not</em> phonemic/lexical tone; languages are English + Mandarin + Chinese dialects, and
+   even though Mandarin is tonal the paper <strong>never studies lexical-tone×emotion channel competition</strong> —
+   its conflict is prosody-vs-semantics (sarcasm/masking) in <strong>synthetic TTS</strong> speech. ✔
+   <em>Transfer risk: none — this is a citation, not a method to reuse.</em> This is the clean cite-and-
+   distinguish: ViEmoSpeech's headline (Vietnamese lexical tone is phonation-heavy and shares the
+   F0/phonation channel emotion uses) is <strong>untouched</strong> by CASE. CASE is the closest-named competitor
+   yet operates in an orthogonal problem space; ViEmoSpeech's novelty claim survives intact.</p>
+</li>
+<li>
+<p><strong>[V-A — fusion architecture template]</strong> The FAS two-pathway + Q-Former distillation head:
+   frozen-encoder, pre-computed features, <code>d=512</code>, Top-K L2-saliency token selection with <strong>asymmetric
+   budgets</strong> (<code>k_sem=16 &gt; k_aco=8</code>), <code>N_q=2</code> learnable queries, 3.45M trainable params, CE loss.
+   <em>Transfer risk: MEDIUM-HIGH.</em> The <strong>shape</strong> (cheap learned fusion over two frozen streams) transfers
+   and directly answers V-A ("beat the rule-based PhoWhisper+PhoBERT baseline"). But two components do
+   <strong>not</strong> transfer as-is: (i) MingTok-Audio is a <strong>Mandarin/English TTS codec</strong> — no evidence it
+   tokenizes Vietnamese <em>phonation/tone</em> cleanly; ViEmoSpeech's V-B candidates (WavLM / emotion2vec /
+   phonation features) are the natural acoustic stream. (ii) FAS's semantic stream is <strong>Whisper-encoder
+   features</strong>, not a text-LM over an ASR transcript — ViEmoSpeech's text branch is PhoBERT/ViSoBERT
+   over a <strong>PhoWhisper transcript</strong> (V-C), so the "semantic pathway" is a different object.</p>
+</li>
+<li>
+<p><strong>[V-A / V-B — the asymmetric-budget + saliency finding]</strong> "Preserving more <em>semantic</em> tokens is
+   more beneficial than more acoustic tokens" (Table 5, <code>k_sem=16&gt;k_aco=8</code>), and L2-norm saliency
+   (energy proxy) beats random/uniform token selection by up to 3.91 ACC. ✔
+   <em>Transfer risk: MEDIUM and directionally interesting.</em> This is empirical evidence that, even for a
+   task framed around <em>acoustic</em> conflict, the semantic stream should carry more capacity — which
+   <strong>rhymes with</strong> ViEmoSpeech's own thesis that in a tonal language the text/semantic branch "must
+   carry more load." But CASE's semantics are clean (ground-truth text → Whisper); under PhoWhisper
+   tone-swap noise the ViEmoSpeech semantic stream is <em>corrupted precisely at high arousal</em>, so the
+   "more semantic tokens" prescription may invert. Worth an explicit ablation, not a copy.</p>
+</li>
+<li>
+<p><strong>[V-G — conflict-case evaluation design]</strong> CASE's construction protocol: deliberately engineer a
+   ground-truth acoustic emotion that <strong>contradicts</strong> the text's semantic emotion, then <strong>discard any
+   sample whose acoustic emotion is not clearly perceptible</strong> (12-expert gate). Reported as a
+   <em>zero-shot diagnostic slice</em>, separate from in-domain metrics; both ACC and unweighted-avg F1
+   reported. ✔ <em>Transfer risk: LOW as a design pattern, but CASE-the-dataset does not transfer</em>
+   (synthetic Chinese/English, no Vietnamese, no ASR). The reusable idea is a <strong>held-out conflict
+   sub-slice</strong> with its own metric line.</p>
+</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li>
+<p><strong>V-D → the paper's positioning paragraph writes itself.</strong> In the ViEmoSpeech method paper, cite
+  CASE as the state of the art on <em>paralinguistic</em> acoustic-semantic conflict and distinguish in one
+  sentence: "Unlike CASE, whose 'tone' is prosodic tone-of-voice over synthetic English/Mandarin
+  speech, ViEmoSpeech studies <strong>phonemic lexical-tone×emotion channel competition</strong> in natural
+  Vietnamese TV-drama speech." Concrete artifact: the Related-Work / novelty paragraph and the
+  <code>docs/project-overview.md §1.3</code> competitor table. This closes the biggest reviewer objection
+  ("isn't this just CASE?") with a factual, checkable distinction.</p>
+</li>
+<li>
+<p><strong>V-A → a concrete fusion baseline to build and beat.</strong> Implement FAS-lite as one arm of the fusion
+  bake-off: two frozen streams (swap MingTok→WavLM/emotion2vec for the Vietnamese acoustic stream;
+  swap Whisper→PhoBERT-over-PhoWhisper for the semantic stream), Top-K L2 saliency distillation,
+  <code>N_q=2</code> learnable queries, CE + the V/A regression + distress heads bolted on the fused vector.
+  Because encoders stay frozen and features are pre-computed, this is a <strong>cheap</strong> experiment (3.45M
+  trainable params, single-GPU) — exactly the kind of learned-fusion candidate V-A needs against the
+  rule-based 2412.09829 baseline. Artifact: a <code>fusion=fas</code> config in the SER training script.</p>
+</li>
+<li>
+<p><strong>V-A/V-B → set the token-budget prior from their ablation.</strong> Start the ViEmoSpeech fusion head at
+  <code>k_sem ≥ k_aco</code> and <code>N_q=2</code> (their saturation point) rather than sweeping blind — their Table 5/Fig 4
+  give a defensible initialization and save compute. Then run the <em>inverted</em> ablation: does the
+  semantic-heavy budget still win when the semantic stream is PhoWhisper-noisy? That ablation is a
+  publishable result that directly tests the ViEmoSpeech tone×emotion thesis (V-D quantification).</p>
+</li>
+<li>
+<p><strong>V-G → add a "conflict slice" to the eval protocol.</strong> ViEmoSpeech TV-drama naturally contains
+  sarcasm/masking; mark a held-out <strong>acoustic-semantic-conflict sub-slice</strong> (human-labeled emotion ≠
+  the emotion a text-only PhoBERT predicts from the transcript) and report macro-F1 / CCC on it as a
+  separate line, à la CASE's zero-shot column. Artifact: a <code>conflict_subslice</code> flag in the gold
+  held-out series, reported next to the overall numbers in <code>docs/tasks/vn-tv-ser-pilot.md</code>.</p>
+</li>
+</ul>
+<h3 id="transfer-validity-ethics-lens-viemospeech-regime">Transfer-validity &amp; ethics lens (ViEmoSpeech regime)</h3>
+<ul>
+<li><strong>Register/language mismatch is total, and that is the point.</strong> CASE = synthetic (Doubao-TTS),
+  acted-by-design, English/Mandarin, no ASR in the loop (Whisper <em>features</em>, not noisy transcripts),
+  7-class softmax only — no valence/arousal, no distress. ViEmoSpeech = natural Vietnamese TV-drama,
+  PhoWhisper transcripts with <strong>tone-swap errors at high arousal</strong> (mày→máy, tao→tháo), 7-class + V/A
+  (Russell 1–5, CCC) + a recall-floored distress flag. So FAS's numbers are <strong>not comparable bars</strong>;
+  only its <em>architecture</em> and <em>ablation priors</em> transfer.</li>
+<li><strong>FAS's "trust the acoustics under conflict" heuristic is dangerous in a tonal language.</strong> FAS
+  resolves conflict by prioritizing the acoustic pathway (Fig. 5 case study: "Trust Acoustic"). In
+  Vietnamese the acoustic channel (F0/phonation) is <strong>shared</strong> between lexical tone and emotion — so
+  "trust acoustics" cannot be a blanket arbitration rule; the same F0 excursion can be a tone contour
+  <em>or</em> an affect cue. ViEmoSpeech's fusion must <em>jointly</em> resolve, not default to one modality. This is
+  a design-level warning, not a number to reuse.</li>
+<li><strong>Synthetic vs. natural distress ethics.</strong> CASE sidesteps consent by being fully synthetic; its
+  ethics section warns SER "could be deployed in surveillance… interrogation." ViEmoSpeech uses real
+  (copyrighted) TV-drama speech under the features-only release constraint and an explicitly honest
+  <strong>distress = acted-drama proxy, not clinical</strong> framing — a <em>different</em> ethical posture that
+  ViEmoSpeech already documents; CASE offers the misuse-warning language worth echoing.</li>
+<li><strong>Rare-class collapse is a red flag for the distress head (V-F).</strong> On CASE <strong>no model</strong> predicts any
+  fear or disgust sample correctly (Appendix A.2.3) — the rare, high-conflict classes vanish under a
+  flat CE objective. ViEmoSpeech's distress flag is exactly such a rare, high-stakes class; this is
+  direct evidence that a plain-CE fused head will <strong>not</strong> meet a recall floor, motivating the
+  V-F recall-floor loss / threshold policy rather than trusting the softmax.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech">Limitations &amp; open questions for ViEmoSpeech</h3>
+<ul>
+<li><strong>Contradiction/gap vs. ViEmoSpeech's core thesis (V-D).</strong> CASE claims to study "tone vs words" yet,
+  by including <em>Mandarin</em> (a tonal language) and still treating "tone" purely as prosody, it
+  <strong>demonstrates the gap ViEmoSpeech fills</strong>: nobody in the closest competitor line has quantified
+  <em>lexical-tone×emotion</em> channel competition. FAS's own best config (more semantic tokens than
+  acoustic, Table 5) even suggests the acoustic stream is <em>less</em> separable than assumed — consistent
+  with the ViEmoSpeech hypothesis that tone and emotion are entangled in the same acoustic channel and
+  the text branch must compensate. ViEmoSpeech should cite this as <em>supporting evidence</em>, not a rival.</li>
+<li><strong>Contradiction vs. vn-12 (Incongruent-SLM "semantics dominate") and vs. FAS.</strong> FAS asserts the
+  <em>acoustic</em> channel should win under conflict and engineers CASE so acoustic emotion is ground truth;
+  vn-12 reports SLMs default to <em>semantics</em>. These frame opposite arbitration priors. ViEmoSpeech sits
+  between them and cannot adopt either as a rule, because in Vietnamese the acoustic F0/phonation
+  channel is <em>itself semantically loaded</em> (it carries lexical tone). Open question: does a learned
+  fusion (FAS-style) implicitly learn a per-utterance arbitration that beats both fixed priors on
+  Vietnamese conflict cases?</li>
+<li><strong>No ASR-noise robustness anywhere in FAS.</strong> FAS's semantic stream is clean Whisper features from
+  ground-truth text; it never confronts transcription error. ViEmoSpeech's headline failure mode —
+  PhoWhisper tone-swap at high arousal — is <em>outside</em> FAS's evaluated regime. Whether the Top-K
+  saliency + Q-Former head is robust to a corrupted semantic stream is untested and is a genuine
+  ViEmoSpeech-owned experiment (ties V-A × V-C).</li>
+<li><strong>CASE is 378 synthetic samples, diagnostic-only</strong> (the authors' own Limitation: "insufficient in
+  scale to serve as standalone training data," ✔). It cannot be a ViEmoSpeech training or fine-tuning
+  source, and its acted-TTS distribution is far from spontaneous TV dialogue — usable as a <em>conceptual</em>
+  eval-design template only.</li>
+<li><strong>Acoustic tokenizer portability is unverified for Vietnamese.</strong> MingTok-Audio / XCodec2 / VibeVoice
+  are TTS codecs trained on (largely) English/Mandarin; there is no evidence they preserve Vietnamese
+  tone/phonation detail. Before adopting FAS's acoustic pathway, ViEmoSpeech must verify (V-B) whether
+  a TTS codec or a phonation-aware SSL (WavLM/emotion2vec + jitter/shimmer/HNR/H1–H2) better retains
+  the tone-emotion channel — the very signal ViEmoSpeech is built to measure.</li>
+</ul></article>
+</div></body></html>

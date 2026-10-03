@@ -108,8 +108,11 @@ def main() -> None:
     }
 
     if eps is None:
-        units = [(m.stem, m) for m in sorted(rawdir.glob("*.mp*")) + sorted(rawdir.glob("*.m4a"))
-                 if m.suffix.lower() in (".mp3", ".mp4", ".m4a")]
+        units = [
+            (m.stem, m)
+            for m in sorted(rawdir.glob("*.mp*")) + sorted(rawdir.glob("*.m4a"))
+            if m.suffix.lower() in (".mp3", ".mp4", ".m4a")
+        ]
     else:
         units = []
         for n in eps:

@@ -1,0 +1,252 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>F3 · Bimodal Connection Attention Fusion</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#7c3aed">F3 · Fusion khảo sát (v2 tương lai)</span>
+<h1>Bimodal Connection Attention Fusion</h1><p class="venue">arXiv 2025</p>
+<div class="role" style="--accent:#7c3aed"><b>Vai trò trong survey:</b> Fusion audio↔text thật + deep-supervision (audio-anchoring); ứng viên v2.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/07-bimodal-connection-attention.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/07-bimodal-connection-attention.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/07-bimodal-connection-attention.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-07-bimodal-connection-attention-fusion-for-speech-emotion-recognition">Paper 07 — Bimodal Connection Attention Fusion for Speech Emotion Recognition</h1>
+<ul>
+<li><strong>Authors:</strong> Jiachen Luo, Huy Phan, Lin Wang, Joshua D. Reiss (QMUL)</li>
+<li><strong>Venue / year:</strong> arXiv preprint 2025</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2503.05858 · PDF <code>pdfs/07-bimodal-connection-attention.pdf</code></li>
+<li><strong>Group:</strong> audio+text (trục chính)</li>
+</ul>
+<p><strong>Summary:</strong> Interactive connection network + bimodal attention + contrastive audio-text alignment để lọc nhiễu cross-modal.</p>
+<p><strong>Relevance to Pebble:</strong> Công thức cụ thể cross-attention + contrastive alignment. <strong>Lưu ý:</strong> có cặp near-duplicate arXiv 2503.05858 / 2503.06405 cùng nhóm — xác nhận bản supersede trước khi deep-read.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<p><strong>Pebble profile used (assembled at analysis time):</strong> Primary = ordinal suicide-risk <strong>text</strong> classification (BERT-family encoder, teacher-LLM silver labels, gold-holdout eval, ordinal-aware QWK/MAE; contribution is methodological honesty, not SOTA). Adjacent <strong>voice</strong> stream = frozen SSL backbone (WavLM-Large / emotion2vec) + 3 <strong>heterogeneous MTL heads</strong> (emotion CE + affect valence/arousal <strong>CCC regression</strong> + crisis BCE under a <strong>hard recall floor 0.90</strong>), balanced by <strong>Kendall uncertainty weighting</strong>. Voice+text <strong>fusion is the forward direction</strong>, not the current stage.</p>
+<h3 id="analysis-bcaf-bimodal-connection-attention-fusion">Analysis — BCAF (Bimodal Connection Attention Fusion)</h3>
+<ul>
+<li><strong>Overlap:</strong> 23% (peripheral) — D1=1, D2=0, D3=1, D4=0, D5=0, D6=0, D7=2</li>
+<li>Formula: (3·1 + 2·0 + 1·1 + 2·0 + 2·0 + 2·0 + 1·2) / 26 × 100 = 6/26 × 100 = 23%.</li>
+<li><strong>Closest on:</strong> D7 (backbone match — audio <strong>wav2vec-large SSL</strong> + text <strong>RoBERTa</strong>, i.e. exactly Pebble's voice-SSL + text-BERT pairing) and D1/D3 partials (multi-head auxiliary supervision on emotion corpora MELD/IEMOCAP).</li>
+<li><strong>Best point (Method to adopt):</strong> Keep <strong>per-modality auxiliary heads</strong> (audio-only <code>L_a</code>, text-only <code>L_l</code>) alongside the fused head <code>L_m</code>, plus a <strong>correlative/connection attention</strong> layer that down-weights conflicting cross-modal signal — this is BCAF's concrete defense against the well-known "text dominates audio, audio branch gets ignored" collapse in audio+text fusion.</li>
+<li><strong>How to apply to Pebble:</strong> when the voice stream fuses with the text risk model, don't concatenate-and-classify; deep-supervise each branch (audio-only + text-only logits) next to the fused logits and add a cross-attention correlative gate, so the paralinguistic (voice) signal survives fusion instead of being overwritten by the stronger text encoder.</li>
+<li><strong>Caveats:</strong></li>
+<li>Scored from abstract + intro/method (pp.1–4); results/ablation sections unread — but that does not affect the domain/method/backbone dimensions scored here.</li>
+<li><strong>No</strong> continuous head, crisis/mental-health domain, teacher-LLM distillation, or principled MTL loss balancing seen — all four heads are categorical emotion; "dynamic" weighting is attention-level, not task-loss-level (so D1 partial, D5=0). This is a <strong>fusion-architecture</strong> paper, and Pebble's rubric rewards MTL-head heterogeneity / crisis / distillation, which pulls the % down despite the fusion recipe being directly relevant to the forward direction.</li>
+<li><strong>Sibling disambiguation:</strong> arXiv <strong>2503.06405</strong> is <em>"Heterogeneous Bimodal Attention Fusion (HBAF)"</em> — a <strong>distinct, not duplicate</strong> paper from the same group (same MELD/IEMOCAP setup). HBAF's final v3 is dated <strong>2025-04-01</strong>, later than BCAF's v3 (<strong>2025-03-22</strong>), and HBAF adds a <strong>dynamic gating mechanism + inter-modal contrastive learning</strong> that BCAF lacks (BCAF instead uses the encoder-decoder connection loss + correlative attention). Best read: HBAF is the <strong>later, extended</strong> sibling; treat BCAF (this paper) as the connection-attention variant, not superseded content — deep-read HBAF first if only one is read.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Read against the <strong>current ViEmoSpeech profile + Decision Register V-A…V-H</strong>
+(<code>docs/tasks/paper-deep-analysis.md</code>), not the archived text-stream profile in the
+"Analysis" section above. PDF read in full via <code>pdftotext</code> on
+<code>pdfs/07-bimodal-connection-attention.pdf</code> (arXiv:2503.05858<strong>v3</strong>, 22 Mar 2025, QMUL
+Centre for Digital Music — Luo, Phan, Wang, Reiss). Decisions targeted: <strong>V-A</strong> (learned
+audio+text fusion mechanism), <strong>V-C</strong> (is the text branch a genuine transcript encoder?),
+<strong>V-G</strong> (eval protocol/metrics). No paywalled venue found — this is arXiv-only; the local
+v3 is the authoritative version.</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>Read method:</strong> <code>pdftotext ".../07-bimodal-connection-attention.pdf" -</code> (full body, all
+  equations, Tables I–II, all ablation prose, confusion matrices, references). Figures 6, 8, 9
+  are raster images — numbers inside them are <strong>not</strong> text-extractable, so the absolute
+  weighted-F1 of BCAF is figure-only and reported here as uncorroborated-numerically.</li>
+<li><strong>Web validation:</strong></li>
+<li>Query <code>"Bimodal Connection Attention Fusion BCAF ... arXiv 2503.05858"</code> → resolved
+    https://arxiv.org/abs/2503.05858 and https://arxiv.org/html/2503.05858v3. Corroborates the
+    two headline deltas: <strong>+3.15% wF1 over HCAM (MELD)</strong>, <strong>+4.11% wF1 over Mamba (IEMOCAP)</strong> ✔.</li>
+<li>Same query surfaced the sibling https://arxiv.org/abs/2503.06405 (HBAF) — confirms the
+    existing stub's disambiguation: <strong>2503.06405 = a distinct paper (Heterogeneous Bimodal
+    Attention Fusion), not a supersede</strong> of this one ✔.</li>
+<li><code>WebFetch</code> on the v3 HTML confirmed <strong>Table II</strong> attention-variant numbers (see below) and
+    the encoder descriptions verbatim; it could <strong>not</strong> recover Fig-6 absolute F1 (image) and
+    confirmed the loss weighting factors (μ/β/γ) are <strong>not numerically specified</strong> in the paper ✔.</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<ul>
+<li><strong>Task / data:</strong> conversational SER, <strong>categorical only</strong>, on <strong>MELD</strong> (7 emotions from
+  <em>Friends</em>; 13,708 utt / 1,433 dialogues; Table I train+val 11,098 / test 2,610) and <strong>IEMOCAP</strong>
+  (6 classes; 10 speakers, 12.46 h; Table I train+val 5,810 / test 1,623). Primary metric =
+  <strong>weighted-F1 only</strong> (chosen "due to the natural imbalance") — no macro-F1, no dimensional
+  V/A, no CCC anywhere. All ✔ (Table I / §IV.A).</li>
+<li><strong>Uni-modal encoders (§III.A):</strong> audio = <strong>large wav2vec</strong>, one <strong>1024-d utterance-level</strong>
+  vector <code>Ha</code> ✔; text = <strong>RoBERTa</strong>, taking "the utterance transcript as input", averaging the
+  <strong>final four layers</strong> into a <strong>1024-d</strong> vector <code>Hl</code> ✔. Both are used as <strong>fixed
+  utterance-level feature extractors</strong> (no fine-tuning of the backbones is described; only the
+  fusion stack is trained) — a <strong>frozen-backbone</strong> design, matching ViEmoSpeech's plan.</li>
+<li><strong>Three fusion modules (§III.B):</strong>
+  1. <strong>Interactive Connection Network</strong> — per-modality encoder-decoder (3 FC+ReLU each,
+     <code>Hm</code>1024→<code>em</code>512→<code>dm</code>1024) trained by a <strong>connection loss</strong> (Eq. 3):
+     <code>Lc = ‖Ha−da‖²_F + ‖Hl−dl‖²_F + μ(‖I−eₐeₗᵀ‖²_F − ‖I−dₐdₗᵀ‖²_F)</code> — reconstruction + a
+     <strong>CLIP-style latent/reconstructed-space alignment</strong> of the two modalities (μ balances). ✔
+  2. <strong>Bimodal Attention Network</strong> — stacked <strong>self-attention</strong> (Eq. 4–6, intra-modal) +
+     <strong>cross-attention</strong> (Eq. 7–12, inter-modal, queries from the opposite modality), each with
+     LayerNorm/AddNorm/FeedForward → <code>hsa,hsl,hca,hcl</code> (all 1024-d). ✔
+  3. <strong>Correlative Attention Network</strong> — a <strong>Joint Attention Network</strong> with a <em>pair of softmax</em>
+     (Eq. 14: <code>softmax(intra) − Φ·softmax(cross)</code>, Φ learnable — the cross term is <strong>subtracted</strong>
+     to suppress noisy cross-modal interactions) and a <strong>Bimodal Correlation Evaluation</strong> that,
+     <strong>inspired by CLIP</strong>, takes <strong>cosine similarity</strong> between each latent uni-modal code and the
+     fused code <code>hb</code> → coefficients <code>cor_a-b, cor_l-b</code> (Eq. 15) that <strong>reweight</strong> the uni-modal
+     reps: <code>ĥa = hsa·cor_a-b</code>, <code>ĥl = hsl·cor_l-b</code> (Eq. 16). ✔</li>
+<li><strong>Classification &amp; loss (§III.C-D):</strong> concatenate <code>hca⊕hcl⊕ĥa⊕ĥl</code> → <strong>3072-d</strong> → 4 FC layers.
+  Three <strong>independent CE heads</strong> — audio <code>La</code> (Eq. 19–20), text <code>Ll</code> (Eq. 21–22), bimodal <code>Lm</code>
+  (Eq. 23–24) — combined: <strong><code>L = μ·Lc + β(La + Ll) + Lm</code></strong> (Eq. 18; per-modality deep
+  supervision). Weight values μ/β/γ <strong>not reported</strong> ✖. ✔ for structure.</li>
+<li><strong>Config (§IV.C):</strong> PyTorch 1.11, Adam <strong>lr 1e-4</strong>, early-stop <strong>patience 15</strong>, <strong>L2 1e-4</strong>,
+  <strong>dropout 0.3</strong>. ✔</li>
+<li><strong>Headline results (§V.A, Fig. 6):</strong> BCAF <strong>+3.15% wF1 over HCAM on MELD</strong>, <strong>+4.11% wF1 over
+  Mamba on IEMOCAP</strong> ✔ (corroborated). Absolute BCAF wF1 is figure-only ✖-numerically.</li>
+<li><strong>Ablations (§V.B, prose numbers referencing Fig. 6):</strong> removal impact order
+  <strong>correlative &gt; bimodal &gt; interactive</strong>. Interactive connection net <strong>+2.81% MELD / +2.83%
+  IEMOCAP</strong>; bimodal attention net <strong>+4.1% / +5.12%</strong>; <strong>correlative attention net +5.24% /
+  +6.68%</strong> (largest) ✔ (stated in body text; underlying bars are Fig. 6). Attention-variant
+  study (<strong>Table II</strong>, "w/o" F1): BAN 64.83/69.57, JAN 66.08/71.35, BAN-SA 67.21/72.16, BAN-CA
+  67.52/73.01 ✔; full BAN gives <strong>+3.6% MELD / +6.6% IEMOCAP</strong> over the no-BAN baseline; the
+  cross-attention-only removal (BAN-CA) costs the least (−1.41% / −1.69%), so <strong>intra-modal
+  self-attention carries more than cross-modal</strong> in their read.</li>
+<li><strong>Error analysis (§V.D-E, Fig. 9 confusion matrices):</strong> rare classes collapse — MELD
+  <strong>fear diag 34.00%, disgust 47.06%</strong>, IEMOCAP happy 61.81% — while neutral (84.95%) and angry
+  (75.88%) dominate ✔. <strong>Internal contradiction:</strong> the abstract/§V.A claim BCAF beats HCAM by
+  +3.15% on MELD, but the §V.D case-study text says BCAF "performed worse than the
+  state-of-the-art HCAM model" (attributed to HCAM's speaker-modeling GCN) — the paper is
+  internally inconsistent on the HCAM comparison ⚠✔.</li>
+</ul>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-by-decision">Parts directly useful for ViEmoSpeech (tagged by Decision)</h3>
+<ol>
+<li><strong>[V-A] Per-modality deep-supervision + fused head (Eq. 18–24).</strong> Three CE heads (<code>La</code>
+   audio-only, <code>Ll</code> text-only, <code>Lm</code> fused) under <code>L = μ·Lc + β(La+Ll) + Lm</code>. A concrete,
+   equation-level <strong>learned-fusion candidate</strong> and the paper's explicit defense against the
+   "text dominates, audio branch dies" collapse that vn-12/bimodal-01 warn about.</li>
+<li><strong>[V-A] Connection loss Lc (Eq. 3) as a modality-alignment regularizer.</strong> Reconstruction +
+   CLIP-style latent alignment of frozen audio/text codes — a self-supervised auxiliary that
+   could tie our WavLM/emotion2vec audio and PhoBERT text into a shared space <em>before</em> the
+   classifier. Ablation credits it +2.81/+2.83%.</li>
+<li><strong>[V-A] Correlative attention w/ CLIP cosine reweighting (Eq. 14–16).</strong> The subtractive
+   pair-of-softmax (<code>−Φ·softmax(cross)</code>) + cosine-similarity gating is the <strong>largest single
+   ablation contributor (+5.24/+6.68%)</strong> and is explicitly a <strong>cross-modal-noise filter</strong> — the
+   candidate mechanism most aligned with our ASR-noise problem for V-C.</li>
+<li><strong>[V-C] The text branch is a <em>genuine transcript encoder</em> (RoBERTa over the utterance
+   transcript, final-4-layer average → 1024-d).</strong> Unlike EAA/bimodal-03 (audio↔audio HuBERT+BEATs),
+   BCAF is a <strong>real audio↔text</strong> fusion — a valid V-C architectural precedent for our
+   audio+PhoWhisper-text pairing. <strong>But the transcripts are gold</strong> (MELD/IEMOCAP ship human
+   transcripts); ASR is never touched.</li>
+<li><strong>[V-G] Frozen-utterance-feature fusion recipe + config</strong> (wav2vec-1024 ⊕ RoBERTa-1024, Adam
+   1e-4, patience-15 early stop, L2 1e-4, dropout 0.3) — a directly-portable training skeleton
+   for our frozen-backbone fusion arm.</li>
+<li><strong>[V-G] Weighted-F1-only reporting is the anti-pattern to correct.</strong> Their Fig. 9 shows fear
+   34%/disgust 47% while the headline wF1 looks healthy — a concrete demonstration that wF1
+   <strong>masks rare-class collapse</strong>, motivating our macro-F1 + per-class-floor reporting.</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>V-A (fusion arm):</strong> Build the learned-fusion arm that beats the withdrawn rule-fusion
+  positioning (vn-09) with <strong>three deeply-supervised heads</strong> (<code>audio-only</code>, <code>text-only</code>, <code>fused</code>)
+  and the <strong>connection loss</strong> as an auxiliary. This gives us two things at once: (a) an audio-only
+  aux head is exactly the <strong>audio-anchoring safeguard</strong> vn-12 demanded to stop text-collapse, and
+  (b) it slots beside the CASE/FAS Q-Former candidate (vn-07) and WavFusion gating as a third,
+  equation-complete V-A option — pick via ablation on our clips. Concrete artifact: a
+  <code>fusion/bcaf_heads.py</code> module with <code>L = μ·Lc + β(La+Ll) + Lm</code> and a config sweep over β (audio
+  vs text weight) as our <strong>tone-channel-load knob</strong>.</li>
+<li><strong>V-A (correlative attention):</strong> Port the correlative attention network as the <strong>noise-gating
+  block</strong> in the fusion arm — it is their biggest ablation lever (+5.24/+6.68%) and its stated
+  purpose ("filter incorrect cross-modal relationships") is what we need when PhoWhisper text is
+  partially wrong. Ablate it on a <strong>held-out ASR-error slice</strong> to measure whether it actually
+  down-weights a corrupted text token at high arousal.</li>
+<li><strong>V-C (ASR robustness experiment):</strong> Because BCAF's text branch is genuine but <strong>only ever
+  fed gold transcripts</strong>, running BCAF twice — once on YouTube captions (our gold proxy), once on
+  PhoWhisper ASR output (with the mày→máy / tao→tháo tone-swap errors) — turns this paper into a
+  <strong>direct V-C robustness probe</strong>: does the CLIP-style connection loss <em>help</em> (aligns audio to
+  denoise text) or <em>hurt</em> (aligns audio to a corrupted transcript)? Either result is a paper
+  finding no BCAF/CASE experiment has reported.</li>
+<li><strong>V-G (metrics correction):</strong> Adopt BCAF's frozen-feature skeleton but <strong>replace its metric
+  headline</strong> — report <strong>macro-F1 + per-class recall floor + CCC for V/A</strong> under
+  speaker-disjoint + whole-series holdout (ADR-002). Their Fig. 9 collapse is our justification
+  line: "weighted-F1 hid a 34% fear rate; we report macro so the rare-but-safety-relevant
+  classes (distress) can't be laundered."</li>
+</ul>
+<h3 id="child-mental-health-viemospeech-transfer-lens">Child mental-health / ViEmoSpeech transfer lens</h3>
+<ul>
+<li><strong>Register mismatch:</strong> MELD = <em>Friends</em> sitcom (adult, English, scripted-acted, high
+  background noise: "honking, barking"); IEMOCAP = adult dyadic acted English. <strong>Zero tonal
+  language, zero Vietnamese, zero child speech.</strong> The <em>mechanism</em> (fusion topology, connection
+  loss, correlative attention) is language-agnostic and transfers; the <em>numbers</em> (wF1 deltas,
+  Table II) do <strong>not</strong> transfer to VN tonal child-adjacent drama.</li>
+<li><strong>Tone×emotion untouched:</strong> BCAF's own motivating example ("higher vocal pitch correlates with
+  excitement") treats pitch as a paralinguistic emotion cue with <strong>no notion of lexical tone</strong>
+  competing for the F0/phonation channel. Consistent with the cross-cutting finding: <strong>0 papers
+  measure lexical-tone×emotion competition</strong> — V-D novelty intact; BCAF is another confirming
+  data point, not a competitor on the claim.</li>
+<li><strong>Gold-transcript assumption is the load-bearing risk for us.</strong> BCAF's connection loss and
+  correlative attention <strong>assume the text carries clean complementary signal</strong>. Under VN ASR
+  tone-swap noise (profile: PhoWhisper mean sim 87.2 vs captions; errors spike at high arousal —
+  exactly the emotional utterances), a CLIP-style "align audio to text" objective could <strong>pull
+  the audio representation toward a wrong word</strong>. Mitigation: gate the connection loss by an
+  ASR-confidence signal, or train the audio-only head <code>La</code> with higher β so a corrupted text
+  branch cannot dominate — measurable via the V-C robustness experiment above.</li>
+<li><strong>Distress framing:</strong> categorical-only, weighted-F1-only — <strong>no dimensional or clinical signal</strong>.
+  BCAF gives us nothing for the <strong>V-F distress recall-floor</strong> directly; if anything its
+  wF1-masking-rare-classes behaviour is the exact failure our recall-floor + ≥50-clip floor
+  (ADR-002) exists to prevent. Cite as method-transfer for fusion, <strong>not</strong> for the distress head.</li>
+<li><strong>Ethics:</strong> public benchmark corpora, no human-subjects concerns beyond the originals; nothing
+  to import or avoid on the governance side.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech-1-contradictiongap">Limitations &amp; open questions for ViEmoSpeech (≥1 contradiction/gap)</h3>
+<ul>
+<li><strong>Contradiction #1 (internal to the paper):</strong> abstract/§V.A "outperforms HCAM +3.15% on MELD"
+  vs §V.D "performed worse than the state-of-the-art HCAM model." A load-bearing headline the
+  paper contradicts itself on ⇒ treat the +3.15% MELD figure as <strong>soft</strong>; the +4.11% IEMOCAP
+  figure (vs Mamba) is the cleaner claim. Do not cite BCAF's MELD SOTA-beating as settled.</li>
+<li><strong>Contradiction #2 (vs the stale entry + vs EAA/bimodal-03):</strong> the old "Analysis" note above
+  and the EAA read lumped these as cross-attention fusion; <strong>BCAF is a genuine audio↔text learned
+  fusion</strong>, whereas EAA is audio↔audio (HuBERT+BEATs). BCAF is therefore the <strong>better V-C/V-A
+  architectural precedent</strong> of the two — correction recorded.</li>
+<li><strong>Gap #1 (vs ViEmoSpeech plan — ASR noise):</strong> every BCAF component that touches text
+  (connection loss, correlative attention, text head) is validated <strong>only on gold transcripts</strong>.
+  The paper's central "cross-modal noise" is <strong>background acoustic noise</strong>, not transcription
+  error — so its noise-filtering evidence does <strong>not</strong> cover our failure mode. Untested and
+  research-bearing.</li>
+<li><strong>Gap #2 (vs V-G / vs bimodal-02):</strong> BCAF handles imbalance <strong>only via the weighted-F1 metric</strong>
+  — no reweighting, resampling, or focal loss (bimodal-02's whole toolkit), and no macro-F1 to
+  even see the collapse. Their own confusion matrix (fear 34%, disgust 47%) shows the cost. Our
+  eval must not copy the metric; and a ≥50-clip corpus floor remains a better rare-class lever
+  than any of BCAF's machinery (which does nothing for rarity).</li>
+<li><strong>Gap #3 (reproducibility):</strong> loss weights μ/β/γ (Eq. 3, 18) are <strong>never given numerically</strong>,
+  and absolute F1 lives only inside Fig. 6 — copying BCAF requires re-tuning these blind. Budget
+  a β-sweep as our own experiment rather than assuming their unstated setting.</li>
+<li><strong>Open question:</strong> BCAF says intra-modal self-attention matters more than cross-attention
+  (BAN-CA removal cheapest). If that holds on <strong>VN tonal</strong> data, it would <em>undercut</em> the premise
+  that text must carry extra load — but their finding is on adult English with clean transcripts,
+  so it is exactly the kind of register-dependent result the cross-cutting synthesis flags as
+  not-yet-settled. Worth reproducing on our clips as a V-C/V-D data point.</li>
+</ul></article>
+</div></body></html>

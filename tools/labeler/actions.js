@@ -14,7 +14,7 @@ export async function confirmGold() {
   const body = {
     emotion: S.curEmotion, valence: +$("g-val").value, arousal: +$("g-aro").value,
     gold_text: $("g-text").value.trim(),
-    gender: $("g-gender").value, age_group: $("g-age").value,
+    gender: $("g-gender").value, age_group: $("g-age").value, dialect: $("g-dialect").value,
     annotator: ($("annotator").value || "human").trim() || "human",
   };
   let rec;
@@ -117,7 +117,7 @@ export async function saveSplit() {
 }
 
 /* ---------- export (raw state dump; Kaggle export = phase 4) ---------- */
-const COLS = ["id", "series", "episode", "gender", "age_group", "start", "end",
+const COLS = ["id", "series", "episode", "gender", "age_group", "dialect", "start", "end",
   "gold_emotion", "gold_valence", "gold_arousal", "gold_distress", "gold_text",
   "opus_emotion", "sonnet_emotion", "teacher_agree", "note", "annotator"];
 
@@ -133,7 +133,7 @@ async function buildCSV() {
   const rows = [COLS];
   for (const { ep, id, g } of out) {
     const agree = g.opus && g.sonnet ? g.opus === g.sonnet : "";
-    rows.push([id, ep.series, ep.epName, g.gender || "", g.age_group || "",
+    rows.push([id, ep.series, ep.epName, g.gender || "", g.age_group || "", g.dialect || "",
       g.start ?? "", g.end ?? "", g.emotion, g.valence, g.arousal, g.distress, g.gold_text || "",
       g.opus || "", g.sonnet || "", agree, g.note || "", g.annotator || ""]);
   }

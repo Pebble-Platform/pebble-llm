@@ -1,0 +1,288 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>M1 · Emotional Vietnamese Speech Depression Diagnosis (Dynamic-CBAM / VNEMOS)</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#2563eb">M1 · Phương pháp được benchmark</span>
+<h1>Emotional Vietnamese Speech Depression Diagnosis (Dynamic-CBAM / VNEMOS)</h1><p class="venue">arXiv 2024</p>
+<div class="role" style="--accent:#2563eb"><b>Vai trò trong survey:</b> Baseline audio-only MFCC (dòng VNEMOS) — mốc 'không-SSL' của bảng benchmark.</div>
+<div class="links"><a href="../papers/vietnamese-ser/pdfs/10-vn-depression-dynamic-cbam.pdf">📄 PDF gốc</a><a href="../papers/vietnamese-ser/10-vn-depression-dynamic-cbam.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/vietnamese-ser/10-vn-depression-dynamic-cbam.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-vn-10-emotional-vietnamese-speech-based-depression-diagnosis-using-dynamic-attention-mechanism">Paper vn-10 — Emotional Vietnamese Speech-Based Depression Diagnosis Using Dynamic Attention Mechanism</h1>
+<ul>
+<li><strong>Authors:</strong> Quang-Anh N.D., Manh-Hung Ha, Thai Kim Dinh, Minh-Duc Pham, Ninh Nguyen Van (VNU Hà Nội)</li>
+<li><strong>Venue / year:</strong> arXiv Dec 2024; Springer chapter (10.1007/978-3-032-00267-9_23)</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2412.08683 · PDF <code>pdfs/10-vn-depression-dynamic-cbam.pdf</code></li>
+<li><strong>Group:</strong> vietnamese-ser / VNEMOS-line baseline, distress-adjacent</li>
+</ul>
+<p><strong>Summary:</strong> Dynamic-CBAM (omni-dimensional dynamic convolution attention) +
+BiGRU on the VNEMOS dataset (250 clips, MFCC-only best config) for 5-class
+emotion as a depression-diagnosis proxy; UA 0.87 / WA 0.86 / F1 0.87.</p>
+<p><strong>Relevance to ViEmoSpeech:</strong> Audio-only VN baseline number; evidence the
+VNEMOS author cluster has not explored bimodal or tone-aware framing. Their
+"emotion as depression proxy" framing is a cautionary contrast for our
+distress-is-a-proxy discipline (V-F, honest framing).</p>
+<blockquote>
+<p>Stub created 2026-07-10 (task <code>docs/tasks/paper-deep-analysis.md</code>); deep-read pending.</p>
+</blockquote>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<h3 id="source-access-note">Source-access note</h3>
+<p>Read the full local PDF <code>pdfs/10-vn-depression-dynamic-cbam.pdf</code> (arXiv:2412.08683v1,
+<code>cs.SD</code>, 11 Dec 2024) via <code>pdftotext</code> — method, dataset, all equations (Eq 1–9), and every
+table (Tables 1–4). The paper is 9 pages, single study. The <strong>published/venue version</strong> is a
+Springer chapter (ICAMCS-line 2024 proceedings, DOI 10.1007/978-3-032-00267-9_23); Springer
+full text is paywalled (link redirects to <code>idp.springer.com</code> auth) — <strong>not bypassed</strong>.</p>
+<p>Web-validated the load-bearing numbers against non-paywalled surfaces:
+- Headline UA/WA/F1 = 0.87/0.86/0.87 on VNEMOS — <strong>✔ corroborated</strong>. Query: <em>"Emotional
+  Vietnamese Speech-Based Depression Diagnosis Dynamic Attention Mechanism VNEMOS UA 0.87"</em> →
+  <code>https://arxiv.org/abs/2412.08683</code> and the Springer abstract snippet both report
+  "0.87 UA, 0.86 WA, 0.87 F1-score". Preprint and venue agree; no delta found.
+- Table 4 full ablation ladder (0.73 → 0.87) — <strong>✔ corroborated</strong> against the arXiv HTML
+  (<code>https://arxiv.org/html/2412.08683v1</code>), which reproduces every row identically to the local
+  PDF.
+- VNEMOS = 250 segments / ~30 min / 27 movies-series-live-shows / 5 emotions — <strong>✔ corroborated</strong>
+  in-text and cross-checked against the dataset's own source paper (VNEMOS, ICDV 2024,
+  10.1109/icdv61346.2024.10616411, <code>https://ieeexplore.ieee.org/document/10616411/</code>). Minor
+  cross-source discrepancy: web summaries of the <em>VNEMOS ICDV paper</em> cite "89% accuracy" for the
+  original DNN, whereas this depression paper reports the prior VNEMOS baseline as UA 0.85 in its
+  Table 4 row "Anh, N. Q., et al. [20]" — <strong>≈ approximate</strong> (different metric/config; not
+  load-bearing here).</p>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p><strong>Claim vs. content.</strong> The title and abstract sell "depression diagnosis." The actual model is a
+<strong>5-class acted-emotion classifier</strong> (anger, happiness, sadness, fear, neutral) trained with
+plain cross-entropy (Eq 6). <strong>Depression is never operationalized</strong> — there is no depression
+label, no PHQ/BDI/clinical anchor, no emotion→depression mapping rule, and no depressed-subject
+data. The depression framing is entirely rhetorical: the Introduction asserts depressed people
+"speak slowly, trembly, and lose emotion," and the Conclusion calls the emotion model "the
+prerequisite step" toward a future depression system. §4 even lists the classes inconsistently
+("anger, sadness, happiness, anxiety, and neutral" — "anxiety" swapped for "fear"), signalling
+the emotion set itself is loosely handled. This is the single most important thing the paper
+demonstrates for us, and it is a <em>negative</em> example (see V-F below).</p>
+<p><strong>Architecture.</strong> Two designs are compared (Fig 3):
+- (a) <strong>Dual-stream</strong>: stream 1 = raw waveform (5 s @ 16 kHz) → four 1D CBM blocks
+  (Conv-BatchNorm-MaxPool) → Bi-GRU (Eq 5); stream 2 = MFCC → four 2D CBM blocks →
+  <strong>Dynamic-CBAM</strong> → concatenate → dense classifier (outputs 0–4).
+- (b) <strong>Proposed / final</strong>: <strong>MFCC-only, single stream</strong> — drops the raw-waveform branch
+  "to avoid data corrupted spike-noises in the raw waveform."
+- <strong>Dynamic-CBAM</strong> = standard CBAM (channel attention Eq 1 + spatial attention Eq 2, combined
+  Eq 3) with the spatial-attention convolution replaced by <strong>ODConv</strong> (omni-dimensional dynamic
+  convolution, Eq 4) so kernel weights are input-dependent.</p>
+<p><strong>Data &amp; preprocessing.</strong> VNEMOS: 250 clips, ~30 min total, from 27 movies / series / live shows
+(mixed natural + acted). <strong>Mirror-padding</strong> (repeat the clip) pads short segments to the 5 s
+window. Preprocessing text says "resample with 160kHz … windows with 8kHz" — an evident typo for
+16 kHz sample rate; do not treat literally.</p>
+<p><strong>Training / eval protocol.</strong> epoch=100, lr=0.001, batch=32, Adam, cross-entropy; RTX 2080 Ti.
+<strong>5-fold stratified cross-validation, stratified by class</strong> (§3.3). Metrics: UA (unweighted /
+macro accuracy), WA (weighted accuracy), precision/recall/F1 (Eq 7–9).</p>
+<p><strong>Results (Table 4, 5-fold CV averages) — ✔ corroborated:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Config</th>
+<th>Input</th>
+<th>UA</th>
+<th>WA</th>
+<th>F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One-stream</td>
+<td>waveform</td>
+<td>0.73</td>
+<td>0.72</td>
+<td>0.73</td>
+</tr>
+<tr>
+<td>One-stream GRU</td>
+<td>waveform</td>
+<td>0.80</td>
+<td>0.79</td>
+<td>0.80</td>
+</tr>
+<tr>
+<td>One-stream GRU</td>
+<td>MFCC</td>
+<td>0.82</td>
+<td>0.81</td>
+<td>0.82</td>
+</tr>
+<tr>
+<td>One-stream Bi-GRU</td>
+<td>waveform</td>
+<td>0.76</td>
+<td>0.75</td>
+<td>0.76</td>
+</tr>
+<tr>
+<td>Dual-stream Bi-GRU</td>
+<td>waveform+MFCC</td>
+<td>0.84</td>
+<td>0.83</td>
+<td>0.84</td>
+</tr>
+<tr>
+<td>Dual-stream Dynamic-CBAM</td>
+<td>waveform+MFCC</td>
+<td>0.85</td>
+<td>0.85</td>
+<td>0.85</td>
+</tr>
+<tr>
+<td>Dual-stream Dynamic-CBAM Bi-GRU</td>
+<td>waveform+MFCC</td>
+<td>0.86</td>
+<td>0.85</td>
+<td>0.86</td>
+</tr>
+<tr>
+<td><strong>Proposed (MFCC-only)</strong></td>
+<td>MFCC</td>
+<td><strong>0.87</strong></td>
+<td><strong>0.86</strong></td>
+<td><strong>0.87</strong></td>
+</tr>
+<tr>
+<td>Anh et al. [20] (prior VNEMOS)</td>
+<td>MFCC</td>
+<td>0.85</td>
+<td>0.83</td>
+<td>0.85</td>
+</tr>
+</tbody>
+</table>
+<p>Headline: the <strong>MFCC-only model beats the best dual-stream config by +0.01 UA</strong> (0.87 vs 0.86);
+adding the raw-waveform branch never helped and often hurt.</p>
+<h3 id="parts-directly-useful-for-pebble">Parts directly useful for Pebble</h3>
+<ol>
+<li>
+<p><strong>The "emotion-as-depression-proxy" framing gap — a governance/labeling anti-pattern
+   [V-F].</strong> This paper labels 5 acted emotions and <em>asserts</em> depression relevance with zero
+   clinical linkage or depressed-population data. It is the cleanest published example in our
+   VN set of the exact overclaim ViEmoSpeech's distress head must NOT make. Concrete artifact:
+   the distress-head spec in <code>docs/spec/capabilities/</code> and the method paper's framing paragraph
+   should cite this as the contrast — "distress flag = acted-drama proxy, explicitly not a
+   clinical or depression signal; we do not infer disorder from emotion."
+   <strong>Transfer risk:</strong> none technically — we copy the <em>lesson, not the method</em>. The risk is
+   reputational if ViEmoSpeech drifts toward the same overclaim, which this paper makes vivid.</p>
+</li>
+<li>
+<p><strong>VNEMOS as a VN audio-only baseline number — but a <em>soft</em> one [V-G].</strong> UA 0.87 / WA 0.86 /
+   F1 0.87 is the number to cite in our baselines table (alongside 2412.09829 and 2604.01711).
+   <strong>Critically, the split is 5-fold CV stratified <em>by class</em>, NOT speaker-disjoint</strong> (§3.3), on
+   only 250 clips from 27 sources with heavy per-source speaker reuse — so the same actors almost
+   certainly appear in train and test folds. Concrete artifact: the <code>V-G</code> eval-protocol doc and
+   the baselines table must annotate this number as <strong>"speaker-leaky, not comparable to our
+   speaker-disjoint holdout"</strong> — an <em>upper-bound-inflated</em> reference, not a bar to claim on equal
+   footing.
+   <strong>Transfer risk:</strong> high. A 0.87 obtained under speaker leakage on 250 clips will not survive a
+   speaker-disjoint split; our comparable numbers will look worse and that is <em>correct</em>, not a
+   regression. State this plainly wherever the number appears.</p>
+</li>
+<li>
+<p><strong>MFCC-only ≥ raw-waveform dual-stream — a feature-choice data point [V-B].</strong> Their best model
+   drops the raw-waveform branch; every waveform-inclusive row is ≤ the MFCC-only row (Table 4).
+   They attribute the raw-waveform branch's failure to "spike-noise." Concrete artifact: the
+   <code>V-B</code> audio-backbone experiment — weak evidence that on tiny VN drama corpora, hand-crafted
+   spectral features (MFCC) can match or beat a jointly-trained raw-waveform CNN, i.e. a
+   raw-audio model is not automatically better when data is scarce.
+   <strong>Transfer risk:</strong> high, and it partly cuts <em>against</em> our plan. The result is a 1D-CNN trained
+   from scratch on 250 clips — it says nothing about <strong>pretrained</strong> raw-waveform SSL encoders
+   (WavLM / emotion2vec), which is what V-B actually proposes. Read it as "don't train a raw-audio
+   CNN from scratch on our corpus," not "don't use WavLM."</p>
+</li>
+</ol>
+<h3 id="how-each-part-helps-pebble-succeed">How each part helps Pebble succeed</h3>
+<ul>
+<li><strong>V-F / distress head.</strong> Write the honest-proxy framing into the distress-head spec <em>now</em> and
+  cite this paper as the anti-pattern: emotion classification on acted VN media is not depression
+  detection. Our recall-floor objective is defined over an <em>acted-drama distress proxy</em>; any paper
+  text touching clinical utility gets the same hedge. Action: add one sentence to the distress
+  capability file — "we deliberately avoid the emotion→disorder inference made by
+  Quang-Anh et al. (2024), which claims depression diagnosis from a 5-class acted-emotion model
+  with no clinical anchor."</li>
+<li><strong>V-G / eval protocol + baselines.</strong> Add the row to the baselines table with the leakage caveat,
+  and use it to <em>justify</em> our speaker-disjoint + whole-series-holdout protocol (ADR-002): the
+  contrast "0.87 under class-stratified CV vs. our lower-but-honest speaker-disjoint number" is
+  itself a methodological point in the method paper. Action: baselines table gets a "split" column
+  so VNEMOS's class-stratified CV is visibly distinguished from our speaker-disjoint numbers.</li>
+<li><strong>V-B / audio features.</strong> Run the feature ablation with the <em>correct</em> comparison: pretrained
+  WavLM/emotion2vec vs. MFCC vs. their fusion — <em>not</em> raw-CNN-from-scratch vs. MFCC. Their result
+  only licenses "MFCC is a strong cheap baseline on small VN data"; keep an MFCC baseline arm so we
+  can show whether SSL features actually beat it in our regime. One experiment worth running:
+  whether MFCC's advantage here is because raw-waveform CNNs from scratch overfit 250 clips (which
+  our pretrained backbone sidesteps).</li>
+</ul>
+<h3 id="child-mental-health-lens">Child mental-health lens</h3>
+<ul>
+<li><strong>Transfer validity: low as a corpus, useful as a warning.</strong> VNEMOS is acted/natural VN adult
+  media (movies, series, live shows), 5 basic emotions, no children, no distress/clinical labels.
+  Nothing transfers to a child register directly; the <em>emotion taxonomy</em> (5 basic) is even
+  narrower than our 7-class + V/A + distress scheme.</li>
+<li><strong>The overclaim is the ethics lesson.</strong> A model that classifies acted anger/sadness and is then
+  titled "depression diagnosis … so treatment and prevention can be started" is exactly the kind
+  of clinical-utility leap that is dangerous in a child-facing context. ViEmoSpeech's discipline
+  — distress is a <em>proxy flag with a recall floor</em>, feeding a decision layer, never a diagnosis —
+  is the correct posture, and this paper shows the failure mode to avoid.</li>
+<li><strong>Human-label discipline (ADR-003).</strong> VNEMOS's labels come from the same author cluster with no
+  reported inter-annotator agreement, no speaker-disjoint discipline, and a proxy claim. It
+  reinforces why our gold set needs κ/α and a whole-series human-labeled holdout before any
+  headline claim.</li>
+<li><strong>Mitigation for us:</strong> keep the distress head's outputs strictly non-diagnostic in copy and API;
+  never let "emotion pattern" stand in for "mental-health status" in child-facing surfaces.</li>
+</ul>
+<h3 id="limitations-open-questions-for-pebble">Limitations &amp; open questions for Pebble</h3>
+<ul>
+<li><strong>Contradiction/gap vs. our plan (V-B):</strong> this paper's "MFCC beats raw waveform" <em>appears</em> to
+  undercut V-B's premise that a raw-waveform SSL backbone (WavLM/emotion2vec) is worth the cost.
+  The contradiction is resolvable — theirs is a from-scratch 1D-CNN on 250 clips, ours is a
+  pretrained SSL encoder — but it must be surfaced and tested, not assumed away. If our own
+  ablation ever shows MFCC ≈ WavLM on the ViEmoSpeech corpus, that is a real finding, and this
+  paper is the precedent. <strong>Open question:</strong> at what corpus size does a pretrained raw-audio
+  backbone overtake MFCC on VN drama speech?</li>
+<li><strong>Contradiction/gap vs. our eval discipline (V-G):</strong> their 0.87 is not speaker-disjoint (5-fold
+  CV stratified by class on 250 clips / 27 sources). Any comparison that puts our speaker-disjoint
+  number next to their 0.87 without the split caveat is apples-to-oranges and would understate
+  ViEmoSpeech. This is the concrete contradiction to flag in the baselines table.</li>
+<li><strong>No tone, no text, no bimodality.</strong> The VNEMOS cluster has published <em>only</em> audio-only,
+  tone-agnostic models — confirming the ViEmoSpeech gap (tone×emotion, bimodal audio+text) is
+  genuinely unoccupied by this group.</li>
+<li><strong>Margin is within noise.</strong> +0.01 UA on ~50 test clips/fold is not a reliable ranking; the
+  "MFCC-only is best" conclusion rests on a difference smaller than the CV variance the paper does
+  not report (no std, no CIs). Treat the whole Table-4 ladder as directional only.</li>
+<li><strong>Small unresolved discrepancies:</strong> the 5-emotion set is stated inconsistently (fear vs.
+  anxiety); "160 kHz / 8 kHz" preprocessing is a typo for 16 kHz; and the prior VNEMOS baseline is
+  cited as UA 0.85 here vs. "89% accuracy" in some web summaries of the ICDV paper — none
+  load-bearing, but they lower confidence in the paper's numerical care.</li>
+</ul></article>
+</div></body></html>

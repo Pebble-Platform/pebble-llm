@@ -119,6 +119,7 @@ def cut_from_full(ep: Path, a: float, b: float) -> tuple[str, float, float]:
         raise HTTPException(400, "selection out of range")
     data, _ = sf.read(str(src), start=i0, stop=i1, dtype="float32")
     cid = f"seg{next_seg_num(ep):05d}"
+    (ep / "clips").mkdir(exist_ok=True)  # --vocals-only episodes have no clips/ yet
     _write(ep / "clips" / f"{cid}.wav", data, sr, info.subtype)
     return cid, a, b
 

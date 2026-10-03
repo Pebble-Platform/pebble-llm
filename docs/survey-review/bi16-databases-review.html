@@ -1,0 +1,300 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>H2 · Databases for SER — 50+ corpora review</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#059669">H2 · Honest-eval, corpus & VN prior art</span>
+<h1>Databases for SER — 50+ corpora review</h1><p class="venue">Data (MDPI) 2025</p>
+<div class="role" style="--accent:#059669"><b>Vai trò trong survey:</b> Bằng chứng novelty corpus: 0/52 VN, 0/52 gán lexical tone, 0/52 cat+dim+distress.</div>
+<div class="links"><a href="../papers/bimodal-ser/pdfs/16-ser-databases-review.pdf">📄 PDF gốc</a><a href="../papers/bimodal-ser/16-ser-databases-review.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/bimodal-ser/16-ser-databases-review.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-16-review-and-comparative-analysis-of-databases-for-speech-emotion-recognition">Paper 16 — Review and Comparative Analysis of Databases for Speech Emotion Recognition</h1>
+<ul>
+<li><strong>Authors:</strong> S. Serrano, O. Serghini, G. Esposito, S. Carbone, C. Mento, A. Floris, S. Porcu, L. Atzori</li>
+<li><strong>Venue / year:</strong> Data (MDPI), 10(10):164, 2025 (OA)</li>
+<li><strong>Links:</strong> abs https://doi.org/10.3390/data10100164 · PDF <code>pdfs/16-ser-databases-review.pdf</code></li>
+<li><strong>Group:</strong> survey / benchmark (datasets)</li>
+</ul>
+<p><strong>Summary:</strong> So sánh 50+ corpora SER (collection method, annotation scheme, demographic diversity, ecological validity).</p>
+<p><strong>Relevance to Pebble:</strong> Reference chọn/đánh giá dataset SER khi mở rộng voice stream.</p>
+<blockquote>
+<p>Compact entry từ literature sweep (<code>docs/tasks/bimodal-ser-papers.md</code>); chưa deep-read.</p>
+</blockquote>
+<h2 id="analysis-overlap-with-pebble">Analysis (overlap with Pebble)</h2>
+<p><strong>Assembled profile (scored against, from the IDD layers):</strong>
+- <strong>Primary (text):</strong> ordinal suicide-risk classification; teacher-LLM silver labels → <strong>gold-holdout</strong> eval; ordinal-aware losses/metrics (QWK/MAE); reproducibility + clinical-data ethics are repo-wide binds (<code>docs/intent/constraints.md</code>).
+- <strong>Adjacent (voice):</strong> frozen emotion2vec/WavLM backbone + shared trunk, <strong>3 heterogeneous heads</strong> — emotion CE / affect V/A <strong>CCC</strong> / crisis BCE under a <strong>hard recall floor</strong> — balanced by <strong>Kendall uncertainty weighting</strong> (<code>voice-multimodal.md</code> → <code>docs/tasks/voice-mtl-heads.md</code>).
+- <strong>Current voice stage:</strong> heads trained on <strong>RAVDESS with proxy labels</strong> (Russell circumplex V/A; high-distress crisis set). Explicit next action item: <strong>swap proxies for MSP-Podcast (continuous A/V/D) + DAIC (crisis)</strong> for scientifically meaningful numbers.</p>
+<h3 id="analysis-ser-databases-review-serrano-et-al-2025">Analysis — SER Databases Review (Serrano et al., 2025)</h3>
+<ul>
+<li><strong>Overlap:</strong> 27% (peripheral) — D1=1, D2=1, D3=2, D4=0, D5=0, D6=0, D7=0</li>
+<li>Compute: (3·1 + 2·1 + 1·2 + 2·0 + 2·0 + 2·0 + 1·0) / 26 × 100 = 7/26 × 100 ≈ 27%.</li>
+<li><strong>Closest on:</strong> D3 (it <em>is</em> a catalogue of emotion corpora, incl. intensity-labelled ones like MCAESD/MEAD — the voice-stream analog of the emotion-transfer corpora dimension) and D1-partial (organizes corpora by <strong>categorical vs dimensional/continuous</strong> label schema, exactly the label duality Pebble's emotion + V/A heads consume).</li>
+<li><strong>Best point (Dataset to reuse):</strong> The review's comparative framework — Table 2 parameters + the AHP <strong>quality index Q = 0.2615·S′ + 0.0872·E′ + 0.6114·C′ + 0.0400·R′</strong> (speakers, emotions, citations/yr, recency) + the Table 3 usage map — is a ready-made vetting map that shortlists which corpora actually supply <strong>continuous dimensional labels</strong> and appear in robustness studies, with MSP-Podcast/MELD/CMU-MOSEI flagged as the natural/dimensional corpora now displacing acted ones.</li>
+<li><strong>How to apply to Pebble:</strong> Use it to justify and scope the voice stream's planned proxy→real swap — confirm <strong>MSP-Podcast (continuous A/V/D)</strong> as the RAVDESS-proxy replacement for the affect (CCC) head, note it lacks a native crisis label (keep DAIC-class for the recall-floor head), then hand both candidates to <code>find-dataset</code> for license/gate checks against the repo's ethics bind.</li>
+<li><strong>Caveats:</strong> Read selectively — intro/methodology/taxonomy/emotion-models (pp.1-6), database-characteristics + acted/elicited/<strong>natural-corpus ethics</strong> (pp.7-9), the tail of the 52-corpus catalogue (pp.44-48), and the full synthesis/discussion/conclusions incl. Q and Table 3 (pp.49-52). The <strong>individual RAVDESS / IEMOCAP / MSP-Podcast</strong> descriptions in the mid-section-6 catalogue were <strong>not</strong> read line-by-line (their coverage is confirmed via Table 3, which lists IEMOCAP=11, RAVDESS=11, MSP-PODCAST=2 occurrences); <strong>DAIC-WOZ</strong> does not appear in Table 3 and may be outside this review's SER-corpus scope (it covers stress/emergency-call corpora generically). Score is structurally low because it is a <em>dataset review</em> — orthogonal to Pebble's modeling dimensions (D4-D7 absent by construction); its real value is practical dataset selection, which the overlap % does not capture.</li>
+</ul>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<blockquote>
+<p>Scored against the <strong>current ViEmoSpeech profile + Decision Register (V-A…V-H)</strong> in
+<code>docs/tasks/paper-deep-analysis.md</code>, NOT the stale text-stream "Analysis" section above.
+This is THE corpus-landscape paper for V-H; it also anchors V-E (label-scheme conventions) and
+V-D (any tonal-language / tone-annotated corpus in the 52).</p>
+</blockquote>
+<h3 id="source-access-note">Source-access note</h3>
+<ul>
+<li><strong>PDF read end-to-end</strong> via <code>pdftotext docs/papers/bimodal-ser/pdfs/16-ser-databases-review.pdf -</code>
+  (1358 lines; all of §§1–8, Table 1, the full 52-row Table 2 spread across pp. 11–19, every
+  individual corpus description §6.1–6.52, the §7 discussion incl. the quality index and Table 3,
+  and the reference list). The local PDF <strong>is the published venue version</strong>: its header carries
+  "<em>Data</em> <strong>2025</strong>, <em>10</em>, 164", "Published: 14 October 2025", DOI 10.3390/data10100164, and the
+  MDPI CC-BY notice — MDPI <em>Data</em> is fully open-access and ships the final typeset PDF, so there is
+  <strong>no preprint/venue delta</strong> to reconcile.</li>
+<li><strong>Web-validated</strong> the headline framing against the venue landing page:
+  query <code>Serrano "Review and Comparative Analysis of Databases for Speech Emotion Recognition"
+  Data MDPI 2025 fifty-two corpora quality index</code> → resolved
+  <code>https://www.mdpi.com/2306-5729/10/10/164</code>, which corroborates <strong>"fifty-two databases across
+  acted, elicited, and natural speech"</strong>, the Oct-14-2025 publication date, and the four-axis
+  narrative-review framing (✔). A direct <code>WebFetch</code> of the MDPI HTML returned <strong>HTTP 403</strong> (bot
+  block), so the Q-index coefficients and the four-dimension definitions below are quoted from the
+  venue PDF itself (equation (1), §5, §7.1) rather than re-fetched — acceptable because the local
+  PDF <em>is</em> the published artifact.</li>
+</ul>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p>A <strong>narrative</strong> (explicitly <em>not</em> PRISMA-systematic) review + comparative analysis of <strong>52 SER
+corpora</strong> released up to mid-2025 (§2). It contributes four things:</p>
+<ol>
+<li><strong>A four-dimension classification framework</strong> (§5, the load-bearing V-H artifact):
+   - <strong>Scope</strong> — what the corpus captures and <em>how it is elicited</em>: <strong>acted / elicited / natural</strong>;
+     target task/application; <strong>lab vs "in the wild"</strong>.
+   - <strong>Physical Existence</strong> — "<em>whether the corpus can actually be obtained and reused</em>": <strong>access
+     and licensing</strong>, documentation/metadata quality, <strong>persistent identifier (DOI)</strong>, and
+     <strong>defined train/val/test splits</strong>.
+   - <strong>Contents</strong> — speakers, total duration (hours/utterances), recording/channel + sampling rate,
+     <strong>class distribution</strong>, <strong>label schema (categorical vs dimensional)</strong>, <em>who labels</em>
+     (self/observer/expert/crowd), inter-rater reliability, transcripts/lexical layers, extra
+     modalities.
+   - <strong>Language Composition</strong> — languages, <strong>dialects/accents, code-switching</strong>, demographic breadth.</li>
+<li><strong>A speech-type taxonomy</strong> with an advantages/limitations table (Table 1, §5): acted =
+   controlled/wide-emotion-range/comparable but low ecological validity; elicited = compromise,
+   lower inter-rater agreement; natural = ecologically valid but noisy, imbalanced, and <strong>raises
+   "ethical and privacy concerns"</strong>. The review states <strong>"&gt;60% of emotional speech databases are
+   simulated [ref 47, Schröder 2001]"</strong> (§5.1) — ≈ (a cited secondary statistic, not their own count).</li>
+<li><strong>The 52-corpus inventory (Table 2)</strong> — columns: <em>corpus name, ref/year, language(s), speech
+   type/speakers, emotions, recording conditions, annotation method</em>. (Note: <strong>Table 2 has NO
+   license, DOI, split, or size-in-hours column</strong> — see Limitations; the "Physical Existence"
+   dimension is described in prose but never tabulated.)</li>
+<li><strong>A quality index</strong> for weighting corpora (§7.1, eq. 1) —
+   <strong>Q = 0.2615·S + 0.0872·E + 0.6114·C + 0.0400·R</strong> (S = normalized #speakers, E = #emotions,
+   C = citations/year, R = recency), AHP-weighted (✔, eq. (1), venue PDF). <strong>Citations dominate
+   (0.61)</strong> and <strong>speaker count is second (0.26)</strong>; emotions (0.087) and recency (0.040) are near
+   noise. Plus Table 3 (usage map of 26 early-2024 SER papers): IEMOCAP and Chou each cited 11×,
+   DES/TESS/CREMA-D 5×, MSP-Podcast/MELD 2× — acted English benchmarks still dominate real usage.</li>
+</ol>
+<p><strong>Key facts for our three target decisions (from a full scan of Table 2 + §6.1–6.52):</strong></p>
+<ul>
+<li><strong>Languages (V-D, V-H):</strong> English dominates; then German, French, Italian, Mandarin, plus
+  Hindi, Bangla, Arabic, Persian, Spanish, Polish, Punjabi, Amharic, Greek, Danish, Slovenian, and
+  multilingual (CREST, INTERFACE). <strong>Vietnamese appears in 0 of 52 corpora</strong> (✔, full Table 2 read).</li>
+<li><strong>Tonal-language corpora (V-D):</strong> <strong>6 of 52</strong> are tonal-language — CASIA (Mandarin, acted, 4 spk),
+  CHEAVD (Chinese, natural+acted, films/TV), NNIME (Chinese, acted, 44 spk), EMOVIE (Mandarin,
+  acted, 9724 samples from movie clips, polarity labels), MCAESD (Mandarin, acted, 6 spk), and
+  <strong>CAVES (Cantonese, elicited, 10 spk)</strong>. <strong>CAVES is the only entry that even names tone</strong>: it is
+  "<em>a tonal language (with two more phonetic tones than Mandarin)</em>" and its 50 CHINT carrier
+  sentences were "<em>selected to have a good coverage of the different lexical tones, both in initial
+  and final sentence positions</em>" (§6.51) — but that is tone <strong>balancing for stimulus control</strong>, not
+  a tone <strong>annotation layer</strong> and <strong>not</strong> a study of tone×emotion interaction. <strong>0 of 52 corpora
+  annotate lexical tone or treat tone as an analysis variable</strong> (✔). This confirms the V-D
+  whitespace from the corpus-supply side, matching the model-side finding across vn-06…13.</li>
+<li><strong>Label schema (V-E):</strong> the review sets up the categorical vs dimensional duality (§4) but
+  <strong>never tabulates how many corpora use which</strong> — a gap it leaves open. From my own read of Table 2</li>
+<li>descriptions: the <strong>large majority are categorical-only</strong> (Ekman-style 5–8 discrete classes);
+  <strong>~8 of 52 carry a dimensional or continuous layer</strong> — VAM (V/A/Dominance, purely dimensional),
+  IEMOCAP (categorical + V/A/D 5-pt), MSP-IMPROV (discrete + continuous-in-time), NNIME
+  (discrete + continuous-in-time), MSP-Podcast (attribute + categorical), Real-Life Call Center (2D
+  activation-evaluation), CREMA-D (labels + real-valued <strong>intensity</strong>), CMU-MOSEI (Likert sentiment</li>
+<li>emotion), SAFE (categorical + intensity/evaluation/reactivity) (≈ — my count from Table 2, not
+  a figure the paper states). <strong>None of the ~8 both-scheme corpora are tonal-language or Vietnamese;
+  none carry a distress/severity flag alongside V/A.</strong></li>
+<li><strong>Found-from-media corpora exist but none match our box-set (V-H):</strong> film/TV/online-sourced
+  corpora are common — CREST (TV/DVD), SAFE (30 movies), ITA-DB (40 movies/TV series, dubbed),
+  EMOTV1 (French TV), VAM (German TV talk show), CHEAVD (films/TV), ANAD (Arabic TV), MELD (<em>Friends</em>
+  TV series), CMU-MOSEI (YouTube), EMOVIE (movie clips), PEMO (Punjabi movies), ITA-DB-RE
+  (courtroom). So "cut emotion clips from TV/film" is a well-trodden collection method — <strong>but every
+  one either releases audio (triggering the copyright problem the review itself flags) or is
+  gated/undocumented, and none is tonal + feature-only + CC-BY.</strong></li>
+<li><strong>The ethics/legality passage that directly authorizes our release model (V-H):</strong> §5.3 and §7.3.
+  §5.3: "<em>For media-derived corpora (film, TV, online platforms), researchers must address
+  copyright/neighboring rights and terms of service; fair use or fair dealing depends on
+  jurisdiction and rarely permits redistribution of raw audio… use clear dataset licenses and,
+  where needed, controlled-access repositories.</em>" §7.3 closes with the operative sentence:
+  "<em>Where these conditions cannot be met, distribution should be limited (for example, on-site
+  access or </em><em>sharing only derived features</em><em>) or avoided.</em>" (✔, §5.3/§7.3 venue PDF). This is a
+  peer-reviewed survey explicitly naming <strong>feature-only release</strong> as the legitimate answer for
+  copyrighted found-media speech — precisely ViEmoSpeech's design.</li>
+</ul>
+<h3 id="parts-directly-useful-for-pebble-tagged-by-decision-id">Parts directly useful for Pebble (tagged by Decision ID)</h3>
+<ol>
+<li><strong>[V-H] The four-dimension framework (Scope / Physical Existence / Contents / Language
+   Composition) as our positioning-table skeleton.</strong> Re-use these exact axes as the columns of the
+   ViEmoSpeech "where we sit" table, but <strong>add the two columns Table 2 omits</strong>: <code>Release form</code>
+   (raw-audio vs features-only) and <code>Source legality</code> (own-recording / CC-licensed / copyrighted
+   found-media). Under this framework ViEmoSpeech is the unique row: Scope = <strong>natural /
+   found / in-the-wild (TV drama)</strong>; Physical Existence = <strong>CC-BY, features-only, DOI, speaker-
+   disjoint splits with whole-series holdout</strong>; Contents = <strong>7-cat + V/A(1–5) + distress, human-
+   labeled, syllable-tone layer</strong>; Language = <strong>Vietnamese + Bắc/Trung/Nam dialect</strong>. Complements
+   the THAI-SER positioning table already adopted for V-H (vn-11) — 16 gives the <em>canonical
+   published dimension names</em>; THAI-SER gives the tonal-corpus comparison row.</li>
+<li><strong>[V-H] The quality index Q and its weights as a scoping/expectation calibrator.</strong> Q's
+   coefficients say the field rewards <strong>citations (0.61) and speaker count (0.26)</strong> far above
+   emotion breadth (0.087) or recency (0.040). Concretely: a brand-new corpus scores near-zero on Q
+   for years regardless of design quality (C≈0, R small), and our <strong>speaker count</strong> (drama cast,
+   tens not hundreds) is the one intrinsic lever we can move. Do <strong>not</strong> chase Q; use it to set
+   realistic reviewer expectations and to justify reporting our own intrinsic-quality axes
+   (tone annotation, dialect, distress) that Q ignores.</li>
+<li><strong>[V-H] The §5.3/§7.3 "sharing only derived features" clause as the citable legal-design
+   anchor.</strong> This is the single most useful sentence in the paper for us: cite it verbatim as
+   independent, peer-reviewed justification that features-only release is the <em>recommended</em>
+   disposition for copyrighted found-media SER — turning our media-legality constraint
+   (<code>docs/intent/constraints.md</code>) from a limitation into an alignment with published best practice.</li>
+<li><strong>[V-E] The categorical-vs-dimensional duality + the missing count.</strong> The review confirms both
+   label families are mainstream and that <strong>carrying both is rare (~8/52) and never combined with a
+   distress flag or a tonal language</strong>. Use this to justify ViEmoSpeech's dual 7-cat + V/A scheme as
+   deliberately spanning both conventions, and to position the distress flag as a <em>third</em> axis no
+   corpus in the 52 provides. Also lift the review's naming of the annotator-source taxonomy
+   (self / observer / expert / crowd) + inter-rater-reliability expectation into our ADR-002/003
+   annotation-protocol spec fields.</li>
+<li><strong>[V-D] The 0/52-tone-annotation finding as corpus-side novelty evidence.</strong> Pair this with the
+   model-side triangulation (vn-06/07/13): no SER <em>corpus</em> annotates lexical tone and no SER <em>model</em>
+   measures tone×emotion channel competition. CAVES is the closest (tonal, tone-balanced stimuli)
+   and is the cite-and-distinguish precedent — it <em>controls</em> for tone, we <em>annotate and measure</em> it.</li>
+</ol>
+<h3 id="how-each-part-helps-pebble-succeed">How each part helps Pebble succeed</h3>
+<ul>
+<li><strong>Positioning table (part 1) → the method/corpus paper's Table 1.</strong> Build one comparison table
+  keyed on 16's four dimensions + our two added columns, populated with the corpora our register
+  already names (ViSEC, VLSP-56h, VNEMOS, THAI-SER, MSP-Podcast, IEMOCAP, CAVES). The empty cells
+  (Vietnamese ∩ tonal-annotated ∩ features-only ∩ CC-BY ∩ dimensional+distress) <em>are</em> the
+  contribution figure. Artifact: the positioning table in the ViEmoSpeech corpus paper + a stub in
+  <code>docs/spec/capabilities/</code>.</li>
+<li><strong>Transfer risk:</strong> LOW — these are published dimension names, directly reusable. The only risk
+    is that "natural/found" flattens our specific sub-case (single-speaker cut TV-drama); our two
+    added columns resolve it.</li>
+<li><strong>Quality index (part 2) → honest scoping in the paper's limitations.</strong> Add a sentence: "under
+  Serrano et al.'s citation-dominated Q, any new corpus is undervalued by construction; we instead
+  report intrinsic design axes (tone/dialect/distress) that Q's weights (0.087 emotions, 0.040
+  recency) do not capture." This pre-empts a "low-impact new dataset" reviewer objection.</li>
+<li><strong>Transfer risk:</strong> MEDIUM — Q is descriptive of the surveyed set, not a normative benchmark; do
+    not compute a Q for ViEmoSpeech and compare (it would be misleadingly near-zero pre-citations).</li>
+<li><strong>Feature-only clause (part 3) → the Data Availability + Ethics section.</strong> Cite §5.3/§7.3 directly
+  where we describe the release = features+timestamps+labels+speaker-ids. It converts our hard
+  constraint into "consistent with the release disposition recommended by the most recent SER-corpus
+  review." Artifact: Data Availability statement + <code>docs/intent/constraints.md</code> cross-reference.</li>
+<li><strong>Transfer risk:</strong> LOW — the clause is jurisdiction-agnostic and explicitly covers "film, TV,
+    online platforms"; it maps 1:1 to our TV-drama source. Caveat: it is guidance, not a legal
+    opinion — our actual VN-jurisdiction copyright analysis still stands on its own.</li>
+<li><strong>Label-duality count (part 4) → V-E label-scheme spec.</strong> Justify the dual scheme and the
+  standalone distress axis as filling the "~8/52 carry both, 0/52 carry a distress flag on a tonal
+  language" gap; import the self/observer/expert/crowd + IRR fields into the labeler spec
+  (<code>tools/labeler/SPEC.md</code>) so our annotation metadata is comparable to the surveyed corpora.</li>
+<li><strong>Transfer risk:</strong> MEDIUM — the "~8/52" tally is mine, not the paper's stated figure (≈); if
+    cited as a number we must recount and own it, not attribute the count to Serrano et al.</li>
+<li><strong>Tone-annotation gap (part 5) → V-D novelty defense + the tone×emotion figure.</strong> Use 16 as the
+  corpus-supply half of the two-sided novelty claim; CAVES becomes a one-line cite-and-distinguish
+  ("tone-balanced for control, not annotated") in the method paper's related-work.</li>
+<li><strong>Transfer risk:</strong> LOW — the 0/52 reading is direct from Table 2 + §6.51; CAVES is unambiguously
+    control-only. Residual risk: a tonal corpus published <em>after</em> mid-2025 could annotate tone;
+    re-check at submission time.</li>
+</ul>
+<h3 id="child-mental-health-lens-found-tv-tonal-feature-only-transfer-for-viemospeech">Child mental-health lens (found-TV / tonal / feature-only transfer for ViEmoSpeech)</h3>
+<ul>
+<li><strong>How many boxes are simultaneously unchecked in the 52?</strong> ViEmoSpeech asks for the intersection
+  of: <strong>Vietnamese (0/52), lexical-tone-annotated (0/52), tone×emotion-measurable (0/52),
+  found-copyrighted-TV-drama source (present but ~12/52 and always audio-released/gated),
+  features-only CC-BY release (0/52 in Table 2 — no corpus in the inventory is documented as a
+  features-only release), dimensional + categorical + distress labels (0/52 combine all three).</strong>
+  Every one of these boxes is <em>individually</em> unchecked or rare, and <strong>their conjunction is empty</strong> —
+  the review's own inventory is the strongest evidence that ViEmoSpeech occupies genuine whitespace.</li>
+<li><strong>Children specifically:</strong> the review flags (via Matveev et al. [17], §3) that "<em>emotional models
+  [should be] tailored to specific demographics, such as children, as their speech patterns differ
+  from those of adults</em>", yet <strong>only 1 of 52 corpora involves children — AIBO</strong> (German/English
+  children × Sony AIBO robot, human-robot elicited speech), and it is neither tonal, nor Vietnamese,
+  nor dimensionally labeled, nor mental-health-oriented. Child-register SER is near-absent from the
+  entire published corpus landscape. (Caveat: ViEmoSpeech's own source = <em>adult</em> TV-drama actors,
+  so 16 does not remove our child-register transfer risk — it shows the whole field shares it.)</li>
+<li><strong>Ethics the review foregrounds and we must honor:</strong> §5.3 explicitly lists <strong>"extra safeguards for
+  vulnerable populations such as children or patients,"</strong> data minimization, de-identification, and
+  — for found media — copyright/ToS handling with controlled-access or feature-only release. This is
+  independent external support for our media-legality invariant and our distress-as-acted-proxy
+  framing: the review treats natural/found affect as ethically loaded and recommends exactly the
+  release discipline we adopt.</li>
+<li><strong>Distress transfer risk:</strong> the review's clinical touchpoint is a single cited depression-from-
+  voice study (Hansen et al. [9], §1), described only as "early diagnosis." No corpus in the 52
+  carries a clinical distress/severity label. So 16 offers <strong>no</strong> distress-label precedent to
+  transfer — it <em>confirms</em> that our distress head is unprecedented at the corpus level and reinforces
+  the V-F honest-proxy framing (acted-drama distress ≠ clinical, screen for recall only).</li>
+</ul>
+<h3 id="limitations-open-questions-for-pebble">Limitations &amp; open questions for Pebble</h3>
+<ul>
+<li><strong>Contradiction / gap #1 (vs the paper's own framework):</strong> 16 names <strong>"Physical Existence
+  (access and licensing… DOI… train/val/test splits)"</strong> as one of its four load-bearing dimensions,
+  yet <strong>Table 2 tabulates none of them</strong> — no license column, no DOI, no split, no size-in-hours.
+  The paper cannot actually answer "which of these 52 can I legally reuse and how is it licensed?"
+  from its own table. This is precisely the axis ViEmoSpeech is built around, so our positioning
+  table <strong>must add the <code>Release form</code> + <code>Source legality</code> columns 16 omits</strong> — and we can cite this
+  omission as the concrete gap our corpus documentation closes.</li>
+<li><strong>Contradiction / gap #2 (vs THAI-SER, vn-11, on the naturalness bet):</strong> THAI-SER empirically
+  found <strong>scripted &gt; improvised</strong> (WA 73.99 vs 61.80), cutting against the "natural speech is
+  better" thesis. Review 16 leans the <em>opposite</em> way rhetorically — it repeatedly frames natural/
+  found speech as higher ecological validity and "the direction the field is moving," while conceding
+  natural corpora yield <strong>lower inter-rater agreement</strong> and harder annotation (Table 1, §5.4). Both
+  can't be uncritically true for us: found TV-drama gives ecological validity <strong>and</strong> annotation
+  difficulty. ViEmoSpeech must <em>measure</em> whether its found-drama register actually beats an acted
+  baseline (V-G), not assume the review's ecological-validity narrative.</li>
+<li><strong>Gap #3 (V-E, unquantified):</strong> the review discusses categorical vs dimensional at length but
+  <strong>never reports the split count</strong>, so our "~8/52 carry both" is our own tally, not a citable
+  figure (tagged ≈). If we need a citable number, we must count it ourselves in the paper and can
+  note that 16 left it unquantified.</li>
+<li><strong>The Q-index is adoption-biased, not quality-biased:</strong> with C (citations/yr) weighted 0.61, Q
+  measures <em>incumbency</em>, not corpus design quality — it structurally penalizes exactly the new,
+  under-represented-language corpora the review says the field needs. Do not use Q to argue
+  ViEmoSpeech's value; use it only to explain why a design-quality argument is needed instead.</li>
+<li><strong>Open question — no modeling guidance:</strong> 16 is a <em>dataset</em> review; it contributes zero on fusion
+  architecture (V-A), audio backbone (V-B), or ASR-noise robustness (V-C). For those, 16 is silent
+  and the register-dependence synthesis from the bimodal papers stands unaffected.</li>
+<li><strong>Open question worth one check:</strong> several found-media corpora in Table 2 (CHEAVD, ANAD, MELD,
+  CMU-MOSEI) are TV/online-sourced yet apparently distribute audio — worth confirming whether any
+  publishes a <em>features-only</em> variant we could cite as a direct precedent, since Table 2's lack of a
+  release-form column hides this.</li>
+</ul></article>
+</div></body></html>

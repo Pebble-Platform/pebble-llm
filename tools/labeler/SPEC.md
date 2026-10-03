@@ -2,11 +2,12 @@
 
 > Công cụ **con người gán nhãn** cho ViEmoSpeech. Tầng **execution** — phải thỏa
 > `docs/intent/` + `docs/spec/capabilities/extraction-pipeline.md`.
-> Cập nhật: 2026-07-21 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008 + loại-nhiều 009 + **bỏ speaker/cast, gán giới tính+tuổi trực tiếp per-clip**).
+> Cập nhật: 2026-10-03 (khớp code: phase 0–5 + refactor 004 + excise/seek 005 + context ±N 008 + loại-nhiều 009 + **bỏ speaker/cast, gán giới tính+tuổi trực tiếp per-clip** + cắt thủ công thành trang riêng 016).
 > Chi tiết tính năng: [`SPEC-features.md`](SPEC-features.md). Lịch sử build:
 > [change 003](../../docs/spec/changes/003-human-labeling-tool/README.md) (phase
 > 0–5) + [change 004](../../docs/spec/changes/004-labeler-refactor/README.md) (refactor)
-> + [change 005](../../docs/spec/changes/005-labeler-excise-seek/README.md) (excise + seek).
+> + [change 005](../../docs/spec/changes/005-labeler-excise-seek/README.md) (excise + seek)
+> + [change 016](../../docs/spec/changes/016-labeler-segment-page/README.md) (trang cắt thủ công).
 
 ## Vị trí trong pipeline
 
@@ -30,13 +31,15 @@ slice + backup `_orig/`).
 **Frontend** (ES modules, nạp qua `<script type="module" src="main.js">`):
 `state.js` (kernel `S` + consts) · `api.js` (mọi call server) · `view.js`
 (waveform + render + select) · `actions.js` (confirm/recut/split/reject
-+ export) · `segment.js` (cắt thủ công: script YT + chọn vùng + tạo clip) ·
-`main.js` (DOM wiring + keyboard + init). `index.html` = markup thuần.
++ export) · `main.js` (DOM wiring + keyboard + init). `index.html` = markup thuần.
+Trang riêng `segment.html` + `segment.js` (cắt thủ công: script YT + chọn vùng +
+tạo clip; dùng chung `state.js`/`api.js`).
 
 **Chạy** (từ repo root):
 ```
 .venv-vnser/Scripts/python.exe tools/labeler/server.py --root data/vietnamese-ser/episodes
-# mở http://127.0.0.1:8000/index.html  (cần server — không mở file:// trực tiếp)
+# mở http://127.0.0.1:8421/index.html  (cần server — không mở file:// trực tiếp)
+# cắt thủ công: nút ✂ mở tab http://127.0.0.1:8421/segment.html?ep=<epKey>
 ```
 `data/**` là media bản quyền, gitignored, **local-only** (intent §1).
 
@@ -57,7 +60,7 @@ hot-backup `VACUUM INTO`). Bootstrap 1 lần từ `state.jsonl` cũ qua
 | | `distress` | bool — **bỏ khỏi form 2026-07-10**; server default `false` (record cũ giữ giá trị đã gán) |
 | | `multi` | bool — tai người nghi ≥2 giọng |
 | | `note` | text — **bỏ khỏi form 2026-07-10**; server default `""` |
-| nhân khẩu | `gender, age_group` | **gán trực tiếp per-clip khi label** (nghe giọng). `gender` = `"" \| female \| male`; `age_group` = `"" \| child \| teen \| young_adult \| middle_aged \| senior` (nhóm tuổi, không phải số). Không bắt buộc — `""` tới khi chọn. Record cũ giữ thêm `speaker` (không dùng, không migrate) |
+| nhân khẩu | `gender, age_group, dialect` | **gán trực tiếp per-clip khi label** (nghe giọng). `gender` = `"" \| female \| male`; `age_group` = `"" \| child \| teen \| young_adult \| middle_aged \| senior` (nhóm tuổi, không phải số); `dialect` = `"" \| north \| central \| south` (Bắc/Trung/Nam — hệ thanh điệu khác nhau, intent §6; metadata KHÔNG phải target train). Không bắt buộc — `""` tới khi chọn. Record cũ giữ thêm `speaker` (không dùng, không migrate) |
 | biên | `start, end` | recut-aware (cộng dồn qua nhiều lần recut) |
 | recut (F1) | `recut`, `gold_text` | `gold_text` = text người sửa sau recut |
 | excise (F7) | `excised` | list `[[a,b]…]` (giây clip-local) đoạn GIỮA đã bỏ + nối; `recut=true`; undo qua `/recut/undo`. `start/end` **giữ nguyên** biên bao (provenance) |
@@ -85,6 +88,56 @@ theo `speaker` (idempotent, chỉ điền field rỗng, backup trước khi ghi)
 label lại. `cast.json` giữ lại làm nguồn migrate; trường `speaker` cũ trong record
 để nguyên (thừa, vô hại).
 
+### Bảng `assignments` — hàng đợi + nhãn vòng 2 của annotator online (change 011)
+
+Bảng **thứ hai** trong `state.db`, khoá **`(annotator, seq)`**, cột phẳng:
+`epkey · id · kind · emotion · valence · arousal · skip_reason · listen_ms · ts`.
+Một dòng = **một lần TRÌNH BÀY một clip cho một annotator**; hàng đợi và câu trả
+lời ở chung (cột nhãn rỗng/NULL tới khi chấm, `ts IS NULL` = chưa chấm).
+
+Khoá theo `seq` chứ không theo `(epkey, id)` vì QC protocol seed ~10% **clip lặp**
+để đo tự nhất quán — cùng một clip trình bày cho cùng một người **hai lần**, phải
+ra hai dòng độc lập. `kind` ∈ `normal | gold | dup | trap` để báo cáo κ loại
+gold/dup ra (qc-protocol §5.1).
+
+`records` **không đụng tới** — nhãn của owner ở nguyên đó (`annotator='human'`,
+813 dòng), nên **không có migrate nào** và mọi đường code cũ chạy y như trước.
+Tách bảng vì `records.data` trộn **trạng thái clip** (recut/excised/rejected/split/
+gold_text/gợi ý teacher — owner sở hữu, **không phải per-annotator**) với **phán
+đoán nhãn**; nhét annotator vào khoá `records` sẽ nhân bản trạng thái clip và sinh
+dòng annotator mang cờ `rejected` mà họ không có quyền đặt.
+
+API (`store.py`): `assign()` cài hàng đợi (**từ chối ghi đè** hàng đợi đã có câu
+trả lời) · `next_seq()` · `assignment_clip()` · `save_rating()` · `progress()` ·
+`all_ratings()`. Skip = dòng có `skip_reason`, `emotion` rỗng.
+
+**Auth + role** (`auth.py`, change 011): `tokens.json` trong data root (gitignored)
+map token → `{id, role}`; role `admin` (owner) vs `annotator`. Biên bảo mật = **một
+middleware `guard`** trong `server.py`, deny-by-default: chỉ `/rate.html` +
+`/rate.js` là public, mọi route **không** thuộc `/rate/*` là **owner-only** (route
+thêm sau này mặc định được bảo vệ). Loopback được coi là admin **chỉ khi** không có
+header `x-forwarded-*` — tunnel nối qua localhost nên nếu tin socket thôi sẽ trao
+admin cho cả internet; `--no-local-admin` là lớp thứ hai, **bắt buộc khi tunnel mở**.
+`access.log` ghi ai nghe clip nào lúc nào (ADR-005 safeguard #6), không công bố.
+
+**Route annotator:** `GET /rate/next` (chỉ `{seq, done, total}`) · `GET
+/rate/clip/{seq}.wav` (địa chỉ hoá **theo vị trí hàng đợi** — annotator không bao
+giờ biết `epKey`/`clip_id`, không liệt kê được corpus) · `POST /rate/{seq}` ·
+`GET /rate/whoami`. UI `rate.html`/`rate.js` **mù**: không transcript, không gợi ý
+teacher, không nhãn owner.
+
+**Màn owner của change 011:** `/gold.html` (nghe & chốt gold set — đếm clip đã thật
+sự phát, cảnh báo khi ghi nếu còn "giữ mà chưa nghe"; ghi `gold-set.txt`) ·
+`/review.html` (so nhãn mọi rater trên **từng clip**, ô lệch đa số tô đỏ, lọc
+bất đồng/no_agreement/bỏ qua/clip lặp; clip lặp hiện cả 2 lần gán của cùng một
+người). Cả hai owner-only qua middleware `guard`. Dùng `/review.html` **sau khi đóng
+vòng** — xem nhãn giữa chừng rồi góp ý là neo nhãn, hỏng phép đo.
+
+Script: `build_assignments.py` (phân tầng + gold + dup + xáo trộn per-annotator) ·
+`pick_gold_candidates.py` (lọc đồng thuận ba chiều → ứng viên gold) ·
+`iaa_report.py` (Fleiss κ + Krippendorff α, nhãn-của-record). Giao thức + runbook:
+[change 011](../../docs/spec/changes/011-online-multi-annotator/README.md).
+
 `gold.csv` / `gold_bundle.zip` = **view export** dựng thẳng từ `state.db`
 (gồm cột `gender`/`age_group` per-clip; dump thô; export Kaggle đầy đủ — strip text
 public, loại rejected/test-series — là phase 4).
@@ -100,8 +153,8 @@ public, loại rejected/test-series — là phase 4).
 | `GET /gold` | toàn bộ record (cho export) |
 | `GET /script/{epKey}` | `{duration, blocks:[{start,end,text}]}` — script YouTube de-rolled (segment mode) |
 | `GET /segment-audio/{epKey}.wav` `?a&b&pad` | slice vocals đã tách nhạc `[a−pad, b+pad]` (preview vùng, chỉ đọc) |
-| `POST /segment/{epKey}` `{a,b,text}` | cắt clip MỚI từ vocals cho vùng `[a,b]` + seed record (`manual_segment`, gold_text=text YT) |
-| `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,gender,age_group,annotator}` (distress/note: server default) |
+| `POST /segment/{epKey}` `{a,b,text,label_now,emotion?,valence?,arousal?,gender?,age_group?,dialect?,annotator?}` | cắt clip MỚI từ vocals + seed record (`manual_segment`, `gold_text`); nếu `label_now` thì ghi nhãn ngay |
+| `POST /gold/{epKey}/{id}` | lưu nhãn `{emotion,valence,arousal,gold_text,gender,age_group,dialect,annotator}` (distress/note: server default) |
 | `POST /recut/{epKey}/{id}` `{a,b,text}` · `/undo` | trim (giữ `[a,b]`) + backup `_orig/` · khôi phục (`/undo` cũng xoá `excised`) |
 | `POST /excise/{epKey}/{id}` `{a,b,text}` | bỏ đoạn GIỮA `[a,b]`, nối phần còn lại (1 clip); ghi `excised`; undo dùng chung `/recut/undo` |
 | `POST /reject/{epKey}/{id}` `{reason}` · `/undo` | flag rejected (giữ file) · gỡ |
@@ -113,14 +166,24 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 ## Chức năng
 
 - **Cắt thủ công (✂ cắt thủ công, per tập):** cho tập **chưa label** mà auto-cut
-  (VAD∩turn) đang cắt mất context. Overlay: **script YouTube** de-rolled
-  (`youtube_transcripts.txt`, `GET /script`) làm view chính; click 1 block chọn
-  vùng, shift-click block khác **gộp** vùng; waveform của vùng (`GET
-  /segment-audio` từ **vocals đã tách nhạc**), `▶ nghe` kèm **± ngữ cảnh** (0/1/2/3s
-  cắt từ audio đầy đủ — nghe lại phần bị mất), nút chỉnh mép `đầu/cuối ±0.2s`, ô
-  text seed từ script (sửa được). `＋ tạo clip` → `POST /segment` cắt vocals
-  `[a,b]` thành clip mới (seg kế tiếp, `manual_segment`), vào bảng để label như
-  thường. **Auto clip giữ nguyên** (thêm vào, không xoá). ⚠️ Người tự chọn vùng →
+  (VAD∩turn) đang cắt mất context. **Trang riêng** `segment.html?ep=<epKey>`
+  (nút ✂ mở tab mới, mang theo annotator; tab labeler giữ nguyên — `↻`/mở lại
+  tập để thấy clip mới). Cột trái = **script YouTube** de-rolled
+  (`youtube_transcripts.txt`, `GET /script`); click 1 block → tải waveform
+  **block đó + 1 block liền trước + 1 block liền sau** (`GET /segment-audio` từ
+  **vocals đã tách nhạc**), vùng chọn mặc định = block đã click; shift-click block
+  khác **gộp** (vẫn ±1 block). **Kéo trên sóng** chọn vùng làm clip chính (click
+  không kéo = dời con trỏ phát); vạch dọc = mép block script. `＋ đoạn trước` /
+  `＋ đoạn sau` nới vùng hiển thị thêm **1 block** mỗi lần (vùng chọn giữ nguyên).
+  `▶ phát` (Space) phát cả vùng hiển thị từ con trỏ, `▶ nghe vùng chọn` chỉ phát
+  vùng chọn. Ô text seed từ các block mà vùng chọn phủ quá nửa (sửa được; chỉ
+  seed lại khi tập block phủ thay đổi). `label ngay` (mặc định bật) cho phép chọn
+  emotion/V/A + demographics ngay trên trang (V/A hiển thị số `1–5` kèm mô
+  tả tiếng Việt như form label chính); `＋ tạo clip + label` → `POST
+  /segment` vừa cắt vocals `[a,b]` thành clip mới (seg kế tiếp,
+  `manual_segment`) vừa ghi nhãn vào cùng record. Có thể tắt `label ngay` để tạo
+  clip chưa nhãn và label sau như luồng cũ. **Auto clip giữ nguyên** (thêm vào,
+  không xoá). ⚠️ Người tự chọn vùng →
   **người chịu trách nhiệm single-speaker (I3)** thay cho auto; dùng `>>` trong
   caption + split/multi để giữ đơn-giọng.
 - **Label:** chọn emotion (phím `1`–`7` hoặc click), valence/arousal (**không
@@ -184,7 +247,9 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
 - **Frontend chưa browser-drive:** verify = API e2e + DOM-stub load-test + served
   200. Tương tác thật (kéo chọn, chia, dropdown) cần người click-test.
 - **Single-pass** (1 annotator/clip) ⇒ **chưa có κ human–human** để báo (ADR-003
-  known gap); double-annotate subset là further work.
+  known gap). Đang xử lý: [change 011](../../docs/spec/changes/011-online-multi-annotator/README.md)
+  (tool label online đa annotator, cho phép bởi [ADR-005](../../docs/spec/decisions/ADR-005-annotation-streaming-not-release.md)).
+  Đã xong M2 (bảng `ratings`); còn auth/role, UI `/rate`, tunnel, và 2 vòng label.
 - **Nhân khẩu per-clip (bỏ speaker/cast 2026-07-20, migrate 2026-07-21):** record
   (nay trong `state.db`) còn giữ trường `speaker` (không migrate — vô hại, không ai
   đọc); 232 clip đã gán nhân vật được backfill `gender`/`age_group` từ `cast.json`
@@ -197,7 +262,8 @@ Path traversal chặn (mọi `epKey/clip_id` resolve dưới `--root`). `clip_id
   ghi (vd `migrate_*`). `state.jsonl` cũ giữ lại làm nguồn bootstrap, **đông cứng**
   (server không ghi vào nữa).
 - **Cắt thủ công — nợ:** dùng script YT làm view (chưa render waveform full-track
-  14′), timestamp M:SS (giây) nên mép ~±0.5s → phải nudge + nghe; chưa overlay
+  14′), timestamp M:SS (giây) nên mép block ~±0.5s → chọn vùng bằng kéo + nghe;
+  chưa đánh dấu vùng đã cắt thành clip (dễ cắt trùng); chưa overlay
   speaker-turn (`diar_turns.csv`) để cảnh báo đa giọng. 1/33 tập thiếu
   `youtube_transcripts.txt` → script rỗng cho tập đó.
 - **Export Kaggle đầy đủ = phase 4** (chưa build): nhãn human + loại rejected +

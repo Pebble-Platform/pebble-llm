@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ViEmoSpeech — tiến độ gán nhãn</title>
+<style>
+:root{--bg:#f7f7f8;--card:#fff;--fg:#1a1a1e;--mut:#6b6b76;--line:#e3e3e8;--bar:#4f7fff;--barbg:#ececf2}
+:root[data-theme=dark]{--bg:#16161a;--card:#202027;--fg:#ececf1;--mut:#9a9aa6;--line:#31313b;--bar:#6f97ff;--barbg:#2a2a33}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#16161a;--card:#202027;--fg:#ececf1;--mut:#9a9aa6;--line:#31313b;--bar:#6f97ff;--barbg:#2a2a33}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,'Segoe UI',sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:32px 20px 64px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:22px;margin:0}
+.sub{color:var(--mut);font-size:13px;margin:4px 0 24px}
+button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 14px;cursor:pointer}
+button:hover{border-color:var(--bar)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card .n{font-size:28px;font-weight:650;letter-spacing:-.5px}
+.card .l{color:var(--mut);font-size:13px;margin-top:2px}
+section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:20px}
+h2{font-size:15px;margin:0 0 14px;font-weight:600}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:360px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+tr.total td{font-weight:650;border-top:2px solid var(--line)}
+.bar{position:relative;background:var(--barbg);border-radius:5px;height:22px;min-width:120px}
+.bar>span{position:absolute;inset:0;background:var(--bar);border-radius:5px}
+.bar>b{position:absolute;left:8px;top:0;line-height:22px;font-weight:500;font-size:12px}
+.err{color:#d24}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>ViEmoSpeech — tiến độ gán nhãn</h1>
+    <button id="reload">↻ tải lại</button>
+  </div>
+  <div class="sub" id="sub">Đang tải…</div>
+  <div id="root"></div>
+</div>
+<script>
+const hms = s => { s = Math.round(s); const p = n => String(n).padStart(2,'0');
+  return `${Math.floor(s/3600)}:${p(Math.floor(s/60)%60)}:${p(s%60)}`; };
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+function breakdownRows(rows){
+  const mx = Math.max(1, ...rows.map(r => r[1]));
+  return rows.map(([k,n,dur]) =>
+    `<tr><td>${esc(k)}</td><td class="num">${n}</td>`
+    + `<td><div class="bar"><span style="width:${Math.round(n/mx*100)}%"></span>`
+    + `<b>${hms(dur)}</b></div></td></tr>`).join('');
+}
+function section(title, rows){
+  return `<section><h2>${title}</h2><div class="scroll"><table>`
+    + `<tr><th>${title}</th><th class="num">audios</th><th>duration</th></tr>`
+    + breakdownRows(rows) + `</table></div></section>`;
+}
+
+async function render(){
+  const sub = document.getElementById('sub'), root = document.getElementById('root');
+  sub.className = 'sub'; sub.textContent = 'Đang tải…'; root.innerHTML = '';
+  let d;
+  try { const r = await fetch('/stats'); if(!r.ok) throw new Error(r.status); d = await r.json(); }
+  catch(e){ sub.className = 'sub err'; sub.textContent = 'Lỗi tải /stats: ' + e.message
+    + ' — server labeler đang chạy chứ?'; return; }
+
+  const tv = d.series.reduce((a,s)=>a+s[1],0), tn = d.series.reduce((a,s)=>a+s[2],0),
+        td = d.series.reduce((a,s)=>a+s[3],0);
+  sub.textContent = 'Cập nhật ' + new Date().toLocaleTimeString('vi-VN');
+
+  const seriesRows = d.series.map(([s,v,n,dur]) =>
+    `<tr><td>${esc(s)}</td><td class="num">${v}</td><td class="num">${n}</td>`
+    + `<td class="num">${hms(dur)}</td></tr>`).join('');
+
+  root.innerHTML =
+    `<div class="cards">
+       <div class="card"><div class="n">${tv}</div><div class="l">videos</div></div>
+       <div class="card"><div class="n">${tn}</div><div class="l">labels</div></div>
+       <div class="card"><div class="n">${hms(td)}</div><div class="l">duration đã gán</div></div>
+     </div>
+     <section><h2>Theo series</h2><div class="scroll"><table>
+       <tr><th>series</th><th class="num">videos</th><th class="num">labels</th><th class="num">duration</th></tr>
+       ${seriesRows}
+       <tr class="total"><td>TOTAL</td><td class="num">${tv}</td><td class="num">${tn}</td><td class="num">${hms(td)}</td></tr>
+     </table></div></section>`
+    + section('emotion', d.emotion) + section('gender', d.gender) + section('age', d.age);
+}
+
+document.getElementById('reload').onclick = render;
+render();
+</script>
+</body>
+</html>

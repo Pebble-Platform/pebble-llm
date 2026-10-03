@@ -16,11 +16,9 @@ import sys
 
 import pandas as pd
 
-sys.path.insert(
-    0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts" / "vietnamese-ser")
-)
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "scripts" / "vietnamese-ser"))
 
-import make_splits  # noqa: E402
+import make_splits
 
 
 def _synthetic_manifest() -> pd.DataFrame:
@@ -43,12 +41,28 @@ def _synthetic_manifest() -> pd.DataFrame:
     ]
     for ep, spk, n in spec:
         for _ in range(n):
-            rows.append({"ep": ep, "clip": f"clips/{ep}_seg{cid:05d}.wav", "speaker": spk, "is_clean": True})
+            rows.append(
+                {"ep": ep, "clip": f"clips/{ep}_seg{cid:05d}.wav", "speaker": spk, "is_clean": True}
+            )
             cid += 1
     # two non-clean rows that must be dropped before splitting
-    rows.append({"ep": "ep01", "clip": f"clips/ep01_seg{cid:05d}.wav", "speaker": "SPEAKER_09", "is_clean": False})
+    rows.append(
+        {
+            "ep": "ep01",
+            "clip": f"clips/ep01_seg{cid:05d}.wav",
+            "speaker": "SPEAKER_09",
+            "is_clean": False,
+        }
+    )
     cid += 1
-    rows.append({"ep": "ep02", "clip": f"clips/ep02_seg{cid:05d}.wav", "speaker": "SPEAKER_03", "is_clean": False})
+    rows.append(
+        {
+            "ep": "ep02",
+            "clip": f"clips/ep02_seg{cid:05d}.wav",
+            "speaker": "SPEAKER_03",
+            "is_clean": False,
+        }
+    )
     return pd.DataFrame(rows)
 
 
@@ -65,7 +79,9 @@ def test_only_clean_rows_are_split():
     df = make_splits.assign_folds(_synthetic_manifest(), n_splits=5)
     assert df["is_clean"].all()
     assert df["fold"].between(0, 4).all()
-    assert len(df) == 245  # sum of clip counts above (12+5+39+8+40+25+25+47+38+6), non-clean dropped
+    assert (
+        len(df) == 245
+    )  # sum of clip counts above (12+5+39+8+40+25+25+47+38+6), non-clean dropped
 
 
 def test_split_is_deterministic():

@@ -1,0 +1,277 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>H3 · THAI-SER corpus</title><style>
+:root{--fg:#1a1a1a;--muted:#666;--bg:#fff;--card:#f7f7f8;--border:#e3e3e6;--link:#2563eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e8e8ea;--muted:#9a9aa2;--bg:#16171a;--card:#1e1f24;--border:#2c2e35;--link:#6ea8fe}}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px 80px}
+.topnav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:12px 0;margin-bottom:8px}
+.topnav a{color:var(--link);text-decoration:none;font-size:14px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:600;letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:18px 0 6px}
+.venue{color:var(--muted);font-size:14px;margin:0 0 14px}
+.role{background:var(--card);border-left:4px solid var(--accent,#2563eb);padding:12px 16px;border-radius:6px;margin:14px 0 24px;font-size:15px}
+.links a{display:inline-block;margin-right:14px;color:var(--link);text-decoration:none;font-size:14px}
+article :is(h2,h3){margin-top:30px;line-height:1.3;border-top:1px solid var(--border);padding-top:18px}
+article h2{font-size:21px} article h3{font-size:17px;border-top:none;padding-top:6px}
+article table{border-collapse:collapse;width:100%;font-size:14px;margin:14px 0;display:block;overflow-x:auto}
+article th,article td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+article th{background:var(--card)}
+article code{background:var(--card);padding:1px 5px;border-radius:4px;font-size:.9em}
+article pre{background:var(--card);padding:14px;border-radius:8px;overflow-x:auto}
+article blockquote{border-left:3px solid var(--border);margin:14px 0;padding:2px 16px;color:var(--muted)}
+article a{color:var(--link)}
+/* index */
+.hero{padding:34px 0 10px} .hero p{color:var(--muted);font-size:16px;max-width:60ch}
+.grp{margin-top:38px} .grp h2{font-size:18px;margin-bottom:2px;display:flex;align-items:center;gap:10px}
+.grp>p{color:var(--muted);font-size:14px;margin:4px 0 16px}
+.card{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:10px 0}
+.card .t{font-weight:600;font-size:15px}.card .v{color:var(--muted);font-size:13px;margin:2px 0 6px}
+.card .r{font-size:14px;margin:6px 0 8px}.card .lk a{margin-right:14px;font-size:13px;color:var(--link);text-decoration:none}
+.tag{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+</style></head>
+<body><div class="wrap">
+<div class="topnav"><a href="index.html">← Tất cả bài báo (index)</a></div>
+<span class="pill" style="background:#059669">H3 · Honest-eval, corpus & VN prior art</span>
+<h1>THAI-SER corpus</h1><p class="venue">arXiv 2025</p>
+<div class="role" style="--accent:#059669"><b>Vai trò trong survey:</b> Tiền lệ corpus ngôn ngữ thanh điệu (CC-BY-SA) + crowd-QC (Krippendorff α).</div>
+<div class="links"><a href="../papers/vietnamese-ser/pdfs/11-thai-ser-corpus.pdf">📄 PDF gốc</a><a href="../papers/vietnamese-ser/11-thai-ser-corpus.vi.md">🇻🇳 Bản dịch (.vi.md)</a>
+<a href="../papers/vietnamese-ser/11-thai-ser-corpus.md">📝 Nguồn phân tích (.md)</a></div>
+<article><h1 id="paper-vn-11-thai-ser-thai-speech-emotion-recognition-corpus">Paper vn-11 — THAI-SER: Thai Speech Emotion Recognition Corpus</h1>
+<ul>
+<li><strong>Authors:</strong> Jilamika Wongpithayadisai, Chompakorn Chaksangchaichot, Soravitt Sangnark, Patawee Prakrankamanant, et al.</li>
+<li><strong>Venue / year:</strong> arXiv preprint, 2025</li>
+<li><strong>Links:</strong> abs https://arxiv.org/abs/2507.09618 · PDF <code>pdfs/11-thai-ser-corpus.pdf</code></li>
+<li><strong>Group:</strong> vietnamese-ser / nearest tonal-language corpus precedent</li>
+</ul>
+<p><strong>Summary:</strong> First sizeable Thai SER corpus — 41h36m, 27,854 utterances, 200
+actors, 5 emotions, scripted + improvised, crowdsourced annotation, CC-BY-SA 4.0.</p>
+<p><strong>Relevance to ViEmoSpeech:</strong> Closest published precedent for "SER corpus for a
+tonal language with a clear license" — direct design comparator for corpus
+paper positioning (V-H): actors/scripted vs our found TV-drama speech; their
+annotation protocol and release format are reference points.</p>
+<blockquote>
+<p>Stub created 2026-07-10 (task <code>docs/tasks/paper-deep-analysis.md</code>); deep-read pending.</p>
+</blockquote>
+<h2 id="deep-research-full-pdf-read-2026-07-10">Deep research — full-PDF read (2026-07-10)</h2>
+<h3 id="source-access-note">Source-access note</h3>
+<p>Read the full local PDF (<code>pdfs/11-thai-ser-corpus.pdf</code>, arXiv:2507.09618v1, 13 Jul 2025)
+via <code>pdftotext</code> — Abstract, §1 Introduction + Table 1 (corpus landscape), §2 Corpus
+design (actors, environments, scripted/improvised sessions, alignment), §3 Annotation
+(crowdsourcing QC, pretest, trustworthiness), §4 Data evaluation (majority agreement,
+Krippendorff α, HRA, Tables 8–11), §5 Downstream experiments (splits, CNN+LSTM baseline,
+Tables 12–16), §6 Discussion, §7 Conclusion. <strong>No separate venue version exists</strong> — this
+is an arXiv preprint with no journal/conference publication yet, so arXiv v1 is the
+authoritative text. Headline numbers were web-corroborated against two independent sources:
+- Query <code>THAI-SER Thai Speech Emotion Recognition corpus 27854 utterances 200 actors
+  Krippendorff alpha</code> → arXiv abstract (https://arxiv.org/abs/2507.09618) confirms
+  41h36m / 27,854 utt / 100 recordings / 200 actors (112F/88M) / 5 emotions / α 0.692 /
+  HRA 0.772 / CC-BY-SA 4.0. ✔
+- Release mechanics (V-H, load-bearing): HuggingFace <code>airesearch/thai-ser</code>
+  (https://huggingface.co/datasets/airesearch/thai-ser) confirms <strong>audio itself is released</strong>
+  (FLAC, channels mic_clip/mic_con/mic_middle/mic_zoom) + per-row labels
+  (assigned_emo, majority_emo, raw responses) + metadata (session/actor/gender/age/room),
+  ~27,900 rows, CC-BY-SA-4.0. ✔ Code at github.com/tann9949/thaiser-experiments.</p>
+<p>Table-internal numbers (Tables 8–16) exist only in this single authoritative preprint;
+no conflicting version, so tagged ✔ where self-consistent, ≈ where read off a figure.</p>
+<h3 id="what-the-paper-actually-does">What the paper actually does</h3>
+<p>THAI-SER is a from-scratch <strong>acted+elicited</strong> Thai SER corpus, explicitly motivated by
+Thai being a <strong>tonal language</strong> whose emotional acoustics differ from Western corpora (§1.1,
+citing Anolli 2008, Chong/Kim/Davis 2015). Design and numbers:</p>
+<ul>
+<li><strong>Corpus (Abstract, §2, Table 8):</strong> 41.61 h / 27,854 utt / <strong>100 sessions</strong> (each = one
+  unique actor pair) → <strong>200 actors</strong> (112 F, 88 M; 6 non-binary/LGBTQ recorded separately;
+  mean age 29, range 18–55). Six professional directors. ✔</li>
+<li><strong>Two subsets (§2.3):</strong> <em>scripted</em> (acted) — 3 fixed sentences designed to be emotion-neutral
+  and to "cover many Thai tones, consonants, and diphthongs," spoken at 2 intensity levels ×
+  2 takes × 5 emotions = 60 utt/session; and <em>improvised</em> (elicited, Busso-2008 style) — 15
+  situations in 3 batches, 3-min dyadic scenes, keyword-anti-overfit design. Studio hours split
+  13.69 scripted / 18.01 improvised; Zoom 4.02 / 5.89 (Table 8). ✔</li>
+<li><strong>Two environments (§2.2):</strong> <strong>80 studio</strong> sessions (5 mics/session: 2 lavalier RODE + 2
+  cardioid WARM WA-47Jr + 1 center figure-8; 44.1 kHz/16-bit WAV) vs <strong>20 Zoom</strong> sessions
+  (Zencastr 48 kHz, uncontrolled rooms) recorded during COVID as a deliberate noisy/OOD set. ✔</li>
+<li><strong>Emotions (§2.3):</strong> 5 classes — neutral, angry, happy, sad, <strong>frustrated</strong> (frustration
+  chosen for call-center relevance). Class balance is skewed by <em>design intent</em> toward
+  frustration (30.52% of hours) and neutral (23.30%); angry only 10.05%, happy 13.32%,
+  sad 13.33%, None (no-consensus) 9.48% (Table 8). ✔</li>
+<li><strong>Annotation (§3):</strong> <strong>audio-only</strong> crowdsourcing (deliberately no video, "solely rely on
+  audio-based emotion") on two Thai platforms (wang.in.th, HOPE). <strong>Pretest</strong>: tutorial video +
+  10 screening items + 1 hidden "animal-sound trick question"; <strong>984 of 1,759 applicants passed
+  (56%)</strong> (§3.2). ✔ Per utterance <strong>3–8 annotators</strong> (mostly 3; up to 8 early to tune
+  guidelines) (§4.1.2 fn3). Each 10-item task salts in <strong>gold utterances</strong> (director-validated,
+  → per-annotator "confidence score") and a <strong>consistency utterance</strong> (duplicate, → "consistency
+  score"); annotators failing either &lt;50% are dropped and the utterance re-annotated to ≥3
+  (§3.4). Annotators capped at 30 tasks to prevent situation-memorization bias. Multi-select
+  allowed; "other" emotions hand-mapped to the 5 classes (Table 7) or kept as <code>other</code>.</li>
+<li><strong>Reliability (§4, Table 9):</strong> IAR = <strong>Krippendorff's α with MASI set-distance</strong> (chosen
+  because annotator count varies and labels are set-valued — Cohen's κ inapplicable). <strong>Raw
+  corpus α = 0.413</strong> (below the 0.667 bar); sweeping an agreement-score filter, the optimal
+  cut is <strong>0.71</strong>, which raises α to <strong>0.692</strong> and leaves <strong>14,182 utt</strong> (≈7h43m usable). ✔
+  <strong>Human recognition accuracy</strong> (majority vote vs actor's assigned emotion): 0.592 raw →
+  <strong>0.772 after 0.71-filter</strong>. ✔ High-intensity scripted is easiest (HRA 0.883, α 0.712);
+  low-intensity scripted worst (HRA 0.690, α 0.622); improvised sits between and has the
+  <em>highest raw IAR</em> of any single style (0.426→0.697) despite lower HRA (§4.2.2). Neutral is
+  best-recognized (78%→93%); <strong>frustrated is the failure class</strong> (~62%), confused with angry
+  and sad (§4.2.3, Fig 9). Filtering barely differs by actor gender/age (Table 10).</li>
+<li><strong>Baselines (§5, CNN+LSTM à la Etienne 2018; 64-dim mel-filterbank, 3-s crops, VTLP, CMVN):</strong>
+  <strong>speaker-independent 8-fold</strong> over the 80 studio sessions (10 sessions/fold; <strong>Zoom excluded
+  from training, held out as a challenge set</strong>). 5 seeds/fold. <strong>All-5-emotions: WA 59.80±2.91 /
+  UA 57.81±4.20</strong>; <strong>4-basic (drop frustrated): WA 67.34±3.05 / UA 62.61±3.19</strong> (Table 12). ✔
+  On the held-out <strong>Zoom</strong> set the same model collapses to <strong>WA 46.64 / UA 46.57</strong> (all-emo) —
+  a ~13-pt OOD drop. ✔ <strong>Scripted-only training beats improvised or all</strong> on 4-basic
+  (<strong>WA 73.99 vs 61.80 improvised vs 67.34 all</strong>, Table 13) — <em>opposite</em> of IEMOCAP's
+  "improvised is best" (Neumann&amp;Vu 2017), attributed to fixed-sentence scripting giving
+  cleaner labels. ✔ Cross-corpus (Tables 14–16): THAI-SER-trained models transfer better to
+  Emo-DB/EMOVO than IEMOCAP-trained ones even after pruning to equal hours/speakers.</li>
+</ul>
+<h3 id="parts-directly-useful-for-viemospeech-tagged-with-decision-ids">Parts directly useful for ViEmoSpeech (tagged with Decision IDs)</h3>
+<ol>
+<li>
+<p><strong>[V-H] Nearest tonal-language corpus precedent, opposite legality trade-off.</strong> THAI-SER is
+   the closest published analogue (tonal SEA language, clear license) but sits at the <em>opposite</em>
+   pole of the naturalness/legality axis: consented professional actors → <strong>audio itself is
+   CC-BY-SA-4.0-releasable</strong> (FLAC on HuggingFace). ViEmoSpeech uses <em>found copyrighted TV-drama</em>
+   → <strong>feature-only CC-BY release, media never shipped</strong>. THAI-SER's Table 1 (the corpus
+   landscape: Emo-DB/IEMOCAP/CREMA-D/RAVDESS/MSP-<em>/LSSED with type∈{acted,elicited,natural}) is
+   the exact positioning table ViEmoSpeech's dataset paper should extend, adding a "Release =
+   features-only / media withheld" column that no listed corpus needs and that is ViEmoSpeech's
+   defining constraint. Their §1.1 taxonomy (natural=privacy/copyright-risky vs acted=controlled
+   but unnatural vs elicited=middle) is a ready-made framing: ViEmoSpeech is </em>natural/found<em>
+   (their highest-naturalness, highest-legal-risk cell) but neutralizes the risk via
+   feature-only release — a design point their acted corpus does not have to solve.
+   </em><em>Transfer risk:</em><em> their size (41.6 h / 27,854 utt / 200 speakers) and class balance are
+   achievable because acted recording is cheap to scale; ViEmoSpeech's found-speech pipeline
+   (3,611 utt / 2 series now, ~18k/23.8h P1 target) will be smaller and </em>speaker-imbalanced by
+   source* — cite THAI-SER as the scale bar, not a matchable target.</p>
+</li>
+<li>
+<p><strong>[V-E] Crowdsourced QC scheme = concrete protocol to graft onto ADR-002/ADR-003.</strong> Their
+   trust machinery is directly portable to ViEmoSpeech's human-labeling tool: <strong>gold-standard
+   salting</strong> (director-validated unambiguous items → confidence score), <strong>consistency
+   duplicates</strong> (→ consistency score), <strong>&gt;50%-on-both trustworthiness gate with auto-drop +
+   re-annotate-to-≥3</strong>, <strong>pretest with a hidden trick question</strong> (56% pass rate), and a
+   <strong>per-utterance agreement-score → global-α filter</strong> (raw α 0.413 → 0.692 at the 0.71 cut).
+   Their κ-is-inapplicable argument matters for ViEmoSpeech: variable rater count + multi-select
+   emotions ⇒ <strong>use Krippendorff α with MASI set-distance, not Cohen κ</strong> — and note that
+   ViEmoSpeech currently reports teacher-agreement κ (0.675/0.857 in commit log); α+MASI is the
+   correct instrument once we move to human multi-annotator V/A+distress. <strong>Transfer risk:</strong> their
+   0.71 threshold discards ~49% of utterances (27,854→14,182) to reach α 0.692; ViEmoSpeech
+   cannot afford to throw away half of a found corpus it already struggles to fill to rare-class
+   floors (ADR-002, ≥50 clips), so adopt the <em>mechanism</em> (agreement score per utterance, soft
+   labels retained) but keep low-agreement clips with a soft/curriculum treatment (their own §6.4
+   open question) rather than hard-filtering.</p>
+</li>
+<li>
+<p><strong>[V-G] Speaker-disjoint split protocol + honest OOD challenge set — a direct template.</strong>
+   Their eval is exactly ViEmoSpeech's ADR: <strong>speaker-independent k-fold</strong> (folds cut by
+   <em>session/speaker-pair</em>, val and test never share speakers with train), <strong>weighted +
+   unweighted accuracy</strong> reported with <strong>5-seed std</strong>, and a <strong>deliberately held-out
+   distribution-shift set</strong> (Zoom) never seen in training. This is the citation ViEmoSpeech
+   needs for its <strong>whole-series held-out gold</strong> (ADR-002) and speaker-disjoint splits (I-invariant):
+   THAI-SER demonstrates the OOD gap empirically (67.3→46.6 WA studio→Zoom). It also supplies a
+   <em>baseline realism anchor</em>: a competent CNN+LSTM on a clean acted 5-class tonal corpus lands at
+   <strong>WA ~60 / UA ~58</strong> — so ViEmoSpeech's 7-class found-speech numbers should be read against
+   that, not against the leak-inflated 0.86–0.87 of vn-08/vn-10. <strong>Transfer risk:</strong> their UA/WA
+   metric is for balanced-ish acted classes; ViEmoSpeech's found corpus needs macro-F1 + CCC
+   (V/A) + recall@floor (distress), so port the <em>split discipline</em> and <em>seed-variance reporting</em>,
+   not the metric choice.</p>
+</li>
+<li>
+<p><strong>[V-D] The tonal-language corpus that never measures tone×emotion — a novelty-space
+   opening.</strong> THAI-SER <em>motivates itself</em> on Thai tonality (§1.1) and <em>designs scripted sentences
+   to "cover many Thai tones, consonants, and diphthongs"</em> (§2.3.1) — yet <strong>nowhere in the paper
+   is tone×emotion interaction analyzed or measured</strong>; tone is used only to make the scripted
+   sentences phonetically balanced, then dropped. Their frustrated↔angry↔sad confusion (Fig 9)
+   is discussed purely as intensity, never as F0/tone-contour competition. <strong>This is the cleanest
+   evidence yet that the nearest tonal SER corpus leaves ViEmoSpeech's headline claim (tone is
+   phonation-heavy, competing with emotion's channel — Shen vn-06) wide open.</strong> Actionable:
+   ViEmoSpeech should cite THAI-SER as "a tonal-language SER corpus that acknowledges tone
+   matters but never quantifies tone-emotion channel competition," positioning the tone×emotion
+   probing figure (V-D backbone) as the contribution THAI-SER gestured at but did not deliver.
+   <strong>Transfer risk:</strong> Thai has 5 tones and is not as phonation-heavy as Vietnamese (whose glottal
+   tones carry voice-quality load, Brunelle 2009); the <em>gap</em> transfers, but do not claim their
+   corpus could have measured the Vietnamese-specific phonation effect.</p>
+</li>
+</ol>
+<h3 id="how-each-part-helps-viemospeech-succeed">How each part helps ViEmoSpeech succeed</h3>
+<ul>
+<li><strong>V-H →</strong> Build the dataset-paper positioning table by extending THAI-SER's Table 1 with two
+  columns THAI-SER doesn't need — <em>Release format</em> (features+timestamps+labels vs full audio) and
+  <em>Source legality</em> (found/copyrighted vs consented). ViEmoSpeech occupies the "natural + tonal +
+  feature-only-CC-BY" cell that is empty across their entire landscape (and across ViSEC/VLSP/
+  VNEMOS). Concrete artifact: the comparators row in the corpus paper's intro + the release-spec
+  section that cites THAI-SER as proof that a clean-license tonal SER corpus is publishable while
+  distinguishing on the media-withheld mechanism.</li>
+<li><strong>V-E →</strong> Port the gold+consistency+pretest scheme into the labeler tool (<code>tools/labeler/</code>):
+  add director/expert-validated <strong>gold clips</strong> and <strong>duplicate consistency clips</strong> salted into
+  each human labeling batch, compute per-rater confidence &amp; consistency, and gate at &gt;50%; switch
+  the reported reliability statistic from κ to <strong>Krippendorff α + MASI</strong> for the multi-select
+  V/A+distress dimensions. Keep the soft-label matrix (their §6.4 "up to 8 annotators → richer
+  soft labels than IEMOCAP") for a future distress-head calibration target.</li>
+<li><strong>V-G →</strong> Adopt their session-level speaker-disjoint fold cutting and 5-seed std reporting
+  verbatim for the ViEmoSpeech benchmark; register the whole-series holdout as the analogue of
+  their Zoom challenge set (an <em>acknowledged</em> distribution-shift slice reported separately). Use
+  their WA~60/UA~58 clean-acted 5-class number as the "honest baseline ceiling" annotation next
+  to the leak-flagged vn-08 (86.6) / vn-10 (0.87) rows in the baselines table.</li>
+<li><strong>V-D →</strong> Anchor the tone×emotion probing figure (Shen-style layer-wise Ridge probe, arousal
+  bin × tone label, phoneme-disjoint) as <em>the</em> contribution, framed against THAI-SER: "even the
+  nearest tonal-language SER corpus designs for tonal coverage but never measures the tone-emotion
+  channel interaction." One sentence in related work; the measurable claim is ViEmoSpeech's.</li>
+</ul>
+<h3 id="child-mental-health-lens-viemospeech-transfer-validity">Child mental-health lens (ViEmoSpeech transfer validity)</h3>
+<p>ViEmoSpeech is not child-facing; the relevant lens is the <strong>legality/naturalness/consent</strong>
+axis, and THAI-SER is the sharpest comparator on it.</p>
+<ul>
+<li><strong>Consent + releasable audio is exactly what ViEmoSpeech cannot have.</strong> THAI-SER's entire QC
+  edifice (gold utterances chosen by directors, actors briefed and re-taking until the director
+  approves, ground-truth <em>assigned</em> emotion per utterance) rests on <strong>consented acted speech with
+  a known intended label</strong>. ViEmoSpeech has <em>found</em> TV-drama speech with <strong>no assigned ground
+  truth</strong> — the actor's intent is unrecoverable, so ViEmoSpeech has no "HRA vs assigned emotion"
+  metric available and must treat every label as perceived-only. Mitigation: ViEmoSpeech's
+  human/teacher labels <em>are</em> the perceived-emotion majority (their maj-vote), so report <strong>IAR
+  (α+MASI) as the honest reliability statistic and never an "accuracy"</strong> — which aligns with the
+  repo invariant "teacher-agreement κ is never reported as accuracy."</li>
+<li><strong>Feature-only release is the ethical/legal substitute for their open audio.</strong> THAI-SER can
+  ship FLAC because 200 adults consented; ViEmoSpeech ships features+timestamps+labels+speaker-ids
+  precisely because the drama actors did <strong>not</strong> consent to a research corpus and the media is
+  copyrighted. The THAI-SER contrast is the cleanest way to explain <em>why</em> ViEmoSpeech's release is
+  shaped the way it is — it is the same corpus category (acted/dramatic emotional speech) minus
+  the consent/ownership that would permit media release.</li>
+<li><strong>Frustration ambiguity is a warning for the distress proxy (V-F).</strong> Their most-confused class
+  (frustrated, ~62% HRA, blends into angry+sad) shows that low-arousal negative affect is
+  perceptually unstable even for attentive human raters on clean audio. ViEmoSpeech's <strong>distress
+  flag</strong> (acted-drama proxy, recall-floor objective) is in the same perceptual danger zone —
+  expect low human agreement on the distress boundary and design the recall-floor + soft-label
+  treatment accordingly, rather than assuming a crisp distress label exists.</li>
+</ul>
+<h3 id="limitations-open-questions-for-viemospeech">Limitations &amp; open questions for ViEmoSpeech</h3>
+<ul>
+<li><strong>Contradiction vs IEMOCAP / vs ViEmoSpeech's found-speech premise (§5.2.1, Table 13):</strong>
+  THAI-SER finds <strong>scripted &gt; improvised</strong> (WA 73.99 vs 61.80), the <em>reverse</em> of IEMOCAP's
+  finding that improvised/natural speech trains better SER models. Their explanation — fixed
+  sentences give cleaner labels — cuts <em>against</em> ViEmoSpeech's core bet that found <em>natural</em> drama
+  speech is worth the legal complexity. ViEmoSpeech must answer this directly: is found natural
+  speech more valuable (richer, in-the-wild) or is it just noisier-labeled data that a scripted
+  acted corpus would beat? The honest position is that ViEmoSpeech trades label cleanliness for
+  ecological validity and the tone×emotion measurement, and must <em>show</em> the natural-speech
+  advantage, not assume it.</li>
+<li><strong>Contradiction vs vn-08/vn-10 baseline optimism:</strong> THAI-SER's clean acted 5-class ceiling is
+  <strong>WA ~60 / UA ~58</strong> under a <em>proper speaker-disjoint</em> split; vn-08 (86.6%) and vn-10 (0.87)
+  report far higher on Vietnamese under speaker-leaky protocols. This is corroborating evidence
+  that those VN numbers are inflated and that ViEmoSpeech's speaker-disjoint 7-class results will
+  look "worse" while being more honest — the THAI-SER number is the fair-comparison anchor.</li>
+<li><strong>The tonal-corpus that skips tone (gap vs V-D / vs Shen vn-06):</strong> as above — THAI-SER never
+  measures tone×emotion despite motivating on tonality. Open question ViEmoSpeech owns: does the
+  scripted-vs-improvised acoustic difference interact with tone-contour realization under
+  emotion? THAI-SER has the data (tone-balanced scripted sentences) but never asked.</li>
+<li><strong>Hard-filtering discards half the corpus (§4.2.1, §6.4):</strong> their 0.71 cut drops 27,854→14,182.
+  ViEmoSpeech cannot copy this at its current scale; the open question they flag (soft labels /
+  low-agreement curriculum, Lotfian&amp;Busso 2019b) is the better path for a data-scarce found
+  corpus — ViEmoSpeech should treat this as a to-solve, not a solved recipe.</li>
+<li><strong>Also worth noting — EMOLA (Thai TV-drama "Lakorn" emotional corpus, found via search):</strong> a
+  prior Thai attempt at <em>found dramatic</em> emotional speech exists, i.e. the found-drama route is
+  not unprecedented even in Thai; ViEmoSpeech should scan EMOLA's license/release choices as an
+  additional V-H comparator (not read here; flagged for follow-up).</li>
+</ul></article>
+</div></body></html>
