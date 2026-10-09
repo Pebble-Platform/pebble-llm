@@ -2,7 +2,7 @@
 series playlist, into data/vietnamese-ser/raw/<series>/epNN[_P].<ext> (gitignored).
 
 Robust to playlists in reverse / arbitrary order: the episode id is parsed from each
-video TITLE ("Tập N" or "Tập N.P"), never from playlist position — these playlists
+video TITLE ("Tập N", "Tập N.P", or the English "Episode N"), never from playlist position — these playlists
 list the newest/last part first (e.g. "Về nhà đi con" lists Tập 85 first, Tập 01 last;
 "Chạy trốn thanh xuân" lists Tập 1.1 last).
 
@@ -34,7 +34,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-TITLE_RE = re.compile(r"Tập\s+0*(\d+(?:\.\d+)*)", re.IGNORECASE)
+# VieON Original mixes languages inside ONE playlist ("Episode 7" next to
+# "Tập 8"), so both spellings have to resolve to the same episode key.
+TITLE_RE = re.compile(r"(?:Tập|Episode)\s+0*(\d+(?:\.\d+)*)", re.IGNORECASE)
 
 
 def part_id(s: str) -> tuple[int, ...]:

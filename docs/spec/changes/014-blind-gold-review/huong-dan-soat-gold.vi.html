@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi"><meta charset="utf-8">
+<title>Hướng dẫn soát nhãn — ViEmoSpeech</title>
+<style>
+  @page{size:A4;margin:11mm 12mm}
+  *{box-sizing:border-box}
+  body{font:11.2pt/1.46 "Segoe UI",system-ui,sans-serif;color:#172033;margin:0}
+  h1{font-size:17.5pt;margin:0 0 1mm}
+  .sub{color:#667085;font-size:9.2pt;margin-bottom:3.5mm}
+  h2{font-size:11pt;margin:0 0 1.5mm;color:#167344;text-transform:uppercase;letter-spacing:.4px}
+  section{margin-bottom:3.2mm}
+  ol,ul{margin:0;padding-left:4.6mm}
+  li{margin-bottom:1.1mm}
+  b{color:#0b2a1a}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+  table{border-collapse:collapse;width:100%;font-size:9.6pt}
+  td{border-bottom:1px solid #e4e8ee;padding:1.25mm 1.4mm;vertical-align:top}
+  td:first-child{white-space:nowrap;font-weight:700;width:26mm}
+  .key{border-left:3.5px solid}
+  .joy{border-color:#f59e0b}.sad{border-color:#3b82f6}.ang{border-color:#ef4444}
+  .fea{border-color:#8b5cf6}.sur{border-color:#ec4899}.dis{border-color:#22c55e}.neu{border-color:#64748b}
+  .box{border:1px solid #d7dce3;border-radius:2mm;padding:2.2mm 2.8mm;background:#f8fafc}
+  .warn{border-color:#f0c36d;background:#fffbeb}
+  .foot{margin-top:3.5mm;padding-top:2.2mm;border-top:1px solid #d7dce3;color:#667085;font-size:9pt}
+  .step{font-size:10.6pt}
+</style>
+
+<h1>Hướng dẫn soát nhãn cảm xúc — ViEmoSpeech</h1>
+<div class="sub">Màn soát gold (<code>gold.html</code>) · phiên bản 1 · 2026-09-11 · định nghĩa đầy đủ 7 nhãn xem <i>Hướng dẫn gán nhãn cảm xúc</i></div>
+
+<section>
+  <h2>1 · Đăng nhập</h2>
+  Mở link được gửi riêng cho anh/chị → nhập <b>User name</b> và <b>Password</b> do người phụ trách cấp.
+  Góc trên bên trái hiện <code>User: … · 12/1071</code> = số clip đã soát / tổng. Đóng tab rồi mở lại
+  <b>tiếp đúng chỗ đang dở</b>, không mất gì.
+</section>
+
+<section>
+  <h2>2 · Mỗi clip làm 5 bước</h2>
+  <ol class="step">
+    <li><b>Nghe hết đoạn.</b> Các nút bị mờ cho tới khi audio chạy hết <i>một lần</i> — đó là cố ý.
+        Sau đó nghe lại bao nhiêu lần cũng được, không giới hạn thời gian.</li>
+    <li><b>Chọn 1 trong 7 nhãn.</b> Màn này <b>không hiển thị nhãn của người gán trước</b> —
+        không có đáp án nào giấu sẵn để dò. Chọn cảm xúc anh/chị <i>nghe thấy</i>.</li>
+    <li><b>Bấm “Xác nhận nhãn”.</b> Sau bước này nhãn <b>khoá lại, không đổi được nữa</b> —
+        và Valence / Arousal mới hiện ra. Thứ tự này là cố ý: biết trước hai thang đó sẽ làm lệch
+        chính phán đoán chúng tôi cần.</li>
+    <li><b>Soát thông tin.</b> Valence · Arousal · Giới tính · Tuổi · Vùng miền hiện ở dạng chỉ đọc.
+        Thấy <b>sai</b> thì bấm <b>“Sửa”</b> rồi chỉnh; thấy đúng thì để nguyên.</li>
+    <li><b>Bấm “Lưu”</b> → tự nhảy sang clip kế. <b>Không quay lại clip đã lưu được</b>, nên xem lại
+        một lượt trước khi bấm.</li>
+  </ol>
+</section>
+
+<div class="cols">
+  <section>
+    <h2>3 · Bảy nhãn trên màn hình</h2>
+    <table>
+      <tr><td class="key joy">vui</td><td>Vui, thích thú, hào hứng, âu yếm, trêu đùa</td></tr>
+      <tr><td class="key sad">buồn</td><td>Buồn, thất vọng, tủi thân, đau lòng, nản</td></tr>
+      <tr><td class="key ang">tức giận</td><td>Giận, cáu, quát mắng, gắt gỏng, đe dọa</td></tr>
+      <tr><td class="key fea">sợ / lo âu</td><td>Sợ hãi, hoảng loạn, lo lắng, van xin</td></tr>
+      <tr><td class="key sur">ngạc nhiên</td><td>Ngạc nhiên, sững sờ, không tin nổi</td></tr>
+      <tr><td class="key dis">ghê tởm</td><td>Ghê tởm, khinh bỉ, chán ghét, mỉa mai cay độc</td></tr>
+      <tr><td class="key neu">trung tính</td><td>Nói chuyện bình thường, không màu cảm xúc rõ</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4 · Hai thang điểm</h2>
+    <table>
+      <tr><td>Valence</td><td>1 rất tiêu cực → 3 trung tính → 5 rất tích cực</td></tr>
+      <tr><td>Arousal</td><td>1 rất bình thản → 3 trung bình → 5 rất kích động</td></tr>
+    </table>
+    <div style="margin-top:1.8mm">
+      <h2>5 · Khi nào bấm “Loại”</h2>
+      Clip <b>không dùng được</b>: nhiều người nói chồng lên nhau · tiếng ồn/nhạc át giọng ·
+      cắt hụt đầu hoặc cuối câu · không phải tiếng người.
+      Bấm <b>Loại</b> → nhập <b>lý do</b> (bắt buộc) → <b>Xác nhận loại</b>.
+      <b>Đừng</b> dùng “Loại” chỉ vì khó chọn cảm xúc.
+    </div>
+  </section>
+</div>
+
+<section class="box warn">
+  <h2 style="color:#a16207">Ba điều quan trọng nhất</h2>
+  <ul>
+    <li><b>Chọn cái anh/chị THẬT SỰ nghe thấy.</b> Không có đáp án đúng giấu sẵn. Hai người nghe ra
+        hai cảm xúc khác nhau thì <i>cả hai đều không sai</i> — chính khoảng chênh đó là dữ liệu cần đo.</li>
+    <li><b>Đừng bàn với người soát khác.</b> Bàn rồi thống nhất là hỏng cả phép đo, phải bỏ cả vòng.</li>
+    <li><b>Nghe giọng, đừng chỉ đọc chữ.</b> Câu thoại hiện trên màn hình chỉ để tham khảo; tín hiệu
+        chính là <i>cách nói</i> — ngữ điệu, nhịp, giọng run/nghẹn/gắt, tiếng thở, tiếng khóc.</li>
+  </ul>
+</section>
+
+<div class="foot">
+  Xong việc (hoặc rời máy) → bấm <b>Đăng xuất</b> ở góc trên bên phải. · Nội dung phim có cảnh cãi vã,
+  quát mắng, khóc, hoảng sợ — đều là diễn xuất, nhưng nghe nhiều vẫn mệt: nghỉ giải lao, và dừng bất cứ
+  lúc nào nếu thấy không thoải mái. · Vướng gì nhắn người phụ trách.
+</div>

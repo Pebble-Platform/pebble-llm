@@ -1,7 +1,7 @@
 @echo off
 setlocal
 set PORT=%~1
-if not defined PORT set PORT=8001
+if not defined PORT set PORT=8421
 set SCRIPT_DIR=%~dp0
 for %%I in (%SCRIPT_DIR%..\..) do set REPO_ROOT=%%~fI
 set PYTHON=%REPO_ROOT%\.venv-vnser\Scripts\python.exe

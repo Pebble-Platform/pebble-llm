@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Đặc trưng cảm xúc trong audio</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --faint:#8c959f; --line:#d8dee4;
+    --accent:#2563eb; --s1:#2563eb; --s2:#c2410c; --ok:#1a7f37; --warn:#bc4c00;
+    --code:#eef1f4; --grid:#e6e9ed; --okbg:rgba(26,127,55,.07); --qbg:rgba(37,99,235,.06);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+      --accent:#589bff; --s1:#3b82f6; --s2:#e0702a; --ok:#3fb950; --warn:#f0883e;
+      --code:#1c2128; --grid:#21262d; --okbg:rgba(63,185,80,.10); --qbg:rgba(88,155,255,.08);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+    --accent:#589bff; --s1:#3b82f6; --s2:#e0702a; --ok:#3fb950; --warn:#f0883e;
+    --code:#1c2128; --grid:#21262d; --okbg:rgba(63,185,80,.10); --qbg:rgba(88,155,255,.08);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:32px 80px}
+  header{border-bottom:2px solid var(--line);padding-bottom:16px}
+  h1{font-size:28px;line-height:1.3;margin:0 0 8px;text-wrap:balance}
+  h2{font-size:22px;margin:48px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+  h2 small{display:block;font-size:13px;font-weight:700;color:var(--accent);
+    text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+  h3{font-size:16px;margin:22px 0 4px}
+  p,li{margin:8px 0}
+  .sub{color:var(--muted);font-size:14px}
+  a{color:var(--accent)}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;
+    font-family:"SF Mono",Consolas,monospace}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:15px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:13px;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ci{color:var(--muted);font-size:13px;white-space:nowrap}
+  .up{color:var(--ok);font-weight:700}
+  .flat{color:var(--warn);font-weight:700}
+  .q{background:var(--qbg);border-radius:8px;padding:12px 16px;margin:10px 0 4px}
+  .q p{margin:4px 0}
+  .ans{background:var(--okbg);border:1px solid var(--ok);border-radius:10px;padding:12px 18px;margin:18px 0}
+  .ans b.t{color:var(--ok)}
+  .ans p{margin:4px 0}
+  .warnbox{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .warnbox p{margin:4px 0}
+  .summary{display:grid;gap:10px;margin:18px 0;padding:0;list-style:none;counter-reset:s}
+  .summary li{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:12px 16px 12px 52px;position:relative;margin:0}
+  .summary li::before{counter-increment:s;content:counter(s);position:absolute;left:16px;top:12px;
+    width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--panel);
+    font-weight:700;font-size:14px;text-align:center;line-height:24px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .tile .k{font-size:13px;color:var(--muted)}
+  .tile .v{font-size:26px;font-weight:700;line-height:1.3}
+  .tile p{margin:0;font-size:14px;color:var(--muted)}
+  figure{margin:16px 0;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:14px 16px 10px}
+  .fig-title{font-weight:600;font-size:15px;margin:0}
+  figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:6px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+  .sw.dash{height:0;border-top:2px dashed var(--faint);background:none}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  svg text{fill:var(--muted);font-size:12px;font-family:inherit}
+  svg .lbl{fill:var(--ink);font-size:13px}
+  svg .strong{fill:var(--ink);font-weight:700;font-size:13px}
+  details{margin:12px 0}
+  summary{cursor:pointer;color:var(--accent);font-weight:600}
+  .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:13px;
+    padding:6px 9px;border-radius:6px;line-height:1.4;max-width:280px;z-index:10}
+  @media (max-width:560px){ h1{font-size:23px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Trong âm thanh có gì cho biết cảm xúc, và dùng nó thế nào cho tốt nhất?</h1>
+  <div class="sub">ViEmoSpeech · change 015 · 1324 clip từ 2 phim · phân tích chạy từ commit
+    <code>f52d7b8</code></div>
+</header>
+
+<h2><small>Tóm tắt</small>Ba câu hỏi, ba câu trả lời</h2>
+<ol class="summary">
+  <li><b>Âm thanh cho biết cảm xúc <i>mạnh hay yếu</i>, gần như không cho biết <i>tích cực hay tiêu cực</i>.</b>
+    Cao độ và độ to giọng tăng rõ theo mức kích động. Với vui/buồn, tín hiệu rất yếu.</li>
+  <li><b>Lấy thông tin ở tầng giữa của WavLM tốt hơn tầng cuối đang dùng.</b>
+    Điểm tăng từ 0.261 lên 0.296, và mức tăng này đáng tin.</li>
+  <li><b>Bỏ hoặc gộp các lớp khó (ghê/khinh, ngạc nhiên) không làm model tốt hơn.</b>
+    Con số trông tăng chỉ vì bài kiểm tra trở nên dễ hơn.</li>
+</ol>
+
+<h2><small>Trước khi đọc</small>Dữ liệu và cách chấm điểm</h2>
+<p><b>Dữ liệu:</b> 1324 đoạn thoại ngắn cắt từ 2 phim truyền hình Việt (chay-tron-thanh-xuan, ve-nha-di-con). Mỗi
+đoạn được người gán một trong 7 cảm xúc (trung tính 367 · giận 251 · vui 234 · sợ / lo 131 · buồn 156 · ghê / khinh 103 · ngạc nhiên 82), cùng hai điểm 1–5:</p>
+<ul>
+  <li><b>Arousal</b> (mức kích động): bình thản → kích động mạnh.</li>
+  <li><b>Valence</b> (cực tính): tiêu cực → tích cực.</li>
+</ul>
+<p><b>Cách chấm:</b> model học trên một phim rồi bị kiểm tra trên phim kia, với dàn diễn viên khác hẳn.
+Như vậy model không thể "nhớ giọng" người quen, và điểm số phản ánh khả năng tổng quát thật.</p>
+<p><b>Điểm số chính:</b> macro-F1, từ 0 đến 1, là trung bình độ chính xác của từng cảm xúc (lớp hiếm
+được tính ngang lớp phổ biến). Đoán ngẫu nhiên được khoảng 0.13. Với valence và arousal (điểm
+1–5) dùng <b>CCC</b>, cũng từ 0 đến 1: 0 là không đoán được gì, 1 là đoán trúng hoàn toàn.</p>
+
+<h2><small>Câu hỏi 1</small>Những đặc trưng âm thanh quen thuộc nói gì về cảm xúc?</h2>
+<div class="q">
+  <p><b>Vì sao hỏi:</b> trước khi dùng model "hộp đen", cần biết những thứ đo được bằng tay, như cao độ,
+  độ to, độ rung của giọng, có mang cảm xúc không, và mang loại thông tin nào.</p>
+  <p><b>Đã làm:</b> đo 88 đặc trưng âm học chuẩn (bộ eGeMAPS) cho mọi đoạn. Mỗi đặc trưng được so với
+  giọng cùng giới và cùng lứa tuổi, để không nhầm "giọng nữ cao" với "đang kích động". Sau đó xem mỗi đặc
+  trưng đi cùng chiều với arousal và valence đến mức nào (hệ số tương quan ρ: 0 là không liên quan,
+  ±1 là hoàn toàn cùng chiều hoặc ngược chiều).</p>
+</div>
+
+<h3>Kết quả 1a: cao độ và độ to đi theo mức kích động</h3>
+<figure>
+  <p class="fig-title">Cao độ và độ to giọng theo từng cảm xúc (so với trung bình giọng cùng giới, cùng tuổi)</p>
+  <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>cao độ (F0)</span>
+    <span><i class="sw" style="background:var(--s2)"></i>độ to</span></div>
+  <svg id="fig1" role="img" aria-label="Cao độ và độ to theo cảm xúc"></svg>
+  <figcaption>Giận và sợ: giọng cao và to hơn bình thường. Ngạc nhiên: cao hơn nhưng không to hơn.
+  Trung tính và buồn: thấp và nhỏ hơn.
+  Tương quan với arousal: cao độ ρ = +0.55, độ to ρ = +0.53, đúng như các nghiên cứu trước.</figcaption>
+</figure>
+
+<h3>Kết quả 1b: với valence (tích cực / tiêu cực), tín hiệu rất yếu</h3>
+<div class="tiles">
+  <div class="tile"><div class="k">Đặc trưng mạnh nhất với arousal</div><div class="v">ρ 0.56</div>
+    <p>tín hiệu rõ</p></div>
+  <div class="tile"><div class="k">Đặc trưng mạnh nhất với valence</div><div class="v">ρ 0.20</div>
+    <p>yếu hơn gần 3 lần</p></div>
+  <div class="tile"><div class="k">Còn lại sau khi trừ phần arousal</div><div class="v">ρ -0.18</div>
+    <p>chỉ có độ rung giọng (jitter)</p></div>
+</div>
+<p>Một phần tín hiệu valence thực ra là arousal "lọt sang": trong nhãn, đoạn kích động thường bị chấm
+valence thấp (giận, sợ), hai điểm tương quan ρ = -0.19. Khi trừ phần đó ra, chỉ <b>jitter</b> (độ rung
+không đều của dây thanh) còn giữ tín hiệu, từ -0.20 xuống -0.18. Dùng cả 88 đặc trưng để dự đoán
+valence ở phim còn lại thì điểm gần bằng 0 (CCC = 0.00).</p>
+
+<div class="ans"><p><b class="t">Trả lời câu 1:</b> âm thanh cho biết cảm xúc <b>mạnh hay yếu</b>, nhưng gần
+như không cho biết <b>tích cực hay tiêu cực</b>. Muốn đoán valence tốt, cần thêm nguồn khác ngoài âm
+thanh, ví dụ lời thoại.</p></div>
+
+<h2><small>Câu hỏi 2</small>Để model tự học, nên lấy thông tin ở tầng nào?</h2>
+<div class="q">
+  <p><b>Vì sao hỏi:</b> model hiện tại dùng WavLM, một mạng có 24 tầng đã được huấn luyện trước trên rất
+  nhiều giọng nói, và đang lấy thông tin ở <b>tầng cuối cùng</b>. Nhưng tầng cuối thường chuyên về "nói chữ
+  gì", trong khi cảm xúc có thể nằm ở tầng giữa.</p>
+  <p><b>Đã làm:</b> thử từng tầng (0 đến 24), cùng một cách học đơn giản, cùng cách chấm. Để công bằng, tầng
+  "tốt nhất" được chọn <b>chỉ bằng phim dùng để học</b>, không nhìn phim kiểm tra.</p>
+</div>
+
+<figure>
+  <p class="fig-title">Điểm macro-F1 khi lấy thông tin ở từng tầng của WavLM</p>
+  <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>điểm theo tầng (dải mờ = khoảng tin cậy 95%)</span>
+    <span><i class="sw dash"></i>mốc so sánh</span></div>
+  <svg id="fig2" role="img" aria-label="macro-F1 theo tầng WavLM"></svg>
+  <figcaption>Điểm tăng dần đến khoảng tầng 9–15 rồi giảm về tầng cuối. Rê chuột lên biểu đồ để xem điểm
+  từng tầng.</figcaption>
+</figure>
+
+<div class="scroll"><table>
+  <thead><tr><th>Cách lấy thông tin</th><th class="num">macro-F1</th><th class="num">CCC valence</th></tr></thead>
+  <tbody>
+    <tr><td>Tầng cuối (đang dùng)</td><td class="num">0.261</td><td class="num">0.08</td></tr>
+    <tr><td><b>Tầng chọn bằng phim học</b></td><td class="num"><b>0.296</b></td><td class="num">0.12</td></tr>
+    <tr><td>88 đặc trưng thủ công (câu 1)</td><td class="num">0.229</td><td class="num">0.00</td></tr>
+  </tbody>
+</table></div>
+<p>Chênh lệch giữa tầng chọn và tầng cuối là <b>+0.035</b>, khoảng tin cậy 95% [+0.014, +0.056], và
+chênh lệch ở từng lần trong 10 lần chạy lại nằm trong [+0.010, +0.040]. Mức này vượt ngưỡng "đáng kể" 0.02 đã đặt trước khi chạy, nên là
+cải thiện thật. Khi học trên chay-tron-thanh-xuan, tầng được chọn gần như luôn là <b>16</b>.</p>
+
+<div class="ans"><p><b class="t">Trả lời câu 2:</b> nên lấy thông tin ở <b>tầng giữa</b> của WavLM thay vì
+tầng cuối. Đây là cải thiện rẻ nhất có thể: không cần thêm dữ liệu, chỉ đổi chỗ lấy. Valence vẫn thấp
+(0.08 → 0.12), khớp với câu 1.</p></div>
+
+<h2><small>Câu hỏi 3</small>Bỏ hoặc gộp các cảm xúc khó có làm model tốt hơn không?</h2>
+<div class="q">
+  <p><b>Vì sao hỏi:</b> model gần như không nhận ra <b>ghê/khinh</b> (F1 0.07) và <b>ngạc nhiên</b>
+  (F1 0.09). Người gán nhãn cũng hay bất đồng ở hai lớp này. Nếu bỏ hoặc gộp chúng, các cảm xúc còn
+  lại có được nhận tốt hơn không?</p>
+  <p><b>Đã làm:</b> dùng tầng tốt từ câu 2, thử hai cách: (a) bỏ hẳn hai lớp, còn 5 cảm xúc, 1139 đoạn;
+  (b) gộp ghê/khinh vào giận, còn 6 cảm xúc.</p>
+</div>
+
+<div class="warnbox">
+  <p><b>Cái bẫy cần tránh:</b> bỏ hai lớp thì điểm nhảy từ 0.277 lên 0.407. Nhưng đó là vì bài kiểm
+  tra dễ hơn (ít lựa chọn hơn, bỏ đúng hai lớp khó nhất), không phải vì model giỏi hơn. So sánh đúng là:
+  chấm <b>model cũ và model mới trên cùng những đoạn đó, cùng những cảm xúc đó</b>.</p>
+</div>
+
+<div class="scroll"><table>
+  <thead><tr><th>Cách thử</th><th class="num">Model cũ (7 lớp)</th><th class="num">Model mới</th>
+    <th class="num">Chênh lệch [khoảng tin cậy]</th><th>Đáng kể?</th></tr></thead>
+  <tbody>
+    <tr><td>(a) Bỏ ghê/khinh + ngạc nhiên</td><td class="num">0.394</td><td class="num">0.407</td><td class="num">+0.013 <span class="ci">[+0.001, +0.026]</span></td><td><span class="flat">không</span></td></tr>
+    <tr><td>(b) Gộp ghê/khinh vào giận</td><td class="num">0.318</td><td class="num">0.328</td><td class="num">+0.010 <span class="ci">[-0.002, +0.023]</span></td><td><span class="flat">không</span></td></tr>
+  </tbody>
+</table></div>
+<p>Cả hai chênh lệch đều dưới ngưỡng 0.02: các cảm xúc còn lại gần như không được nhận tốt hơn.</p>
+
+<h3>Vì sao gộp vào "giận" không giúp</h3>
+<figure>
+  <p class="fig-title">Những đoạn được gán "ghê/khinh" bị model và người soát lại gọi là gì</p>
+  <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>model (103 đoạn)</span>
+    <span><i class="sw" style="background:var(--s2)"></i>người soát lại mù (28 đoạn)</span></div>
+  <svg id="fig3" role="img" aria-label="Đoạn ghê/khinh được gọi là gì"></svg>
+  <figcaption>Chỉ khoảng 23% (model) và 36% (người) gọi chúng là "giận"; phần còn lại rải sang
+  trung tính, buồn, vui. Ghê/khinh trong hai phim này chủ yếu là nói giọng bình thường mà nội dung khinh
+  bỉ, nên nhận ra qua lời nói hơn là qua âm thanh, đúng như câu 1.</figcaption>
+</figure>
+<p>Điều thay đổi thật khi bỏ hai lớp là <b>độ đồng thuận của người gán nhãn</b>: hệ số κ tăng từ 0.51
+(7 lớp) lên 0.62 (5 lớp), còn gộp chỉ lên 0.54 (đo trên 343 đoạn được hai người gán độc lập). Một
+phần là vì những đoạn khó nhất cũng bị bỏ theo.</p>
+
+<div class="ans"><p><b class="t">Trả lời câu 3:</b> <b>không</b>, đổi bộ cảm xúc không làm model tốt hơn.
+Lý do chính đáng duy nhất để bỏ hai lớp này là nhãn của chúng kém tin cậy. Nếu muốn, có thể giữ 7 lớp
+trong dữ liệu và báo cáo thêm kết quả 5 lớp, nhưng cần một kế hoạch đo riêng.</p></div>
+
+<h2><small>Kết luận</small>Việc nên làm tiếp</h2>
+<ol class="summary">
+  <li><b>Đổi model hiện tại sang lấy thông tin ở tầng giữa của WavLM</b> (cải thiện đã chứng minh,
+    0.261 → 0.296).</li>
+  <li><b>Thêm nguồn ngoài âm thanh cho valence</b>, như lời thoại hoặc thanh điệu (hướng của change 013),
+    vì âm thanh một mình không đủ.</li>
+  <li><b>Xem lại hướng dẫn gán nhãn cho ghê/khinh và ngạc nhiên</b>, thay vì bỏ chúng khỏi model.</li>
+</ol>
+
+<h2><small>Phụ lục</small>Giới hạn và chi tiết kỹ thuật</h2>
+<h3>Giới hạn cần nhớ</h3>
+<ul>
+  <li>Nhãn chủ yếu do một người gán, độ đồng thuận với người thứ hai κ = 0.51. Các con số là thử nghiệm,
+    chưa phải kết quả chính thức.</li>
+  <li>Tiếng Việt có thanh điệu: cao độ và chất giọng vừa mang thanh điệu vừa mang cảm xúc. Chưa có nhãn
+    thanh điệu theo âm tiết để tách hai thứ này.</li>
+  <li>Chỉ có giọng miền Bắc. Đặc trưng chỉ được chuẩn hoá theo giới và tuổi, nên khác biệt thu âm giữa hai
+    phim vẫn còn.</li>
+</ul>
+<h3>Phần nào đã đặt kế hoạch trước, phần nào không</h3>
+<ul>
+  <li><b>Câu 1 và câu 2</b> theo kế hoạch đo đã chốt và commit trước khi chạy
+    (<code>docs/spec/changes/015-emotion-acoustic-features/preregistration.md</code>). Ba giả thuyết của
+    câu 1: <ul><li>H1a: đúng</li><li>H1b: đúng</li><li>H1c: đúng</li></ul></li>
+  <li><b>Phần "trừ arousal" ở câu 1 và toàn bộ câu 3</b> là phân tích thêm, làm sau khi đã thấy kết quả, chỉ
+    dùng để định hướng.</li>
+  <li>Câu 3 ở tầng cuối cho kết luận giống hệt: bỏ lớp 0.356 → 0.359, gộp lớp 0.296 → 0.292.</li>
+</ul>
+<h3>Cách đo</h3>
+<ul>
+  <li>Chuẩn hoá theo nhóm giới × tuổi: female/young_adult 661 · male/young_adult 335 · female/middle_aged 187 · male/middle_aged 115 · male/senior 25.</li>
+  <li>Model: một lớp tuyến tính trên đặc trưng WavLM đã đóng băng, 10 lần chạy với khởi tạo khác nhau
+    rồi gộp. Khoảng tin cậy và chênh lệch tính bằng bootstrap ghép cặp 1000 lần.</li>
+  <li>Tầng được chọn bằng phim học, theo từng lần chạy. Học trên chay-tron-thanh-xuan: 16, 16, 16, 16, 16, 16, 16, 16, 13, 16. Học trên
+    ve-nha-di-con (chỉ 3 tập, nên dao động): 12, 21, 13, 13, 23, 13, 8, 12, 14, 11.</li>
+</ul>
+<details><summary>Bảng điểm đủ 25 tầng</summary>
+<div class="scroll"><table>
+  <thead><tr><th>Tầng</th><th class="num">macro-F1 (học 1 phim, thử phim kia)</th>
+    <th class="num">macro-F1 (trộn 2 phim, lạc quan)</th><th class="num">CCC valence</th>
+    <th class="num">CCC arousal</th></tr></thead>
+  <tbody><tr><td>tầng 0</td><td class="num">0.180 <span class="ci">[0.160, 0.198]</span></td><td class="num">0.269</td><td class="num">0.083</td><td class="num">0.122</td></tr><tr><td>tầng 1</td><td class="num">0.231 <span class="ci">[0.209, 0.252]</span></td><td class="num">0.320</td><td class="num">0.097</td><td class="num">0.103</td></tr><tr><td>tầng 2</td><td class="num">0.236 <span class="ci">[0.214, 0.255]</span></td><td class="num">0.323</td><td class="num">0.077</td><td class="num">0.105</td></tr><tr><td>tầng 3</td><td class="num">0.258 <span class="ci">[0.236, 0.277]</span></td><td class="num">0.335</td><td class="num">0.095</td><td class="num">0.119</td></tr><tr><td>tầng 4</td><td class="num">0.262 <span class="ci">[0.238, 0.284]</span></td><td class="num">0.362</td><td class="num">0.115</td><td class="num">0.109</td></tr><tr><td>tầng 5</td><td class="num">0.269 <span class="ci">[0.248, 0.289]</span></td><td class="num">0.354</td><td class="num">0.117</td><td class="num">0.104</td></tr><tr><td>tầng 6</td><td class="num">0.272 <span class="ci">[0.251, 0.293]</span></td><td class="num">0.368</td><td class="num">0.114</td><td class="num">0.086</td></tr><tr><td>tầng 7</td><td class="num">0.280 <span class="ci">[0.257, 0.302]</span></td><td class="num">0.373</td><td class="num">0.102</td><td class="num">0.103</td></tr><tr><td>tầng 8</td><td class="num">0.285 <span class="ci">[0.263, 0.305]</span></td><td class="num">0.368</td><td class="num">0.104</td><td class="num">0.105</td></tr><tr><td>tầng 9</td><td class="num">0.293 <span class="ci">[0.269, 0.314]</span></td><td class="num">0.386</td><td class="num">0.090</td><td class="num">0.115</td></tr><tr><td>tầng 10</td><td class="num">0.291 <span class="ci">[0.268, 0.313]</span></td><td class="num">0.379</td><td class="num">0.102</td><td class="num">0.104</td></tr><tr><td>tầng 11</td><td class="num">0.314 <span class="ci">[0.290, 0.338]</span></td><td class="num">0.391</td><td class="num">0.093</td><td class="num">0.109</td></tr><tr><td>tầng 12</td><td class="num">0.298 <span class="ci">[0.274, 0.321]</span></td><td class="num">0.386</td><td class="num">0.108</td><td class="num">0.114</td></tr><tr><td>tầng 13</td><td class="num">0.287 <span class="ci">[0.264, 0.310]</span></td><td class="num">0.386</td><td class="num">0.112</td><td class="num">0.108</td></tr><tr><td>tầng 14</td><td class="num">0.299 <span class="ci">[0.277, 0.323]</span></td><td class="num">0.388</td><td class="num">0.116</td><td class="num">0.119</td></tr><tr><td>tầng 15</td><td class="num">0.296 <span class="ci">[0.272, 0.317]</span></td><td class="num">0.392</td><td class="num">0.115</td><td class="num">0.112</td></tr><tr><td>tầng 16</td><td class="num">0.277 <span class="ci">[0.255, 0.299]</span></td><td class="num">0.376</td><td class="num">0.111</td><td class="num">0.113</td></tr><tr><td>tầng 17</td><td class="num">0.281 <span class="ci">[0.258, 0.302]</span></td><td class="num">0.366</td><td class="num">0.108</td><td class="num">0.112</td></tr><tr><td>tầng 18</td><td class="num">0.275 <span class="ci">[0.253, 0.297]</span></td><td class="num">0.378</td><td class="num">0.102</td><td class="num">0.106</td></tr><tr><td>tầng 19</td><td class="num">0.299 <span class="ci">[0.274, 0.322]</span></td><td class="num">0.376</td><td class="num">0.107</td><td class="num">0.111</td></tr><tr><td>tầng 20</td><td class="num">0.276 <span class="ci">[0.252, 0.299]</span></td><td class="num">0.375</td><td class="num">0.112</td><td class="num">0.108</td></tr><tr><td>tầng 21</td><td class="num">0.282 <span class="ci">[0.257, 0.304]</span></td><td class="num">0.382</td><td class="num">0.109</td><td class="num">0.118</td></tr><tr><td>tầng 22</td><td class="num">0.280 <span class="ci">[0.257, 0.302]</span></td><td class="num">0.385</td><td class="num">0.100</td><td class="num">0.114</td></tr><tr><td>tầng 23</td><td class="num">0.281 <span class="ci">[0.257, 0.304]</span></td><td class="num">0.369</td><td class="num">0.091</td><td class="num">0.102</td></tr><tr><td>tầng 24 (đang dùng)</td><td class="num">0.261 <span class="ci">[0.237, 0.282]</span></td><td class="num">0.361</td><td class="num">0.082</td><td class="num">0.095</td></tr></tbody>
+</table></div>
+</details>
+<details><summary>Bảng đủ 88 đặc trưng âm học (xếp theo tương quan với arousal)</summary>
+<div class="scroll"><table>
+  <thead><tr><th>Nhóm</th><th>Đặc trưng</th><th class="num">ρ arousal</th><th class="num">ρ valence</th>
+    <th class="num">ε² (phân biệt 7 lớp)</th></tr></thead>
+  <tbody><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_percentile80.0</code></td><td class="num">+0.562</td><td class="num">-0.162</td><td class="num">0.192</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_amean</code></td><td class="num">+0.551</td><td class="num">-0.151</td><td class="num">0.173</td></tr><tr><td>prosody</td><td><code>loudness_sma3_percentile80.0</code></td><td class="num">+0.551</td><td class="num">-0.181</td><td class="num">0.151</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_percentile50.0</code></td><td class="num">+0.545</td><td class="num">-0.161</td><td class="num">0.171</td></tr><tr><td>prosody</td><td><code>loudness_sma3_amean</code></td><td class="num">+0.533</td><td class="num">-0.160</td><td class="num">0.137</td></tr><tr><td>prosody</td><td><code>loudness_sma3_pctlrange0-2</code></td><td class="num">+0.525</td><td class="num">-0.190</td><td class="num">0.144</td></tr><tr><td>spectral</td><td><code>spectralFlux_sma3_amean</code></td><td class="num">+0.524</td><td class="num">-0.203</td><td class="num">0.148</td></tr><tr><td>spectral</td><td><code>spectralFluxV_sma3nz_amean</code></td><td class="num">+0.524</td><td class="num">-0.198</td><td class="num">0.147</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_percentile20.0</code></td><td class="num">+0.517</td><td class="num">-0.134</td><td class="num">0.149</td></tr><tr><td>spectral</td><td><code>mfcc2V_sma3nz_amean</code></td><td class="num">-0.494</td><td class="num">+0.104</td><td class="num">0.161</td></tr><tr><td>spectral</td><td><code>mfcc2_sma3_amean</code></td><td class="num">-0.470</td><td class="num">+0.096</td><td class="num">0.153</td></tr><tr><td>prosody</td><td><code>loudness_sma3_percentile50.0</code></td><td class="num">+0.464</td><td class="num">-0.139</td><td class="num">0.104</td></tr><tr><td>prosody</td><td><code>loudness_sma3_meanRisingSlope</code></td><td class="num">+0.452</td><td class="num">-0.185</td><td class="num">0.117</td></tr><tr><td>spectral</td><td><code>alphaRatioV_sma3nz_amean</code></td><td class="num">+0.451</td><td class="num">-0.092</td><td class="num">0.154</td></tr><tr><td>prosody</td><td><code>equivalentSoundLevel_dBp</code></td><td class="num">+0.448</td><td class="num">-0.172</td><td class="num">0.085</td></tr><tr><td>spectral</td><td><code>mfcc1V_sma3nz_amean</code></td><td class="num">-0.427</td><td class="num">+0.127</td><td class="num">0.134</td></tr><tr><td>prosody</td><td><code>loudness_sma3_meanFallingSlope</code></td><td class="num">+0.395</td><td class="num">-0.169</td><td class="num">0.096</td></tr><tr><td>spectral</td><td><code>hammarbergIndexV_sma3nz_amean</code></td><td class="num">-0.387</td><td class="num">+0.057</td><td class="num">0.133</td></tr><tr><td>spectral</td><td><code>F3amplitudeLogRelF0_sma3nz_stddevNorm</code></td><td class="num">-0.376</td><td class="num">+0.144</td><td class="num">0.123</td></tr><tr><td>spectral</td><td><code>F1frequency_sma3nz_amean</code></td><td class="num">+0.373</td><td class="num">-0.151</td><td class="num">0.096</td></tr><tr><td>spectral</td><td><code>mfcc4V_sma3nz_amean</code></td><td class="num">-0.372</td><td class="num">+0.156</td><td class="num">0.098</td></tr><tr><td>prosody</td><td><code>loudness_sma3_stddevRisingSlope</code></td><td class="num">+0.370</td><td class="num">-0.136</td><td class="num">0.071</td></tr><tr><td>spectral</td><td><code>mfcc3V_sma3nz_amean</code></td><td class="num">-0.365</td><td class="num">+0.112</td><td class="num">0.084</td></tr><tr><td>spectral</td><td><code>F2amplitudeLogRelF0_sma3nz_stddevNorm</code></td><td class="num">-0.362</td><td class="num">+0.143</td><td class="num">0.107</td></tr><tr><td>spectral</td><td><code>mfcc3_sma3_amean</code></td><td class="num">-0.352</td><td class="num">+0.151</td><td class="num">0.087</td></tr><tr><td>spectral</td><td><code>mfcc4_sma3_amean</code></td><td class="num">-0.350</td><td class="num">+0.173</td><td class="num">0.096</td></tr><tr><td>voice quality</td><td><code>logRelF0-H1-A3_sma3nz_amean</code></td><td class="num">-0.333</td><td class="num">+0.050</td><td class="num">0.118</td></tr><tr><td>spectral</td><td><code>mfcc1V_sma3nz_stddevNorm</code></td><td class="num">+0.323</td><td class="num">-0.170</td><td class="num">0.085</td></tr><tr><td>spectral</td><td><code>slopeV0-500_sma3nz_amean</code></td><td class="num">+0.322</td><td class="num">-0.142</td><td class="num">0.066</td></tr><tr><td>spectral</td><td><code>spectralFluxUV_sma3nz_amean</code></td><td class="num">+0.317</td><td class="num">-0.122</td><td class="num">0.061</td></tr><tr><td>voice quality</td><td><code>logRelF0-H1-A3_sma3nz_stddevNorm</code></td><td class="num">+0.313</td><td class="num">-0.116</td><td class="num">0.097</td></tr><tr><td>prosody</td><td><code>loudness_sma3_stddevFallingSlope</code></td><td class="num">+0.310</td><td class="num">-0.141</td><td class="num">0.065</td></tr><tr><td>voice quality</td><td><code>HNRdBACF_sma3nz_stddevNorm</code></td><td class="num">+0.310</td><td class="num">-0.182</td><td class="num">0.111</td></tr><tr><td>spectral</td><td><code>hammarbergIndexV_sma3nz_stddevNorm</code></td><td class="num">+0.303</td><td class="num">-0.131</td><td class="num">0.064</td></tr><tr><td>spectral</td><td><code>F3amplitudeLogRelF0_sma3nz_amean</code></td><td class="num">+0.299</td><td class="num">-0.144</td><td class="num">0.082</td></tr><tr><td>spectral</td><td><code>F2amplitudeLogRelF0_sma3nz_amean</code></td><td class="num">+0.293</td><td class="num">-0.141</td><td class="num">0.076</td></tr><tr><td>spectral</td><td><code>alphaRatioV_sma3nz_stddevNorm</code></td><td class="num">-0.286</td><td class="num">+0.061</td><td class="num">0.055</td></tr><tr><td>spectral</td><td><code>mfcc1_sma3_amean</code></td><td class="num">-0.285</td><td class="num">+0.093</td><td class="num">0.068</td></tr><tr><td>prosody</td><td><code>loudness_sma3_percentile20.0</code></td><td class="num">+0.282</td><td class="num">-0.028</td><td class="num">0.041</td></tr><tr><td>spectral</td><td><code>F1bandwidth_sma3nz_stddevNorm</code></td><td class="num">+0.273</td><td class="num">-0.147</td><td class="num">0.053</td></tr><tr><td>spectral</td><td><code>mfcc3V_sma3nz_stddevNorm</code></td><td class="num">-0.244</td><td class="num">+0.087</td><td class="num">0.040</td></tr><tr><td>spectral</td><td><code>slopeV500-1500_sma3nz_amean</code></td><td class="num">+0.235</td><td class="num">-0.066</td><td class="num">0.057</td></tr><tr><td>spectral</td><td><code>alphaRatioUV_sma3nz_amean</code></td><td class="num">+0.221</td><td class="num">-0.055</td><td class="num">0.048</td></tr><tr><td>spectral</td><td><code>mfcc4V_sma3nz_stddevNorm</code></td><td class="num">+0.220</td><td class="num">-0.091</td><td class="num">0.039</td></tr><tr><td>prosody</td><td><code>MeanVoicedSegmentLengthSec</code></td><td class="num">+0.200</td><td class="num">-0.099</td><td class="num">0.028</td></tr><tr><td>spectral</td><td><code>slopeUV0-500_sma3nz_amean</code></td><td class="num">+0.198</td><td class="num">-0.107</td><td class="num">0.029</td></tr><tr><td>spectral</td><td><code>F1amplitudeLogRelF0_sma3nz_stddevNorm</code></td><td class="num">-0.189</td><td class="num">+0.106</td><td class="num">0.043</td></tr><tr><td>spectral</td><td><code>slopeV0-500_sma3nz_stddevNorm</code></td><td class="num">-0.188</td><td class="num">+0.039</td><td class="num">0.025</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_stddevFallingSlope</code></td><td class="num">+0.184</td><td class="num">-0.151</td><td class="num">0.043</td></tr><tr><td>voice quality</td><td><code>shimmerLocaldB_sma3nz_stddevNorm</code></td><td class="num">-0.179</td><td class="num">+0.110</td><td class="num">0.041</td></tr><tr><td>prosody</td><td><code>StddevVoicedSegmentLengthSec</code></td><td class="num">+0.178</td><td class="num">-0.128</td><td class="num">0.030</td></tr><tr><td>spectral</td><td><code>F1frequency_sma3nz_stddevNorm</code></td><td class="num">+0.177</td><td class="num">-0.077</td><td class="num">0.023</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_meanFallingSlope</code></td><td class="num">+0.176</td><td class="num">-0.167</td><td class="num">0.044</td></tr><tr><td>spectral</td><td><code>F2frequency_sma3nz_amean</code></td><td class="num">+0.174</td><td class="num">-0.085</td><td class="num">0.029</td></tr><tr><td>spectral</td><td><code>F1bandwidth_sma3nz_amean</code></td><td class="num">-0.174</td><td class="num">+0.022</td><td class="num">0.022</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_pctlrange0-2</code></td><td class="num">+0.165</td><td class="num">-0.113</td><td class="num">0.054</td></tr><tr><td>spectral</td><td><code>mfcc2_sma3_stddevNorm</code></td><td class="num">-0.158</td><td class="num">-0.008</td><td class="num">0.024</td></tr><tr><td>spectral</td><td><code>mfcc2V_sma3nz_stddevNorm</code></td><td class="num">-0.153</td><td class="num">-0.035</td><td class="num">0.023</td></tr><tr><td>spectral</td><td><code>F1amplitudeLogRelF0_sma3nz_amean</code></td><td class="num">+0.151</td><td class="num">-0.096</td><td class="num">0.033</td></tr><tr><td>spectral</td><td><code>mfcc4_sma3_stddevNorm</code></td><td class="num">+0.142</td><td class="num">-0.056</td><td class="num">0.035</td></tr><tr><td>prosody</td><td><code>VoicedSegmentsPerSec</code></td><td class="num">-0.133</td><td class="num">+0.062</td><td class="num">0.014</td></tr><tr><td>voice quality</td><td><code>jitterLocal_sma3nz_stddevNorm</code></td><td class="num">+0.132</td><td class="num">-0.087</td><td class="num">0.023</td></tr><tr><td>voice quality</td><td><code>jitterLocal_sma3nz_amean</code></td><td class="num">+0.130</td><td class="num">-0.196</td><td class="num">0.055</td></tr><tr><td>spectral</td><td><code>hammarbergIndexUV_sma3nz_amean</code></td><td class="num">-0.120</td><td class="num">-0.005</td><td class="num">0.036</td></tr><tr><td>spectral</td><td><code>F2frequency_sma3nz_stddevNorm</code></td><td class="num">-0.104</td><td class="num">+0.011</td><td class="num">0.018</td></tr><tr><td>prosody</td><td><code>StddevUnvoicedSegmentLength</code></td><td class="num">-0.086</td><td class="num">+0.024</td><td class="num">0.015</td></tr><tr><td>spectral</td><td><code>slopeV500-1500_sma3nz_stddevNorm</code></td><td class="num">-0.080</td><td class="num">-0.005</td><td class="num">0.010</td></tr><tr><td>spectral</td><td><code>F3frequency_sma3nz_stddevNorm</code></td><td class="num">-0.075</td><td class="num">+0.070</td><td class="num">0.013</td></tr><tr><td>spectral</td><td><code>mfcc1_sma3_stddevNorm</code></td><td class="num">+0.075</td><td class="num">-0.071</td><td class="num">0.021</td></tr><tr><td>spectral</td><td><code>mfcc3_sma3_stddevNorm</code></td><td class="num">-0.071</td><td class="num">+0.051</td><td class="num">0.024</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_stddevNorm</code></td><td class="num">+0.069</td><td class="num">-0.096</td><td class="num">0.034</td></tr><tr><td>prosody</td><td><code>loudnessPeaksPerSec</code></td><td class="num">+0.067</td><td class="num">-0.035</td><td class="num">0.027</td></tr><tr><td>prosody</td><td><code>MeanUnvoicedSegmentLength</code></td><td class="num">-0.061</td><td class="num">+0.044</td><td class="num">0.016</td></tr><tr><td>voice quality</td><td><code>HNRdBACF_sma3nz_amean</code></td><td class="num">+0.061</td><td class="num">+0.067</td><td class="num">0.026</td></tr><tr><td>spectral</td><td><code>F3bandwidth_sma3nz_amean</code></td><td class="num">-0.056</td><td class="num">+0.004</td><td class="num">0.010</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope</code></td><td class="num">-0.054</td><td class="num">-0.022</td><td class="num">0.010</td></tr><tr><td>spectral</td><td><code>F3frequency_sma3nz_amean</code></td><td class="num">+0.054</td><td class="num">-0.067</td><td class="num">0.032</td></tr><tr><td>voice quality</td><td><code>logRelF0-H1-H2_sma3nz_amean</code></td><td class="num">+0.052</td><td class="num">-0.051</td><td class="num">0.021</td></tr><tr><td>spectral</td><td><code>slopeUV500-1500_sma3nz_amean</code></td><td class="num">-0.044</td><td class="num">+0.008</td><td class="num">0.011</td></tr><tr><td>prosody</td><td><code>F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope</code></td><td class="num">-0.033</td><td class="num">-0.047</td><td class="num">0.009</td></tr><tr><td>prosody</td><td><code>loudness_sma3_stddevNorm</code></td><td class="num">-0.032</td><td class="num">-0.028</td><td class="num">0.006</td></tr><tr><td>spectral</td><td><code>spectralFlux_sma3_stddevNorm</code></td><td class="num">-0.031</td><td class="num">-0.002</td><td class="num">0.012</td></tr><tr><td>voice quality</td><td><code>logRelF0-H1-H2_sma3nz_stddevNorm</code></td><td class="num">-0.029</td><td class="num">+0.060</td><td class="num">0.010</td></tr><tr><td>spectral</td><td><code>F2bandwidth_sma3nz_stddevNorm</code></td><td class="num">-0.025</td><td class="num">+0.018</td><td class="num">0.009</td></tr><tr><td>spectral</td><td><code>F2bandwidth_sma3nz_amean</code></td><td class="num">+0.019</td><td class="num">-0.072</td><td class="num">0.013</td></tr><tr><td>spectral</td><td><code>spectralFluxV_sma3nz_stddevNorm</code></td><td class="num">+0.018</td><td class="num">-0.016</td><td class="num">0.010</td></tr><tr><td>spectral</td><td><code>F3bandwidth_sma3nz_stddevNorm</code></td><td class="num">+0.017</td><td class="num">+0.000</td><td class="num">0.008</td></tr><tr><td>voice quality</td><td><code>shimmerLocaldB_sma3nz_amean</code></td><td class="num">-0.010</td><td class="num">-0.052</td><td class="num">0.007</td></tr></tbody>
+</table></div>
+</details>
+<p class="sub">Nguồn số liệu: <code>docs/reports/015/metrics.json</code> (<code>analyze_emotion_features.py</code>),
+  <code>docs/reports/015/classset.json</code> (<code>classset_015.py</code>), κ từ
+  <code>docs/reports/014/kappa.md</code>. Trang được sinh bởi <code>render_015_report.py</code>, không có
+  số nào gõ tay.</p>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const DATA = {"fig1": [{"e": "anger", "vi": "giận", "f0": 0.5918137520501296, "ld": 0.5695038678826563}, {"e": "surprise", "vi": "ngạc nhiên", "f0": 0.4593854193353157, "ld": -0.04536884186953476}, {"e": "fear_anxiety", "vi": "sợ / lo", "f0": 0.37862644413442004, "ld": 0.18537763508993224}, {"e": "joy", "vi": "vui", "f0": -0.13700243734467976, "ld": -0.14744062368177302}, {"e": "disgust", "vi": "ghê / khinh", "f0": -0.201296754318681, "ld": -0.15401855444732604}, {"e": "sadness", "vi": "buồn", "f0": -0.4685610760291701, "ld": -0.4446639197065887}, {"e": "neutral", "vi": "trung tính", "f0": -0.5612122052737303, "ld": -0.4783553320979872}], "fig2": [{"l": 0, "f1": 0.1795556245986573, "ci": [0.16026764608121372, 0.19781286292567124]}, {"l": 1, "f1": 0.23123959653838336, "ci": [0.20901131062865203, 0.25235707545175495]}, {"l": 2, "f1": 0.23561709010731763, "ci": [0.2141290189027985, 0.2549284626697916]}, {"l": 3, "f1": 0.2576713875325046, "ci": [0.23588216841288248, 0.2767455439349328]}, {"l": 4, "f1": 0.26155120131752063, "ci": [0.23755356024694174, 0.28371324282873933]}, {"l": 5, "f1": 0.2691501652268479, "ci": [0.24799893806848217, 0.28933643497993045]}, {"l": 6, "f1": 0.2724314298705718, "ci": [0.25137015367205706, 0.2931024563251113]}, {"l": 7, "f1": 0.27956410401933857, "ci": [0.25672289821437955, 0.3015338493413095]}, {"l": 8, "f1": 0.28456034138213365, "ci": [0.2627072355049001, 0.3049828196122974]}, {"l": 9, "f1": 0.2926231914925169, "ci": [0.269321663818767, 0.3138287944705439]}, {"l": 10, "f1": 0.2909235594154609, "ci": [0.2681937865635359, 0.31311515851031824]}, {"l": 11, "f1": 0.3135259509959606, "ci": [0.2901031871450927, 0.33772715718432117]}, {"l": 12, "f1": 0.2978777092531671, "ci": [0.27436067876299824, 0.32130106882967774]}, {"l": 13, "f1": 0.28743120911773357, "ci": [0.26407299886106184, 0.30957612620339314]}, {"l": 14, "f1": 0.2990916712202864, "ci": [0.2766919276228476, 0.32273139205782925]}, {"l": 15, "f1": 0.29550805451768614, "ci": [0.27173311895357555, 0.31717334813258563]}, {"l": 16, "f1": 0.27696763968823374, "ci": [0.2545795891232052, 0.2986320500480692]}, {"l": 17, "f1": 0.28085789451102683, "ci": [0.2584500144367789, 0.301631345862473]}, {"l": 18, "f1": 0.2751173475871022, "ci": [0.25298581556982946, 0.29740731163276446]}, {"l": 19, "f1": 0.29864128855230554, "ci": [0.27449643875740265, 0.3218179534346364]}, {"l": 20, "f1": 0.27606148036765144, "ci": [0.2524105568986559, 0.29850790093258794]}, {"l": 21, "f1": 0.28196949907721686, "ci": [0.2567821870860923, 0.3042411232352095]}, {"l": 22, "f1": 0.2795411498693224, "ci": [0.25740880086968415, 0.3023541624845447]}, {"l": 23, "f1": 0.2811189207665396, "ci": [0.25707227132396276, 0.3036903984610569]}, {"l": 24, "f1": 0.26073323785829666, "ci": [0.23717851196193632, 0.2821903227334314]}], "sel": 0.29621675557423377, "egp": 0.22883599566810314, "fig3": [{"e": "neutral", "vi": "trung tính", "m": 0.24271844660194175, "h": 0.2857142857142857}, {"e": "anger", "vi": "giận", "m": 0.23300970873786409, "h": 0.35714285714285715}, {"e": "sadness", "vi": "buồn", "m": 0.23300970873786409, "h": 0.07142857142857142}, {"e": "fear_anxiety", "vi": "sợ / lo", "m": 0.0970873786407767, "h": 0.03571428571428571}, {"e": "joy", "vi": "vui", "m": 0.08737864077669903, "h": 0.07142857142857142}, {"e": "disgust", "vi": "ghê / khinh", "m": 0.05825242718446602, "h": 0.07142857142857142}, {"e": "surprise", "vi": "ngạc nhiên", "m": 0.04854368932038835, "h": 0.10714285714285714}], "nm": 103, "nh": 28};
+(function () {
+  const NS = "http://www.w3.org/2000/svg", tip = document.getElementById("tip");
+  function moveTip(e) {
+    let x = e.clientX + 14, y = e.clientY + 14;
+    if (x + tip.offsetWidth > innerWidth - 8) x = e.clientX - tip.offsetWidth - 14;
+    if (y + tip.offsetHeight > innerHeight - 8) y = e.clientY - tip.offsetHeight - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function bindTip(el, html) {
+    el.addEventListener("pointerenter", e => { tip.innerHTML = html; tip.hidden = false; moveTip(e); });
+    el.addEventListener("pointermove", moveTip);
+    el.addEventListener("pointerleave", () => { tip.hidden = true; });
+  }
+  function el(tag, attrs, parent) {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function text(p, x, y, s, a) { const t = el("text", Object.assign({x, y}, a || {}), p); t.textContent = s; return t; }
+  const sg = v => (v >= 0 ? "+" : "") + v.toFixed(2), GRID = "var(--grid)", BASE = "var(--faint)";
+
+  // grouped horizontal bars, zero-centred: rows of {vi, a, b}
+  function pairedBars(id, rows, ka, kb, lim, ticks, fmt, tipf) {
+    const svg = document.getElementById(id), W = 720, L = 120, R = 46, rowH = 34;
+    const H = 26 + rows.length * rowH + 6, x0 = lim[0] < 0 ? L + (W - L - R) * (-lim[0]) / (lim[1] - lim[0]) : L;
+    const sc = (W - L - R) / (lim[1] - lim[0]);
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    ticks.forEach(t => {
+      const x = x0 + t * sc;
+      el("line", {x1: x, x2: x, y1: 20, y2: H - 4, stroke: t === 0 ? BASE : GRID}, svg);
+      text(svg, x, 13, fmt(t), {"text-anchor": "middle"});
+    });
+    rows.forEach((r, i) => {
+      const y = 26 + i * rowH;
+      text(svg, L - 10, y + 18, r.vi, {"text-anchor": "end", class: "lbl"});
+      [[ka, "var(--s1)", 4], [kb, "var(--s2)", 16]].forEach(([k, c, dy]) => {
+        const v = r[k], w = Math.max(Math.abs(v) * sc, 1.5);
+        el("rect", {x: v >= 0 ? x0 : x0 - w, y: y + dy, width: w, height: 11, rx: 2, fill: c}, svg);
+      });
+      const hit = el("rect", {x: 0, y, width: W, height: rowH, fill: "transparent"}, svg);
+      bindTip(hit, tipf(r));
+    });
+  }
+  pairedBars("fig1", DATA.fig1, "f0", "ld", [-0.8, 0.8], [-0.8, -0.4, 0, 0.4, 0.8], sg,
+    r => `<b>${r.vi}</b> (${r.e})<br>cao độ ${sg(r.f0)}<br>độ to ${sg(r.ld)}<br><span style="opacity:.8">đơn vị: độ lệch chuẩn so với giọng cùng nhóm</span>`);
+  pairedBars("fig3", DATA.fig3, "m", "h", [0, 0.4], [0, 0.1, 0.2, 0.3, 0.4], t => Math.round(t * 100) + "%",
+    r => `<b>${r.vi}</b><br>model ${Math.round(r.m * 100)}% · người ${Math.round(r.h * 100)}%`);
+
+  // layer curve
+  (function () {
+    const svg = document.getElementById("fig2"), W = 720, L = 44, R = 170, T = 12, B = 34, H = 290;
+    const lo = 0.15, hi = 0.35, xs = l => L + l * (W - L - R) / 24, ys = v => T + (hi - v) / (hi - lo) * (H - T - B);
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    for (let v = 0.15; v <= 0.3501; v += 0.05) {
+      el("line", {x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: GRID}, svg);
+      text(svg, L - 6, ys(v) + 4, v.toFixed(2), {"text-anchor": "end"});
+    }
+    for (let l = 0; l <= 24; l += 4) text(svg, xs(l), H - 16, l, {"text-anchor": "middle"});
+    text(svg, (L + W - R) / 2, H, "tầng của WavLM (0 = đầu vào, 24 = tầng cuối)", {"text-anchor": "middle"});
+    const c = DATA.fig2;
+    el("polygon", {points: c.map(p => `${xs(p.l)},${ys(p.ci[1])}`).concat(c.slice().reverse().map(p => `${xs(p.l)},${ys(p.ci[0])}`)).join(" "),
+      fill: "var(--s1)", opacity: .14}, svg);
+    el("polyline", {points: c.map(p => `${xs(p.l)},${ys(p.f1)}`).join(" "), fill: "none", stroke: "var(--s1)",
+      "stroke-width": 2.5, "stroke-linejoin": "round"}, svg);
+    [[DATA.sel, "tầng chọn bằng phim học", "strong"], [DATA.egp, "88 đặc trưng thủ công", ""]].forEach(([v, s, cl]) => {
+      el("line", {x1: L, x2: W - R, y1: ys(v), y2: ys(v), stroke: BASE, "stroke-dasharray": "5 4"}, svg);
+      text(svg, W - R + 8, ys(v) + 4, `${s} ${v.toFixed(3)}`, {class: cl});
+    });
+    const last = c[24];
+    el("circle", {cx: xs(24), cy: ys(last.f1), r: 5.5, fill: "var(--s1)", stroke: "var(--panel)", "stroke-width": 2}, svg);
+    text(svg, W - R + 8, ys(last.f1) + 4, `tầng cuối (đang dùng) ${last.f1.toFixed(3)}`, {class: "lbl"});
+    const cross = el("line", {y1: T, y2: H - B, stroke: BASE, visibility: "hidden"}, svg), step = (W - L - R) / 24;
+    c.forEach(p => {
+      const hit = el("rect", {x: xs(p.l) - step / 2, y: T, width: step, height: H - T - B, fill: "transparent"}, svg);
+      hit.addEventListener("pointerenter", () => { cross.setAttribute("x1", xs(p.l)); cross.setAttribute("x2", xs(p.l)); cross.setAttribute("visibility", "visible"); });
+      hit.addEventListener("pointerleave", () => cross.setAttribute("visibility", "hidden"));
+      bindTip(hit, `<b>tầng ${p.l}</b>${p.l === 24 ? " (đang dùng)" : ""}<br>macro-F1 ${p.f1.toFixed(3)}<br>khoảng tin cậy [${p.ci[0].toFixed(3)}, ${p.ci[1].toFixed(3)}]`);
+    });
+  })();
+})();
+</script>
+</body>
+</html>

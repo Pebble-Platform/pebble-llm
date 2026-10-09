@@ -1,8 +1,20 @@
 # Change 015 — Đặc trưng âm học của cảm xúc (eGeMAPS + probe theo layer WavLM)
 
-- **Status:** **draft (2026-09-27)** — script trích đặc trưng đã có và đã smoke-test;
-  [`preregistration.md`](preregistration.md) **chưa đông cứng** (3 quyết định chờ owner,
-  §"Cần owner quyết"). Chưa chạy phân tích nào, chưa có số.
+- **Status:** **xong 2026-09-28.** Pre-registration đông cứng và commit ở `f52d7b8` trước
+  khi chạy; phân tích chạy từ đúng commit đó. Báo cáo: `docs/reports/015/`
+  (`egemaps_stats.md`, `layer_probe.md`, `metrics.json`).
+- **Kết quả (theo quy tắc chốt trước):**
+  - H1a **đúng**: arousal ρ +0.551 với F0 trung bình, +0.533 với loudness.
+  - H1b **đúng**: max |ρ| valence 0.203 so với arousal 0.562.
+  - H1c **đúng**: jitter ρ −0.196 và HNR stddevNorm ρ −0.182 với valence.
+  - §5: Δ macro-F1 (ℓ\* − 24) LOSO = **+0.035 [+0.014, +0.056]**, cả 10 seed dương ⇒
+    **layer chọn trong fold thắng layer 24**. Hành động: một change sau đổi feature của
+    kernel baseline.
+- **Khám phá thêm, ngoài pre-registration:** nhãn V–A tương quan ρ −0.194, nên phần lớn
+  tương quan valence của các đặc trưng chỉ là arousal lọt qua. Sau khi kiểm soát arousal
+  (partial ρ), jitter còn **−0.176** và HNR stddevNorm còn −0.131; các cột chất giọng
+  khác |ρ| < 0.09. Probe eGeMAPS-88 cho CCC valence LOSO −0.001: tín hiệu valence này
+  không đủ để dự đoán chéo series.
 - **Owner:** user / Claude
 - **Depends on:** [004](../004-vnser-training/README.md) (baseline dùng layer cuối của
   WavLM) · [012](../012-label-quality-ablation/preregistration.md) (head, seed, cách gộp

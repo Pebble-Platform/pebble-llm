@@ -142,9 +142,6 @@ flowchart TD
   F --> G["G · κ human–human<br/>⛔ ĐANG CHẶN"]
   G --> H["H · Huấn luyện + đánh giá<br/>🔄 có baseline"]
   H --> I["I · Viết bài báo<br/>⬜ Chưa"]
-  C["C · ADR-003 phương pháp gán nhãn ✅"] -.-> F
-  D["D · Công cụ gán nhãn owner ✅"] -.-> F
-  E["E · Related work — 29 PDF ✅"] -.-> I
   style G stroke:#bc4c00,stroke-width:3px
 ```
 
@@ -152,9 +149,6 @@ flowchart TD
 |---|---|---|---|
 | **A** | Pipeline trích xuất (video → clip sạch) | ✅ **Xong** — chạy local + kernel Kaggle | `docs/spec/capabilities/extraction-pipeline.md` |
 | **B** | Trích corpus 2 bộ phim | ✅ **Xong 3.775 clip** | đĩa `data/vietnamese-ser/episodes/` |
-| **C** | Chốt phương pháp gán nhãn (bỏ weak-supervision) | ✅ **Chốt** ADR-003 (2026-07-07) | `docs/spec/decisions/ADR-003-*.md` |
-| **D** | Công cụ gán nhãn cho chủ nhiệm (owner) | ✅ **Xong** + 6 vòng cải tiến (change 003–010) | `tools/labeler/` |
-| **E** | Related work | ✅ **Xong** — 29 PDF đọc sâu toàn văn + bản dịch tiếng Việt + 18 trang review HTML | `docs/papers/`, `docs/survey-review/` |
 | **F** | Gán nhãn người | 🔄 **Đang chạy — 926/3.775 clip (~25%)** | `state.db`, truy vấn 2026-08-01 |
 | **G** | Công cụ đa-annotator + đo κ human–human | ✅ **Công cụ xong** · ⛔ **chờ người thật** | change 011 — chi tiết §3.1 |
 | **H** | Huấn luyện + đánh giá | 🔄 **Đã có baseline audio-only trên nhãn người**; benchmark 6 phương pháp: harness xong, chưa chạy | `docs/spec/capabilities/training-baseline.md` |

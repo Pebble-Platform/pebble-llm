@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soát audio ViEmoSpeech</title>
+<!-- Template for build_inspect_page.py. The generated copy (data/vietnamese-ser/inspect/)
+     embeds transcripts and points at local clips: LOCAL ONLY, never commit or upload. -->
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --faint:#8c959f; --line:#d8dee4;
+    --accent:#2563eb; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700; --code:#eef1f4;
+    --okbg:rgba(26,127,55,.10); --badbg:rgba(207,34,46,.09); --warnbg:rgba(154,103,0,.10);
+    --sel:rgba(37,99,235,.10);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+      --accent:#589bff; --ok:#3fb950; --bad:#f85149; --warn:#d29922; --code:#1c2128;
+      --okbg:rgba(63,185,80,.13); --badbg:rgba(248,81,73,.12); --warnbg:rgba(210,153,34,.13);
+      --sel:rgba(88,155,255,.14);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+    --accent:#589bff; --ok:#3fb950; --bad:#f85149; --warn:#d29922; --code:#1c2128;
+    --okbg:rgba(63,185,80,.13); --badbg:rgba(248,81,73,.12); --warnbg:rgba(210,153,34,.13);
+    --sel:rgba(88,155,255,.14);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:1400px;margin:0 auto;padding-inline:20px;padding-block:24px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  h2{font-size:15px;margin:22px 0 8px}
+  .sub{color:var(--muted);font-size:13px}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:12.5px;font-family:Consolas,"SF Mono",monospace}
+  .warnline{margin:10px 0 0;padding:8px 12px;border-radius:6px;background:var(--warnbg);color:var(--ink);font-size:13px}
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:150px}
+  .stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+  .stat span{color:var(--muted);font-size:12px}
+  .top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  button.chip{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:20px;padding:2px 10px;cursor:pointer}
+  button.chip[aria-pressed="true"]{background:var(--sel);border-color:var(--accent)}
+  button.chip b{font-variant-numeric:tabular-nums}
+  .cm{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .cm th,.cm td{padding:4px 7px;text-align:center;border:1px solid var(--line)}
+  .cm th{color:var(--muted);font-weight:600}
+  .cm th.r{text-align:left}
+  .cm td{cursor:pointer}
+  .cm td.d{font-weight:700}
+  .cm td.on{outline:2px solid var(--accent);outline-offset:-2px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:end;margin:18px 0 10px}
+  .controls label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--muted)}
+  select,input[type="search"]{font:inherit;font-size:13px;color:var(--ink);background:var(--panel);
+    border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+  input[type="search"]{min-width:220px}
+  button.btn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:6px;padding:4px 10px;cursor:pointer}
+  button:focus-visible,select:focus-visible,input:focus-visible,td:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .scroll{overflow-x:auto}
+  table.rows{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  table.rows th,table.rows td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+  table.rows th{font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);
+    background:rgba(127,127,127,.07);white-space:nowrap}
+  .id{font-family:Consolas,"SF Mono",monospace;font-size:12.5px}
+  .muted{color:var(--muted);font-size:12px}
+  .num{font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:0 8px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+  .p-ok{background:var(--okbg);color:var(--ok)}
+  .p-bad{background:var(--badbg);color:var(--bad)}
+  .p-na{background:rgba(127,127,127,.12);color:var(--muted)}
+  .flag{display:inline-block;margin:0 4px 4px 0;padding:0 7px;border-radius:4px;font-size:11.5px;
+    background:var(--warnbg);color:var(--warn);white-space:nowrap}
+  audio{width:220px;height:32px;display:block}
+  .text{max-width:300px;font-size:13px}
+  .pager{display:flex;gap:10px;align-items:center;margin:12px 0}
+  @media (max-width:860px){ .top{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Soát audio theo từng giai đoạn</h1>
+  <div class="sub" id="prov"></div>
+  <div class="warnline">Trang này chỉ dùng trên máy này: nó chứa lời thoại và trỏ tới clip phim có bản quyền. Không commit, không upload, không gửi file.</div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="top">
+    <div class="box">
+      <h2 style="margin-top:0">Cờ tự động <span class="muted">(bấm để lọc)</span></h2>
+      <div class="chips" id="flagchips"></div>
+      <p class="muted" id="thr"></p>
+    </div>
+    <div class="box">
+      <h2 style="margin-top:0">Ma trận nhầm <span class="muted" id="cmev"></span> <span class="muted">(bấm ô để lọc)</span></h2>
+      <div class="scroll"><table class="cm" id="cm"></table></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label for="f-ev">Eval
+      <select id="f-ev"><option value="loso">B · khác series (LOSO)</option><option value="gkf">A · cùng series (GroupKFold)</option></select></label>
+    <label for="f-series">Series <select id="f-series"></select></label>
+    <label for="f-emo">Nhãn <select id="f-emo"></select></label>
+    <label for="f-pred">Dự đoán <select id="f-pred"></select></label>
+    <label for="f-status">Kết quả
+      <select id="f-status"><option value="">tất cả</option><option value="ok">đúng</option><option value="bad">sai</option><option value="na">không vào benchmark</option></select></label>
+    <label for="f-flag">Cờ <select id="f-flag"></select></label>
+    <label for="f-q">Tìm (id / lời thoại) <input type="search" id="f-q" placeholder="seg00012, ep03…"></label>
+    <button class="btn" id="reset" type="button">Bỏ lọc</button>
+  </div>
+
+  <div class="pager"><button class="btn" id="prev" type="button">‹ Trước</button><span id="pageinfo" class="muted"></span><button class="btn" id="next" type="button">Sau ›</button></div>
+  <div class="scroll">
+    <table class="rows">
+      <thead><tr><th>Clip</th><th>1 · Trước xử lý<br><span class="muted" style="text-transform:none">mp3 gốc, còn nhạc</span></th><th>2 · Sau xử lý<br><span class="muted" style="text-transform:none">16 kHz mono, đã tách nhạc</span></th><th>3 · Nhãn</th><th>3 · Dự đoán</th><th>Cờ</th><th>Lời thoại</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="pager"><button class="btn" id="prev2" type="button">‹ Trước</button><span id="pageinfo2" class="muted"></span><button class="btn" id="next2" type="button">Sau ›</button></div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const PAGE = 40;
+const E5 = ["neutral", "anger", "joy", "fear_anxiety", "sadness"];
+const ALL_E = ["neutral", "anger", "joy", "fear_anxiety", "sadness", "disgust", "surprise"];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+let page = 0, cmCell = null;
+
+function status(r, ev) {
+  const p = r[ev];
+  if (!p) return "na";
+  return p.e === r.emo ? "ok" : "bad";
+}
+function opt(sel, values, label) {
+  sel.innerHTML = `<option value="">${label}</option>` + values.map((v) => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+}
+
+function setup() {
+  const m = DATA.meta, t = m.thresholds;
+  $("prov").innerHTML = `Nhãn: <code>${esc(m.manifest)}</code> · dự đoán: <code>${esc(m.predictions)}</code>`;
+  $("thr").textContent = `Ngưỡng: ngắn < ${t.short_s}s · dài > ${t.long_s}s · nhỏ tiếng < ${t.quiet_dbfs} dBFS · clipping > ${t.clip_frac * 100}% mẫu · ` +
+    `nhiều im lặng > ${t.silent_frac * 100}% khung · lệch độ dài: clip dài hơn (end − start) một khoảng khác 0 / ${t.pad_s} / ${2 * t.pad_s}s (phần đệm khi cắt), sai số ${t.dur_tol_s}s · thiếu timestamp: start/end của nhãn bằng 0 · giọng mất: clip nhỏ hơn bản gốc quá ${-t.vocal_drop_db} dB. Cờ chỉ để soát, không tự loại clip.`;
+  opt($("f-series"), [...new Set(DATA.rows.map((r) => r.series))].sort(), "tất cả");
+  opt($("f-emo"), ALL_E, "tất cả");
+  opt($("f-pred"), E5, "tất cả");
+  const flagNames = [...new Set(DATA.rows.flatMap((r) => r.flags))].sort();
+  $("f-flag").innerHTML = `<option value="">tất cả</option><option value="*">có ít nhất 1 cờ</option>` +
+    flagNames.map((f) => `<option value="${esc(f)}">${esc(f)}</option>`).join("");
+  $("flagchips").innerHTML = flagNames.length ? flagNames.map((f) =>
+    `<button class="chip" type="button" data-flag="${esc(f)}" aria-pressed="false">${esc(f)} <b>${DATA.rows.filter((r) => r.flags.includes(f)).length}</b></button>`).join("")
+    : '<span class="muted">Không clip nào bị gắn cờ.</span>';
+  $("flagchips").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-flag]");
+    if (!b) return;
+    $("f-flag").value = $("f-flag").value === b.dataset.flag ? "" : b.dataset.flag;
+    page = 0; render();
+  });
+  ["f-ev", "f-series", "f-emo", "f-pred", "f-status", "f-flag"].forEach((id) =>
+    $(id).addEventListener("change", () => { if (id === "f-ev") cmCell = null; page = 0; render(); }));
+  $("f-q").addEventListener("input", () => { page = 0; render(); });
+  $("reset").addEventListener("click", () => {
+    ["f-series", "f-emo", "f-pred", "f-status", "f-flag", "f-q"].forEach((id) => { $(id).value = ""; });
+    cmCell = null; page = 0; render();
+  });
+  for (const [b, d] of [["prev", -1], ["prev2", -1], ["next", 1], ["next2", 1]])
+    $(b).addEventListener("click", () => { page += d; render(); window.scrollTo({top: $("tbody").offsetTop - 80}); });
+}
+
+function filtered() {
+  const ev = $("f-ev").value, s = $("f-series").value, emo = $("f-emo").value, pr = $("f-pred").value;
+  const st = $("f-status").value, fl = $("f-flag").value, q = $("f-q").value.trim().toLowerCase();
+  return DATA.rows.filter((r) =>
+    (!s || r.series === s) && (!emo || r.emo === emo) && (!pr || (r[ev] && r[ev].e === pr)) &&
+    (!st || status(r, ev) === st) && (!fl || (fl === "*" ? r.flags.length : r.flags.includes(fl))) &&
+    (!q || (r.ep + "/" + r.id).toLowerCase().includes(q) || r.text.toLowerCase().includes(q)) &&
+    (!cmCell || (r[ev] && r.emo === cmCell[0] && r[ev].e === cmCell[1])));
+}
+
+function renderStats(ev) {
+  const bench = DATA.rows.filter((r) => r[ev]);
+  const ok = bench.filter((r) => r[ev].e === r.emo).length;
+  const flagged = DATA.rows.filter((r) => r.flags.length).length;
+  $("stats").innerHTML = [
+    [DATA.rows.length, "clip trong manifest"],
+    [bench.length, "clip vào benchmark (5 lớp)"],
+    [(ok / Math.max(bench.length, 1) * 100).toFixed(1) + "%", `dự đoán đúng · ${ev === "loso" ? "eval B" : "eval A"}`],
+    [flagged, "clip có cờ tự động"],
+  ].map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+}
+
+function renderCM(ev) {
+  $("cmev").textContent = ev === "loso" ? "· eval B" : "· eval A";
+  let h = "<tr><th class='r'>nhãn ↓ / dự đoán →</th>" + E5.map((e) => `<th>${e}</th>`).join("") + "</tr>";
+  for (const t of E5) {
+    h += `<tr><th class="r">${t}</th>`;
+    for (const p of E5) {
+      const n = DATA.rows.filter((r) => r[ev] && r.emo === t && r[ev].e === p).length;
+      const on = cmCell && cmCell[0] === t && cmCell[1] === p;
+      h += `<td tabindex="0" data-t="${t}" data-p="${p}" class="${t === p ? "d" : ""} ${on ? "on" : ""}">${n}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("cm").innerHTML = h;
+}
+$("cm").addEventListener("click", (e) => {
+  const td = e.target.closest("td[data-t]");
+  if (!td) return;
+  cmCell = cmCell && cmCell[0] === td.dataset.t && cmCell[1] === td.dataset.p ? null : [td.dataset.t, td.dataset.p];
+  page = 0; render();
+});
+$("cm").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("td[data-t]")) e.target.click(); });
+
+function render() {
+  const ev = $("f-ev").value;
+  renderStats(ev); renderCM(ev);
+  document.querySelectorAll("button[data-flag]").forEach((b) => b.setAttribute("aria-pressed", String($("f-flag").value === b.dataset.flag)));
+  const rows = filtered(), pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  page = Math.min(Math.max(page, 0), pages - 1);
+  const info = `${rows.length} clip · trang ${page + 1}/${pages}`;
+  $("pageinfo").textContent = info; $("pageinfo2").textContent = info;
+  $("tbody").innerHTML = rows.slice(page * PAGE, page * PAGE + PAGE).map((r) => {
+    const p = r[ev], st = status(r, ev);
+    const pill = st === "ok" ? '<span class="pill p-ok">đúng</span>' : st === "bad" ? '<span class="pill p-bad">sai</span>' : '<span class="pill p-na">không vào benchmark</span>';
+    return `<tr>
+      <td><div class="id">${esc(r.ep)}/${esc(r.id)}</div><div class="muted num">${r.t[0].toFixed(1)}–${r.t[1].toFixed(1)}s · ${r.series}${r.fold == null ? "" : " · fold " + r.fold}</div></td>
+      <td><audio controls preload="none" src="${esc(r.orig)}"></audio><div class="muted num">${r.db_orig == null ? "—" : r.db_orig + " dBFS"}</div></td>
+      <td><audio controls preload="none" src="${esc(r.clip)}"></audio><div class="muted num">${r.dur}s · ${r.sr / 1000} kHz · ${r.db} dBFS · đỉnh ${r.peak} · im lặng ${Math.round(r.silent * 100)}%</div></td>
+      <td><b>${esc(r.emo)}</b><div class="muted num">V ${r.val} · A ${r.aro}</div></td>
+      <td>${p ? `<b>${esc(p.e)}</b> ${pill}<div class="muted num">V ${p.v.toFixed(2)} · A ${p.a.toFixed(2)}</div>` : pill}</td>
+      <td>${r.flags.map((f) => `<span class="flag">${esc(f)}</span>`).join("") || '<span class="muted">—</span>'}</td>
+      <td class="text">${esc(r.text)}</td></tr>`;
+  }).join("") || '<tr><td colspan="7" class="muted">Không clip nào khớp bộ lọc.</td></tr>';
+}
+
+setup(); render();
+</script>
+</body>
+</html>

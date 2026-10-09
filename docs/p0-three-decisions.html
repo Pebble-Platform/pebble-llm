@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ba quyết định P0 — ViEmoSpeech</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --line:#d8dee4;
+    --accent:#2563eb; --ok:#1a7f37; --run:#9a6700; --todo:#8250df; --warn:#bc4c00;
+    --code:#eef1f4; --rail:#d8dee4; --gpu:#0f766e; --okbg:rgba(26,127,55,.07);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --line:#2d333b;
+      --accent:#589bff; --ok:#3fb950; --run:#d29922; --todo:#bc8cff; --warn:#f0883e;
+      --code:#1c2128; --rail:#2d333b; --gpu:#2dd4bf; --okbg:rgba(63,185,80,.10);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --line:#2d333b;
+    --accent:#589bff; --ok:#3fb950; --run:#d29922; --todo:#bc8cff; --warn:#f0883e;
+    --code:#1c2128; --rail:#2d333b; --gpu:#2dd4bf; --okbg:rgba(63,185,80,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px;text-wrap:balance}
+  h2{font-size:21px;margin:40px 0 12px;padding-top:14px;border-top:1px solid var(--line);
+    text-wrap:balance}
+  h3{font-size:15.5px;margin:22px 0 8px;color:var(--muted);text-transform:uppercase;
+    letter-spacing:.04em;font-weight:700}
+  p,li{margin:8px 0}
+  .sub{color:var(--muted);font-size:13.5px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;
+    font-family:"SF Mono",Consolas,monospace}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.02em;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .mid{text-align:center}
+  .pass{color:var(--ok);font-weight:700}
+  .fail{color:var(--warn);font-weight:700}
+  .badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1px solid transparent;white-space:nowrap}
+  .b-ok{color:var(--ok);border-color:var(--ok)}
+  .b-block{color:var(--warn);border-color:var(--warn)}
+  .b-gpu{color:var(--gpu);border-color:var(--gpu)}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout p:first-child{margin-top:0}
+  .callout p:last-child{margin-bottom:0}
+  .rec{background:var(--okbg);border:1px solid var(--ok);border-radius:10px;
+    padding:14px 18px;margin:18px 0}
+  .rec h4{margin:0 0 6px;font-size:16px;color:var(--ok)}
+  .rec p:last-child{margin-bottom:0}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+    margin:18px 0;font-size:14px}
+  .toc a{margin-right:16px;white-space:nowrap;display:inline-block}
+  .dec{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+  .dec-id{font-family:"SF Mono",Consolas,monospace;font-weight:700;color:var(--accent)}
+  ul{padding-left:22px}
+  .check{list-style:none;padding-left:0}
+  .check li{position:relative;padding-left:26px;margin:8px 0}
+  .check li::before{content:"";position:absolute;left:2px;top:.45em;width:12px;height:12px;
+    border:1.5px solid var(--rail);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Ba quyết định P0 — phương án &amp; khuyến nghị</h1>
+  <p class="sub">ViEmoSpeech · 2026-09-05 · nguồn:
+  <code>docs/tasks/p0-three-decisions.md</code> ·
+  bối cảnh: <a href="viemospeech-scale-roadmap.html">roadmap</a></p>
+</header>
+
+<nav class="toc">
+  <a href="#tomtat">Tóm tắt</a>
+  <a href="#qd1">1 · Series test</a>
+  <a href="#qd2">2 · Media &amp; compute</a>
+  <a href="#qd3">3 · Quy mô</a>
+  <a href="#dialect">Dialect</a>
+  <a href="#viec">Việc cần làm</a>
+</nav>
+
+<h2 id="tomtat">Tóm tắt khuyến nghị</h2>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>#</th><th>Quyết định</th><th>Khuyến nghị</th><th>Lý do một dòng</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td>Series test</td>
+        <td><strong>Không phải series nào đang có.</strong> Test = series thứ 3,
+        <strong>cùng miền Bắc</strong></td>
+        <td>Cả 2 series hiện tại đều trượt sàn ADR-002 hoặc làm rỗng train set</td></tr>
+    <tr><td class="num">2</td><td>Media / compute</td>
+        <td><strong>CPU local</strong> làm mặc định; thuê GPU rời ~$15–35 nếu cần nhanh.
+        <strong>Không</strong> đưa tập phim đầy đủ lên Kaggle</td>
+        <td>Không có GPU local (đã kiểm); CPU local wall-clock ngang Kaggle mà không phơi nhiễm</td></tr>
+    <tr><td class="num">3</td><td>Quy mô</td>
+        <td><strong>P1 làm mục tiêu, nhưng chia nhỏ</strong>: extract series 3 trước, label
+        tới sàn, rồi quyết tiếp</td>
+        <td>Ràng buộc thật là nhãn người (2–3k), không phải extraction (18k)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <p>Một phát hiện xuyên suốt cả ba: <strong>corpus hiện 100% giọng Bắc</strong>
+  (1.215/1.215 clip), trong khi <code>intent/constraints.md §6</code> cam kết dialect
+  metadata Bắc/Trung/Nam vì “different tone systems”. Xem
+  <a href="#dialect">phần dialect</a>.</p>
+</div>
+
+<h2 id="qd1"><span class="dec-id">QĐ 1</span> · Series nào làm test set?</h2>
+
+<h3>Câu hỏi thật sự</h3>
+<p>ADR-002 đã chốt <strong>phương pháp</strong> (hold out nguyên series) nhưng để mở
+<strong>series nào</strong>. Nó cũng đặt sẵn tiêu chí định lượng: sàn
+<strong>≥50 clip ở lớp emotion hiếm nhất</strong>, target 80–100 trước khi báo per-class
+UAR/macro-F1.</p>
+
+<h3>Dữ liệu thật (đo 2026-09-05 từ <code>state.db</code>)</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>Series</th><th class="num">n sạch</th><th>Lớp hiếm nhất</th>
+    <th class="mid">Sàn ≥50</th><th class="mid">Target ≥80</th></tr></thead>
+  <tbody>
+    <tr><td><code>chay-tron-thanh-xuan</code></td><td class="num">951</td>
+        <td>surprise <strong>62</strong></td>
+        <td class="mid pass">PASS</td><td class="mid fail">FAIL</td></tr>
+    <tr><td><code>ve-nha-di-con</code></td><td class="num">264</td>
+        <td>surprise <strong>10</strong></td>
+        <td class="mid fail">FAIL — thiếu 5×</td><td class="mid fail">FAIL</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Phương án</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>PA</th><th>Nội dung</th><th>Vấn đề</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A</strong></td><td><code>ve-nha-di-con</code> làm test</td>
+        <td><strong>Trượt sàn ADR-002 5 lần.</strong> surprise 10 mẫu ⇒ per-class F1 là
+        nhiễu thuần tuý — đúng cái ablation 012 vừa vấp phải</td></tr>
+    <tr><td><strong>B</strong></td><td><code>chay-tron-thanh-xuan</code> làm test</td>
+        <td>Train còn <strong>264 clip</strong>. Không train nổi cái gì có nghĩa</td></tr>
+    <tr><td><strong>C</strong></td><td>Series thứ 3 làm test</td>
+        <td>Tốn label thêm — nhưng là chi phí <strong>bắt buộc</strong>, không phải phát sinh</td></tr>
+    <tr><td><strong>D</strong></td><td>Hoãn, dùng LOSO 2 chiều như hiện tại</td>
+        <td>LOSO <strong>không phải</strong> test-split, nó là cross-validation. Paper cần
+        một held-out chưa bao giờ được train</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="rec">
+  <h4>✅ Khuyến nghị — PA C: series thứ 3, cùng miền Bắc</h4>
+  <p>Cụ thể: <strong>Sống chung với mẹ chồng</strong> (34 tập, VTV Giải Trí chính thức) —
+  top-1 của <code>05-scale-plan.md §7</code>: dày thoại nhất, gọn, một run kênh chính thức.</p>
+  <p><strong>Vì sao cùng miền Bắc chứ không lấy series miền Nam:</strong> nếu test là giọng
+  Nam còn train là giọng Bắc, con số headline trộn <strong>hai</strong> hiệu ứng — đổi dàn
+  diễn viên (cái ta muốn đo) và đổi hệ thanh điệu (cái khác hẳn). Không tách được thì không
+  diễn giải được.</p>
+</div>
+
+<h3>Ngân sách nhãn cho test set</h3>
+<p>Với tỉ lệ lớp tự nhiên đo được (surprise 5,9% · disgust 8,3%):</p>
+<div class="scroll">
+<table>
+  <thead><tr><th>Mục tiêu</th><th class="num">Clip cần label nếu lấy ngẫu nhiên</th></tr></thead>
+  <tbody>
+    <tr><td>surprise ≥ 50 (sàn)</td><td class="num">~844</td></tr>
+    <tr><td>surprise ≥ 80 (target)</td><td class="num">~1.350</td></tr>
+  </tbody>
+</table>
+</div>
+<p>ADR-002 cho phép <strong>ưu tiên clip để annotate</strong> rồi backfill cân bằng lớp.
+Dùng gợi ý teacher để oversample ứng viên <code>surprise</code>/<code>disgust</code> ⇒ số
+thật thấp hơn nhiều. <strong>Nhưng phải backfill</strong> — không để sampling quyết định
+phân bố lớp cuối.</p>
+
+<div class="callout warn">
+  <p><strong>Kiểm trước khi chốt</strong> (ADR-002 đã nêu): liếc cast series test vs 2
+  series train để chắc không chung diễn viên. Rẻ, 15 phút — đừng tin vào id diarization.</p>
+</div>
+
+<h2 id="qd2"><span class="dec-id">QĐ 2</span> · Media lên Kaggle, hay chạy ở đâu?</h2>
+
+<div class="callout warn">
+  <p><strong>Điều kiện đã thay đổi so với lúc viết <code>05-scale-plan.md §6</code>.</strong>
+  Đã kiểm 2026-09-05: máy này <strong>không có GPU NVIDIA</strong> — chỉ có
+  <code>Intel(R) Iris(R) Xe Graphics</code> tích hợp. <strong>“PA B — GPU local” như mô tả
+  trong scale-plan không tồn tại</strong> trừ khi mua phần cứng.</p>
+</div>
+
+<p>Scale-plan chỉ liệt kê 2 phương án. Nó bỏ sót hai, và một trong hai hoá ra là tốt nhất.</p>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>PA</th><th class="num">Chi phí tiền</th><th>Wall-clock 120 tập</th>
+    <th>Phơi nhiễm pháp lý</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A.</strong> Kaggle private dataset</td><td class="num">$0</td>
+        <td>~2 tuần (trần 30 GPU-h/tuần)</td>
+        <td><span class="badge b-block">Cao</span> upload <strong>nguyên tập phim</strong>
+        lên nền tảng bên thứ ba, kèm cam kết mình có quyền</td></tr>
+    <tr><td><strong>B.</strong> Mua GPU local</td><td class="num">$500–2.000+</td>
+        <td>vài ngày</td><td>Không</td></tr>
+    <tr><td><strong>C.</strong> CPU local (đã có sẵn)</td><td class="num"><strong>$0</strong></td>
+        <td><strong>8–10 ngày</strong> chạy liên tục</td>
+        <td><span class="badge b-ok">Không</span> media không rời máy</td></tr>
+    <tr><td><strong>D.</strong> Thuê GPU rời (vast.ai / RunPod)</td>
+        <td class="num"><strong>~$15–35</strong></td><td>~1–2 ngày</td>
+        <td><span class="badge b-gpu">Thấp–TB</span> VM riêng, không có điều khoản cấp phép
+        nội dung kiểu nền tảng; host vẫn truy cập được đĩa về kỹ thuật</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <p><strong>PA C dựa trên số đo có sẵn trong repo</strong>
+  (<code>scripts/vietnamese-ser/README.md</code>): ~1,5–2h CPU cho một tập ~45 phút,
+  <strong>resumable, cache theo từng stage</strong>. 120 tập × 1,75h ≈
+  <strong>210 giờ ≈ 8,75 ngày</strong> chạy liên tục.</p>
+  <p><strong>Đây là điểm mấu chốt:</strong> Kaggle mất ~2 tuần vì bị trần quota chặn, chứ
+  không phải vì tính toán chậm. CPU local mất ~9 ngày. <strong>Wall-clock ngang nhau</strong>
+  — nhưng một bên phải upload phim bản quyền, một bên thì không.</p>
+</div>
+
+<h3>Vì sao rủi ro Kaggle không nhỏ như “dù sao cũng private”</h3>
+<p>Kaggle yêu cầu người upload <strong>cam kết</strong> nội dung không xâm phạm quyền của
+bên khác (<a href="https://www.kaggle.com/general/159857">Kaggle: rules for datasets</a>).
+Đưa nguyên tập phim VTV/HTV2 lên là cam kết một điều mình không có quyền cam kết — vấn đề
+nằm ở đó, không phải ở chuyện dataset để private hay public.</p>
+
+<p class="sub">Tôi <strong>không</strong> đọc được nguyên văn Kaggle Terms of Use bằng công
+cụ (trang render bằng JS, WebFetch chỉ lấy được tiêu đề), nên điều khoản cấp phép cụ thể
+tôi <strong>không xác nhận</strong> được — hãy tự đọc
+<a href="https://www.kaggle.com/terms">kaggle.com/terms</a> trước khi chọn PA A.</p>
+
+<p><strong>Phân biệt về mức độ:</strong> upload <strong>nguyên bộ phim</strong> (tác phẩm
+hoàn chỉnh, hàng trăm GB) khác hẳn về bản chất với clip <strong>2–3 giây</strong> cắt rời
+phục vụ nghiên cứu. Cái sau gần thông lệ nghiên cứu hơn nhiều.</p>
+
+<div class="callout warn">
+  <p><strong>Cần nói thẳng:</strong> hai dataset <code>viemospeech-pilot</code> và
+  <code>viemospeech-ablation-012</code> <strong>đã có</strong> ~1.000 clip audio trên Kaggle
+  (91 MB, private) — bản ablation-012 do chính phiên làm việc này đẩy lên 2026-08-31. Đó là
+  phơi nhiễm ở mức <strong>clip</strong>, không phải mức tập phim. Nếu bạn thấy kể cả mức đó
+  cũng không chấp nhận được, nói tôi xoá.</p>
+</div>
+
+<div class="rec">
+  <h4>✅ Khuyến nghị — C mặc định, D khi cần nhanh, không bao giờ A cho tập phim đầy đủ</h4>
+  <ol>
+    <li><strong>P2 extraction chạy CPU local.</strong> Miễn phí, sạch pháp lý, resumable,
+    wall-clock ngang Kaggle. Chi phí thật là máy bị chiếm ~9 ngày — chạy nền được.</li>
+    <li><strong>Nếu 9 ngày quá lâu:</strong> thuê GPU rời ~$15–35 cho cả P1. Rẻ hơn nhiều so
+    với mức người ta hình dung khi nghe “thuê GPU”.</li>
+    <li><strong>P4 fine-tune</strong> vẫn cần audio trên GPU ⇒ dùng D. Còn probe trên feature
+    đã cache thì chỉ upload <code>.npz</code>, <strong>không</strong> cần audio — Kaggle vẫn
+    dùng tốt cho việc đó.</li>
+  </ol>
+  <p><strong>Điều sẽ sai nếu chọn A:</strong> không phải “bị kiện” — mà là một reviewer hỏi
+  “dữ liệu được xử lý ở đâu” và câu trả lời trung thực làm hỏng phần data-statement của
+  paper. Rủi ro thật nằm ở đó.</p>
+</div>
+
+<h2 id="qd3"><span class="dec-id">QĐ 3</span> · Quy mô: P1 (3 bộ) hay P2 (6 bộ)?</h2>
+
+<h3>Đặt lại câu hỏi</h3>
+<p>Scale-plan tính quy mô theo <strong>extraction</strong> (P1 = 120 tập → ~18k utterance).
+Nhưng mục tiêu gold là <strong>2–3k utterance nhãn người</strong>, và nhịp label đo được là
+<strong>1.193 clip trong ~6 tuần</strong>.</p>
+
+<p>Nghĩa là: extract 18k rồi label 2–3k. <strong>13k–16k utterance sẽ không bao giờ được
+gán nhãn.</strong> Chọn P1 hay P2 gần như không đổi được ngày ra paper, vì cái chặn không
+phải extraction.</p>
+
+<h3>Vậy extract rộng có vô ích không?</h3>
+<p>Không — nhưng vì lý do khác với lý do trong scale-plan: <strong>pool lớn cho phép chọn
+lớp</strong>. Muốn đạt sàn surprise ≥50 mà pool nhỏ thì phải label rất nhiều clip neutral
+để vét vài clip surprise. Pool lớn + gợi ý teacher ⇒ oversample được lớp hiếm. Đó mới là
+giá trị thật của việc extract rộng.</p>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>PA</th><th>Nội dung</th><th>Nhận xét</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A</strong></td><td>Cam kết P1 (3 bộ/120 tập) ngay</td>
+        <td>Đúng hướng, nhưng dồn toàn bộ chi phí trước khi biết series 3 có dùng được không</td></tr>
+    <tr><td><strong>B</strong></td><td>Cam kết P2 (6 bộ)</td>
+        <td>Không giải quyết nút thắt nào đang có. Hoãn lại</td></tr>
+    <tr><td><strong>C</strong></td><td>P1 làm mục tiêu, chia nhỏ theo series</td>
+        <td>Chi phí nhỏ, học được sớm</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="rec">
+  <h4>✅ Khuyến nghị — PA C</h4>
+  <p>Giữ <strong>P1 (3 bộ) làm target v2</strong> như scale-plan đề xuất, nhưng
+  <strong>đừng extract 120 tập trước</strong>. Trình tự:</p>
+  <ol>
+    <li>Extract <strong>Sống chung với mẹ chồng</strong> (34 tập) → ~60 CPU-h ≈ 2,5 ngày.</li>
+    <li>Label tới sàn ADR-002 (ưu tiên lớp hiếm bằng gợi ý teacher).</li>
+    <li>Lúc đó mới biết yield thật, nhịp label thật, và test set có đạt sàn không —
+    <strong>rồi mới quyết</strong> có mở bộ thứ tư không.</li>
+  </ol>
+  <p>Đây cũng chính là kỷ luật <code>002-scale-batch-1</code> đã ghi sẵn trong danh sách
+  change ứng viên: <em>“chạy bộ phim đầu tiên qua kernel: chốt GPU-h/tập thật, yield/tập
+  trên mẫu lớn”</em>.</p>
+</div>
+
+<h2 id="dialect">Phát hiện xuyên suốt: dialect</h2>
+
+<p><code>intent/constraints.md §6</code> cam kết: <em>“Every utterance carries
+auto-generated syllable-level tone annotations and <strong>dialect metadata (Bắc/Trung/Nam
+— different tone systems)</strong>.”</em></p>
+
+<p><strong>Thực tế đo được: 1.215/1.215 clip đều là <code>north</code>.</strong> Cam kết ở
+tầng intent đang chưa được đáp ứng — và không phải chỉ là chuyện “thiếu đa dạng”.</p>
+
+<div class="callout">
+  <p>Tiếng Việt Nam Bộ <strong>gộp thanh hỏi và thanh ngã</strong> — 5 thanh thay vì 6.
+  Nếu luận điểm của paper là <em>thanh điệu và cảm xúc cạnh tranh trên cùng một kênh</em>,
+  thì một phương ngữ có <strong>tương phản thanh điệu bị thu hẹp</strong> phải hành xử khác
+  đi một cách đo được. Đó là một <strong>thí nghiệm tự nhiên</strong>, không phải metadata
+  trang trí.</p>
+</div>
+
+<p><strong>Nhưng đừng trộn nó vào test split chính</strong> (xem QĐ1). Đề xuất: series miền
+Nam (<strong>Gạo nếp gạo tẻ</strong>, HTV2/Vie Channel, 109 tập) là <strong>bộ thứ tư</strong>,
+dùng cho một mục phân tích riêng về dialect-shift — sau khi P1 xong, không phải bây giờ.</p>
+
+<h2 id="viec">Việc cần bạn làm</h2>
+<ul class="check">
+  <li><strong>QĐ1:</strong> duyệt “test = series 3 miền Bắc (Sống chung với mẹ chồng)”?
+  Nếu duyệt, cập nhật ADR-002 từ <code>proposed</code> → <code>accepted</code> kèm series
+  cụ thể.</li>
+  <li><strong>QĐ2:</strong> duyệt “CPU local cho P2, không đưa tập phim lên Kaggle”? Và cho
+  biết có muốn xoá ~1k clip đang nằm trên Kaggle không.</li>
+  <li><strong>QĐ3:</strong> duyệt “P1 là target, nhưng extract từng series một”?</li>
+  <li>Liếc cast series 3 vs 2 series hiện có (~15 phút) trước khi chốt QĐ1.</li>
+</ul>
+
+<h2>Nguồn</h2>
+<p class="sub"><strong>Nội bộ:</strong> <code>state.db</code> (đo 2026-09-05) ·
+ADR-002 · <code>05-scale-plan.md</code> · <code>intent/constraints.md</code> ·
+<code>scripts/vietnamese-ser/README.md</code> (thời gian CPU) ·
+<code>docs/reports/012/ablation.md</code>.<br>
+<strong>Kaggle:</strong>
+<a href="https://www.kaggle.com/general/159857">rules for datasets</a> ·
+<a href="https://www.kaggle.com/terms">Terms of Use</a> (không đọc được bằng công cụ).<br>
+<strong>GPU thuê:</strong>
+<a href="https://www.spheron.network/blog/gpu-cloud-pricing-comparison-runpod-vs-vastai-2026/">RunPod vs Vast.ai 2026</a> ·
+<a href="https://earnifyhub.com/learning-guides/cloud-gpu-providers-compared-runpod-vastai-lambda-2026">Cloud GPU providers compared 2026</a>.<br>
+<strong>Phương ngữ:</strong>
+<a href="https://www.1stopasia.com/blog/vietnamese-dialects-a-beginners-guide-to-regional-variations/">1-StopAsia</a> ·
+<a href="https://vietcetera.com/en/from-north-centre-to-south-exploring-vietnams-linguistic-diversity">Vietcetera</a>.</p>
+
+</div>
+</body>
+</html>

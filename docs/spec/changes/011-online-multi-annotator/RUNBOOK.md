@@ -11,9 +11,44 @@
 - [ ] `qc-protocol.md` đã **đông cứng** (trạng thái `frozen` + ngày + commit).
 - [ ] `gold-set.txt` đã dựng (qc-protocol §2.1): chạy
       `scripts/vietnamese-ser/pick_gold_candidates.py`, rồi mở
-      **`http://127.0.0.1:8000/gold.html`** để nghe và chốt.
+      **`http://127.0.0.1:8421/gold.html`** để nghe và chốt.
 - [ ] `consent.vi.md` **đã điền hết ô trống** (thù lao, người phụ trách, IRB).
 - [ ] Mỗi annotator đã **xác nhận consent** trước khi được cấp token.
+
+## 0. Tài khoản gold reviewer (`gold.html`)
+
+Trang chốt gold set dùng **username + password** (HTTP Basic), tách hẳn khỏi token
+annotator ở §1–2: mỗi người soát ghi kết quả riêng vào
+`<root>/gold-reviews/<username>.json`, nên biết ai đã chốt clip nào.
+
+Tạo (hoặc đổi mật khẩu) — **script hỏi mật khẩu tương tác**, phải tự gõ trong terminal:
+
+```powershell
+.venv-vnser\Scripts\python.exe scripts\vietnamese-ser\manage_gold_user.py <username>
+# Password:  <gõ, không hiện ký tự>
+# Confirm:   <gõ lại>
+# saved <username> -> data\vietnamese-ser\episodes\gold-users.json
+```
+
+| | |
+|---|---|
+| Username | chỉ `A-Z a-z 0-9 _ - .` — khác đi là `bad username` |
+| Password | không ràng buộc độ dài; chỉ cần khác rỗng và 2 lần gõ khớp |
+| Lưu dưới dạng | PBKDF2-SHA256, 310 000 rounds + salt ngẫu nhiên → **quên là phải tạo lại**, không xem lại được |
+| Chạy lại cùng username | **đổi mật khẩu** cho người đó (ghi đè entry cũ) |
+
+`gold-users.json` nằm trong `data/**` → **gitignored, không bao giờ commit**.
+
+⚠️ File chỉ được đọc **lúc server khởi động** — tạo user xong phải **restart** thì mới
+đăng nhập được.
+
+Chạy server gold review (mặc định port 8001, đã kèm `--no-local-admin --gold-users`):
+
+```powershell
+tools\labeler\run_gold_review.cmd        # hoặc: run_gold_review.cmd 8002
+```
+
+Gửi cho người soát: link `gold.html` + username/password (qua 2 kênh khác nhau).
 
 ## 1–2. Token + hàng đợi + thư mời — một lệnh
 
@@ -107,7 +142,7 @@ mở ra — lúc đó buộc phải `--no-local-admin` và làm UI owner biết 
 ## 4. Mở tunnel
 
 ```bash
-ngrok http 8000
+ngrok http 8421
 ```
 
 Gửi cho từng annotator **link riêng của họ**:
@@ -153,7 +188,7 @@ Góp ý kiểu "clip này chắc là giận chứ nhỉ" là neo nhãn, và làm
 
 ## 5b. Sau khi đóng vòng — soi từng clip
 
-`http://127.0.0.1:8000/review.html` — bảng **so nhãn mọi người trên từng clip**:
+`http://127.0.0.1:8421/review.html` — bảng **so nhãn mọi người trên từng clip**:
 owner + từng annotator cạnh nhau, ô nào lệch đa số thì tô đỏ, nghe được tại chỗ.
 Lọc: `chỉ bất đồng` · `no_agreement` · `có bỏ qua` · `clip lặp` (clip lặp hiện **cả
 hai lần gán** của cùng một người — nhìn ra ngay ai tự mâu thuẫn).

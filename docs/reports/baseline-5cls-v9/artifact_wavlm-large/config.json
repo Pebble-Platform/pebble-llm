@@ -1,0 +1,90 @@
+{
+  "backbone": "microsoft/wavlm-large",
+  "emotions": [
+    "neutral",
+    "anger",
+    "joy",
+    "fear_anxiety",
+    "sadness"
+  ],
+  "n_splits": 5,
+  "seed": 0,
+  "split_hash": "f6dd57308a35bad6efc357aec611beb0",
+  "pip_pins": [
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "torchaudio==2.5.1",
+    "transformers==4.46.3",
+    "soundfile",
+    "pandas",
+    "numpy"
+  ],
+  "n_clips": 1139,
+  "series": [
+    "chay-tron-thanh-xuan",
+    "ve-nha-di-con"
+  ],
+  "label_source": "human single-annotator (ADR-003)",
+  "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
+  "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
+  "metrics_groupkfold": {
+    "emotion_macro_f1": 0.42821191181961,
+    "emotion_macro_f1_ci95": [
+      0.39721857319267023,
+      0.4552351546335076
+    ],
+    "emotion_uar": 0.4323790506990523,
+    "emotion_uar_ci95": [
+      0.40238704007066667,
+      0.4602197280444924
+    ],
+    "emotion_n": 1139,
+    "emotion_support": {
+      "neutral": 367,
+      "anger": 251,
+      "joy": 234,
+      "fear_anxiety": 131,
+      "sadness": 156
+    },
+    "ccc_valence": 0.14650462202676487,
+    "ccc_valence_ci95": [
+      0.1265602470018767,
+      0.1663307798292353
+    ],
+    "ccc_arousal": 0.1616207252521102,
+    "ccc_arousal_ci95": [
+      0.14685601987706556,
+      0.17727077773122704
+    ]
+  },
+  "metrics_leave_one_series_out": {
+    "emotion_macro_f1": 0.3508991419601041,
+    "emotion_macro_f1_ci95": [
+      0.32438733920992674,
+      0.37504724139522655
+    ],
+    "emotion_uar": 0.3510121968045666,
+    "emotion_uar_ci95": [
+      0.32398968507082865,
+      0.37607172376211734
+    ],
+    "emotion_n": 1139,
+    "emotion_support": {
+      "neutral": 367,
+      "anger": 251,
+      "joy": 234,
+      "fear_anxiety": 131,
+      "sadness": 156
+    },
+    "ccc_valence": 0.0923428194999577,
+    "ccc_valence_ci95": [
+      0.0716007764059772,
+      0.11211281030172586
+    ],
+    "ccc_arousal": 0.1008672259129682,
+    "ccc_arousal_ci95": [
+      0.09021508000694374,
+      0.11235555973987948
+    ]
+  }
+}

@@ -69,7 +69,9 @@ def srt_to_caption_txt(srt: Path, out: Path) -> int:
     return len(lines)
 
 
-def ep_done(outdir: Path, has_caption: bool) -> bool:
+def ep_done(outdir: Path, has_caption: bool, vocals_only: bool = False) -> bool:
+    if vocals_only:  # nothing downstream of music removal runs in this mode
+        return (outdir / "vocals_16k.wav").exists()
     need = [outdir / "report.md", outdir / "transcripts.csv"]
     if has_caption:
         need.append(outdir / "transcripts_yt.csv")
@@ -83,6 +85,12 @@ def main() -> None:
     ap.add_argument("--episodes", default="2-10", help="e.g. 2-10 or 3")
     ap.add_argument("--python", default=str(ROOT / ".venv-vnser" / "Scripts" / "python.exe"))
     ap.add_argument("--skip-asr", action="store_true")
+    ap.add_argument(
+        "--vocals-only",
+        action="store_true",
+        help="music removal + YouTube caption only -- no VAD cut, no ASR, no align. "
+        "For episodes the human segments by hand in the labeler.",
+    )
     args = ap.parse_args()
 
     eps: list[int] | None
@@ -135,7 +143,7 @@ def main() -> None:
         if srt and not caption.exists():
             print(f">> {ep}: SRT → caption ({srt_to_caption_txt(srt, caption)} block)")
 
-        if ep_done(outdir, caption.exists()):
+        if ep_done(outdir, caption.exists(), args.vocals_only):
             print(f"== {ep}: đã xong — skip")
         else:
             cmd = [
@@ -146,13 +154,20 @@ def main() -> None:
                 "--outdir",
                 str(outdir),
             ]
-            if hf_token:
+            if args.vocals_only:
+                cmd += ["--vocals-only"]
+            elif hf_token:
                 cmd += ["--turn-split", "--hf-token", hf_token]
             if args.skip_asr:
                 cmd += ["--skip-asr"]
-            print(f">> {ep}: extract ({'turn-split' if hf_token else 'fallback VAD'})")
+            mode = (
+                "vocals-only"
+                if args.vocals_only
+                else ("turn-split" if hf_token else "fallback VAD")
+            )
+            print(f">> {ep}: extract ({mode})")
             subprocess.run(cmd, check=True, env=env)
-            if caption.exists() and not args.skip_asr:
+            if caption.exists() and not args.skip_asr and not args.vocals_only:
                 # align failing must not kill the batch — extract (the expensive
                 # part) is already done and cached; align can be re-run cheaply.
                 try:

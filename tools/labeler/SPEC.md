@@ -126,12 +126,24 @@ giờ biết `epKey`/`clip_id`, không liệt kê được corpus) · `POST /rat
 `GET /rate/whoami`. UI `rate.html`/`rate.js` **mù**: không transcript, không gợi ý
 teacher, không nhãn owner.
 
-**Màn owner của change 011:** `/gold.html` (nghe & chốt gold set — đếm clip đã thật
-sự phát, cảnh báo khi ghi nếu còn "giữ mà chưa nghe"; ghi `gold-set.txt`) ·
-`/review.html` (so nhãn mọi rater trên **từng clip**, ô lệch đa số tô đỏ, lọc
-bất đồng/no_agreement/bỏ qua/clip lặp; clip lặp hiện cả 2 lần gán của cùng một
-người). Cả hai owner-only qua middleware `guard`. Dùng `/review.html` **sau khi đóng
-vòng** — xem nhãn giữa chừng rồi góp ý là neo nhãn, hỏng phép đo.
+**Màn owner của change 011:** `/review.html` (so nhãn mọi rater trên **từng clip**, ô
+lệch đa số tô đỏ, lọc bất đồng/no_agreement/bỏ qua/clip lặp; clip lặp hiện cả 2 lần gán
+của cùng một người), owner-only qua middleware `guard`. Dùng **sau khi đóng vòng** — xem
+nhãn giữa chừng rồi góp ý là neo nhãn, hỏng phép đo.
+
+**Màn soát gold** (`/gold.html`, [change 014](../../docs/spec/changes/014-blind-gold-review/README.md)):
+người soát đăng nhập bằng username/password (`gold-users.json` trong data root, PBKDF2
+310k; tạo bằng `scripts/vietnamese-ser/manage_gold_user.py`) rồi đi hết hàng đợi
+`review-candidates.tsv`. **Mù nhãn owner:** `/gold-review/next` **không gửi**
+`emotion`/`valence`/`arousal` xuống trình duyệt — người soát chọn emotion từ 7 lựa chọn
+hiện sẵn, chốt qua `POST /gold-review/commit/{key}`, **rồi** V/A của owner mới lộ ra để
+soát (sửa được qua nút Sửa; giới tính/tuổi/vùng miền hiện readonly từ đầu vì không rò rỉ
+emotion). Đổi nhãn sau khi chốt bị **server** từ chối, và phải phát hết audio mới trả lời
+được. Kết quả ghi `gold-reviews/<user>.json`, **không** vào `state.db` — adjudicate là
+việc riêng; `agreed` do server tính = người soát giữ nguyên cả 6 trường của owner.
+
+Route `/gold-candidates` + `/gold-set` (màn chốt gold set cũ của change 011) **không còn
+UI nào gọi** kể từ khi `gold.html` thành màn soát — chỉ còn gọi được bằng `curl`.
 
 Script: `build_assignments.py` (phân tầng + gold + dup + xáo trộn per-annotator) ·
 `pick_gold_candidates.py` (lọc đồng thuận ba chiều → ứng viên gold) ·

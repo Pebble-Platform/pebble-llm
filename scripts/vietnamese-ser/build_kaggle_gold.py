@@ -11,9 +11,19 @@ timestamps + human text, NO speaker/gender/age — speakers are still raw diariz
 ids (not yet reassigned to cast characters), so those fields would ship the known
 wrong values. Teacher emotion is kept as a *suggestion* column only (not a label).
 
+``--keys`` restricts the export to the clips listed in a queue TSV and ``--reviews``
+joins a second rater's pass from ``gold-reviews/<user>.json`` into the *_reviewed
+columns. Together they stage the fixed clip set for the label-quality ablation
+(change 012 §2): same clips in every arm, only the label column differs.
+
 Usage (from repo root):
   PYTHONIOENCODING=utf-8 python scripts/vietnamese-ser/build_kaggle_gold.py         # stage only
   PYTHONIOENCODING=utf-8 python scripts/vietnamese-ser/build_kaggle_gold.py --push  # + version dataset
+  # change 012 ablation set (1071 clips, owner + reviewed labels side by side):
+  PYTHONIOENCODING=utf-8 python scripts/vietnamese-ser/build_kaggle_gold.py \
+      --slug viemospeech-ablation-012 \
+      --keys docs/spec/changes/011-online-multi-annotator/review-candidates.tsv \
+      --reviews data/vietnamese-ser/episodes/gold-reviews/vyphan.json
 
 PRIVATE only: clips derive from copyrighted episodes — research use, NEVER public
 (intent constraint #1). Uploading to a private dataset is the user's risk call
@@ -47,6 +57,10 @@ COLS = [
     "valence",
     "arousal",
     "gold_text",
+    "emotion_reviewed",
+    "valence_reviewed",
+    "arousal_reviewed",
+    "agreed",
     "opus_suggest",
     "sonnet_suggest",
     "annotator",
@@ -54,25 +68,63 @@ COLS = [
 ]
 
 
+def _read_keys(path: Path) -> set[str]:
+    """'epKey/clip_id' keys from a queue TSV (first column, '#' comments skipped)."""
+    return {
+        ln.split("	")[0]
+        for ln in path.read_text(encoding="utf-8").splitlines()
+        if ln.strip() and not ln.startswith("#")
+    }
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--owner", default="phatneurondai")
     ap.add_argument("--push", action="store_true")
+    ap.add_argument(
+        "--slug",
+        default=SLUG,
+        help="dataset slug; use a separate one for an "
+        "ablation set so the pilot dataset is not overwritten",
+    )
+    ap.add_argument("--keys", help="queue TSV; keep only its 'epKey/clip_id' rows (change 012 §2)")
+    ap.add_argument("--reviews", help="gold-reviews/<user>.json; join the 2nd rater's pass")
+    ap.add_argument(
+        "--drop-emotions",
+        default="",
+        help="comma list of emotions whose clips are left out (class-subset run); "
+        "the kernel then trains/scores only the classes present",
+    )
     args = ap.parse_args()
+    drop = {e for e in args.drop_emotions.split(",") if e}
 
     recs = read_records(EPISODES)
+    keys = _read_keys(Path(args.keys)) if args.keys else None
+    reviews = json.loads(Path(args.reviews).read_text(encoding="utf-8")) if args.reviews else {}
 
-    stage = ROOT / "data" / "vietnamese-ser" / "kaggle-upload" / SLUG
+    stage = ROOT / "data" / "vietnamese-ser" / "kaggle-upload" / args.slug
     clips_out = stage / "clips"
     if stage.exists():
         shutil.rmtree(stage)  # clean rebuild so a re-run doesn't ship stale clips
     clips_out.mkdir(parents=True, exist_ok=True)
 
-    rows, skipped_no_wav = [], 0
+    rows, skipped_no_wav, skipped_off_queue, skipped_rev_rejected = [], 0, 0, 0
     for r in recs:
         # corpus-clean (I3): human emotion, not rejected, not human-flagged multi-voice
         if not r.get("emotion") or r.get("rejected") or r.get("multi"):
+            continue
+        if r["emotion"] in drop:
+            continue
+        key = f"{r['epKey']}/{r['id']}"
+        if keys is not None and key not in keys:
+            skipped_off_queue += 1
+            continue
+        rev = reviews.get(key)
+        if rev and rev.get("rejected"):
+            # the 2nd rater threw the clip out: drop it from EVERY arm rather than ship
+            # a row that only one arm can train on (change 012 §2 -- fixed clip set).
+            skipped_rev_rejected += 1
             continue
         src = EPISODES / r["epKey"] / "clips" / f"{r['id']}.wav"
         if not src.is_file():
@@ -98,6 +150,10 @@ def main() -> None:
                 r.get("valence"),
                 r.get("arousal"),
                 r.get("gold_text", ""),
+                (rev["answer"]["emotion"] if rev else ""),
+                (rev["answer"]["valence"] if rev else ""),
+                (rev["answer"]["arousal"] if rev else ""),
+                (int(rev["agreed"]) if rev else ""),
                 r.get("opus", ""),
                 r.get("sonnet", ""),
                 r.get("annotator", ""),
@@ -114,9 +170,13 @@ def main() -> None:
         f"# ViEmoSpeech pilot — human labels (PRIVATE, research only)\n\n"
         f"Utterances: {len(rows)} (human `emotion`, rejected excluded). Clips 16 kHz "
         f"mono, cut from Demucs vocals.\n\n"
-        f"Labels are single human annotator (state.db, tools/labeler). Columns: "
+        + (f"Class subset: clips labeled {sorted(drop)} are LEFT OUT.\n\n" if drop else "")
+        + f"Labels are single human annotator (state.db, tools/labeler). Columns: "
         f"emotion (7-class), valence/arousal (1-5), gold_text (human-corrected), plus "
         f"opus_suggest/sonnet_suggest = LLM *suggestions* (NOT labels, ADR-003).\n\n"
+        f"`emotion_reviewed`/`valence_reviewed`/`arousal_reviewed` = a SECOND rater's pass "
+        f"({sum(1 for x in rows if x[10])} rows); `agreed`=1 means that rater kept the owner's "
+        f"values unchanged, so those rows carry identical labels in both columns (change 012).\n\n"
         f"**No speaker/gender/age**: speakers not yet reassigned from diarization ids "
         f"to cast characters — omitted rather than ship wrong values.\n\n"
         f"Derived from copyrighted VN TV drama — research use, **never make public**.\n",
@@ -125,8 +185,8 @@ def main() -> None:
     (stage / "dataset-metadata.json").write_text(
         json.dumps(
             {
-                "title": "ViEmoSpeech pilot (private)",
-                "id": f"{args.owner}/{SLUG}",
+                "title": f"ViEmoSpeech {args.slug} (private)",
+                "id": f"{args.owner}/{args.slug}",
                 "licenses": [{"name": "other"}],
             },
             indent=2,
@@ -137,12 +197,21 @@ def main() -> None:
     print(f"staged: {stage}")
     print(
         f"utterances={len(rows)}  clips={len(list(clips_out.glob('*.wav')))}  "
-        f"skipped_no_wav={skipped_no_wav}"
+        f"skipped_no_wav={skipped_no_wav}  skipped_off_queue={skipped_off_queue}  "
+        f"skipped_rev_rejected={skipped_rev_rejected}  reviewed={sum(1 for x in rows if x[10])}"
     )
 
     if args.push:
         st = subprocess.run(
-            ["uvx", "--from", "kaggle", "kaggle", "datasets", "status", f"{args.owner}/{SLUG}"],
+            [
+                "uvx",
+                "--from",
+                "kaggle",
+                "kaggle",
+                "datasets",
+                "status",
+                f"{args.owner}/{args.slug}",
+            ],
             capture_output=True,
             text=True,
         )
@@ -161,7 +230,7 @@ def main() -> None:
             "datasets",
             action,
             "-p",
-            SLUG,
+            args.slug,
             "--dir-mode",
             "zip",
         ]

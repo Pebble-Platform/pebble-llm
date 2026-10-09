@@ -389,6 +389,12 @@ def main() -> None:
         "construction); requires --hf-token",
     )
     ap.add_argument("--skip-asr", action="store_true")
+    ap.add_argument(
+        "--vocals-only",
+        action="store_true",
+        help="stop after music removal (audio_full.wav + vocals_16k.wav) -- for episodes "
+        "a human will segment by hand in the labeler instead of taking the VAD cut",
+    )
     args = ap.parse_args()
     if args.turn_split and not args.hf_token:
         ap.error("--turn-split requires --hf-token (diarization drives the turn boundaries)")
@@ -398,6 +404,9 @@ def main() -> None:
 
     full = stage_audio(args.input, outdir)
     voc = stage_demucs(full, outdir)
+    if args.vocals_only:
+        print(f"vocals-only: {full.name} + {voc.name} ready in {outdir} (no cutting)")
+        return
     # turn-split: diarize BEFORE building segments so cuts land on speaker boundaries
     turns = load_diar_turns(voc, outdir, args.hf_token) if args.turn_split else None
     segs = stage_vad(voc, outdir, turns)

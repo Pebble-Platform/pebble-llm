@@ -138,7 +138,7 @@ def main() -> None:
         )
 
     print("--- owner ------------------------------------------------------------")
-    print("  Chạy server KHÔNG có --no-local-admin: mở http://127.0.0.1:8000/index.html")
+    print("  Chạy server KHÔNG có --no-local-admin: mở http://127.0.0.1:8421/index.html")
     print("  bình thường, không cần token. Request qua tunnel vẫn bị chặn admin (server")
     print("  phát hiện header x-forwarded-*), nên loopback-admin không hở ra ngoài.")
     print(f"  Token admin dự phòng (cho curl / --no-local-admin): {by_id['owner']}")

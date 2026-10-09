@@ -3,8 +3,9 @@
 Context (2026-07-22): the per-clip `dialect` field (Bắc/Trung/Nam — different tone
 systems, intent §6) was just added to the labeler. Both pilot series in the corpus
 (Về nhà đi con · Chạy trốn thanh xuân — VFC / Northern productions) are Northern-
-accent, so every EXISTING record is backfilled to "north". New labels default to
-"" until a human picks a region. This bulk assumption IS the provenance trail —
+accent, so every EXISTING record is backfilled to "north". (Since 2026-07-29 the
+labeler form also defaults new labels to "north".) This bulk assumption IS the
+provenance trail —
 it is a source-level fact (production house), not a per-clip listening judgement.
 
 Idempotent + non-destructive: only fills EMPTY/missing dialect (never overwrites a
