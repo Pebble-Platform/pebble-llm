@@ -1,0 +1,66 @@
+{
+  "groupkfold": {
+    "emotion_macro_f1": 0.35584738195540105,
+    "emotion_macro_f1_ci95": [
+      0.3296510596244872,
+      0.38030825221546444
+    ],
+    "emotion_uar": 0.360701946943022,
+    "emotion_uar_ci95": [
+      0.3338010752474934,
+      0.38724145644097735
+    ],
+    "emotion_n": 1324,
+    "emotion_support": {
+      "neutral": 367,
+      "anger": 251,
+      "joy": 234,
+      "fear_anxiety": 131,
+      "sadness": 156,
+      "disgust": 103,
+      "surprise": 82
+    },
+    "ccc_valence": 0.1344374440460048,
+    "ccc_valence_ci95": [
+      0.11557946712853227,
+      0.15288294981563366
+    ],
+    "ccc_arousal": 0.1636078287546335,
+    "ccc_arousal_ci95": [
+      0.1494315365081543,
+      0.17739687334824208
+    ]
+  },
+  "leave_one_series_out": {
+    "emotion_macro_f1": 0.25569312222266,
+    "emotion_macro_f1_ci95": [
+      0.23378668952268267,
+      0.2772439822378296
+    ],
+    "emotion_uar": 0.2564559808623776,
+    "emotion_uar_ci95": [
+      0.2355220205305668,
+      0.2785203738695106
+    ],
+    "emotion_n": 1324,
+    "emotion_support": {
+      "neutral": 367,
+      "anger": 251,
+      "joy": 234,
+      "fear_anxiety": 131,
+      "sadness": 156,
+      "disgust": 103,
+      "surprise": 82
+    },
+    "ccc_valence": 0.08013998481858091,
+    "ccc_valence_ci95": [
+      0.061592201031718995,
+      0.10024432109680254
+    ],
+    "ccc_arousal": 0.09405112052279714,
+    "ccc_arousal_ci95": [
+      0.08404679820504316,
+      0.10493677420797873
+    ]
+  }
+}

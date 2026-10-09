@@ -1,0 +1,447 @@
+<title>Baseline v7 · 1324 clip</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --faint:#8c959f; --line:#d8dee4;
+    --accent:#2563eb; --s1:#2563eb; --s2:#c2410c; --ok:#1a7f37; --warn:#bc4c00;
+    --code:#eef1f4; --grid:#e6e9ed; --okbg:rgba(26,127,55,.07); --warnbg:rgba(188,76,0,.06);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+      --accent:#589bff; --s1:#3b82f6; --s2:#e0702a; --ok:#3fb950; --warn:#f0883e;
+      --code:#1c2128; --grid:#21262d; --okbg:rgba(63,185,80,.10); --warnbg:rgba(240,136,62,.08);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+    --accent:#589bff; --s1:#3b82f6; --s2:#e0702a; --ok:#3fb950; --warn:#f0883e;
+    --code:#1c2128; --grid:#21262d; --okbg:rgba(63,185,80,.10); --warnbg:rgba(240,136,62,.08);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding-inline:20px;padding-block:32px 80px}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px;text-wrap:balance}
+  h2{font-size:21px;margin:44px 0 12px;padding-top:14px;border-top:1px solid var(--line);text-wrap:balance}
+  h3{font-size:13px;margin:24px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  p,li{margin:8px 0;max-width:72ch}
+  .sub{color:var(--muted);font-size:13.5px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;font-family:"SF Mono",Consolas,monospace}
+  .mono{font-family:"SF Mono",Consolas,monospace}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:12px;text-transform:uppercase;
+    letter-spacing:.03em;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ci{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .up{color:var(--ok);font-weight:600}
+  .flat{color:var(--warn);font-weight:600}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout > :first-child{margin-top:0}
+  .callout > :last-child{margin-bottom:0}
+  .rec{background:var(--okbg);border:1px solid var(--ok);border-radius:10px;padding:14px 18px;margin:18px 0}
+  .rec h4{margin:0 0 6px;font-size:16px;color:var(--ok)}
+  .rec > :last-child{margin-bottom:0}
+
+  /* findings */
+  .findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0 8px}
+  .finding{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+    display:flex;flex-direction:column;gap:4px}
+  .finding .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  .finding .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+  .finding p{margin:0;font-size:14px;color:var(--ink)}
+
+  /* charts */
+  figure{margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px 10px}
+  figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+  .fig-title{font-weight:600;font-size:14.5px;margin:0 0 2px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:6px 0 4px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .sw.dash{height:0;border-top:2px dashed var(--faint);background:none}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  svg text{fill:var(--muted);font-size:11.5px;font-family:inherit}
+  svg .lbl{font-size:12px;font-weight:600}
+
+  /* horizontal bars */
+  .hbars{display:grid;grid-template-columns:minmax(150px,230px) 1fr;gap:8px 12px;align-items:center;font-size:14px}
+  .hbars .name{color:var(--ink)}
+  .hbars .name small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+  .track{position:relative;height:22px}
+  .bar{position:absolute;left:0;top:3px;height:16px;background:var(--s1);border-radius:0 4px 4px 0}
+  .bar.muted{background:var(--faint)}
+  .bar-v{position:absolute;top:0;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;
+    white-space:nowrap;line-height:22px}
+  .delta{grid-column:2;font-size:12.5px;color:var(--muted);margin:-4px 0 2px;font-variant-numeric:tabular-nums}
+  .delta b{color:var(--ink)}
+
+  /* per-class mini bars */
+  .mb{display:flex;align-items:center;gap:8px;min-width:130px}
+  .mb i{display:block;height:10px;border-radius:0 3px 3px 0;background:var(--s1)}
+  .mb i.h{background:var(--s2)}
+  .mb span{font-variant-numeric:tabular-nums;font-size:13px;min-width:38px}
+
+  /* heatmap */
+  .heat td,.heat th{text-align:center;padding:7px 6px;font-variant-numeric:tabular-nums;font-size:13px}
+  .heat th.row{text-align:left;text-transform:none;font-size:13px;color:var(--ink);letter-spacing:0}
+  .heat td{border-left:2px solid var(--panel)}
+  .heat td.diag{outline:2px solid var(--ink);outline-offset:-2px}
+  .heat td small{display:block;font-size:10.5px;opacity:.75}
+
+  .tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;
+    padding:6px 9px;border-radius:6px;line-height:1.4;max-width:260px;z-index:10;
+    font-variant-numeric:tabular-nums}
+  [data-tip]{cursor:default}
+  [data-tip]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  ol li,ul li{max-width:72ch}
+  @media (max-width:560px){
+    .hbars{grid-template-columns:1fr}
+    .delta{grid-column:1}
+    h1{font-size:22px}
+  }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Baseline v7 trên 1324 clip: thêm nhãn nâng số lạc quan, số trung thực đứng yên</h1>
+  <div class="sub">ViEmoSpeech · frozen WavLM-Large + linear probe · emotion 7 lớp · kernel <code>vnser-train</code> v7, 2026-09-27 ·
+    phân tích bổ sung chạy lại probe trên CPU từ embedding của chính run này</div>
+</header>
+
+<div class="findings">
+  <div class="finding"><span class="k">Eval A · GroupKFold</span><span class="v">0.314 → 0.356</span>
+    <p>Tăng rõ. Nhưng A bị thổi phồng bởi rò rỉ danh tính trong cùng series.</p></div>
+  <div class="finding"><span class="k">Eval B · cross-series</span><span class="v">0.249 → 0.256</span>
+    <p>Gần như không đổi. Đây là số trung thực (I4).</p></div>
+  <div class="finding"><span class="k">Vì sao</span><span class="v">264 clip</span>
+    <p>80% điểm B đến từ chiều train trên <code>ve-nha-di-con</code>. Series này không có nhãn mới nào từ trước v6.</p></div>
+  <div class="finding"><span class="k">Người ↔ người</span><span class="v">κ 0.513</span>
+    <p>Hai người chỉ trùng 60% ở vòng mù. Disgust, surprise và fear yếu ở cả người lẫn model.</p></div>
+</div>
+
+<div class="callout">
+  <p><b>Câu trả lời ngắn:</b> nhãn thêm vào <em>có</em> giúp model tổng quát hoá sang series khác.
+  Khi train trên <code>chay-tron-thanh-xuan</code> và test trên <code>ve-nha-di-con</code>, macro-F1 tăng đều từ 0.252 (264 clip)
+  lên 0.302 (1060 clip) và chưa chững lại. Con số B gộp không phản ánh điều đó vì nó bị chiều ngược lại (train chỉ 264 clip) kéo xuống.
+  Muốn nâng số trung thực thì đợt gán nhãn tiếp theo phải dồn vào <code>ve-nha-di-con</code> hoặc một series thứ ba.</p>
+</div>
+
+<h2 id="so-do">Số đo chính</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Head</th><th>Metric</th><th class="num">A · v6 (750)</th><th class="num">A · v7 (1324)</th><th class="num">B · v6 (750)</th><th class="num">B · v7 (1324)</th></tr></thead>
+  <tbody>
+    <tr><td>emotion 7 lớp</td><td>macro-F1</td><td class="num">0.314</td><td class="num"><span class="up">0.356</span> <span class="ci">[0.330, 0.380]</span></td><td class="num">0.249</td><td class="num"><span class="flat">0.256</span> <span class="ci">[0.234, 0.277]</span></td></tr>
+    <tr><td>emotion 7 lớp</td><td>UAR</td><td class="num">0.319</td><td class="num">0.361 <span class="ci">[0.334, 0.387]</span></td><td class="num">0.247</td><td class="num">0.256 <span class="ci">[0.236, 0.279]</span></td></tr>
+    <tr><td>affect</td><td>CCC valence</td><td class="num">0.116</td><td class="num">0.134 <span class="ci">[0.116, 0.153]</span></td><td class="num">0.091</td><td class="num">0.080 <span class="ci">[0.062, 0.100]</span></td></tr>
+    <tr><td>affect</td><td>CCC arousal</td><td class="num">0.132</td><td class="num">0.164 <span class="ci">[0.149, 0.177]</span></td><td class="num">0.087</td><td class="num">0.094 <span class="ci">[0.084, 0.105]</span></td></tr>
+  </tbody>
+</table>
+</div>
+<p class="sub">Seed 0, CI bootstrap 95% theo clip, lấy nguyên từ báo cáo kernel. Qua 10 seed của linear probe: A = 0.358 (0.350–0.363), B = 0.260 (0.249–0.269), nên dao động do seed nhỏ hơn nhiều so với CI.
+Mốc luôn đoán neutral: macro-F1 0.062.</p>
+
+<h3>Thành phần dữ liệu</h3>
+<div class="scroll">
+<table>
+  <thead><tr><th>Series</th><th class="num">v6 · 2026-07-22</th><th class="num">ablation 012 · 2026-08-31</th><th class="num">v7 · 2026-09-27</th><th class="num">Clip đã cắt, chưa ai đụng</th></tr></thead>
+  <tbody>
+    <tr><td><code>chay-tron-thanh-xuan</code></td><td class="num">486</td><td class="num">930</td><td class="num"><b>1060</b></td><td class="num">508</td></tr>
+    <tr><td><code>ve-nha-di-con</code></td><td class="num">264</td><td class="num">264</td><td class="num"><b>264</b></td><td class="num">1251</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="sub">Đếm từ <code>state.db</code> theo mốc <code>ts</code> của lần sửa nhãn cuối, nên là xấp xỉ. Riêng mốc v6 thì khớp đúng 750 clip. Toàn bộ 574 nhãn mới từ v6 tới nay thuộc <code>chay-tron-thanh-xuan</code>.</p>
+
+<h2 id="vi-sao">Vì sao eval B đứng yên</h2>
+<p>Eval B (leave-one-series-out) gộp dự đoán out-of-fold của cả hai chiều rồi chấm trên toàn bộ 1324 clip. Mỗi chiều đóng góp theo số clip <em>test</em> của nó:</p>
+<div class="scroll">
+<table>
+  <thead><tr><th>Chiều</th><th class="num">n train</th><th class="num">n test</th><th class="num">Tỷ trọng trong B</th><th class="num">macro-F1 (10 seed)</th><th class="num">CCC arousal</th><th class="num">CCC valence</th></tr></thead>
+  <tbody>
+    <tr><td>train <code>ve-nha-di-con</code> → test <code>chay-tron-thanh-xuan</code></td><td class="num">264</td><td class="num">1060</td><td class="num"><b>80%</b></td><td class="num">0.242 <span class="ci">0.232–0.252</span></td><td class="num">0.082</td><td class="num">0.075</td></tr>
+    <tr><td>train <code>chay-tron-thanh-xuan</code> → test <code>ve-nha-di-con</code></td><td class="num">1060</td><td class="num">264</td><td class="num">20%</td><td class="num">0.302 <span class="ci">0.291–0.314</span></td><td class="num">0.144</td><td class="num">0.106</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Khi series lớn nhận thêm nhãn, chúng rơi vào tập <em>test</em> của chiều yếu (vẫn train trên 264 clip) và vào tập <em>train</em> của chiều mạnh, chiều mà chỉ chiếm 20% trọng số. Vì vậy B gần như không nhúc nhích dù model thực sự học tốt hơn.
+Trên bootstrap theo clip của seed 0, chiều 1060 → 264 có CI rộng [0.247, 0.344] vì chỉ có 264 clip test.</p>
+
+<h2 id="co-hay-series">Do cỡ mẫu hay do series khó hơn?</h2>
+<p>Chênh 0.302 và 0.242 có thể do cỡ tập train (1060 so với 264) hoặc do <code>chay-tron-thanh-xuan</code> vốn khó đoán hơn. Để tách hai khả năng, tôi rút ngẫu nhiên n clip từ series train, giữ nguyên toàn bộ series test, lặp 10 seed ở mỗi n:</p>
+
+<figure>
+  <div class="fig-title">macro-F1 cross-series theo số clip train</div>
+  <div class="legend" id="lc-legend"></div>
+  <div id="lc" role="img" aria-label="Đường cong học: macro-F1 cross-series tăng từ 0.216 ở 66 clip lên 0.302 ở 1060 clip khi train trên chay-tron-thanh-xuan; train trên ve-nha-di-con đạt 0.242 ở 264 clip."></div>
+  <figcaption>Điểm = trung bình 10 seed, dải = ±1 độ lệch chuẩn giữa các seed (khác lượng clip rút ra), không phải CI bootstrap. Ở n = 1060, series được dùng hết nên dải chỉ còn dao động do seed của head.</figcaption>
+</figure>
+
+<div class="scroll">
+<table>
+  <thead><tr><th class="num">n train</th><th class="num">chay-tron → ve-nha</th><th class="num">ve-nha → chay-tron</th><th class="num">chênh</th></tr></thead>
+  <tbody id="lc-table"></tbody>
+</table>
+</div>
+
+<ul>
+  <li><b>Ở cùng cỡ mẫu, hai chiều gần như ngang nhau</b>: 0.252 và 0.242 ở 264 clip; 0.250 và 0.231 ở 132 clip. Chênh lệch giữa hai chiều ở bảng trên <b>chủ yếu là do cỡ tập train</b>. <code>chay-tron-thanh-xuan</code> có vẻ khó hơn một chút, khoảng 0.01–0.02.</li>
+  <li><b>Đường cong chưa chững:</b> từ 264 lên 1060 clip (hai lần gấp đôi) tăng khoảng +0.05, tức khoảng +0.025 mỗi lần gấp đôi dữ liệu. Đoạn 500 → 750 hơi lùi (0.286 → 0.282), nằm trong dao động giữa các seed.</li>
+  <li><b>Ngoại suy, chưa phải kết quả đo:</b> nếu <code>ve-nha-di-con</code> cũng lên khoảng 1000 clip, chiều yếu nhiều khả năng sẽ đạt mức 0.28–0.30, và B gộp sẽ lên cùng mức đó. Nguồn clip có đủ: series này còn 1251 clip đã cắt mà chưa ai gán. Với tỷ lệ giữ lại khoảng 62% như đợt trước, sẽ được thêm khoảng 780 clip sạch.</li>
+</ul>
+
+<h2 id="khoang-cach">Tách khoảng cách A → B</h2>
+<p>Khoảng cách A → B đã nới từ khoảng 0.065 (v6) lên 0.098 (10 seed). Có thể tách nó thành hai phần:</p>
+<figure>
+  <div class="fig-title">macro-F1 emotion, trung bình 10 seed</div>
+  <div class="hbars" id="bridge"></div>
+  <figcaption>Ba con số chấm trên tập test khác nhau: B gộp và A chấm trên 1324 clip, chiều 1060 → 264 chỉ chấm trên 264 clip. Vì vậy phép tách chỉ là xấp xỉ về độ lớn, không phải phân rã chính xác.</figcaption>
+</figure>
+<ul>
+  <li><b>Khoảng +0.042 do cỡ tập train.</b> B gộp bị chiều 264 clip kéo xuống. Phần này sẽ mất đi khi <code>ve-nha-di-con</code> có đủ nhãn.</li>
+  <li><b>Khoảng +0.056 do học cùng series.</b> Ở cỡ train tương đương (~1060), A vẫn cao hơn cross-series khoảng 0.056. Phần này gồm rò rỉ danh tính diễn viên và độ khớp miền của cùng một phim (thu âm, mix, văn phong thoại). Phần này thêm nhãn cũng không xoá được, và đây là lý do A không được dùng làm headline.</li>
+</ul>
+
+<h2 id="theo-lop">Theo từng lớp: model yếu đúng chỗ người cũng bất đồng</h2>
+<p>Cột κ người lấy từ vòng soát mù change 014 (owner ↔ <code>nhinguyen</code>, 343 clip, κ one-vs-rest). Cột F1 model dùng dự đoán gộp theo đa số 10 seed. Bảng sắp theo κ người giảm dần.</p>
+<div class="legend"><span><i class="sw" style="background:var(--s2)"></i>κ người (one-vs-rest)</span><span><i class="sw" style="background:var(--s1)"></i>F1 model</span></div>
+<div class="scroll">
+<table>
+  <thead><tr><th>Lớp</th><th class="num">support</th><th>κ người</th><th>F1 · A (GroupKFold)</th><th>F1 · B (cross-series)</th><th class="num">rơi A→B</th></tr></thead>
+  <tbody id="cls-table"></tbody>
+</table>
+</div>
+<ul>
+  <li><b>disgust, surprise, fear_anxiety</b> là ba lớp yếu nhất ở cả hai phía: κ người 0.11–0.38, F1 cross-series 0.07–0.12. Ở cross-series, disgust (0.070) và surprise (0.092) gần như không học được gì. Riêng disgust, người soát mù chỉ gán 4 lần trong khi owner gán 28 lần, tức định nghĩa lớp này chưa được hai người hiểu giống nhau.</li>
+  <li><b>sadness là ngoại lệ đáng chú ý:</b> người đồng ý khá cao (κ 0.62), model trong cùng series đạt 0.40, nhưng sang series khác chỉ còn 0.22. Đây là mức rơi lớn nhất (−0.18). Hướng nghi: dấu hiệu buồn mà model bắt được có thể gắn với cách diễn hoặc cách mix của từng phim, chứ không phải với giọng buồn nói chung. Giả thuyết này chưa được kiểm.</li>
+  <li><b>neutral, anger, joy</b> đứng vững nhất, F1 cross-series 0.40–0.47.</li>
+</ul>
+
+<figure>
+  <div class="fig-title">Ma trận nhầm, eval B (cross-series), chuẩn hoá theo hàng</div>
+  <div class="scroll"><table class="heat" id="heat"></table></div>
+  <figcaption>Hàng = nhãn owner, cột = model dự đoán; ô viền đậm là dự đoán đúng. Số trên là % của hàng, số dưới là số clip. Model dự đoán sadness 206 lần trong khi chỉ có 156 clip sadness thật: fear_anxiety, disgust và cả neutral đều bị đẩy sang sadness. Ngược lại, sadness thật thì bị hút về neutral (56 clip).</figcaption>
+</figure>
+
+<h2 id="nhan-tranh-cai">Model trên clip mà người đồng ý và clip mà người bất đồng</h2>
+<p>Trên 343 clip của vòng soát mù, tách theo việc owner và người soát mù có chọn cùng nhãn hay không:</p>
+<div class="scroll">
+<table>
+  <thead><tr><th>Nhóm clip</th><th class="num">n</th><th class="num">model = owner</th><th class="num">model = người soát mù</th><th class="num">model = một trong hai</th></tr></thead>
+  <tbody>
+    <tr><td>Hai người đồng ý</td><td class="num">206</td><td class="num"><b>43.2%</b></td><td class="num">43.2%</td><td class="num">43.2%</td></tr>
+    <tr><td>Hai người bất đồng</td><td class="num">137</td><td class="num"><b>20.4%</b></td><td class="num">27.7%</td><td class="num">48.2%</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="sub">Eval B, dự đoán gộp 10 seed. Eval A cho cùng hình dạng: 49.0% trên clip đồng ý; 27.7%, 24.8% và 52.6% trên clip bất đồng.</p>
+<ul>
+  <li>Trên clip mà người bất đồng, độ chính xác so với nhãn owner chỉ bằng khoảng một nửa (20% so với 43%). Tuy vậy, gần một nửa số lần model chọn đúng <em>một trong hai</em> nhãn mà con người đã chọn. Một phần "lỗi" của model ở đây là do nhãn mơ hồ, không chỉ do model yếu.</li>
+  <li>Cẩn trọng: khớp một trong hai nhãn thì dễ hơn khớp đúng một nhãn, nên con số 48% không so thẳng được với 43%. Kết luận chắc chắn được chỉ là: độ chính xác của model sụt mạnh đúng ở những clip mà người với người bất đồng.</li>
+  <li>Vì nhãn test luôn là nhãn owner, <b>trần thực tế của macro-F1 thấp hơn 1 một khoảng đáng kể</b>. Con số 0.26–0.30 cần đọc cạnh mức trùng người–người 60%, không đọc một mình.</li>
+</ul>
+
+<h2 id="va">Valence và arousal</h2>
+<ul>
+  <li><b>Arousal tăng theo lượng dữ liệu:</b> CCC 0.082 ở chiều train 264 clip, lên 0.144 ở chiều train 1060 clip. Hình dạng giống emotion.</li>
+  <li><b>Valence vẫn sát sàn:</b> CCC 0.075–0.106 ở cả hai chiều. Điều này khớp với kết luận cũ rằng audio một mình khó bắt valence, và vẫn là động cơ cho nhánh text tone×emotion (change 013).</li>
+  <li>Không có κ cho V/A: ở vòng soát mù, V/A được hiện ra sau khi người soát chốt emotion (change 014), nên bị neo.</li>
+</ul>
+
+<h2 id="khuyen-nghi">Đề xuất cho vòng tiếp theo</h2>
+<div class="rec">
+  <h4>Dồn đợt gán nhãn tiếp theo vào <code>ve-nha-di-con</code></h4>
+  <p>Đây là cách rẻ nhất để nâng con số trung thực. Mục tiêu khoảng 1000 clip sạch, tức gán thêm khoảng 1250 clip trong số đã cắt sẵn. Thêm nhãn cho <code>chay-tron-thanh-xuan</code> lúc này chủ yếu làm đẹp eval A.</p>
+</div>
+<ol>
+  <li><b>Chốt định nghĩa disgust (và xem lại surprise) trước khi gán tiếp.</b> Nếu gán tiếp trên một định nghĩa mà hai người không hiểu giống nhau, dữ liệu thêm vào sẽ ít giá trị. Có hai hướng: (a) gộp disgust vào anger, hoặc (b) giữ nguyên nhưng viết lại guideline kèm ví dụ nghe được. Đây là quyết định về taxonomy, cần người quyết.</li>
+  <li><b>Cho kernel tự báo điểm theo từng chiều.</b> B gộp đang che mất chuyện chiều nào bị thiếu dữ liệu. Nên báo thêm hai chiều riêng và một chiều khớp cỡ mẫu, để lần chạy sau khỏi phải phân tích lại bằng tay.</li>
+  <li><b>Thêm series thứ ba (miền Bắc) vẫn là việc đúng cho tập test</b> (quyết định P0 #1). Có ba series thì leave-one-series-out bớt phụ thuộc vào một cặp phim duy nhất.</li>
+  <li><b>Cho <code>nhinguyen</code> soát nốt 727 clip còn lại</b> của hàng đợi. CI của κ sẽ hẹp lại, và κ theo lớp của disgust và surprise sẽ dựa trên nhiều hơn 15–28 clip.</li>
+</ol>
+
+<h2 id="gioi-han">Giới hạn khi đọc các số này</h2>
+<ul>
+  <li><b>Nhãn train và nhãn test là một người gán (owner).</b> Đây vẫn là số pilot, chưa phải accuracy để công bố (I6).</li>
+  <li><b>κ 0.513 chỉ từ một cặp rater, và owner là một bên.</b> Người soát mù thấy transcript; V/A không có κ.</li>
+  <li>Đường cong học rút mẫu trên series train nhưng <b>luôn chấm trên cùng một tập test 264 clip</b>, nên mọi điểm trên đường cùng chịu một sai số chung. Dải ±1 SD không bao sai số đó.</li>
+  <li>Backbone đóng băng, head tuyến tính. Một model fine-tune có thể có đường cong khác.</li>
+  <li>Phép tách khoảng cách A → B so các số trên tập test khác nhau, nên chỉ đúng về độ lớn.</li>
+  <li>Giả thuyết sadness phụ thuộc series và phần ngoại suy 0.28–0.30 <b>chưa được kiểm</b>.</li>
+</ul>
+
+<h2 id="nguon">Nguồn số</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Số</th><th>File</th><th>Sinh bởi</th></tr></thead>
+  <tbody>
+    <tr><td>A/B, CI, số lớp (v7)</td><td><code>docs/reports/baseline-1324/report.md</code>, <code>metrics.json</code></td><td>kernel <code>phatneurondai/vnser-train</code> v7 (Kaggle P100)</td></tr>
+    <tr><td>10 seed, từng chiều, đường cong học, F1 theo lớp, ma trận nhầm, tách theo mức đồng ý</td><td><code>docs/reports/baseline-1324/analysis.json</code></td><td><code>scripts/vietnamese-ser/analyze_baseline.py</code> (seed 0 tái lập đúng 0.2557 của Kaggle)</td></tr>
+    <tr><td>κ người–người</td><td><code>docs/reports/014/kappa.md</code></td><td><code>scripts/vietnamese-ser/gold_review_kappa.py</code></td></tr>
+    <tr><td>Số v6 (750 clip)</td><td><code>docs/spec/capabilities/training-baseline.md</code> (bản trước)</td><td>kernel <code>vnser-train</code> v6, 2026-07-22</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  var tip = document.getElementById("tip");
+  function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; moveTip(e); }
+  function moveTip(e) {
+    var x = e.clientX + 14, y = e.clientY + 14;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    if (x + w > window.innerWidth - 8) x = e.clientX - w - 14;
+    if (y + h > window.innerHeight - 8) y = e.clientY - h - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.hidden = true; }
+  function bindTip(el, html) {
+    el.setAttribute("data-tip", "");
+    el.addEventListener("pointerenter", function (e) { showTip(e, html); });
+    el.addEventListener("pointermove", moveTip);
+    el.addEventListener("pointerleave", hideTip);
+  }
+  function el(tag, attrs, parent) {
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function f3(x) { return x.toFixed(3); }
+
+  // ── learning curve ───────────────────────────────────────────────────
+  var big = [[66,.216,.025],[132,.250,.018],[264,.252,.015],[500,.286,.023],[750,.282,.011],[1060,.302,.006]];
+  var small = [[66,.196,.021],[132,.231,.012],[264,.242,.007]];
+  var series = [
+    {name: "train chay-tron-thanh-xuan → test ve-nha-di-con", short: "chay-tron → ve-nha", color: "var(--s1)", pts: big},
+    {name: "train ve-nha-di-con → test chay-tron-thanh-xuan", short: "ve-nha → chay-tron", color: "var(--s2)", pts: small}
+  ];
+  var leg = document.getElementById("lc-legend");
+  series.forEach(function (s) {
+    leg.insertAdjacentHTML("beforeend", '<span><i class="sw" style="background:' + s.color + '"></i>' + s.name + "</span>");
+  });
+  leg.insertAdjacentHTML("beforeend", '<span><i class="sw dash"></i>tham chiếu: B gộp v7, A (GroupKFold)</span>');
+
+  var W = 680, H = 330, m = {l: 46, r: 150, t: 14, b: 40};
+  var x0 = 0, x1 = 1100, y0 = .15, y1 = .38;
+  var X = function (v) { return m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r); };
+  var Y = function (v) { return m.t + (1 - (v - y0) / (y1 - y0)) * (H - m.t - m.b); };
+  var svg = el("svg", {viewBox: "0 0 " + W + " " + H});
+  document.getElementById("lc").appendChild(svg);
+  [.15,.20,.25,.30,.35].forEach(function (v) {
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), stroke: "var(--grid)", "stroke-width": 1}, svg);
+    el("text", {x: m.l - 8, y: Y(v) + 4, "text-anchor": "end"}, svg).textContent = v.toFixed(2);
+  });
+  [0,250,500,750,1000].forEach(function (v) {
+    el("text", {x: X(v), y: H - m.b + 18, "text-anchor": "middle"}, svg).textContent = v;
+  });
+  el("text", {x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle"}, svg).textContent = "số clip train (rút ngẫu nhiên từ series train)";
+  el("line", {x1: m.l, x2: W - m.r, y1: Y(y0), y2: Y(y0), stroke: "var(--line)", "stroke-width": 1}, svg);
+  // references
+  [[.256, "B gộp v7 · 0.256"], [.358, "A GroupKFold · 0.358"]].forEach(function (r) {
+    el("line", {x1: m.l, x2: W - m.r, y1: Y(r[0]), y2: Y(r[0]), stroke: "var(--faint)", "stroke-width": 1.25, "stroke-dasharray": "5 4"}, svg);
+    el("text", {x: W - m.r + 8, y: Y(r[0]) + 4}, svg).textContent = r[1];
+  });
+  series.forEach(function (s) {
+    var up = s.pts.map(function (p) { return X(p[0]) + "," + Y(p[1] + p[2]); });
+    var dn = s.pts.slice().reverse().map(function (p) { return X(p[0]) + "," + Y(p[1] - p[2]); });
+    el("polygon", {points: up.concat(dn).join(" "), fill: s.color, "fill-opacity": .13, stroke: "none"}, svg);
+    el("polyline", {points: s.pts.map(function (p) { return X(p[0]) + "," + Y(p[1]); }).join(" "),
+      fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round"}, svg);
+  });
+  series.forEach(function (s) {
+    s.pts.forEach(function (p) {
+      el("circle", {cx: X(p[0]), cy: Y(p[1]), r: 4.5, fill: s.color, stroke: "var(--panel)", "stroke-width": 2}, svg);
+      var hit = el("circle", {cx: X(p[0]), cy: Y(p[1]), r: 12, fill: "transparent", tabindex: 0}, svg);
+      bindTip(hit, "<b>" + s.short + "</b><br>n train = " + p[0] + "<br>macro-F1 = " + f3(p[1]) + " ± " + f3(p[2]) + " (SD, 10 seed)");
+    });
+  });
+  var eb = big[big.length - 1], es = small[small.length - 1];
+  var t1 = el("text", {x: X(eb[0]) + 10, y: Y(eb[1]) + 4, class: "lbl", style: "fill:var(--s1)"}, svg); t1.textContent = "chay-tron → ve-nha";
+  var t2 = el("text", {x: X(es[0]) + 10, y: Y(es[1]) + 16, class: "lbl", style: "fill:var(--s2)"}, svg); t2.textContent = "ve-nha → chay-tron";
+
+  var tb = document.getElementById("lc-table");
+  big.forEach(function (p) {
+    var s = small.filter(function (q) { return q[0] === p[0]; })[0];
+    tb.insertAdjacentHTML("beforeend", "<tr><td class='num'>" + p[0] + "</td><td class='num'>" + f3(p[1]) + " <span class='ci'>± " + f3(p[2]) +
+      "</span></td><td class='num'>" + (s ? f3(s[1]) + " <span class='ci'>± " + f3(s[2]) + "</span>" : "<span class='ci'>series chỉ có 264</span>") +
+      "</td><td class='num'>" + (s ? "+" + f3(p[1] - s[1]) : "") + "</td></tr>");
+  });
+
+  // ── bridge ───────────────────────────────────────────────────────────
+  var bridge = [
+    ["Luôn đoán neutral", "mốc sàn", .062, true],
+    ["B gộp", "cross-series, 1324 clip test", .260],
+    ["Cross-series, train 1060", "chay-tron → ve-nha, 264 clip test", .302],
+    ["A · GroupKFold", "cùng series, 1324 clip test", .358]
+  ];
+  var deltas = {2: "<b>+0.042</b> do cỡ tập train", 3: "<b>+0.056</b> do học cùng series (rò rỉ danh tính + khớp miền)"};
+  var bw = document.getElementById("bridge"), scale = .46;
+  bridge.forEach(function (b, i) {
+    if (deltas[i]) bw.insertAdjacentHTML("beforeend", '<div class="delta">' + deltas[i] + "</div>");
+    var pct = b[2] / scale * 100;
+    bw.insertAdjacentHTML("beforeend",
+      '<div class="name">' + b[0] + "<small>" + b[1] + "</small></div>" +
+      '<div class="track"><div class="bar' + (b[3] ? " muted" : "") + '" style="width:' + pct + '%"></div>' +
+      '<span class="bar-v" style="left:calc(' + pct + '% + 8px)">' + f3(b[2]) + "</span></div>");
+  });
+
+  // ── per-class ────────────────────────────────────────────────────────
+  var cls = [
+    ["joy", 234, .641, .492, .398], ["anger", 251, .631, .551, .459], ["sadness", 156, .621, .395, .215],
+    ["neutral", 367, .503, .465, .475], ["fear_anxiety", 131, .377, .178, .117],
+    ["surprise", 82, .326, .286, .092], ["disgust", 103, .107, .158, .070]
+  ];
+  function mb(v, h) {
+    return '<div class="mb"><i class="' + (h ? "h" : "") + '" style="width:' + (v / .7 * 90) + 'px"></i><span>' + f3(v) + "</span></div>";
+  }
+  var ct = document.getElementById("cls-table");
+  cls.forEach(function (c) {
+    var drop = c[4] - c[3];
+    ct.insertAdjacentHTML("beforeend", "<tr><td>" + c[0] + "</td><td class='num'>" + c[1] + "</td><td>" + mb(c[2], true) +
+      "</td><td>" + mb(c[3]) + "</td><td>" + mb(c[4]) + "</td><td class='num" + (drop < -.15 ? " flat" : "") + "'>" +
+      (drop >= 0 ? "+" : "−") + Math.abs(drop).toFixed(3) + "</td></tr>");
+  });
+
+  // ── heatmap ──────────────────────────────────────────────────────────
+  var E = ["neutral", "anger", "joy", "fear_anxiety", "sadness", "disgust", "surprise"];
+  var C = [[184,34,37,30,53,13,16],[25,119,30,32,24,17,4],[56,38,86,13,24,8,9],[35,28,14,15,29,4,6],
+           [56,16,16,15,39,11,3],[25,24,9,10,24,6,5],[27,9,6,11,13,10,6]];
+  var ht = document.getElementById("heat");
+  var head = "<thead><tr><th class='row'>owner ↓ · model →</th>" + E.map(function (e) { return "<th>" + e + "</th>"; }).join("") + "</tr></thead><tbody>";
+  var colSum = E.map(function (_, j) { return C.reduce(function (a, r) { return a + r[j]; }, 0); });
+  C.forEach(function (row, i) {
+    var n = row.reduce(function (a, b) { return a + b; }, 0);
+    head += "<tr><th class='row'>" + E[i] + " <span class='ci'>(" + n + ")</span></th>";
+    row.forEach(function (v, j) {
+      var p = v / n, mix = Math.round(Math.min(p / .55, 1) * 88);
+      var dark = mix > 50 ? "color:#fff;" : "";
+      head += "<td class='" + (i === j ? "diag" : "") + "' data-i='" + i + "' data-j='" + j + "' style='" + dark +
+        "background:color-mix(in srgb, var(--s1) " + mix + "%, var(--panel))'>" + Math.round(p * 100) + "%<small>" + v + "</small></td>";
+    });
+    head += "</tr>";
+  });
+  head += "<tr><th class='row'>tổng dự đoán</th>" + colSum.map(function (s) { return "<td><b>" + s + "</b></td>"; }).join("") + "</tr></tbody>";
+  ht.innerHTML = head;
+  ht.querySelectorAll("td[data-i]").forEach(function (td) {
+    var i = +td.dataset.i, j = +td.dataset.j, n = C[i].reduce(function (a, b) { return a + b; }, 0);
+    td.tabIndex = 0;
+    bindTip(td, "owner: <b>" + E[i] + "</b><br>model: <b>" + E[j] + "</b><br>" + C[i][j] + " / " + n + " clip (" + (C[i][j] / n * 100).toFixed(1) + "%)");
+  });
+})();
+</script>

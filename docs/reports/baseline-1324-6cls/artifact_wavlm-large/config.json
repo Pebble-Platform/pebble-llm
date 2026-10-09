@@ -1,0 +1,93 @@
+{
+  "backbone": "microsoft/wavlm-large",
+  "emotions": [
+    "neutral",
+    "anger",
+    "joy",
+    "fear_anxiety",
+    "sadness",
+    "disgust"
+  ],
+  "n_splits": 5,
+  "seed": 0,
+  "split_hash": "ab12f9a921dd6d0505a5ae17d1766f80",
+  "pip_pins": [
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "torchaudio==2.5.1",
+    "transformers==4.46.3",
+    "soundfile",
+    "pandas",
+    "numpy"
+  ],
+  "n_clips": 1242,
+  "series": [
+    "chay-tron-thanh-xuan",
+    "ve-nha-di-con"
+  ],
+  "label_source": "human single-annotator (ADR-003)",
+  "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
+  "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
+  "metrics_groupkfold": {
+    "emotion_macro_f1": 0.3844308184202753,
+    "emotion_macro_f1_ci95": [
+      0.3572580767458419,
+      0.41067688955829124
+    ],
+    "emotion_uar": 0.3886036100055923,
+    "emotion_uar_ci95": [
+      0.36142686514470684,
+      0.41755171883578296
+    ],
+    "emotion_n": 1242,
+    "emotion_support": {
+      "neutral": 367,
+      "anger": 251,
+      "joy": 234,
+      "fear_anxiety": 131,
+      "sadness": 156,
+      "disgust": 103
+    },
+    "ccc_valence": 0.14843050466903113,
+    "ccc_valence_ci95": [
+      0.1300569586132894,
+      0.1667012656057302
+    ],
+    "ccc_arousal": 0.1633941624124401,
+    "ccc_arousal_ci95": [
+      0.14800033587999128,
+      0.17712092569778146
+    ]
+  },
+  "metrics_leave_one_series_out": {
+    "emotion_macro_f1": 0.2880736811706926,
+    "emotion_macro_f1_ci95": [
+      0.2642885294783571,
+      0.3116527245532781
+    ],
+    "emotion_uar": 0.2900834760487512,
+    "emotion_uar_ci95": [
+      0.2671859505174665,
+      0.3147038346516541
+    ],
+    "emotion_n": 1242,
+    "emotion_support": {
+      "neutral": 367,
+      "anger": 251,
+      "joy": 234,
+      "fear_anxiety": 131,
+      "sadness": 156,
+      "disgust": 103
+    },
+    "ccc_valence": 0.08713667262672167,
+    "ccc_valence_ci95": [
+      0.06589381698960918,
+      0.10524499438211296
+    ],
+    "ccc_arousal": 0.09712079209575772,
+    "ccc_arousal_ci95": [
+      0.08626230226322366,
+      0.10745362663206733
+    ]
+  }
+}

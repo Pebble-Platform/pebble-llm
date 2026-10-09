@@ -82,3 +82,11 @@ htmlcov/
 docs/papers/finetuning-message/pdfs/
 docs/papers/voice/pdfs/
 docs/papers/pdfs/
+
+.tools/
+# change 012: the ablation kernel runs the SAME script as vnser-train; the copy is
+# made at push time (RUNBOOK) so there is one source of truth in git.
+kaggle/vietnamese-ser/vnser-ablation-012/vnser-train.py
+# class-subset run (disgust+surprise dropped): same script as vnser-train, copied at push time
+kaggle/vietnamese-ser/vnser-train-5cls/vnser-train.py
+kaggle/vietnamese-ser/vnser-train-6cls/vnser-train.py

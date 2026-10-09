@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baseline 6 lớp · 1242 clip</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --faint:#8c959f; --line:#d8dee4;
+    --accent:#2563eb; --s1:#2563eb; --s2:#c2410c; --ok:#1a7f37; --warn:#bc4c00;
+    --code:#eef1f4; --okbg:rgba(26,127,55,.07);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+      --accent:#589bff; --s1:#3b82f6; --s2:#e0702a; --ok:#3fb950; --warn:#f0883e;
+      --code:#1c2128; --okbg:rgba(63,185,80,.10);
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --faint:#6e7681; --line:#2d333b;
+    --accent:#589bff; --s1:#3b82f6; --s2:#e0702a; --ok:#3fb950; --warn:#f0883e;
+    --code:#1c2128; --okbg:rgba(63,185,80,.10);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding-inline:20px;padding-block:32px 80px}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px;text-wrap:balance}
+  h2{font-size:21px;margin:44px 0 12px;padding-top:14px;border-top:1px solid var(--line);text-wrap:balance}
+  h3{font-size:13px;margin:24px 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  p,li{margin:8px 0;max-width:72ch}
+  .sub{color:var(--muted);font-size:13.5px}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;font-family:"SF Mono",Consolas,monospace}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:12px;text-transform:uppercase;
+    letter-spacing:.03em;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ci{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .up{color:var(--ok);font-weight:600}
+  .warn{color:var(--warn);font-weight:600}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .callout > :first-child{margin-top:0}
+  .callout > :last-child{margin-bottom:0}
+  .rec{background:var(--okbg);border:1px solid var(--ok);border-radius:10px;padding:14px 18px;margin:18px 0}
+  .rec h4{margin:0 0 6px;font-size:16px;color:var(--ok)}
+  .rec > :last-child{margin-bottom:0}
+  .findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:20px 0 8px}
+  .finding{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;
+    display:flex;flex-direction:column;gap:4px}
+  .finding .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+  .finding .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+  .finding p{margin:0;font-size:14px}
+  figure{margin:18px 0;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px 10px}
+  figcaption{font-size:13px;color:var(--muted);margin-top:8px}
+  .fig-title{font-weight:600;font-size:14.5px;margin:0 0 8px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:6px 0 4px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+  .hbars{display:grid;grid-template-columns:minmax(150px,250px) 1fr;gap:8px 12px;align-items:center;font-size:14px}
+  .hbars .name small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+  .track{position:relative;height:22px}
+  .bar{position:absolute;left:0;top:3px;height:16px;border-radius:0 4px 4px 0;background:var(--s1)}
+  .bar.base{background:var(--faint)}
+  .bar.alt{background:var(--s2)}
+  .bar-v{position:absolute;top:0;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:22px}
+  .delta{grid-column:2;font-size:12.5px;color:var(--muted);margin:-4px 0 2px;font-variant-numeric:tabular-nums}
+  .delta b{color:var(--ink)}
+  .pair{display:flex;flex-direction:column;gap:3px;min-width:150px}
+  .pair div{display:flex;align-items:center;gap:8px}
+  .pair i{display:block;height:9px;border-radius:0 3px 3px 0}
+  .pair span{font-variant-numeric:tabular-nums;font-size:12.5px}
+  @media (max-width:560px){
+    .hbars{grid-template-columns:1fr}
+    .delta{grid-column:1}
+    h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>Chỉ bỏ surprise: điểm trung thực tăng 0.03, phần model thật sự tiến bộ chỉ khoảng 0.01</h1>
+  <div class="sub">ViEmoSpeech · kernel <code>vnser-train-6cls</code> (Kaggle P100), 2026-10-02 · frozen WavLM-Large layer 24 + linear probe ·
+    1242 clip, đúng tập clip của run 7 lớp v7 trừ 82 clip surprise · so với run 7 lớp (v7) và 5 lớp (bỏ cả disgust)</div>
+</header>
+
+<div class="findings">
+  <div class="finding"><span class="k">Eval B · khác series</span><span class="v">0.256 → 0.288</span>
+    <p>macro-F1, Kaggle seed 0. Trung bình 10 seed: 0.260 → 0.296.</p></div>
+  <div class="finding"><span class="k">Phần thật</span><span class="v">+0.010</span>
+    <p>Model 7 lớp cũ, chỉ bỏ surprise khỏi phép trung bình, đã đạt 0.286.</p></div>
+  <div class="finding"><span class="k">Disgust ở eval B</span><span class="v">F1 0.048</span>
+    <p>Giữ disgust nghĩa là giữ lớp gần như không học được khi sang series khác.</p></div>
+  <div class="finding"><span class="k">So với người</span><span class="v">0.36</span>
+    <p>κ model / κ người, gần như không đổi so với 7 lớp (0.37).</p></div>
+</div>
+
+<div class="callout">
+  <p><b>Kết luận:</b> bỏ surprise gần như không giúp model. Phần tăng chủ yếu đến từ việc một lớp có F1 thấp (0.09) không còn được tính vào trung bình.
+  Disgust vẫn ở mức gần như không học được khi sang series khác (F1 0.048), nên 6 lớp nằm giữa: không dễ đọc như 5 lớp, cũng không giữ đủ thông tin như 7 lớp.
+  Nếu mục tiêu là giữ disgust vì ý nghĩa nghiên cứu, thì vấn đề cần sửa là định nghĩa và dữ liệu của disgust (κ người 0.107), không phải bỏ surprise.</p>
+</div>
+
+<h2 id="run">Thông tin run</h2>
+<div class="scroll">
+<table>
+  <tbody>
+    <tr><td>Kernel</td><td><code>phatneurondai/vnser-train-6cls</code> v1</td></tr>
+    <tr><td>Dataset</td><td><code>phatneurondai/viemospeech-6cls</code>, private · <code>build_kaggle_gold.py --drop-emotions surprise --keys docs/reports/baseline-1324/v7-clip-keys.tsv</code></td></tr>
+    <tr><td>Tập clip</td><td>1242 = 1324 clip của v7 trừ 82 surprise. 17 clip mới của <code>cay-tao-no-hoa</code> bị loại có chủ đích để so được với run 7 và 5 lớp.</td></tr>
+    <tr><td>Series</td><td><code>chay-tron-thanh-xuan</code> 988 · <code>ve-nha-di-con</code> 254</td></tr>
+    <tr><td>Lớp</td><td>neutral 367 · anger 251 · joy 234 · sadness 156 · fear_anxiety 131 · disgust 103</td></tr>
+    <tr><td>Kiểm chéo</td><td>Kaggle eval B seed 0 = 0.28807, khớp từng chữ số với bản chạy CPU local. Seed 0 là seed thấp nhất của eval B trong 10 seed (0.288–0.306).</td></tr>
+    <tr><td>split_hash (GKF)</td><td><code>ab12f9a921dd6d0505a5ae17d1766f80</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="ket-qua">Kết quả chính, so ba cách chọn lớp</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Metric (Kaggle, seed 0)</th><th class="num">7 lớp</th><th class="num">6 lớp · bỏ surprise</th><th class="num">5 lớp · bỏ surprise + disgust</th></tr></thead>
+  <tbody>
+    <tr><td>Số clip</td><td class="num">1324</td><td class="num">1242</td><td class="num">1139</td></tr>
+    <tr><td>A · macro-F1</td><td class="num">0.356</td><td class="num">0.384 <span class="ci">[0.357, 0.411]</span></td><td class="num">0.428</td></tr>
+    <tr><td><b>B · macro-F1</b></td><td class="num"><b>0.256</b></td><td class="num"><b>0.288</b> <span class="ci">[0.264, 0.312]</span></td><td class="num"><b>0.351</b></td></tr>
+    <tr><td>B · UAR</td><td class="num">0.256</td><td class="num">0.290 <span class="ci">[0.267, 0.315]</span></td><td class="num">0.351</td></tr>
+    <tr><td>B · CCC valence</td><td class="num">0.080</td><td class="num">0.087 <span class="ci">[0.066, 0.105]</span></td><td class="num">0.092</td></tr>
+    <tr><td>B · CCC arousal</td><td class="num">0.094</td><td class="num">0.097 <span class="ci">[0.086, 0.107]</span></td><td class="num">0.101</td></tr>
+    <tr><td>Mốc ngẫu nhiên · UAR</td><td class="num">0.143</td><td class="num">0.167</td><td class="num">0.200</td></tr>
+    <tr><td>Mốc luôn đoán neutral · macro-F1</td><td class="num">0.062</td><td class="num">0.076</td><td class="num">0.097</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="sub">A = GroupKFold theo tập (cùng series, lạc quan). B = leave-one-series-out (khác dàn diễn viên, số trung thực theo I4). CI bootstrap 95% theo clip, lấy từ báo cáo kernel.
+Mốc ngẫu nhiên khác nhau theo số lớp, nên ba cột không so thẳng được với nhau.</p>
+
+<h2 id="tach">Tách mức tăng: cơ học và thật</h2>
+<p>Macro-F1 là trung bình F1 của các lớp. Để tách phần do đổi phép trung bình khỏi phần model thực sự học tốt hơn, tôi lấy model 7 lớp hiện tại và chỉ tính trung bình F1 trên các lớp được giữ lại:</p>
+<figure>
+  <div class="fig-title">Eval B (khác series), macro-F1, trung bình 10 seed</div>
+  <div class="hbars" id="bridge"></div>
+  <figcaption>Số 10 seed lấy từ <code>class-subset.json</code> (chạy CPU, cùng feature và head với Kaggle). Thanh xám là model 7 lớp; thanh xanh là model train lại trên tập lớp mới.</figcaption>
+</figure>
+<div class="scroll">
+<table>
+  <thead><tr><th>Phương án</th><th class="num">Tổng mức tăng B</th><th class="num">Cơ học</th><th class="num">Thật</th><th class="num">κ model (B)</th><th class="num">κ người</th><th class="num">tỷ lệ</th></tr></thead>
+  <tbody>
+    <tr><td>7 lớp</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">0.190</td><td class="num">0.513 <span class="ci">n 343</span></td><td class="num">0.37</td></tr>
+    <tr><td><b>6 lớp · bỏ surprise</b></td><td class="num">+0.036</td><td class="num">+0.026</td><td class="num"><b>+0.010</b></td><td class="num">0.204</td><td class="num">0.559 <span class="ci">n 303</span></td><td class="num">0.36</td></tr>
+    <tr><td>5 lớp · bỏ surprise + disgust</td><td class="num">+0.098</td><td class="num">+0.070</td><td class="num">+0.028</td><td class="num">0.231</td><td class="num">0.621 <span class="ci">n 276</span></td><td class="num">0.37</td></tr>
+  </tbody>
+</table>
+</div>
+<ul>
+  <li><b>Bỏ surprise: khoảng 70% mức tăng là cơ học</b>, phần thật chỉ +0.010. Tỷ lệ này giống phương án 5 lớp.</li>
+  <li><b>Tỷ lệ κ model / κ người giữ quanh 0.36–0.37 ở cả ba phương án.</b> Đổi tập lớp làm bài toán dễ hơn cho cả người lẫn model, không làm model gần người hơn.</li>
+  <li>κ người ở dòng 6 và 5 lớp chỉ tính trên những clip mà không ai chọn lớp bị bỏ, nên bị thổi lên một chút.</li>
+</ul>
+
+<h2 id="lop">Theo từng lớp</h2>
+<p>F1 của 6 lớp còn lại, so giữa model 7 lớp và model 6 lớp (dự đoán gộp theo đa số 10 seed):</p>
+<div class="legend"><span><i class="sw" style="background:var(--faint)"></i>model 7 lớp</span><span><i class="sw" style="background:var(--s1)"></i>model 6 lớp</span></div>
+<div class="scroll">
+<table>
+  <thead><tr><th>Lớp</th><th class="num">support</th><th>F1 · A (cùng series)</th><th>F1 · B (khác series)</th><th class="num">Δ B</th></tr></thead>
+  <tbody id="cls"></tbody>
+</table>
+</div>
+<ul>
+  <li><b>Disgust học được trong cùng series nhưng không mang sang series khác.</b> Bỏ surprise giúp disgust ở eval A tăng 0.158 → 0.218. Nhưng ở eval B nó lại giảm 0.070 → 0.048. Disgust đang được nhận ra bằng dấu hiệu riêng của từng phim (giọng diễn viên, cách diễn hoặc cách gán nhãn), không phải bằng dấu hiệu chung.</li>
+  <li>neutral, anger, joy và fear chỉ nhích nhẹ ở eval B (+0.005 đến +0.016). Sadness giảm nhẹ (0.215 → 0.207).</li>
+  <li>Trong ma trận nhầm 7 lớp ở eval B, clip surprise chủ yếu bị đoán thành neutral (27/82). Bỏ surprise đi, neutral chỉ tăng 0.010, nên surprise không phải thứ đang làm nhiễu các lớp kia.</li>
+</ul>
+
+<h2 id="chieu">Theo chiều của eval B</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Chiều</th><th class="num">7 lớp</th><th class="num">6 lớp</th><th class="num">5 lớp</th></tr></thead>
+  <tbody>
+    <tr><td>train <code>ve-nha-di-con</code> → test <code>chay-tron-thanh-xuan</code></td><td class="num">0.242 <span class="ci">train 264</span></td><td class="num">0.285 <span class="ci">train 254</span></td><td class="num">0.339 <span class="ci">train 240</span></td></tr>
+    <tr><td>train <code>chay-tron-thanh-xuan</code> → test <code>ve-nha-di-con</code></td><td class="num">0.302 <span class="ci">train 1060</span></td><td class="num">0.326 <span class="ci">train 988</span></td><td class="num">0.403 <span class="ci">train 899</span></td></tr>
+    <tr><td>Chênh giữa hai chiều</td><td class="num">0.060</td><td class="num">0.041</td><td class="num">0.064</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Ở cả ba phương án, chiều train trên <code>ve-nha-di-con</code> (khoảng 250 clip) vẫn thấp hơn. Đổi tập lớp không giải quyết nút thắt cỡ mẫu này.</p>
+
+<h2 id="don-bay">So các cách nâng số trung thực</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Cách</th><th class="num">Δ eval B (thật)</th><th>Ghi chú</th></tr></thead>
+  <tbody>
+    <tr><td>Bỏ surprise, train lại 6 lớp</td><td class="num">+0.010</td><td>Đổi bài toán; phần lớn mức tăng hiển thị là cơ học.</td></tr>
+    <tr><td>Bỏ surprise + disgust, train lại 5 lớp</td><td class="num">+0.028</td><td>Đổi bài toán; tỷ lệ so với người không đổi.</td></tr>
+    <tr><td>Chọn layer WavLM trong fold train (change 015)</td><td class="num"><span class="up">+0.035</span> <span class="ci">[+0.014, +0.056]</span></td><td>Giữ nguyên 7 lớp, pre-registered, 10/10 seed dương. Kernel chưa áp dụng.</td></tr>
+    <tr><td>Gán thêm nhãn cho <code>ve-nha-di-con</code> (~1000 clip)</td><td class="num">≈ +0.02 đến +0.04</td><td>Ngoại suy từ đường cong học, chưa đo.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="de-xuat">Đề xuất</h2>
+<div class="rec">
+  <h4>Không nên chọn 6 lớp làm benchmark</h4>
+  <p>6 lớp giữ lại đúng lớp yếu nhất (disgust) nhưng bỏ đi một lớp mà người còn đồng ý tốt hơn (surprise, κ người 0.326 so với 0.107 của disgust). Nếu muốn một benchmark phụ dễ đọc, 5 lớp hợp lý hơn. Nếu muốn giữ disgust, nên đầu tư vào chính nó.</p>
+</div>
+<ol>
+  <li><b>Nếu giữ disgust:</b> viết lại định nghĩa trong guideline kèm ví dụ nghe được, rồi cho soát mù lại riêng các clip disgust. κ người 0.107 cho thấy hai người hiện chưa hiểu lớp này giống nhau.</li>
+  <li><b>Áp layer của change 015 vào kernel</b>: cải thiện thật lớn nhất đã đo được, không phải đổi tập lớp.</li>
+  <li><b>Dồn đợt gán nhãn tiếp vào <code>ve-nha-di-con</code></b>.</li>
+</ol>
+
+<h2 id="gioi-han">Giới hạn</h2>
+<ul>
+  <li>Nhãn train và test do một người gán (owner). Đây là số pilot, chưa phải headline accuracy (I6).</li>
+  <li>κ người chỉ từ một cặp rater, owner là một bên, người soát mù thấy transcript.</li>
+  <li>Khi dùng thật, clip ngạc nhiên vẫn xuất hiện; model 6 lớp sẽ buộc phải xếp chúng vào lớp khác.</li>
+  <li>Phép tách cơ học/thật dùng trung bình 10 seed chạy trên CPU; Kaggle chỉ chạy seed 0, và seed 0 khớp từng chữ số giữa hai môi trường.</li>
+  <li>Kết luận "disgust phụ thuộc series" dựa trên F1 của 103 clip ở eval A và eval B; chưa kiểm riêng.</li>
+</ul>
+
+<h2 id="nguon">Nguồn số</h2>
+<div class="scroll">
+<table>
+  <thead><tr><th>Số</th><th>File</th><th>Sinh bởi</th></tr></thead>
+  <tbody>
+    <tr><td>Kết quả 6 lớp (seed 0, CI)</td><td><code>docs/reports/baseline-1324-6cls/report.md</code>, <code>metrics.json</code></td><td>kernel <code>vnser-train-6cls</code> (Kaggle)</td></tr>
+    <tr><td>Kết quả 7 lớp và 5 lớp</td><td><code>docs/reports/baseline-1324/report.md</code>, <code>docs/reports/baseline-1324-5cls/report.md</code></td><td>kernel <code>vnser-train</code> v7, <code>vnser-train-5cls</code></td></tr>
+    <tr><td>10 seed, cơ học/thật, κ, theo lớp, theo chiều</td><td><code>docs/reports/baseline-1324/class-subset.json</code></td><td><code>scripts/vietnamese-ser/class_subset_probe.py</code></td></tr>
+    <tr><td>κ người 7 lớp, κ theo lớp</td><td><code>docs/reports/014/kappa.md</code></td><td><code>scripts/vietnamese-ser/gold_review_kappa.py</code></td></tr>
+    <tr><td>Change 015</td><td><code>docs/reports/015/layer_probe.md</code></td><td>change 015</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<script>
+(function () {
+  function f3(x) { return x.toFixed(3); }
+  var scale = .46;
+  var rows = [
+    ["7 lớp", "model 7 lớp", .260, "base"],
+    ["7 lớp, tính trên 6 lớp", "cùng model, chỉ bỏ surprise khỏi trung bình", .286, "base"],
+    ["6 lớp, train lại", "bỏ clip surprise", .296, ""],
+    ["7 lớp, tính trên 5 lớp", "cùng model, bỏ surprise + disgust khỏi trung bình", .330, "base"],
+    ["5 lớp, train lại", "bỏ clip surprise + disgust", .358, ""]
+  ];
+  var deltas = {
+    1: "<b>+0.026</b> cơ học (bỏ surprise khỏi phép trung bình)",
+    2: "<b>+0.010</b> thật (train lại 6 lớp)",
+    3: "so sánh: 5 lớp, <b>+0.070</b> cơ học",
+    4: "<b>+0.028</b> thật (train lại 5 lớp)"
+  };
+  var bw = document.getElementById("bridge");
+  rows.forEach(function (r, i) {
+    if (deltas[i]) bw.insertAdjacentHTML("beforeend", '<div class="delta">' + deltas[i] + "</div>");
+    var pct = r[2] / scale * 100;
+    bw.insertAdjacentHTML("beforeend",
+      '<div class="name">' + r[0] + "<small>" + r[1] + "</small></div>" +
+      '<div class="track"><div class="bar ' + r[3] + '" style="width:' + pct + '%"></div>' +
+      '<span class="bar-v" style="left:calc(' + pct + '% + 8px)">' + f3(r[2]) + "</span></div>");
+  });
+
+  // [class, support, A7, A6, B7, B6]
+  var cls = [
+    ["neutral", 367, .465, .489, .475, .485], ["anger", 251, .551, .546, .459, .464],
+    ["joy", 234, .492, .511, .398, .406], ["sadness", 156, .395, .350, .215, .207],
+    ["fear_anxiety", 131, .178, .199, .117, .133], ["disgust", 103, .158, .218, .070, .048]
+  ];
+  function pair(a, b) {
+    var w = function (v) { return (v / .6 * 110).toFixed(0) + "px"; };
+    return '<div class="pair"><div><i style="width:' + w(a) + ';background:var(--faint)"></i><span>' + f3(a) + "</span></div>" +
+      '<div><i style="width:' + w(b) + ';background:var(--s1)"></i><span>' + f3(b) + "</span></div></div>";
+  }
+  var tb = document.getElementById("cls");
+  cls.forEach(function (c) {
+    var d = c[5] - c[4];
+    tb.insertAdjacentHTML("beforeend", "<tr><td>" + c[0] + "</td><td class='num'>" + c[1] + "</td><td>" + pair(c[2], c[3]) +
+      "</td><td>" + pair(c[4], c[5]) + "</td><td class='num" + (d < 0 ? " warn" : "") + "'>" + (d >= 0 ? "+" : "−") + f3(Math.abs(d)) + "</td></tr>");
+  });
+})();
+</script>
+</body>
+</html>
