@@ -185,6 +185,7 @@ CHANGE_011 = HERE.parent.parent / "docs" / "spec" / "changes" / "011-online-mult
 GOLD_USERS: dict[str, str] = {}
 GOLD_REVIEW_DIR: Path | None = None
 GOLD_HEARD: set[tuple[str, str]] = set()
+GOLD_COMMITTED: dict[tuple[str, str], str] = {}
 SAFE_USER = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
 EMOTIONS = {"joy", "sadness", "anger", "fear_anxiety", "surprise", "disgust", "neutral"}
 GENDERS = {"", "female", "male"}
@@ -245,7 +246,6 @@ def _read_reviews(user: str) -> dict:
         raise HTTPException(500, "review file is invalid")
 
 class GoldReviewIn(BaseModel):
-    agreed: bool
     rejected: bool = False
     reject_reason: str = ""
     emotion: str = ""
@@ -264,8 +264,10 @@ def gold_review_login(request: Request) -> dict:
 def gold_review_next(request: Request) -> dict:
     user = _gold_user(request)
     rows, done = _candidate_rows(), _read_reviews(user)
-    return {"user": user, "completed": len(done), "total": len(rows),
-            "item": next((r for r in rows if r["key"] not in done), None)}
+    item = next((r for r in rows if r["key"] not in done), None)
+    if item is not None:  # the owner's judgement stays server-side until commit (change 014)
+        item = {k: v for k, v in item.items() if k not in ("emotion", "valence", "arousal")}
+    return {"user": user, "completed": len(done), "total": len(rows), "item": item}
 
 @app.get("/gold-review/audio/{ep_key:path}/{clip_id}.wav")
 def gold_review_audio(request: Request, ep_key: str, clip_id: str) -> FileResponse:
@@ -275,6 +277,31 @@ def gold_review_audio(request: Request, ep_key: str, clip_id: str) -> FileRespon
     GOLD_HEARD.add((user, key))
     ep = store.episode_dir(ep_key, clip_id)
     return FileResponse(store.clip_wav(ep, clip_id), media_type="audio/wav", headers={"Cache-Control": "no-store"})
+
+class GoldCommitIn(BaseModel):
+    emotion: str
+
+
+@app.post("/gold-review/commit/{ep_key:path}/{clip_id}")
+def gold_review_commit(request: Request, ep_key: str, clip_id: str, body: GoldCommitIn) -> dict:
+    """Lock in the reviewer's own emotion, and only then hand back the owner's V/A.
+
+    V/A is a projection of the emotion judgement — `valence=1` all but rules out `joy` —
+    so shipping it up front would anchor the very answer this round exists to collect
+    (change 012's named debt). The reveal is gated here rather than hidden in the UI:
+    a curtain over data the browser already holds is not a guarantee.
+    """
+    user, key = _gold_user(request), f"{ep_key}/{clip_id}"
+    source = next((r for r in _candidate_rows() if r["key"] == key), None)
+    if source is None:
+        raise HTTPException(404, "not a gold candidate")
+    if (user, key) not in GOLD_HEARD:
+        raise HTTPException(400, "listen to the audio before answering")
+    if body.emotion not in EMOTIONS:
+        raise HTTPException(400, "invalid labels")
+    GOLD_COMMITTED[(user, key)] = body.emotion
+    return {"valence": source["valence"], "arousal": source["arousal"]}
+
 
 @app.post("/gold-review/item/{ep_key:path}/{clip_id}")
 def gold_review_save(request: Request, ep_key: str, clip_id: str, answer: GoldReviewIn) -> dict:
@@ -289,16 +316,19 @@ def gold_review_save(request: Request, ep_key: str, clip_id: str, answer: GoldRe
         if not reason:
             raise HTTPException(400, "reject reason is required")
     else:
-        if answer.emotion not in EMOTIONS or answer.valence not in range(1, 6) or answer.arousal not in range(1, 6):
+        if GOLD_COMMITTED.get((user, key)) != answer.emotion:
+            raise HTTPException(400, "commit the emotion before saving")
+        if answer.valence not in range(1, 6) or answer.arousal not in range(1, 6):
             raise HTTPException(400, "invalid labels")
         if answer.gender not in GENDERS or answer.age_group not in AGE_GROUPS or answer.dialect not in DIALECTS:
             raise HTTPException(400, "invalid options")
     original = {k: source[k] for k in ("emotion", "valence", "arousal", "gender", "age_group", "dialect")}
-    submitted = answer.dict(exclude={"agreed", "rejected", "reject_reason"})
-    if answer.agreed and (answer.rejected or submitted != original):
-        raise HTTPException(400, "agreed answer must keep original values")
+    submitted = answer.dict(exclude={"rejected", "reject_reason"})
+    # `agreed` keeps its old meaning (the reviewer left every owner value standing), but
+    # is now derived: with the owner's label off-screen there is nothing to agree TO.
+    agreed = not answer.rejected and submitted == original
     reviews = _read_reviews(user)
-    reviews[key] = {"key": key, "agreed": answer.agreed, "rejected": answer.rejected,
+    reviews[key] = {"key": key, "agreed": agreed, "rejected": answer.rejected,
                     "reject_reason": reason, "original": original, "answer": submitted,
                     "ts": store.now()}
     path = _review_path(user)
@@ -307,6 +337,7 @@ def gold_review_save(request: Request, ep_key: str, clip_id: str, answer: GoldRe
     tmp.write_text(json.dumps(reviews, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     tmp.replace(path)
     GOLD_HEARD.discard((user, key))
+    GOLD_COMMITTED.pop((user, key), None)
     return {"saved": key, "completed": len(reviews)}
 
 
