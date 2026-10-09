@@ -40,17 +40,25 @@ def run_one(name: str) -> None:
         tr, te = load_fold(fold, "train"), load_fold(fold, "test")
         out = train_eval(align(feat, tr), tr, align(feat, te), te)
         per_fold.append(out)
-        mf, cv, ca, dr = (out["macro_f1"], out["ccc_valence"],
-                          out["ccc_arousal"], out["distress_recall"])
-        print(f"  {fold} (test={te.ids[0].split('::')[0].split('/')[0]}): "
-              f"macroF1={mf[0]:.3f}±{mf[1]:.3f}  CCC-V={cv[0]:.3f}  CCC-A={ca[0]:.3f}  "
-              f"distress-recall={dr[0]:.3f} (n+={out['support'] and int(te.distress.sum())})")
+        mf, cv, ca, dr = (
+            out["macro_f1"],
+            out["ccc_valence"],
+            out["ccc_arousal"],
+            out["distress_recall"],
+        )
+        print(
+            f"  {fold} (test={te.ids[0].split('::')[0].split('/')[0]}): "
+            f"macroF1={mf[0]:.3f}±{mf[1]:.3f}  CCC-V={cv[0]:.3f}  CCC-A={ca[0]:.3f}  "
+            f"distress-recall={dr[0]:.3f} (n+={out['support'] and int(te.distress.sum())})"
+        )
     mean_mf = np.mean([f["macro_f1"][0] for f in per_fold])
     mean_cv = np.mean([f["ccc_valence"][0] for f in per_fold])
     mean_ca = np.mean([f["ccc_arousal"][0] for f in per_fold])
     print(f"  MEAN: macroF1={mean_mf:.3f}  CCC-V={mean_cv:.3f}  CCC-A={mean_ca:.3f}")
-    print("  per-class F1 (fold1):",
-          {k: round(v, 2) for k, v in per_fold[0]["per_class_f1_mean"].items()})
+    print(
+        "  per-class F1 (fold1):",
+        {k: round(v, 2) for k, v in per_fold[0]["per_class_f1_mean"].items()},
+    )
 
 
 def main() -> None:

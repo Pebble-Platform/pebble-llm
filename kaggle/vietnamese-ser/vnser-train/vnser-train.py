@@ -76,16 +76,29 @@ ON_KAGGLE = os.path.exists("/kaggle/input")
 # microsoft/wavlm-large ships a .bin — and we cannot bump torch (2.6 is unsafe on the
 # P100/sm_60). 4.46.3 predates that guard and is compatible with 2.5.1.
 PIP_PINS = [
-    "torch==2.5.1", "torchvision==0.20.1", "torchaudio==2.5.1",
-    "transformers==4.46.3", "soundfile", "pandas", "numpy",
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+    "torchaudio==2.5.1",
+    "transformers==4.46.3",
+    "soundfile",
+    "pandas",
+    "numpy",
 ]
 
 
 def _pip_install() -> None:
     # P100 = sm_60: pin torch 2.5.1+cu121 (default image torch won't run on P100).
     subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "--extra-index-url",
-         "https://download.pytorch.org/whl/cu121", *PIP_PINS],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "-q",
+            "--extra-index-url",
+            "https://download.pytorch.org/whl/cu121",
+            *PIP_PINS,
+        ],
         check=True,
     )
 
@@ -177,7 +190,11 @@ def _ccc_loss(pred, target):
         x, y = pred[:, k], target[:, k]
         vx, vy = x - x.mean(), y - y.mean()
         cov = (vx * vy).mean()
-        ccc = 2 * cov / (x.var(unbiased=False) + y.var(unbiased=False) + (x.mean() - y.mean()) ** 2 + 1e-8)
+        ccc = (
+            2
+            * cov
+            / (x.var(unbiased=False) + y.var(unbiased=False) + (x.mean() - y.mean()) ** 2 + 1e-8)
+        )
         loss = loss + (1 - ccc)
     return loss / target.shape[1]
 
@@ -278,20 +295,34 @@ def oof_predict(X, folds, emo_label, val, aro, train_mask=None, seed=SEED):
             counts = np.bincount(emo_label[etr], minlength=len(EMOTIONS))
             cw = len(emo_label[etr]) / (len(EMOTIONS) * np.maximum(counts, 1))
             head = _train_linear(
-                (X[etr] - mu) / sd, emo_label[etr], "cls", len(EMOTIONS),
-                class_w=cw, epochs=40 if SMOKE else 200, seed=seed,
+                (X[etr] - mu) / sd,
+                emo_label[etr],
+                "cls",
+                len(EMOTIONS),
+                class_w=cw,
+                epochs=40 if SMOKE else 200,
+                seed=seed,
             )
             with torch.no_grad():
-                p = head(torch.tensor((X[eva] - mu) / sd, dtype=torch.float32,
-                                      device=next(head.parameters()).device))
+                p = head(
+                    torch.tensor(
+                        (X[eva] - mu) / sd,
+                        dtype=torch.float32,
+                        device=next(head.parameters()).device,
+                    )
+                )
             oof_emo[eva] = p.argmax(1).cpu().numpy()
 
         # affect (all rows)
-        head = _train_linear(Xtr, np.stack([val[tr], aro[tr]], 1), "reg2", 2,
-                             epochs=40 if SMOKE else 300, seed=seed)
+        head = _train_linear(
+            Xtr, np.stack([val[tr], aro[tr]], 1), "reg2", 2, epochs=40 if SMOKE else 300, seed=seed
+        )
         with torch.no_grad():
-            p = head(torch.tensor(Xva, dtype=torch.float32,
-                                  device=next(head.parameters()).device)).cpu().numpy()
+            p = (
+                head(torch.tensor(Xva, dtype=torch.float32, device=next(head.parameters()).device))
+                .cpu()
+                .numpy()
+            )
         oof_val[va], oof_aro[va] = p[:, 0], p[:, 1]
         print(f"[cv] fold {f} done")
     return oof_emo, oof_val, oof_aro
@@ -313,11 +344,16 @@ def score(emo_label, oof_emo, val, oof_val, aro, oof_aro, test_mask=None):
     ca, ca_ci = ccc(aro, oof_aro), bootstrap_ci(ccc, aro, oof_aro)
     per_class = {EMOTIONS[c]: int((emo_label == c).sum()) for c in range(len(EMOTIONS))}
     return {
-        "emotion_macro_f1": f1, "emotion_macro_f1_ci95": f1_ci,
-        "emotion_uar": ua, "emotion_uar_ci95": ua_ci,
-        "emotion_n": len(emo_label), "emotion_support": per_class,
-        "ccc_valence": cv, "ccc_valence_ci95": cv_ci,
-        "ccc_arousal": ca, "ccc_arousal_ci95": ca_ci,
+        "emotion_macro_f1": f1,
+        "emotion_macro_f1_ci95": f1_ci,
+        "emotion_uar": ua,
+        "emotion_uar_ci95": ua_ci,
+        "emotion_n": len(emo_label),
+        "emotion_support": per_class,
+        "ccc_valence": cv,
+        "ccc_valence_ci95": cv_ci,
+        "ccc_arousal": ca,
+        "ccc_arousal_ci95": ca_ci,
     }
 
 
@@ -431,10 +467,12 @@ def pool_seeds(preds):
     import numpy as np
 
     emo = np.stack([p[0] for p in preds])
-    modal = np.array([
-        np.bincount(col[col >= 0], minlength=len(EMOTIONS)).argmax() if (col >= 0).any() else -1
-        for col in emo.T
-    ])
+    modal = np.array(
+        [
+            np.bincount(col[col >= 0], minlength=len(EMOTIONS)).argmax() if (col >= 0).any() else -1
+            for col in emo.T
+        ]
+    )
     return modal, np.mean([p[1] for p in preds], 0), np.mean([p[2] for p in preds], 0)
 
 
@@ -473,8 +511,11 @@ def run_ablation(manifest, X, evals, out_dir: Path, split_hash: str) -> dict:
     import numpy as np
 
     # a clip an arm cannot label is a clip that breaks the fixed-set design (§2)
-    missing = [c for c in ("emotion_reviewed", "valence_reviewed", "arousal_reviewed")
-               if c not in manifest.columns or manifest[c].isna().any()]
+    missing = [
+        c
+        for c in ("emotion_reviewed", "valence_reviewed", "arousal_reviewed")
+        if c not in manifest.columns or manifest[c].isna().any()
+    ]
     if missing or not manifest["emotion_reviewed"].isin(EMOTIONS).all():
         raise SystemExit(
             f"manifest lacks complete reviewed labels ({missing or 'bad emotion value'}) - rebuild "
@@ -485,11 +526,18 @@ def run_ablation(manifest, X, evals, out_dir: Path, split_hash: str) -> dict:
     # scoring ALWAYS uses the owner columns: on `agreed` rows the second rater kept them
     # byte-for-byte, so this is the one ruler both arms are measured against.
     y_emo, y_val, y_aro = encode_labels(manifest)
-    print(f"[ablation] {len(manifest)} clips, test set = {int(test_mask.sum())} agreed, "
-          f"seeds {SEEDS}")
+    print(
+        f"[ablation] {len(manifest)} clips, test set = {int(test_mask.sum())} agreed, seeds {SEEDS}"
+    )
 
-    out = {"n_clips": len(manifest), "n_test": int(test_mask.sum()), "seeds": SEEDS,
-           "split_hash": split_hash, "threshold": DECISION_THRESHOLD, "evals": {}}
+    out = {
+        "n_clips": len(manifest),
+        "n_test": int(test_mask.sum()),
+        "seeds": SEEDS,
+        "split_hash": split_hash,
+        "threshold": DECISION_THRESHOLD,
+        "evals": {},
+    }
     for ev, folds in evals.items():
         pooled, per_seed = {}, {}
         for arm in ARMS:
@@ -497,34 +545,45 @@ def run_ablation(manifest, X, evals, out_dir: Path, split_hash: str) -> dict:
             for seed in SEEDS:
                 train_mask, ec, vc, ac = arm_spec(manifest, seed)[arm]
                 emo_l, val_l, aro_l = encode_labels(manifest, ec, vc, ac)
-                preds.append(oof_predict(X, folds, emo_l, val_l, aro_l,
-                                         train_mask=train_mask, seed=seed))
+                preds.append(
+                    oof_predict(X, folds, emo_l, val_l, aro_l, train_mask=train_mask, seed=seed)
+                )
                 per_seed.setdefault(arm, []).append(
-                    score(y_emo, preds[-1][0], y_val, preds[-1][1], y_aro, preds[-1][2],
-                          test_mask)["emotion_macro_f1"])
+                    score(y_emo, preds[-1][0], y_val, preds[-1][1], y_aro, preds[-1][2], test_mask)[
+                        "emotion_macro_f1"
+                    ]
+                )
                 print(f"[ablation] {ev} · {arm} · seed {seed} · train n={int(train_mask.sum())}")
             pooled[arm] = pool_seeds(preds)
 
         arms_out = {
-            arm: {**score(y_emo, pooled[arm][0], y_val, pooled[arm][1], y_aro, pooled[arm][2],
-                          test_mask),
-                  "macro_f1_per_seed": per_seed[arm],
-                  "train_n": int(arm_spec(manifest, SEEDS[0])[arm][0].sum())}
+            arm: {
+                **score(
+                    y_emo, pooled[arm][0], y_val, pooled[arm][1], y_aro, pooled[arm][2], test_mask
+                ),
+                "macro_f1_per_seed": per_seed[arm],
+                "train_n": int(arm_spec(manifest, SEEDS[0])[arm][0].sum()),
+            }
             for arm in ARMS
         }
         keep = test_mask & (y_emo >= 0)
         yt = y_emo[keep]
         deltas = {}
         for hi_arm, lo_arm in DELTA_PAIRS:
-            d = paired_delta(lambda a, b: macro_f1(a, b, len(EMOTIONS)),
-                             yt, pooled[hi_arm][0][keep], pooled[lo_arm][0][keep])
+            d = paired_delta(
+                lambda a, b: macro_f1(a, b, len(EMOTIONS)),
+                yt,
+                pooled[hi_arm][0][keep],
+                pooled[lo_arm][0][keep],
+            )
             diff = np.array(per_seed[hi_arm]) - np.array(per_seed[lo_arm])
             d["seed_range"] = [float(diff.min()), float(diff.max())]
             deltas[f"{hi_arm}-{lo_arm}"] = d
         out["evals"][ev] = {"arms": arms_out, "deltas": deltas}
 
     (out_dir / "metrics_ablation.json").write_text(
-        json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+        json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     write_ablation_report(out, out_dir)
     return out
 
@@ -542,27 +601,42 @@ def write_ablation_report(out: dict, out_dir: Path) -> None:
         "> (the rater saw the owner's label first) - preregistration §8.",
     ]
     for ev, blk in out["evals"].items():
-        lines += ["", f"## Eval - {ev}", "",
-                  "| Arm | train n | macro-F1 | 95% CI | UAR | CCC val | CCC aro |",
-                  "|---|--:|--:|---|--:|--:|--:|"]
+        lines += [
+            "",
+            f"## Eval - {ev}",
+            "",
+            "| Arm | train n | macro-F1 | 95% CI | UAR | CCC val | CCC aro |",
+            "|---|--:|--:|---|--:|--:|--:|",
+        ]
         for arm, m in blk["arms"].items():
             lo, hi = m["emotion_macro_f1_ci95"]
             lines.append(
                 f"| {arm} | {m['train_n']} | {m['emotion_macro_f1']:.3f} | [{lo:.3f}, {hi:.3f}] | "
-                f"{m['emotion_uar']:.3f} | {m['ccc_valence']:.3f} | {m['ccc_arousal']:.3f} |")
-        lines += ["", "### Paired deltas (macro-F1, shared bootstrap over test clips)", "",
-                  "| Comparison | Δ | 95% CI | per-seed Δ range | verdict (§7) |",
-                  "|---|--:|---|---|---|"]
+                f"{m['emotion_uar']:.3f} | {m['ccc_valence']:.3f} | {m['ccc_arousal']:.3f} |"
+            )
+        lines += [
+            "",
+            "### Paired deltas (macro-F1, shared bootstrap over test clips)",
+            "",
+            "| Comparison | Δ | 95% CI | per-seed Δ range | verdict (§7) |",
+            "|---|--:|---|---|---|",
+        ]
         for name, d in blk["deltas"].items():
             lo, hi = d["ci95"]
             r0, r1 = d["seed_range"]
-            lines.append(f"| {name} | {d['delta']:+.3f} | [{lo:+.3f}, {hi:+.3f}] | "
-                         f"[{r0:+.3f}, {r1:+.3f}] | {verdict(d)} |")
-    lines += ["", "The decision rule was fixed before the run; the verdict column applies it",
-              "mechanically. `C_agreed` vs `A_owner` is NOT a valid comparison (different",
-              "training-set size) - compare it to `C_owner_sizematched` instead."]
+            lines.append(
+                f"| {name} | {d['delta']:+.3f} | [{lo:+.3f}, {hi:+.3f}] | "
+                f"[{r0:+.3f}, {r1:+.3f}] | {verdict(d)} |"
+            )
+    lines += [
+        "",
+        "The decision rule was fixed before the run; the verdict column applies it",
+        "mechanically. `C_agreed` vs `A_owner` is NOT a valid comparison (different",
+        "training-set size) - compare it to `C_owner_sizematched` instead.",
+    ]
     (out_dir / "ablation.md").write_text("\n".join(lines), encoding="utf-8")
     print("\n".join(lines))
+
 
 def _resolve_input_root() -> Path:
     """Locate the folder holding manifest.csv.
@@ -619,8 +693,10 @@ def main() -> None:
     if SMOKE:
         # keep a slice from EACH series so the leave-one-series-out path also runs
         manifest = manifest.groupby("series", group_keys=False).head(30).reset_index(drop=True)
-    print(f"[data] {len(manifest)} clean clips from {input_root} · "
-          f"mode={'ablation (change 012)' if ablate else 'baseline'}")
+    print(
+        f"[data] {len(manifest)} clean clips from {input_root} · "
+        f"mode={'ablation (change 012)' if ablate else 'baseline'}"
+    )
 
     gkf = np.array(assign_folds(manifest))
     manifest["fold"] = gkf
@@ -638,6 +714,7 @@ def main() -> None:
     m_loso, oof_loso = (None, None) if ablate or sfolds is None else cv_metrics(manifest, X, sfolds)
 
     import hashlib
+
     pairs = sorted(f"{c},{f}" for c, f in zip(manifest["clip"], gkf))
     split_hash = hashlib.md5("\n".join(pairs).encode()).hexdigest()
 
@@ -649,16 +726,32 @@ def main() -> None:
         return
     art = out_dir / "artifact_wavlm-large"
     art.mkdir(exist_ok=True)
-    (art / "config.json").write_text(json.dumps({
-        "backbone": BACKBONE, "emotions": EMOTIONS, "n_splits": N_SPLITS, "seed": SEED,
-        "split_hash": split_hash, "pip_pins": PIP_PINS, "n_clips": len(manifest),
-        "series": series_names, "label_source": "human single-annotator (ADR-003)",
-        "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
-        "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
-        "metrics_groupkfold": m_gkf, "metrics_leave_one_series_out": m_loso,
-    }, indent=2, ensure_ascii=False), encoding="utf-8")
-    (out_dir / "metrics.json").write_text(json.dumps(
-        {"groupkfold": m_gkf, "leave_one_series_out": m_loso}, indent=2), encoding="utf-8")
+    (art / "config.json").write_text(
+        json.dumps(
+            {
+                "backbone": BACKBONE,
+                "emotions": EMOTIONS,
+                "n_splits": N_SPLITS,
+                "seed": SEED,
+                "split_hash": split_hash,
+                "pip_pins": PIP_PINS,
+                "n_clips": len(manifest),
+                "series": series_names,
+                "label_source": "human single-annotator (ADR-003)",
+                "eval_groupkfold": "GroupKFold(ep) — within-pool, identity leaks within series",
+                "eval_leave_one_series_out": "cross-cast, true speaker-disjoint (I4/ADR-002)",
+                "metrics_groupkfold": m_gkf,
+                "metrics_leave_one_series_out": m_loso,
+            },
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (out_dir / "metrics.json").write_text(
+        json.dumps({"groupkfold": m_gkf, "leave_one_series_out": m_loso}, indent=2),
+        encoding="utf-8",
+    )
     # per-clip out-of-fold predictions, for listening checks (tools: build_inspect_page.py).
     # ids + labels + predictions only: no audio, no transcript (I1).
     pred = manifest[["ep", "id", "clip", "series", "fold", "emotion", "valence", "arousal"]].copy()

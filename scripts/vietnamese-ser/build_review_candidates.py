@@ -3,6 +3,7 @@
 This is deliberately separate from gold-candidates.tsv: these rows are clips to be
 reviewed, not clips already considered obvious enough to become gold anchors.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,7 +19,9 @@ def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description="build the full-corpus review queue")
     ap.add_argument("--root", default="data/vietnamese-ser/episodes")
-    ap.add_argument("--out", default="docs/spec/changes/011-online-multi-annotator/review-candidates.tsv")
+    ap.add_argument(
+        "--out", default="docs/spec/changes/011-online-multi-annotator/review-candidates.tsv"
+    )
     ap.add_argument("--seed", type=int, default=1128)
     a = ap.parse_args()
 
@@ -34,8 +37,7 @@ def main() -> None:
 
     lines = ["# epKey/clip_id\temotion\twav, relative to --root (full-corpus review queue)"]
     lines.extend(
-        f"{r['epKey']}/{r['id']}\t{r['emotion']}\t{r['epKey']}/clips/{r['id']}.wav"
-        for r in rows
+        f"{r['epKey']}/{r['id']}\t{r['emotion']}\t{r['epKey']}/clips/{r['id']}.wav" for r in rows
     )
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)

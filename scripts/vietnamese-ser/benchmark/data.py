@@ -63,9 +63,11 @@ def _selftest() -> None:
         assert tr.valence.min() >= 1 and tr.valence.max() <= 5
         cw = tr.class_weights()
         assert cw.shape == (7,)
-        print(f"{name}: train={len(tr)} test={len(te)} | "
-              f"test present classes={sorted(set(te.emotion_name))} | "
-              f"test distress+={int(te.distress.sum())}")
+        print(
+            f"{name}: train={len(tr)} test={len(te)} | "
+            f"test present classes={sorted(set(te.emotion_name))} | "
+            f"test distress+={int(te.distress.sum())}"
+        )
     print("data self-test OK (speaker-disjoint verified)")
 
 

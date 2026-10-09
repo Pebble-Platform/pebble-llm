@@ -25,18 +25,19 @@ OUT = REPO / "data/vietnamese-ser/benchmark/features/mfcc.npz"
 SR = 16000
 
 _mfcc = torchaudio.transforms.MFCC(
-    sample_rate=SR, n_mfcc=20,
+    sample_rate=SR,
+    n_mfcc=20,
     melkwargs={"n_fft": 400, "hop_length": 160, "n_mels": 40},
 )
 
 
 def utt_vector(wav: np.ndarray) -> np.ndarray:
-    x = torch.tensor(wav, dtype=torch.float32).unsqueeze(0)   # (1, T)
-    m = _mfcc(x).squeeze(0)                                    # (20, frames)
+    x = torch.tensor(wav, dtype=torch.float32).unsqueeze(0)  # (1, T)
+    m = _mfcc(x).squeeze(0)  # (20, frames)
     d1 = torchaudio.functional.compute_deltas(m)
     d2 = torchaudio.functional.compute_deltas(d1)
-    feat = torch.cat([m, d1, d2], dim=0)                      # (60, frames)
-    return torch.cat([feat.mean(1), feat.std(1)]).numpy()     # (120,)
+    feat = torch.cat([m, d1, d2], dim=0)  # (60, frames)
+    return torch.cat([feat.mean(1), feat.std(1)]).numpy()  # (120,)
 
 
 def main() -> None:
@@ -54,7 +55,8 @@ def main() -> None:
             wav = wav.mean(1)
         if sr != SR:
             wav = torchaudio.functional.resample(
-                torch.tensor(wav, dtype=torch.float32), sr, SR).numpy()
+                torch.tensor(wav, dtype=torch.float32), sr, SR
+            ).numpy()
         ids.append(f"{r['ep']}::{r['id']}")
         feats.append(utt_vector(wav.astype(np.float32)))
         if (i + 1) % 500 == 0:

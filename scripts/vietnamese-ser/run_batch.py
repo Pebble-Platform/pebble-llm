@@ -116,8 +116,11 @@ def main() -> None:
     }
 
     if eps is None:
-        units = [(m.stem, m) for m in sorted(rawdir.glob("*.mp*")) + sorted(rawdir.glob("*.m4a"))
-                 if m.suffix.lower() in (".mp3", ".mp4", ".m4a")]
+        units = [
+            (m.stem, m)
+            for m in sorted(rawdir.glob("*.mp*")) + sorted(rawdir.glob("*.m4a"))
+            if m.suffix.lower() in (".mp3", ".mp4", ".m4a")
+        ]
     else:
         units = []
         for n in eps:
@@ -157,8 +160,11 @@ def main() -> None:
                 cmd += ["--turn-split", "--hf-token", hf_token]
             if args.skip_asr:
                 cmd += ["--skip-asr"]
-            mode = "vocals-only" if args.vocals_only else (
-                "turn-split" if hf_token else "fallback VAD")
+            mode = (
+                "vocals-only"
+                if args.vocals_only
+                else ("turn-split" if hf_token else "fallback VAD")
+            )
             print(f">> {ep}: extract ({mode})")
             subprocess.run(cmd, check=True, env=env)
             if caption.exists() and not args.skip_asr and not args.vocals_only:

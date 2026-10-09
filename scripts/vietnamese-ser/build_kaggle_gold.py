@@ -82,13 +82,20 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--owner", default="phatneurondai")
     ap.add_argument("--push", action="store_true")
-    ap.add_argument("--slug", default=SLUG, help="dataset slug; use a separate one for an "
-                    "ablation set so the pilot dataset is not overwritten")
+    ap.add_argument(
+        "--slug",
+        default=SLUG,
+        help="dataset slug; use a separate one for an "
+        "ablation set so the pilot dataset is not overwritten",
+    )
     ap.add_argument("--keys", help="queue TSV; keep only its 'epKey/clip_id' rows (change 012 §2)")
     ap.add_argument("--reviews", help="gold-reviews/<user>.json; join the 2nd rater's pass")
-    ap.add_argument("--drop-emotions", default="",
-                    help="comma list of emotions whose clips are left out (class-subset run); "
-                    "the kernel then trains/scores only the classes present")
+    ap.add_argument(
+        "--drop-emotions",
+        default="",
+        help="comma list of emotions whose clips are left out (class-subset run); "
+        "the kernel then trains/scores only the classes present",
+    )
     args = ap.parse_args()
     drop = {e for e in args.drop_emotions.split(",") if e}
 
@@ -196,7 +203,15 @@ def main() -> None:
 
     if args.push:
         st = subprocess.run(
-            ["uvx", "--from", "kaggle", "kaggle", "datasets", "status", f"{args.owner}/{args.slug}"],
+            [
+                "uvx",
+                "--from",
+                "kaggle",
+                "kaggle",
+                "datasets",
+                "status",
+                f"{args.owner}/{args.slug}",
+            ],
             capture_output=True,
             text=True,
         )
@@ -207,8 +222,18 @@ def main() -> None:
         # whose intermediate dirs don't exist -> manifest.csv fails with ENOENT while
         # clips.zip still uploads. A one-level -p keeps the temp name flat.
         action = "version" if exists else "create"  # create = private by default
-        cmd = ["uvx", "--from", "kaggle", "kaggle", "datasets", action,
-               "-p", args.slug, "--dir-mode", "zip"]
+        cmd = [
+            "uvx",
+            "--from",
+            "kaggle",
+            "kaggle",
+            "datasets",
+            action,
+            "-p",
+            args.slug,
+            "--dir-mode",
+            "zip",
+        ]
         if exists:
             cmd += ["-m", f"human labels: {len(rows)} utt"]
         subprocess.run(cmd, check=True, cwd=stage.parent)
