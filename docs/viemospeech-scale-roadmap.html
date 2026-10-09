@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViEmoSpeech — Roadmap scale &amp; method</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --panel:#fff; --ink:#1c2128; --muted:#57606a; --line:#d8dee4;
+    --accent:#2563eb; --ok:#1a7f37; --run:#9a6700; --todo:#8250df; --warn:#bc4c00;
+    --code:#eef1f4; --rail:#d8dee4; --gpu:#0f766e;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --line:#2d333b;
+      --accent:#589bff; --ok:#3fb950; --run:#d29922; --todo:#bc8cff; --warn:#f0883e;
+      --code:#1c2128; --rail:#2d333b; --gpu:#2dd4bf;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1117; --panel:#161b22; --ink:#e6edf3; --muted:#9aa4af; --line:#2d333b;
+    --accent:#589bff; --ok:#3fb950; --run:#d29922; --todo:#bc8cff; --warn:#f0883e;
+    --code:#1c2128; --rail:#2d333b; --gpu:#2dd4bf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 20px 80px}
+  header.top{border-bottom:2px solid var(--line);padding-bottom:16px;margin-bottom:8px}
+  h1{font-size:26px;margin:0 0 6px;text-wrap:balance}
+  h2{font-size:21px;margin:38px 0 12px;padding-top:14px;border-top:1px solid var(--line);
+    text-wrap:balance}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--accent)}
+  p,li{margin:8px 0}
+  .sub{color:var(--muted);font-size:13.5px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;
+    font-family:"SF Mono",Consolas,monospace}
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:rgba(127,127,127,.08);font-weight:600;font-size:12.5px;
+    text-transform:uppercase;letter-spacing:.02em;color:var(--muted)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .badge{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1px solid transparent;white-space:nowrap}
+  .b-ok{color:var(--ok);border-color:var(--ok)}
+  .b-run{color:var(--run);border-color:var(--run)}
+  .b-todo{color:var(--todo);border-color:var(--todo)}
+  .b-block{color:var(--warn);border-color:var(--warn)}
+  .b-gpu{color:var(--gpu);border-color:var(--gpu)}
+  .callout{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+    border-radius:8px;padding:12px 16px;margin:16px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout.ok{border-left-color:var(--ok)}
+  .callout p:first-child{margin-top:0}
+  .callout p:last-child{margin-bottom:0}
+  .toc{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+    margin:18px 0;font-size:14px}
+  .toc a{margin-right:16px;white-space:nowrap;display:inline-block}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;margin:18px 0}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+  .kpi .v{font-size:23px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+  .kpi .k{font-size:12.5px;color:var(--muted);margin-top:4px}
+  ul{padding-left:22px}
+  /* phase list — the numbering is real: P0..P5 is a dependency order, not decoration */
+  .phase{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:16px 18px;margin:14px 0}
+  .phase-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:2px}
+  .phase-id{font-family:"SF Mono",Consolas,monospace;font-weight:700;font-size:15px;
+    color:var(--accent)}
+  .phase-name{font-weight:600;font-size:16px}
+  .phase-note{color:var(--muted);font-size:13.5px;margin:6px 0 0}
+  .gate{font-size:13.5px;color:var(--warn);margin-top:10px}
+  .task{list-style:none;padding-left:0;margin:10px 0 0}
+  .task li{position:relative;padding-left:26px;margin:6px 0}
+  .task li::before{content:"";position:absolute;left:2px;top:.45em;width:12px;height:12px;
+    border:1.5px solid var(--rail);border-radius:3px}
+  figure{margin:18px 0}
+  figcaption{color:var(--muted);font-size:13px;margin-top:6px}
+  .q{border:1px solid var(--line);border-radius:8px;background:var(--panel);margin:10px 0;
+    padding:0 16px}
+  .q summary{cursor:pointer;font-weight:600;padding:12px 0;list-style-position:outside}
+  .q[open] summary{border-bottom:1px solid var(--line)}
+  .q > :not(summary){font-size:14.5px}
+  @media (prefers-reduced-motion:no-preference){
+    .q summary{transition:color .15s ease}
+  }
+  .q summary:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>ViEmoSpeech — Roadmap scale &amp; method</h1>
+  <p class="sub">Từ pilot 1.193 clip → corpus phát hành được + method paper tone×emotion ·
+  cập nhật 2026-09-05 · nguồn:
+  <code>docs/tasks/viemospeech-scale-roadmap.md</code></p>
+</header>
+
+<nav class="toc">
+  <a href="#chi-phoi">Kết luận chi phối</a>
+  <a href="#trang-thai">Trạng thái đo được</a>
+  <a href="#duong-gang">Đường găng</a>
+  <a href="#phases">P0–P5</a>
+  <a href="#q013">4 câu hỏi method</a>
+  <a href="#log">Decision log</a>
+</nav>
+
+<h2 id="chi-phoi">Kết luận chi phối cả roadmap</h2>
+
+<div class="callout ok">
+  <p><strong>Kaggle GPU không phải nút thắt.</strong> Toàn bộ scale extraction P1 =
+  120 tập × ~0,30 GPU-h ≈ <strong>36 GPU-h ≈ 2 tuần</strong> quota miễn phí
+  (30 GPU-h/tuần, tối đa 2 session song song).</p>
+</div>
+
+<p>Nút thắt thật, theo thứ tự:</p>
+<ol>
+  <li><strong>Nhãn người</strong> — 1.193 clip mất ~6 tuần (2026-07-20 → 2026-08-31).
+  Mục tiêu gold 2–3k utt ⇒ còn ~1–2k clip nữa.</li>
+  <li><strong>3 quyết định chưa chốt</strong> (P0) — chặn P2 và chặn mọi số cuối cùng.</li>
+  <li><strong>Method chưa build</strong> — tầng bimodal tone×emotion, đóng góp thật của
+  paper, chưa có spec cho tới change 013 (tạo 2026-09-03).</li>
+</ol>
+
+<h2 id="trang-thai">Trạng thái đo được (2026-09-03)</h2>
+
+<div class="kpis">
+  <div class="kpi"><div class="v">1.193</div><div class="k">clip nhãn người, sạch</div></div>
+  <div class="kpi"><div class="v">2</div><div class="k">series (32 phần)</div></div>
+  <div class="kpi"><div class="v">0,258</div><div class="k">macro-F1 LOSO</div></div>
+  <div class="kpi"><div class="v">0,071</div><div class="k">CCC valence LOSO</div></div>
+  <div class="kpi"><div class="v">—</div><div class="k">κ human–human</div></div>
+</div>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Đại lượng</th><th class="num">Giá trị</th></tr></thead>
+  <tbody>
+    <tr><td>Series đã extract</td><td class="num">2 (<code>chay-tron-thanh-xuan</code> 22 phần · <code>ve-nha-di-con</code> 10 phần)</td></tr>
+    <tr><td>Record trong <code>state.db</code></td><td class="num">1.916</td></tr>
+    <tr><td>Clip nhãn người, không rejected/multi</td><td class="num">1.193</td></tr>
+    <tr><td>Clip owner đã loại</td><td class="num">718 (631 <code>multi_speaker</code>)</td></tr>
+    <tr><td>Clip đã qua review vòng 2 (vyphan)</td><td class="num">1.071</td></tr>
+    <tr><td>κ human–human</td><td class="num">chưa có</td></tr>
+    <tr><td>Model</td><td class="num">frozen WavLM-Large + linear probe</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="duong-gang">Đường găng</h2>
+
+<figure>
+<svg viewBox="0 0 720 190" width="100%" role="img"
+     aria-label="P0 chia hai nhánh song song: P2 chạy GPU rồi tới P3 tốn thời gian người; P1 chạy song song. Cả hai gộp lại vào P4 rồi P5.">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7"
+            orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ar)" opacity=".7">
+    <path d="M96,95 L96,48 L146,48"/>
+    <path d="M96,95 L96,142 L146,142"/>
+    <path d="M266,48 L316,48"/>
+    <path d="M436,48 L486,48 L486,88 L536,88"/>
+    <path d="M296,142 L486,142 L486,98 L536,98"/>
+    <path d="M646,93 L686,93"/>
+  </g>
+  <g font-family="SF Mono, Consolas, monospace" font-size="13" font-weight="700">
+    <g>
+      <rect x="16" y="76" width="80" height="38" rx="7" fill="var(--panel)"
+            stroke="var(--warn)" stroke-width="1.5"/>
+      <text x="56" y="100" text-anchor="middle" fill="var(--warn)">P0</text>
+    </g>
+    <g>
+      <rect x="146" y="29" width="120" height="38" rx="7" fill="var(--panel)"
+            stroke="var(--gpu)" stroke-width="1.5"/>
+      <text x="206" y="53" text-anchor="middle" fill="var(--gpu)">P2 · GPU</text>
+    </g>
+    <g>
+      <rect x="316" y="29" width="120" height="38" rx="7" fill="var(--panel)"
+            stroke="var(--line)" stroke-width="1.5"/>
+      <text x="376" y="53" text-anchor="middle" fill="var(--ink)">P3 · người</text>
+    </g>
+    <g>
+      <rect x="146" y="123" width="150" height="38" rx="7" fill="var(--panel)"
+            stroke="var(--line)" stroke-width="1.5"/>
+      <text x="221" y="147" text-anchor="middle" fill="var(--ink)">P1 · κ, người</text>
+    </g>
+    <g>
+      <rect x="536" y="74" width="110" height="38" rx="7" fill="var(--panel)"
+            stroke="var(--accent)" stroke-width="1.5"/>
+      <text x="591" y="98" text-anchor="middle" fill="var(--accent)">P4 · train</text>
+    </g>
+    <g>
+      <rect x="686" y="74" width="30" height="38" rx="7" fill="var(--panel)"
+            stroke="var(--line)" stroke-width="1.5"/>
+      <text x="701" y="98" text-anchor="middle" fill="var(--ink)">P5</text>
+    </g>
+  </g>
+</svg>
+<figcaption>P1 và P2 chạy <strong>song song</strong>: một cái tiêu thời gian người,
+một cái tiêu GPU.</figcaption>
+</figure>
+
+<div class="callout warn">
+  <p><strong>Sai lầm dễ mắc:</strong> nhảy thẳng vào P4 vì nó kỹ thuật và hấp dẫn,
+  trong khi κ chưa có. Model tốt mà không có κ thì không thành paper.</p>
+</div>
+
+<h2 id="phases">Các giai đoạn</h2>
+
+<section class="phase">
+  <div class="phase-head">
+    <span class="phase-id">P0</span>
+    <span class="phase-name">Gỡ 3 quyết định</span>
+    <span class="badge b-block">chặn P2</span>
+    <span class="badge b-todo">không GPU</span>
+  </div>
+  <ul class="task">
+    <li><strong>Chốt series test.</strong> ADR-002 chốt hold-out whole-series nhưng chưa
+    chọn series nào. Chưa có ⇒ mọi số LOSO vẫn là tạm.</li>
+    <li><strong>Media lên Kaggle: PA A hay local GPU?</strong> PA A = upload media bản
+    quyền cho bên thứ ba giữ (dù private). Đây là <strong>quyết định pháp lý của owner,
+    không phải kỹ thuật</strong>.</li>
+    <li><strong>Chốt quy mô</strong> P1 (3 bộ) hay P2 (6 bộ).</li>
+  </ul>
+</section>
+
+<section class="phase">
+  <div class="phase-head">
+    <span class="phase-id">P1</span>
+    <span class="phase-name">Vòng label mù</span>
+    <span class="badge b-block">đường găng của paper</span>
+    <span class="badge b-todo">không GPU</span>
+  </div>
+  <p class="phase-note">Tool xong từ 2026-07-28 (<code>/rate.html</code> ·
+  <code>build_assignments.py</code> · <code>iaa_report.py</code>). Bảng
+  <code>assignments</code> hiện <strong>0 dòng</strong> — chưa ai chạy vòng nào.</p>
+  <ul class="task">
+    <li>Chốt gold set theo <code>qc-protocol.md §2.1</code> (~40 clip) → <code>gold-set.txt</code></li>
+    <li>Seed hàng đợi, mời annotator, chạy 2 vòng</li>
+    <li><code>iaa_report.py</code> → κ/α human–human</li>
+  </ul>
+  <div class="callout">
+    <p>Trả <strong>hai</strong> món cùng lúc: κ mà ADR-003/I6 bắt buộc, <strong>và</strong>
+    tập test đủ lớn để chốt Δ(B−A) mà 606 clip của change 012 không phân giải nổi.</p>
+  </div>
+</section>
+
+<section class="phase">
+  <div class="phase-head">
+    <span class="phase-id">P2</span>
+    <span class="phase-name">Scale extraction trên Kaggle</span>
+    <span class="badge b-gpu">~36 GPU-h</span>
+  </div>
+  <p class="phase-note">Kernel <code>vnser-extract/</code> đã build (torch 2.5.1 /
+  pyannote 3.x, HF token qua Kaggle Secrets, smoke local PASS) nhưng
+  <strong>chưa từng push</strong>.</p>
+  <ul class="task">
+    <li>Push + chạy <strong>1 tập trước</strong> để chốt GPU-h thật/tập — <code>0.30</code>
+    mới là ước lượng, chưa bao giờ đo trên P100. Số này quyết lịch cả P2.</li>
+    <li>Chạy batch theo quota (song song rút wall-clock, <strong>không</strong> tăng trần)</li>
+    <li>Cập nhật <code>extraction-pipeline.md</code> với số đo thật</li>
+  </ul>
+  <p class="gate">Gate: P0 · quyết định media phải xong trước.</p>
+</section>
+
+<section class="phase">
+  <div class="phase-head">
+    <span class="phase-id">P3</span>
+    <span class="phase-name">Label tới mức gold</span>
+    <span class="badge b-todo">không GPU</span>
+  </div>
+  <ul class="task">
+    <li>Label thêm ~1–2k clip → tổng 2–3k gold utt</li>
+    <li><strong>Không</strong> lọc theo đồng thuận — change 012 đo được C không hơn C′
+    (Δ +0,011 / −0,022, CI đều chứa 0) ⇒ giữ cả clip bất đồng</li>
+    <li>Ưu tiên soát <strong>arousal</strong> hơn emotion — 012: đây là chỗ review có
+    tác dụng rõ nhất</li>
+  </ul>
+</section>
+
+<section class="phase">
+  <div class="phase-head">
+    <span class="phase-id">P4</span>
+    <span class="phase-name">Train thật trên Kaggle</span>
+    <span class="badge b-gpu">GPU, chưa đo</span>
+  </div>
+  <ul class="task">
+    <li><strong>P4.1 — Fine-tune backbone</strong> (bỏ frozen probe). Chi phí GPU chưa đo
+    → chạy 1 lần nhỏ lấy số trước khi lập lịch quota.</li>
+    <li><strong>P4.2 — Bake-off backbone đa ngữ.</strong> WavLM-Large là English-centric;
+    câu hỏi mở đã ghi trong <code>training-baseline.md</code>, chưa ai chạy.</li>
+    <li><strong>P4.3 — Bimodal tone×emotion</strong> → change 013.</li>
+  </ul>
+</section>
+
+<section class="phase">
+  <div class="phase-head">
+    <span class="phase-id">P5</span>
+    <span class="phase-name">Release</span>
+    <span class="badge b-todo">chưa build</span>
+  </div>
+  <ul class="task">
+    <li>Export public (phase 4): nhãn người + loại rejected + loại test-series + strip text.
+    <code>build_kaggle_gold.py</code> hiện mới là dump thô.</li>
+    <li>Features + timestamps + labels + speaker id, CC-BY (intent §1)</li>
+  </ul>
+</section>
+
+<h2 id="q013">4 câu hỏi chặn tầng method (change 013)</h2>
+
+<p>Động cơ neo vào số đo, không phải ý tưởng: <strong>CCC valence 0,071</strong> ở LOSO
+trong khi arousal 0,114 — audio một mình đọc được <em>mức kích động</em>, không đọc được
+<em>cực tính</em>. Đó là chỗ nhánh text/tone phải gánh.</p>
+
+<details class="q">
+  <summary>Q1 · Nguồn thanh điệu lúc inference là gì?</summary>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Phương án</th><th>Được</th><th>Mất</th></tr></thead>
+    <tbody>
+      <tr><td><strong>A.</strong> Từ text (ASR → âm tiết → dấu)</td>
+          <td>dùng được PhoWhisper sẵn có</td>
+          <td>ASR sai thanh điệu <strong>đúng ở đoạn cảm xúc mạnh</strong> — pilot M3:
+          “mày→máy/mây, tao→tháo” khi quát. Nhiễu <strong>tương quan với nhãn</strong></td></tr>
+      <tr><td><strong>B.</strong> Dự đoán thanh điệu từ audio</td>
+          <td>không phụ thuộc ASR</td>
+          <td>cần nhãn thanh điệu per-syllable để train head đó</td></tr>
+      <tr><td><strong>C.</strong> Chỉ dùng lúc train (auxiliary)</td>
+          <td>tránh hẳn lỗi ASR lúc test</td>
+          <td>delta có thể nhỏ hơn</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Quan sát pilot khiến A thành rủi ro <strong>có hệ thống</strong>, không phải nhiễu
+  ngẫu nhiên — và trớ trêu, chính nó cũng là bằng chứng sớm cho giả thuyết tone×emotion.</p>
+</details>
+
+<details class="q" open>
+  <summary>Q2 · Nhãn thanh điệu ở đâu ra? <span class="badge b-block">nên trả lời trước</span></summary>
+  <p>Intent gọi ViEmoSpeech là corpus <em>syllable-tone-annotated</em>, nhưng
+  <code>state.db</code> hiện <strong>không có</strong> trường nhãn thanh điệu nào — chỉ có
+  <code>dialect</code> (metadata, không phải target). Suy từ dấu chỉ đúng khi text đúng →
+  vòng lại Q1. Nếu cần người gán thì đó là <strong>một hạng mục P3 riêng</strong>, phải
+  thêm vào roadmap trước khi change 013 chạy được.</p>
+</details>
+
+<details class="q">
+  <summary>Q3 · Kiến trúc fusion nào?</summary>
+  <p>CASE/FAS (vn-07) là mẫu gần nhất nhưng nó tách acoustic/semantic — còn ta cần tách
+  <strong>acoustic-cảm-xúc / acoustic-thanh-điệu</strong>, hai thứ dùng chung một kênh
+  vật lý (vn-06: thanh điệu Việt thiên phonation). Đây là điểm khác biệt khoa học của
+  paper, và cũng là chỗ dễ tự lừa mình nhất.</p>
+</details>
+
+<details class="q">
+  <summary>Q4 · Ngưỡng “thành công” chốt trước hay sau?</summary>
+  <p>Change 012 vừa cho thấy vì sao: pre-register ngưỡng rồi thì kết quả Δ +0,024 /
+  CI chứa 0 buộc phải đọc là H0, không lách được. Tầng bimodal cũng cần một
+  <code>preregistration.md</code> tương tự <strong>trước</strong> khi chạy.</p>
+</details>
+
+<h2 id="log">Decision log</h2>
+
+<div class="callout">
+  <p><strong>2026-09-03 — Roadmap lập sau khi có kết quả change 012.</strong> Ba kết luận
+  định hình P3/P4:</p>
+  <ul>
+    <li>Dọn nhãn <strong>chưa</strong> chứng minh được cải thiện model (Δ +0,024, CI
+    [−0,011, +0,056] ⇒ H0; nhưng 10/10 seed dương — thiếu power, không phải phản bác)
+    ⇒ không ưu tiên phân xử 465 bất đồng trước P1.</li>
+    <li>Lọc theo đồng thuận <strong>không</strong> có lợi ⇒ giữ clip bất đồng.</li>
+    <li>CCC valence ~0,07 củng cố lý do tồn tại của nhánh bimodal.</li>
+  </ul>
+</div>
+
+<div class="callout">
+  <p><strong>2026-08-31 — Ngưỡng quyết định 012 chốt ở 0,02 macro-F1</strong>, 10 seed,
+  giữ nhánh C′ (đối chứng cỡ mẫu).</p>
+</div>
+
+<h2>Câu hỏi mở</h2>
+<ul>
+  <li>Vòng mù cần bao nhiêu annotator và bao nhiêu clip để tập test đủ phân giải Δ ~0,02?
+  (606 clip cho CI ±0,03 — chưa tính ngược ra cỡ cần thiết.)</li>
+  <li>P4.1 fine-tune tốn bao nhiêu GPU-h trên 2–3k clip? Chưa đo, chặn việc lập lịch quota.</li>
+  <li>Series thứ 3 lấy bộ nào trong shortlist <code>05-scale-plan.md §7</code>?</li>
+</ul>
+
+<p class="sub" style="margin-top:36px;padding-top:14px;border-top:1px solid var(--line)">
+Nguồn số liệu: <code>docs/spec/capabilities/training-baseline.md</code> ·
+<code>docs/reports/012/ablation.md</code> ·
+<code>docs/papers/vietnamese-ser/05-scale-plan.md</code> ·
+<code>data/vietnamese-ser/episodes/state.db</code>.
+Bản Markdown: <code>docs/tasks/viemospeech-scale-roadmap.md</code>.
+</p>
+
+</div>
+</body>
+</html>
